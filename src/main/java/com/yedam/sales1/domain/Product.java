@@ -1,4 +1,4 @@
-package com.yedam.domain;
+package com.yedam.sales1.domain;
 
 import java.sql.Date;
 

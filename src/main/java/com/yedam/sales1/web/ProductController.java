@@ -1,4 +1,4 @@
-package com.yedam.web;
+package com.yedam.sales1.web;
 
 import java.util.List;
 import java.util.Map;
@@ -8,17 +8,18 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import com.yedam.domain.Product;
-import com.yedam.service.ProductService;
+import com.yedam.hr.domain.Employee;
+import com.yedam.sales1.domain.Product;
+import com.yedam.sales1.service.ProductService;
 
 @Controller
-public class Sales1Controller {
+public class ProductController {
 
 	
     private final ProductService productService;
 
     @Autowired
-    public Sales1Controller(ProductService productService) {
+    public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
@@ -34,6 +35,7 @@ public class Sales1Controller {
         model.addAttribute("columns", tableData.get("columns"));
         model.addAttribute("rows", tableData.get("rows"));
 
-        return "sales1/itemList"; // => templates/sales1/itemList.html
+        return "sales1/productList"; // => templates/sales1/itemList.html
     }
+    
 }

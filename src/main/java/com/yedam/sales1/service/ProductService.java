@@ -1,9 +1,9 @@
-package com.yedam.service;
+package com.yedam.sales1.service;
 
 import java.util.List;
 import java.util.Map;
 
-import com.yedam.domain.Product;
+import com.yedam.sales1.domain.Product;
 
 public interface ProductService {
 	List<Product> getAllProduct();
