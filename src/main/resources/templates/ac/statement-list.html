@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<body>
+<div layout:fragment="content">
+  <!-- 중요: layoutSidenav_content로 감싸야 짤리지 않음 -->
+  <div id="layoutSidenav_content">
+    <main class="container-fluid px-4">
+
+      <h1 class="mt-4">회계 통합관리 (AC-001)</h1>
+      <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+        <li class="breadcrumb-item active">전표 통합관리</li>
+      </ol>
+
+      <!-- 검색툴바 -->
+      <form th:action="@{/ac/statements}" method="get" class="row gy-2 gx-2 align-items-end" th:object="${form}">
+        <div class="col-auto">
+          <label class="form-label">유형</label>
+          <select class="form-select" th:field="*{type}">
+            <option value="ALL">전체</option>
+            <option value="SALES">매출</option>
+            <option value="BUY">매입</option>
+            <option value="MONEY">수금</option>
+            <option value="PAYMENT">지급</option>
+          </select>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label">거래처/전표</label>
+          <input class="form-control" type="text" th:field="*{keyword}" placeholder="거래처명 또는 전표번호"/>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label">전표번호</label>
+          <input class="form-control" type="text" th:field="*{voucherNo}" placeholder="부분검색"/>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label">From</label>
+          <input class="form-control" type="date" th:field="*{fromDate}"/>
+        </div>
+
+        <div class="col-auto">
+          <label class="form-label">To</label>
+          <input class="form-control" type="date" th:field="*{toDate}"/>
+        </div>
+
+        <input type="hidden" th:field="*{page}"/>
+        <input type="hidden" th:field="*{size}"/>
+
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">검색</button>
+          <a th:href="@{/ac/statements}" class="btn btn-outline-secondary">초기화</a>
+        </div>
+      </form>
+
+      <!-- 목록 -->
+      <div class="card mt-3">
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-sm mb-0">
+              <thead class="table-light">
+              <tr>
+                <th>전표일자</th>
+                <th>전표번호</th>
+                <th>유형</th>
+                <th>거래처명</th>
+                <th class="text-end">총액</th>
+                <th>적요</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr th:if="${page.totalElements == 0}">
+                <td colspan="6" class="text-center">데이터가 없습니다.</td>
+              </tr>
+              <tr th:each="row : ${page.content}">
+                <td th:text="${#temporals.format(row.voucherDate, 'yyyy-MM-dd')}">2025-09-01</td>
+                <td th:text="${row.voucherNo}">10001</td>
+                <td>
+                  <span class="badge bg-secondary" th:switch="${row.type}">
+                    <span th:case="'SALES'">매출</span>
+                    <span th:case="'BUY'">매입</span>
+                    <span th:case="'MONEY'">수금</span>
+                    <span th:case="'PAYMENT'">지급</span>
+                    <span th:case="*">기타</span>
+                  </span>
+                </td>
+                <td th:text="${row.partnerName}">거래처</td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(row.amountTotal, 0, 'COMMA', 0, 'POINT')}">0</td>
+                <td th:text="${row.remark}">적요</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 페이지네이션 -->
+      <nav class="mt-3" th:if="${page.totalPages > 1}">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item" th:classappend="${!page.hasPrevious()} ? ' disabled'">
+            <a class="page-link"
+               th:href="@{/ac/statements(page=${page.number-1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Prev</a>
+          </li>
+
+          <li class="page-item"
+              th:each="i : ${#numbers.sequence(0, page.totalPages-1)}"
+              th:classappend="${i==page.number} ? ' active'">
+            <a class="page-link"
+               th:text="${i+1}"
+               th:href="@{/ac/statements(page=${i}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">1</a>
+          </li>
+
+          <li class="page-item" th:classappend="${!page.hasNext()} ? ' disabled'">
+            <a class="page-link"
+               th:href="@{/ac/statements(page=${page.number+1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Next</a>
+          </li>
+        </ul>
+      </nav>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>
