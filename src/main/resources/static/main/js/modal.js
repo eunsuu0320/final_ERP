@@ -40,6 +40,14 @@ const modalConfigs = {
       { title: "적요", field: "remark", minWidth: 200 },
     ],
   },
+	commonCode: {
+		url: "/api/modal/commonCode",
+		title: "공통코드 검색",
+		columns: [
+			{ title: "코드", field: "codeId" },
+			{ title: "코드명", field: "codeName" },
+		]
+	}
 };
 
 let table; // Tabulator 인스턴스 전역 변수
