@@ -11,6 +11,14 @@ const modalConfigs = {
 			{ title: "부서", field: "dept" },
 			{ title: "직급", field: "grade" }
 		]
+	},
+	commonCode: {
+		url: "/api/modal/commonCode",
+		title: "공통코드 검색",
+		columns: [
+			{ title: "코드", field: "codeId" },
+			{ title: "코드명", field: "codeName" },
+		]
 	}
 };
 

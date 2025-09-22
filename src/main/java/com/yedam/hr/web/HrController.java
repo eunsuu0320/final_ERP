@@ -16,7 +16,7 @@ public class HrController {
 
 	@Autowired HrService hrService;
 
-	// 사원 등록
+	// 사원 등록 페이지
 	@GetMapping("/empPage")
 	public String getEmployee (Model model) {
 		return "hr/employee";
@@ -26,6 +26,12 @@ public class HrController {
 	@GetMapping("/selectAllEmp")
 	public List<Employee> employee (Model model) {
 		return hrService.getAllEmployees();
+	}
+
+	// 사원 등록 모달 html
+	@GetMapping("/employee")
+	public String getEmployeeString (Model model) {
+		return "hr/employeeModal";
 	}
 
 	// 수당 및 공제 관리

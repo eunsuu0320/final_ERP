@@ -11909,3 +11909,9 @@ html, body {
   background-position: center;
   background-size: 0.75rem 0.75rem;
 }
+
+.form-label.required::before {
+	content: "*";
+	color: red !important;
+	margin-right: 2px;
+}

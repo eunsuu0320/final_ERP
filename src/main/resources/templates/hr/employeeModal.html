@@ -1,10 +1,158 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
-</head>
+<html xmlns:th="http://www.thymeleaf.org">
 <body>
+	<!-- 사원 신규등록 모달 -->
+	<div th:fragment="empModal">
+		<div class="modal fade" id="empModal" tabindex="-1" aria-hidden="true">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">사원 등록</h5>
+
+						<div>
+							<button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
+							<button type="button" class="btn btn-outline-dark me-2" id="btn-save-reset">초기화</button>
+							<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+						</div>
+					</div>
+
+					<div class="modal-body">
+						<!-- 탭 -->
+						<ul class="nav nav-tabs" id="empTab" role="tablist">
+							<li class="nav-item">
+								<button class="nav-link active" id="basic-tab"
+									data-bs-toggle="tab" data-bs-target="#basicInfo" type="button">기본정보</button>
+							</li>
+							<li class="nav-item">
+								<button class="nav-link" id="contract-tab" data-bs-toggle="tab"
+									data-bs-target="#contractInfo" type="button">근로계약서</button>
+							</li>
+						</ul>
+
+						<!-- 탭 콘텐츠 -->
+						<div class="tab-content mt-3">
+							<!-- 기본정보 탭 -->
+							<div class="tab-pane fade show active" id="basicInfo">
+								<form id="empForm">
+									<div class="row mb-3">
+										<div class="col-md-4">
+											<label class="form-label required">사원번호</label>
+											<input type="text" name="empNo" id="empNo" class="form-control" required>
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">성명</label>
+											<input type="text" name="name" id="name" class="form-control" required>
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">전화번호</label>
+											<input type="text" name="phone" id="phone" class="form-control" required>
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">생년월일</label>
+											<input type="date" name="birth" id="birth" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label required">이메일</label>
+											<input type="email" name="email" id="email" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-4">
+											<label class="form-label required">부서</label>
+											<input type="hidden" name="">
+											<input type="text" name="dept" id="dept" class="form-control" readonly>
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">직위/직급</label>
+											<input type="text" name="grade" id="grade" class="form-control" readonly>
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">직책</label>
+											<input type="text" name="position" id="position" class="form-control" readonly>
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">기본급</label>
+											<input type="number" name="salary" id="salary" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label required">휴가일수</label>
+											<input type="number" name="holyDays" id="salary" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">입사일자</label>
+											<input type="date" name="hireDate" id="hireDate" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label">퇴사일자</label>
+											<input type="date" name="resignDate" id="resignDate" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">부양가족수</label>
+											<input type="number" name="depCnt" id="depCnt" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label">퇴사사유</label>
+											<input type="text" name="resignReason" id="resignReason" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-4">
+											<label class="form-label required">은행</label>
+											<input type="text" name="bankCode" id="bankCode" class="form-control">
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">예금주</label>
+											<input type="text" name="accHolder" id="accHolder" class="form-control">
+										</div>
+										<div class="col-md-4">
+											<label class="form-label required">계좌번호</label>
+											<input type="text" name="accNo" id="accNo" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-3">
+											<label class="form-label required">우편번호</label>
+											<input type="text" name="postalCode" id="postalCode" class="form-control">
+										</div>
+										<div class="col-md-9">
+											<label class="form-label required">주소</label>
+											<input type="text" name="address" id="address" class="form-control">
+										</div>
+									</div>
+								</form>
+							</div>
+
+							<!-- 근로계약서 탭 -->
+							<div class="tab-pane fade" id="contractInfo">
+								<p>여기에 근로계약서 작성 관련 입력폼/업로드 UI 추가 예정</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+		<!-- 공통 모달 -->
+	<div th:replace="common/modal :: commonModal"></div>
+
+	<!-- JS (modalConfigs + openModal 함수 불러오기) -->
+	<script src="/main/js/modal.js"></script>
 
 </body>
 </html>

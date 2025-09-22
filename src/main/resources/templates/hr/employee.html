@@ -17,12 +17,14 @@
 						<option value="emp_no">사원번호</option>
 						<option value="name">성명</option>
 						<option value="dept">부서명</option>
-					</select> <input id="txt-search" type="text"
-						class="form-control w-auto me-2" placeholder="검색어 입력">
+					</select> <input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
 					<button class="btn btn-dark">이력조회</button>
 				</div>
+
+				<!-- 모달 include -->
+				<div th:replace="hr/employeeModal :: empModal"></div>
 
 				<!-- 테이블 -->
 				<div id="employee-table"></div>
@@ -98,9 +100,15 @@
 		}
 	});
 
-	// 신규 버튼 예시
+	// 신규 버튼
 	document.getElementById("btn-new").addEventListener("click", function() {
-		alert("신규 등록 모달 띄우는 기능");
+ 		const modal = new bootstrap.Modal(document.getElementById("empModal"));
+  		modal.show();
+	});
+
+	// 사원 등록 모달 - 초기화 버튼
+	document.getElementById("btn-save-reset").addEventListener("click", function() {
+
 	});
 
 	// 인쇄 버튼
@@ -154,6 +162,8 @@
 	    printWindow.document.close();
 	    printWindow.print();
 	});
+
+
 
 </script>
 
