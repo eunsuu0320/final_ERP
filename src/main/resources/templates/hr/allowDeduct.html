@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<title>수당/공제 관리</title>
+</head>
+<body layout:fragment="content">
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">수당/공제 관리</h1>
+				<!-- 탭 + 버튼 영역 -->
+				<div class="d-flex justify-content-between mb-3">
+					<!-- 수당/공제 탭 -->
+					<ul class="nav nav-tabs" id="payTab" role="tablist">
+						<li class="nav-item">
+							<button class="nav-link active" id="allow-tab"
+								data-bs-toggle="tab" data-bs-target="#allow" type="button">수당</button>
+						</li>
+						<li class="nav-item">
+							<button class="nav-link" id="deduct-tab" data-bs-toggle="tab"
+								data-bs-target="#deduct" type="button">공제</button>
+						</li>
+					</ul>
+
+					<!-- 오른쪽 버튼 -->
+					<div>
+						<button class="btn btn-primary me-2">저장</button>
+						<button class="btn btn-danger me-2">사용중단</button>
+						<button class="btn btn-warning">재사용</button>
+					</div>
+				</div>
+
+				<!-- 탭 콘텐츠 -->
+				<div class="tab-content mt-3">
+					<!-- 수당 -->
+					<div class="tab-pane fade show active" id="allow">
+						<div id="allowance-table"></div>
+					</div>
+					<!-- 공제 -->
+					<div class="tab-pane fade" id="deduct">
+						<div id="deduction-table"></div>
+					</div>
+				</div>
+
+			</div>
+		</main>
+	</div>
+</body>
+</html>
