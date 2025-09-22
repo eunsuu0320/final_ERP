@@ -3,8 +3,6 @@ package com.yedam.hr.domain;
 import java.util.Date;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
@@ -13,7 +11,6 @@ import lombok.Data;
 public class Employees {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
 	private String empNo; // 사원번호
 
 	private String companyCode; // 회사코드
