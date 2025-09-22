@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+
+<head>
+<link rel="stylesheet" th:href="@{/erp/css/sales1/salesStyle.css}" />
+</head>
+
+<body layout:fragment="content">
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="containerBox">
+				<div class="container-fluid px-4">
+					<h3 class="mt-4">품목관리</h3>
+				</div>
+				<div class="d-flex align-items-center mb-3 justify-content-end">
+
+					<button class="btn btn-warning me-2">검색</button>
+					<button class="btn btn-primary me-2">신규</button>
+					<button class="btn btn-danger me-2">삭제</button>
+					<button class="btn btn-dark me-2">초기화</button>
+					<button class="btn btn-secondary me-2">이력조회</button>
+					<button class="btn btn-secondary me-2">인쇄</button>
+					<button class="btn btn-secondary me-2">Excel</button>
+				</div>
+				<div class="searchTool d-flex align-items-center mb-3">
+					<div class="me-5 d-flex align-items-center">
+						<label for="itemName" class="me-3">품목명</label> <input type="text"
+							class="form-control w-auto" placeholder="검색어 입력" id="itemName">
+					</div>
+					<div class="me-5 d-flex align-items-center">
+						<label for="itemGroup" class="me-3">품목그룹</label> <input
+							type="text" class="form-control w-auto" placeholder="검색어 입력"
+							id="itemGroup">
+					</div>
+					<div class="d-flex align-items-center">
+						<label for="warehouse" class="me-3">창고</label> <input type="text"
+							class="form-control w-auto" placeholder="검색어 입력" id="warehouse">
+					</div>
+				</div>
+				<div class="mb-2">
+					<label th:each="col : ${columns}" class="me-2"> <input
+						type="checkbox" class="colCheckbox" th:value="${col}" checked />
+						<span th:text="${col}"></span>
+					</label>
+				</div>
+				<table class="table table-bordered" id="productTable">
+					<thead>
+						<tr>
+							<th th:each="col : ${columns}" th:text="${col}" class="tableCol"></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="row : ${rows}">
+							<td th:each="col : ${columns}" th:text="${row[col]}"
+								class="tableCol"></td>
+						</tr>
+						<!-- 데이터 없으면 빈 행 표시 -->
+						<tr th:if="${#lists.isEmpty(rows)}">
+							<td th:each="col : ${columns}" class="tableCol">&nbsp;</td>
+						</tr>
+					</tbody>
+				</table>
+
+			</div>
+		</main>
+	</div>
+</body>
+
+<script th:src="@{/erp/js/sales1/productList.js}"></script>
+</html>

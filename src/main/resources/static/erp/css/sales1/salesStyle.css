@@ -1,0 +1,12 @@
+@charset "UTF-8";
+
+/*검색바*/
+.searchTool {
+	border: 1px solid #ccc;
+	padding: 30px;
+	
+}
+
+.containerBox {
+	padding: 30px;
+}
