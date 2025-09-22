@@ -1,4 +1,4 @@
-package com.yedam.web;
+package com.yedam.common.web;
 
 import java.util.List;
 
