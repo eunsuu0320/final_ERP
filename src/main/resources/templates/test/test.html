@@ -7,7 +7,12 @@
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="container-fluid px-4">
+				<!-- content 시작 -->
 				<h1 class="mt-4">메뉴이름</h1>
+				<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">사용자 검색</button>
+
+				<!-- 사용자 검색 모달 -->
+				<div th:replace="common/modal :: commonModal('userModal', '사용자 검색', ${userColumns}, ${userItems})"></div>
 			</div>
 		</main>
 	</div>
