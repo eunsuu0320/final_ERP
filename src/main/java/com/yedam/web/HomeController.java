@@ -21,4 +21,9 @@ public class HomeController {
 	public String dashboard(Model model) {
 		return "dashboard";
 	}
+	
+	@GetMapping("test")
+	public String test(Model model) {
+		return "hr/test";
+	}
 }
