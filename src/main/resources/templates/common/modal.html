@@ -1,69 +1,32 @@
-<!-- modal.html -->
-<div class="modal fade" id="commonModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalTitle"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-striped" id="modalTable">
-          <thead><tr id="modalTableHead"></tr></thead>
-          <tbody id="modalTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+	<!-- templates/common/modal.html -->
+	<div th:fragment="commonModal">
+		<div class="modal fade" id="commonModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="commonModalLabel">검색</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<!-- Tabulator 테이블 -->
+						<div id="commonModalTable"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-<script>
-//모달별 컬럼 정의
-const modalConfigs = {
-  user: {
-    title: "사용자 조회",
-    columns: [
-      { key: "empNo", label: "사번" },
-      { key: "name", label: "이름" },
-      { key: "dept", label: "부서" }
-    ]
-  }
-};
 
-function openModal(type, callback) {
-	  let config = modalConfigs[type];
-	  if (!config) {
-	    alert("정의되지 않은 모달 타입: " + type);
-	    return;
-	  }
+	<!-- Tabulator CSS/JS -->
+	<link
+		href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
+		rel="stylesheet">
+	<script
+		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-	  $.getJSON("/api/modal/" + type, function(data) {
-	    $("#modalTitle").text(config.title);
-
-	    // 헤더 그리기
-	    $("#modalTableHead").empty();
-	    config.columns.forEach(col => {
-	      $("#modalTableHead").append(`<th>${col.label}</th>`);
-	    });
-
-	    // 바디 그리기
-	    $("#modalTableBody").empty();
-	    data.forEach(row => {
-	      let tr = $("<tr>").css("cursor", "pointer");
-	      config.columns.forEach(col => {
-	        tr.append(`<td>${row[col.key]}</td>`);
-	      });
-
-	      // 행 클릭 시 callback 호출
-	      tr.on("click", function() {
-	        if (callback) callback(row);
-	        $("#commonModal").modal("hide");
-	      });
-
-	      $("#modalTableBody").append(tr);
-	    });
-
-	    $("#commonModal").modal("show");
-	  });
-	}
-
-</script>
+</body>
+</html>

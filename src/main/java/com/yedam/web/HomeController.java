@@ -26,5 +26,10 @@ public class HomeController {
 	public String test(Model model) {
 		return "test/test";
 	}
+	
+	@GetMapping("login")
+	public String login(Model model) {
+		return "common/login";
+	}
 
 }
