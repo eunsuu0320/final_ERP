@@ -8,7 +8,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Employees {
+public class Employee {
 
 	@Id
 	private String empNo; // 사원번호
@@ -24,7 +24,7 @@ public class Employees {
 	private int salary; // 기본급
 	private Date hireDate; // 입사일자
 	private Date resignDate; // 퇴사일자
-	private int holyDays; // 휴가일수
+	private Integer holyDays; // 휴가일수
 	private int depCnt; // 부양가족수
 	private String resignReason; // 퇴사사유
 	private String bankCode; // 은행코드

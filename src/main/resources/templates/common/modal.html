@@ -1,44 +1,32 @@
-<div th:fragment="commonModal(id, title, columns, items)">
-    <div class="modal fade" th:id="${id}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+	<!-- templates/common/modal.html -->
+	<div th:fragment="commonModal">
+		<div class="modal fade" id="commonModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-xl">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="commonModalLabel">검색</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+					</div>
+					<div class="modal-body">
+						<!-- Tabulator 테이블 -->
+						<div id="commonModalTable"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-                <!-- 모달 헤더 -->
-                <div class="modal-header">
-                    <h5 class="modal-title" th:text="${title}">공통 모달</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
 
-                <!-- 모달 바디 -->
-                <div class="modal-body">
-                    <table class="table table-bordered table-hover">
-                        <thead>
-                        <tr>
-                            <th th:each="col : ${columns}" th:text="${col}"></th>
-                            <th>선택</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr th:each="row : ${items}">
-                            <td th:each="col : ${columns}"
-                                th:text="${#fields.fieldValue(row, col)}"></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary"
-                                        th:attr="onclick=|selectItem('${id}', '${#fields.fieldValue(row,'id')}', '${#fields.fieldValue(row,columns.get(1))}')|">
-                                    선택
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+	<!-- Tabulator CSS/JS -->
+	<link
+		href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
+		rel="stylesheet">
+	<script
+		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-                <!-- 모달 푸터 -->
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                </div>
-
-            </div>
-        </div>
-    </div>
-</div>
+</body>
+</html>
