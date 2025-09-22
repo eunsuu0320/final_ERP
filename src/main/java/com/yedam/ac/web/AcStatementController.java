@@ -14,7 +14,6 @@ import com.yedam.ac.web.dto.UnifiedStatementRow;
 import lombok.RequiredArgsConstructor;
 
 @Controller
-@RequestMapping("/ac")
 @RequiredArgsConstructor
 public class AcStatementController {
 
