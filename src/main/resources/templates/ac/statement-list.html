@@ -4,23 +4,77 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/main}">
 
+<head>
+  <meta charset="UTF-8" />
+  <title>AC-001 통합전표 조회</title>
+
+  <!-- Tabulator CSS/JS (5.x) -->
+  <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
+
+  <!-- XLSX (선택행 엑셀 내보내기용) -->
+  <script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+
+  <!-- 페이지 전용 스타일 -->
+  <th:block layout:fragment="head">
+    <style>
+      .btn-type .btn { min-width: 70px; }
+      .page-toolbar .form-select, .page-toolbar .form-control { min-width: 140px; }
+      .toolbar-right .btn { min-width: 88px; }
+      .select-badge { font-size: .9rem; }
+      .tabulator { border-radius: .5rem; }
+      .toast-min {
+        position: fixed; right: 24px; bottom: 24px;
+        background:#333; color:#fff; padding:10px 14px; border-radius:8px;
+        opacity:.95; z-index: 1055; font-size:.95rem;
+      }
+    </style>
+  </th:block>
+</head>
+
 <body>
 <div layout:fragment="content">
-  <!-- 중요: layoutSidenav_content로 감싸야 짤리지 않음 -->
   <div id="layoutSidenav_content">
     <main class="container-fluid px-4">
 
-      <h1 class="mt-4">회계 통합관리 (AC-001)</h1>
-      <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
-        <li class="breadcrumb-item active">전표 통합관리</li>
-      </ol>
+      <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+        <div>
+          <h2 class="mb-0">전표 관리</h2>
+          <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item active">전표 통합관리</li>
+          </ol>
+        </div>
+        <span class="badge text-bg-info select-badge">
+          선택 <span id="sel-count">0</span>건
+        </span>
+      </div>
+
+      <!-- 상단 액션 바 -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <div class="btn-group">
+          <a class="btn btn-outline-primary" th:href="@{/statements/sales/new}">매출전표등록</a>
+          <a class="btn btn-outline-primary" th:href="@{/statements/buy/new}">매입전표등록</a>
+        </div>
+        <div class="toolbar-right d-flex gap-2">
+          <button type="button" class="btn btn-secondary" id="btn-print">인쇄</button>
+          <button type="button" class="btn btn-dark" id="btn-export">Excel</button>
+        </div>
+      </div>
+
+      <!-- 전표유형 토글 버튼 -->
+      <div class="btn-group btn-type mb-2" role="group" aria-label="type-filter">
+        <button type="button" class="btn btn-outline-primary" data-type="ALL">전체</button>
+        <button type="button" class="btn btn-outline-primary" data-type="SALES">매출</button>
+        <button type="button" class="btn btn-outline-primary" data-type="BUY">매입</button>
+        <button type="button" class="btn btn-outline-primary" data-type="MONEY">수금</button>
+        <button type="button" class="btn btn-outline-primary" data-type="PAYMENT">지급</button>
+      </div>
 
       <!-- 검색툴바 -->
-      <form th:action="@{/ac/statements}" method="get" class="row gy-2 gx-2 align-items-end" th:object="${form}">
+      <form id="searchForm" class="row gy-2 gx-2 align-items-end page-toolbar">
         <div class="col-auto">
           <label class="form-label">유형</label>
-          <select class="form-select" th:field="*{type}">
+          <select class="form-select" name="type" id="type">
             <option value="ALL">전체</option>
             <option value="SALES">매출</option>
             <option value="BUY">매입</option>
@@ -30,100 +84,253 @@
         </div>
 
         <div class="col-auto">
-          <label class="form-label">거래처/전표</label>
-          <input class="form-control" type="text" th:field="*{keyword}" placeholder="거래처명 또는 전표번호"/>
+          <label class="form-label">거래처명</label>
+          <input class="form-control" type="text" name="keyword" id="keyword" placeholder="거래처명">
         </div>
 
         <div class="col-auto">
           <label class="form-label">전표번호</label>
-          <input class="form-control" type="text" th:field="*{voucherNo}" placeholder="부분검색"/>
+          <input class="form-control" type="text" name="voucherNo" id="voucherNo" placeholder="부분검색">
         </div>
 
         <div class="col-auto">
           <label class="form-label">From</label>
-          <input class="form-control" type="date" th:field="*{fromDate}"/>
+          <input class="form-control" type="date" name="fromDate" id="fromDate">
         </div>
 
         <div class="col-auto">
           <label class="form-label">To</label>
-          <input class="form-control" type="date" th:field="*{toDate}"/>
+          <input class="form-control" type="date" name="toDate" id="toDate">
         </div>
 
-        <input type="hidden" th:field="*{page}"/>
-        <input type="hidden" th:field="*{size}"/>
-
         <div class="col-auto">
-          <button type="submit" class="btn btn-primary">검색</button>
-          <a th:href="@{/ac/statements}" class="btn btn-outline-secondary">초기화</a>
+          <button type="button" class="btn btn-primary" id="btn-search">검색</button>
+          <button type="button" class="btn btn-outline-secondary" id="btn-reset">초기화</button>
         </div>
       </form>
 
-      <!-- 목록 -->
-      <div class="card mt-3">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover table-sm mb-0">
-              <thead class="table-light">
-              <tr>
-                <th>전표일자</th>
-                <th>전표번호</th>
-                <th>유형</th>
-                <th>거래처명</th>
-                <th class="text-end">총액</th>
-                <th>적요</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr th:if="${page.totalElements == 0}">
-                <td colspan="6" class="text-center">데이터가 없습니다.</td>
-              </tr>
-              <tr th:each="row : ${page.content}">
-                <td th:text="${#temporals.format(row.voucherDate, 'yyyy-MM-dd')}">2025-09-01</td>
-                <td th:text="${row.voucherNo}">10001</td>
-                <td>
-                  <span class="badge bg-secondary" th:switch="${row.type}">
-                    <span th:case="'SALES'">매출</span>
-                    <span th:case="'BUY'">매입</span>
-                    <span th:case="'MONEY'">수금</span>
-                    <span th:case="'PAYMENT'">지급</span>
-                    <span th:case="*">기타</span>
-                  </span>
-                </td>
-                <td th:text="${row.partnerName}">거래처</td>
-                <td class="text-end" th:text="${#numbers.formatDecimal(row.amountTotal, 0, 'COMMA', 0, 'POINT')}">0</td>
-                <td th:text="${row.remark}">적요</td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- 페이지네이션 -->
-      <nav class="mt-3" th:if="${page.totalPages > 1}">
-        <ul class="pagination justify-content-center mb-0">
-          <li class="page-item" th:classappend="${!page.hasPrevious()} ? ' disabled'">
-            <a class="page-link"
-               th:href="@{/ac/statements(page=${page.number-1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Prev</a>
-          </li>
-
-          <li class="page-item"
-              th:each="i : ${#numbers.sequence(0, page.totalPages-1)}"
-              th:classappend="${i==page.number} ? ' active'">
-            <a class="page-link"
-               th:text="${i+1}"
-               th:href="@{/ac/statements(page=${i}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">1</a>
-          </li>
-
-          <li class="page-item" th:classappend="${!page.hasNext()} ? ' disabled'">
-            <a class="page-link"
-               th:href="@{/ac/statements(page=${page.number+1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Next</a>
-          </li>
-        </ul>
-      </nav>
+      <!-- 그리드 -->
+      <div id="employee-table" class="mt-3"></div>
 
     </main>
   </div>
+
+  <script>
+    // --- util: 토스트 ---
+    function toast(msg, ms=1800){
+      const t = document.createElement('div');
+      t.className = 'toast-min';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=> t.remove(), ms);
+    }
+
+    // --- 검색 파라미터 수집 ---
+    function currentParams(pageIdx /*0-base*/, size){
+      return {
+        type:      document.getElementById('type').value || 'ALL',
+        keyword:   document.getElementById('keyword').value || '',
+        voucherNo: document.getElementById('voucherNo').value || '',
+        fromDate:  document.getElementById('fromDate').value || '',
+        toDate:    document.getElementById('toDate').value || '',
+        page:      pageIdx ?? 0, // Spring Page는 0-base
+        size:      size ?? table?.getPageSize() ?? 20,
+      };
+    }
+
+    // --- 선택개수 뱃지 ---
+    function updateSelCount(){
+      document.getElementById('sel-count').textContent = table.getSelectedRows().length;
+    }
+
+    // --- Tabulator 초기화 ---
+    let table = new Tabulator("#employee-table", {
+      layout: "fitColumns",
+      reactiveData: false,
+      height:"600px",
+
+      // 원격 페이징
+      pagination: true,
+      paginationMode: "remote",
+      paginationSize: 20,
+      paginationSizeSelector: [20, 50, 100],
+
+      columns: [
+        {
+          titleFormatter:"rowSelection", // 헤더 전체선택
+          formatter:"rowSelection",
+          titleFormatterParams:{rowRange:"active"},
+          headerSort:false, width:55,
+          hozAlign:"center", headerHozAlign:"center"
+        },
+        { title:"전표일자", field:"voucherDate", hozAlign:"center",
+          formatter:function(cell){
+            const v = cell.getValue();
+            if(!v) return "";
+            const d = new Date(v);
+            return isNaN(d) ? v : d.toISOString().slice(0,10);
+          }
+        },
+        { title:"전표번호", field:"voucherNo", hozAlign:"center", width:120 },
+        { title:"유형", field:"type", hozAlign:"center", width:100,
+          formatter:function(cell){
+            const t = cell.getValue();
+            const map = {SALES:"매출", BUY:"매입", MONEY:"수금", PAYMENT:"지급"};
+            return `<span class="badge bg-secondary">${map[t] ?? t ?? '기타'}</span>`;
+          }
+        },
+        { title:"거래처명", field:"partnerName", hozAlign:"left", minWidth:180 },
+        { title:"총액", field:"amountTotal", hozAlign:"right", minWidth:110,
+          formatter:function(cell){
+            const n = Number(cell.getValue() ?? 0);
+            return n.toLocaleString();
+          }
+        },
+        { title:"적요", field:"remark", hozAlign:"left", minWidth:200 },
+      ],
+
+      // Ajax 설정
+      ajaxURL: "/api/statements",
+      ajaxConfig: "GET",
+      ajaxContentType:"json",
+
+      // Tabulator(1-base page) -> Spring(0-base page)
+      ajaxURLGenerator:function(url, config, params){
+        const page0 = (params.page ?? 1) - 1; // 1-base -> 0-base
+        const merged = Object.assign({}, currentParams(page0, params.size));
+        const q = new URLSearchParams(merged).toString();
+        return url + "?" + q;
+      },
+
+      // ★ Spring Page -> Tabulator 포맷 매핑 (data, last_page)
+      ajaxResponse:function(url, params, resp){
+        return {
+          data: resp?.content ?? [],
+          last_page: Math.max(1, resp?.totalPages ?? 1),
+        };
+      },
+
+      rowSelected: updateSelCount,
+      rowDeselected: updateSelCount,
+    });
+
+    // 유형 탭 클릭 → type 변경 + 첫 페이지 로드
+    document.querySelectorAll('.btn-type .btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.btn-type .btn').forEach(b=>{
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-outline-primary');
+        });
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-primary');
+
+        document.getElementById('type').value = btn.getAttribute('data-type');
+        table.setPage(1);       // 첫 페이지
+        table.replaceData();    // 재조회
+      });
+    });
+
+    // 검색 버튼
+    document.getElementById('btn-search').addEventListener('click', ()=>{
+      table.setPage(1);
+      table.replaceData();
+    });
+
+    // 초기화 버튼
+    document.getElementById('btn-reset').addEventListener('click', ()=>{
+      document.getElementById('type').value = 'ALL';
+      document.getElementById('keyword').value = '';
+      document.getElementById('voucherNo').value = '';
+      document.getElementById('fromDate').value = '';
+      document.getElementById('toDate').value = '';
+
+      document.querySelectorAll('.btn-type .btn').forEach(b=>{
+        b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary');
+        if(b.getAttribute('data-type')==='ALL'){
+          b.classList.remove('btn-outline-primary'); b.classList.add('btn-primary');
+        }
+      });
+
+      table.setPage(1);
+      table.replaceData();
+    });
+
+    // 인쇄(선택행만)
+    document.getElementById('btn-print').addEventListener('click', ()=>{
+      const rows = table.getSelectedRows();
+      if(rows.length === 0){ toast('인쇄할 행을 선택하세요.'); return; }
+
+      const headers = ["전표일자","전표번호","유형","거래처명","총액","적요"];
+      const mapType = {SALES:"매출", BUY:"매입", MONEY:"수금", PAYMENT:"지급"};
+      const trs = rows.map(r=>{
+        const d = r.getData();
+        const dateStr = d.voucherDate ? new Date(d.voucherDate).toISOString().slice(0,10) : '';
+        const amt = (Number(d.amountTotal||0)).toLocaleString();
+        return `<tr>
+          <td>${dateStr}</td>
+          <td>${d.voucherNo ?? ''}</td>
+          <td>${mapType[d.type] ?? (d.type??'')}</td>
+          <td>${d.partnerName ?? ''}</td>
+          <td style="text-align:right">${amt}</td>
+          <td>${d.remark ?? ''}</td>
+        </tr>`;
+      }).join("");
+
+      const win = window.open('', '_blank', 'width=1200,height=800');
+      win.document.write(`
+        <html>
+          <head>
+            <title>선택 전표 인쇄</title>
+            <link href="/erp/css/styles.css" rel="stylesheet" />
+            <style>
+              table { width:100%; border-collapse: collapse; }
+              th, td { border:1px solid #ddd; padding:8px; text-align:center; }
+              th { background:#f6f6f6; }
+              td:nth-child(5){ text-align:right; }
+            </style>
+          </head>
+          <body>
+            <h3>선택 전표 인쇄</h3>
+            <table>
+              <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
+              <tbody>${trs}</tbody>
+            </table>
+          </body>
+        </html>
+      `);
+      win.document.close(); win.focus(); win.print(); win.close();
+    });
+
+    // Excel(xlsx) 내보내기: 선택행만
+    document.getElementById('btn-export').addEventListener('click', ()=>{
+      const rows = table.getSelectedRows();
+      if(rows.length === 0){ toast('내보낼 행을 선택하세요.'); return; }
+
+      const mapType = {SALES:"매출", BUY:"매입", MONEY:"수금", PAYMENT:"지급"};
+      const data = rows.map(r=>{
+        const d = r.getData();
+        return {
+          전표일자: d.voucherDate ? new Date(d.voucherDate).toISOString().slice(0,10) : '',
+          전표번호: d.voucherNo ?? '',
+          유형:     mapType[d.type] ?? (d.type??''),
+          거래처명: d.partnerName ?? '',
+          총액:     Number(d.amountTotal||0),
+          적요:     d.remark ?? '',
+        };
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, "선택전표");
+      const today = new Date().toISOString().slice(0,10).replaceAll('-','');
+      XLSX.writeFile(wb, `statements_selected_${today}.xlsx`);
+    });
+
+    // 초기 replaceData는 호출하지 않음 (ajaxURL 설정되어 있으므로 자동 1회 로드)
+    // 필요시 아래와 같이 tableBuilt 이후에만 호출
+    // table.on("tableBuilt", () => { table.setPage(1); table.replaceData(); });
+  </script>
 </div>
+
 </body>
 </html>
