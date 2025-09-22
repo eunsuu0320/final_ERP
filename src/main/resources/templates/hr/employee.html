@@ -17,12 +17,14 @@
 						<option value="emp_no">사원번호</option>
 						<option value="name">성명</option>
 						<option value="dept">부서명</option>
-					</select> <input id="txt-search" type="text"
-						class="form-control w-auto me-2" placeholder="검색어 입력">
+					</select> <input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
 					<button class="btn btn-dark">이력조회</button>
 				</div>
+
+				<!-- 모달 include -->
+				<div th:replace="hr/employeeModal :: empModal"></div>
 
 				<!-- 테이블 -->
 				<div id="employee-table"></div>
@@ -32,118 +34,138 @@
 	</div>
 
 	<script>
-		// 더미 데이터 (예시)
-		const employeeData = [ {
-			id : 1,
-			emp_no : "001",
-			name : "김철수",
-			dept : "영업A팀",
-			grade : "대리",
-			position : "사원",
-			phone : "010-1111-2222",
-			email : "kimcs@example.com",
-			hire_date : "2020-03-01"
+	const table = new Tabulator("#employee-table", {
+		layout : "fitColumns",
+		pagination : "local",
+		paginationSize : 50,
+		selectable: true,
+		columns : [ {
+			  title: "선택",
+			  formatter: "rowSelection",  // 체크박스
+			  titleFormatter: "rowSelection", // 헤더에도 전체선택 체크박스
+			  hozAlign: "center",
+			  headerSort: false,
+			  width: 44,                 // 기본 폭
+			  hozAlign: "center",        // 바디 셀 가로 정렬
+			  headerHozAlign: "center",  // 헤더 가로 정렬
+			  cellClick: function(e, cell){
+			    cell.getRow().toggleSelect();
+			  }
+			}, {
+			title : "사원번호",
+			field : "empNo",   // 엔티티 필드명과 매칭
 		}, {
-			id : 2,
-			emp_no : "002",
-			name : "이영희",
-			dept : "영업B팀",
-			grade : "과장",
-			position : "팀장",
-			phone : "010-2222-3333",
-			email : "leeyh@example.com",
-			hire_date : "2018-07-15"
+			title : "성명",
+			field : "name",
 		}, {
-			id : 3,
-			emp_no : "003",
-			name : "박민준",
-			dept : "인사팀",
-			grade : "사원",
-			position : "사원",
-			phone : "010-3333-4444",
-			email : "parkmj@example.com",
-			hire_date : "2021-01-10"
+			title : "부서명",
+			field : "dept"
 		}, {
-			id : 4,
-			emp_no : "004",
-			name : "최은지",
-			dept : "개발팀",
-			grade : "차장",
-			position : "파트장",
-			phone : "010-4444-5555",
-			email : "choiej@example.com",
-			hire_date : "2015-11-20"
+			title : "직급",
+			field : "grade"
 		}, {
-			id : 5,
-			emp_no : "005",
-			name : "정우성",
-			dept : "총무팀",
-			grade : "사원",
-			position : "사원",
-			phone : "010-5555-6666",
-			email : "jungws@example.com",
-			hire_date : "2022-06-05"
-		},
-		// … 더 추가가능
-		];
+			title : "직책",
+			field : "position"
+		}, {
+			title : "전화번호",
+			field : "phone"
+		}, {
+			title : "Email",
+			field : "email"
+		}, {
+			title : "입사일자",
+			field : "hireDate",
+			sorter : "date",
+			hozAlign : "center"
+		}, ],
+	});
 
-		// Tabulator 테이블 생성
-		const table = new Tabulator("#employee-table", {
-			data : employeeData,
-			layout : "fitColumns", // 컬럼 너비 자동 조정
-			pagination : "local", // 로컬 페이징
-			paginationSize : 50,  // 페이지당 행 수
-			columns : [ {
-				title : "사원번호",
-				field : "emp_no",
-			}, {
-				title : "성명",
-				field : "name",
-			}, {
-				title : "부서명",
-				field : "dept"
-			}, {
-				title : "직급",
-				field : "grade"
-			}, {
-				title : "직책",
-				field : "position"
-			}, {
-				title : "전화번호",
-				field : "phone"
-			}, {
-				title : "Email",
-				field : "email"
-			}, {
-				title : "입사일자",
-				field : "hire_date",
-				sorter : "date",
-				hozAlign : "center"
-			}, ],
-		});
+	// 서버에서 전체 사원 조회 (fetch)
+	fetch("/selectAllEmp")
+		.then(res => res.json())
+		.then(data => {
+			table.setData(data);
+		})
+		.catch(err => console.error("데이터 불러오기 실패:", err));
 
-		// 검색 버튼 클릭 이벤트
-		document
-				.getElementById("btn-search")
-				.addEventListener(
-						"click",
-						function() {
-							const field = document.getElementById("sel-field").value;
-							const keyword = document
-									.getElementById("txt-search").value;
+	// 검색 버튼
+	document.getElementById("btn-search").addEventListener("click", function() {
+		const field = document.getElementById("sel-field").value;
+		const keyword = document.getElementById("txt-search").value;
 
-							if (keyword.trim() === "") {
-								table.clearFilter();
-							} else {
-								table.setFilter(field, "like", keyword);
-							}
-						});
+		if (keyword.trim() === "") {
+			table.clearFilter();
+		} else {
+			table.setFilter(field, "like", keyword);
+		}
+	});
 
-		// 신규 버튼 예시
-		document.getElementById("btn-new").addEventListener("click",
-				function() {
-					alert("신규 등록 모달 띄우는 기능"); // 실제 모달이나 다른 화면 연결
-				});
-	</script>
+	// 신규 버튼
+	document.getElementById("btn-new").addEventListener("click", function() {
+ 		const modal = new bootstrap.Modal(document.getElementById("empModal"));
+  		modal.show();
+	});
+
+	// 사원 등록 모달 - 초기화 버튼
+	document.getElementById("btn-save-reset").addEventListener("click", function() {
+
+	});
+
+	// 인쇄 버튼
+	document.querySelector(".btn-secondary").addEventListener("click", function() {
+	    const selected = table.getSelectedData();
+
+	    if (selected.length === 0) {
+	        alert("인쇄할 사원을 선택하세요.");
+	        return;
+	    }
+
+	    // HTML 테이블 문자열로 출력 데이터 만들기
+	    let printContents = `
+	        <h3>선택된 사원 목록</h3>
+	        <table border="1" cellspacing="0" cellpadding="5">
+	          <thead>
+	            <tr>
+	              <th>사원번호</th>
+	              <th>성명</th>
+	              <th>부서명</th>
+	              <th>직급</th>
+	              <th>직책</th>
+	              <th>전화번호</th>
+	              <th>Email</th>
+	              <th>입사일자</th>
+	            </tr>
+	          </thead>
+	          <tbody>
+	    `;
+
+	    selected.forEach(emp => {
+	        printContents += `
+	          <tr>
+	            <td>${emp.empNo}</td>
+	            <td>${emp.name}</td>
+	            <td>${emp.dept}</td>
+	            <td>${emp.grade}</td>
+	            <td>${emp.position}</td>
+	            <td>${emp.phone}</td>
+	            <td>${emp.email}</td>
+	            <td>${emp.hireDate}</td>
+	          </tr>
+	        `;
+	    });
+
+	    printContents += `</tbody></table>`;
+
+	    // 새 창 열고 인쇄 실행
+	    const printWindow = window.open("", "_blank");
+	    printWindow.document.write(printContents);
+	    printWindow.document.close();
+	    printWindow.print();
+	});
+
+
+
+</script>
+
 </body>
 </html>
