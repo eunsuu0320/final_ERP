@@ -1,0 +1,44 @@
+<div th:fragment="commonModal(id, title, columns, items)">
+    <div class="modal fade" th:id="${id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <!-- 모달 헤더 -->
+                <div class="modal-header">
+                    <h5 class="modal-title" th:text="${title}">공통 모달</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <!-- 모달 바디 -->
+                <div class="modal-body">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th th:each="col : ${columns}" th:text="${col}"></th>
+                            <th>선택</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="row : ${items}">
+                            <td th:each="col : ${columns}"
+                                th:text="${#fields.fieldValue(row, col)}"></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary"
+                                        th:attr="onclick=|selectItem('${id}', '${#fields.fieldValue(row,'id')}', '${#fields.fieldValue(row,columns.get(1))}')|">
+                                    선택
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 모달 푸터 -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
