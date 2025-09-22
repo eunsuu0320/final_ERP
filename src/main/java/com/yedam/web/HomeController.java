@@ -24,7 +24,7 @@ public class HomeController {
 
 	@GetMapping("test")
 	public String test(Model model) {
-		return "hr/test";
+		return "test/test";
 	}
 
 }
