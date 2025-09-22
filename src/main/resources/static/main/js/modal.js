@@ -11,7 +11,35 @@ const modalConfigs = {
 			{ title: "부서", field: "dept" },
 			{ title: "직급", field: "grade" }
 		]
-	}
+	},
+	 // ✅ 추가: 거래처 검색
+  partner: {
+    url: "/api/partners",               // 서버 API에 맞게
+    title: "거래처 검색",
+    columns: [
+      { title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
+      { title: "거래처명", field: "partnerName", minWidth: 200 },
+      { title: "담당자", field: "picName", width: 120 },
+      { title: "연락처", field: "tel", width: 140 },
+    ],
+  },
+
+  // ✅ 추가: 전표 검색
+  voucher: {
+    url: "/api/statements/lookup",     // 서버 API에 맞게
+    title: "전표 검색",
+    columns: [
+      { title: "전표일자", field: "voucherDate", width: 120, hozAlign: "center",
+        formatter:(cell)=>{ const v=cell.getValue(); if(!v) return ""; const d=new Date(v); return isNaN(d)? v : d.toISOString().slice(0,10); }
+      },
+      { title: "전표번호", field: "voucherNo", width: 130, hozAlign: "center" },
+      { title: "유형", field: "type", width: 90, hozAlign: "center",
+        formatter:(c)=>({SALES:"매출",BUY:"매입",MONEY:"수금",PAYMENT:"지급"}[c.getValue()]||c.getValue())
+      },
+      { title: "거래처명", field: "partnerName", minWidth: 180 },
+      { title: "적요", field: "remark", minWidth: 200 },
+    ],
+  },
 };
 
 let table; // Tabulator 인스턴스 전역 변수
