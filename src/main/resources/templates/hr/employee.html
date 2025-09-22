@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<title>사원 관리</title>
+<!-- <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet"> -->
+</head>
+<body layout:fragment="content">
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">사원 관리</h1>
+				<div class="d-flex align-items-center mb-3">
+					<button id="btn-new" class="btn btn-primary me-2">신규</button>
+					<select id="sel-field" class="form-select w-auto me-2">
+						<option value="emp_no">사원번호</option>
+						<option value="name">성명</option>
+						<option value="dept">부서명</option>
+					</select> <input id="txt-search" type="text"
+						class="form-control w-auto me-2" placeholder="검색어 입력">
+					<button id="btn-search" class="btn btn-warning me-2">검색</button>
+					<button class="btn btn-secondary me-2">인쇄</button>
+					<button class="btn btn-dark">이력조회</button>
+				</div>
+
+				<!-- 테이블 -->
+				<div id="employee-table"></div>
+
+			</div>
+		</main>
+	</div>
+
+	<!-- <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script> -->
+	<script>
+		// 더미 데이터 (예시)
+		const employeeData = [ {
+			id : 1,
+			emp_no : "001",
+			name : "김철수",
+			dept : "영업A팀",
+			grade : "대리",
+			position : "사원",
+			phone : "010-1111-2222",
+			email : "kimcs@example.com",
+			hire_date : "2020-03-01"
+		}, {
+			id : 2,
+			emp_no : "002",
+			name : "이영희",
+			dept : "영업B팀",
+			grade : "과장",
+			position : "팀장",
+			phone : "010-2222-3333",
+			email : "leeyh@example.com",
+			hire_date : "2018-07-15"
+		}, {
+			id : 3,
+			emp_no : "003",
+			name : "박민준",
+			dept : "인사팀",
+			grade : "사원",
+			position : "사원",
+			phone : "010-3333-4444",
+			email : "parkmj@example.com",
+			hire_date : "2021-01-10"
+		}, {
+			id : 4,
+			emp_no : "004",
+			name : "최은지",
+			dept : "개발팀",
+			grade : "차장",
+			position : "파트장",
+			phone : "010-4444-5555",
+			email : "choiej@example.com",
+			hire_date : "2015-11-20"
+		}, {
+			id : 5,
+			emp_no : "005",
+			name : "정우성",
+			dept : "총무팀",
+			grade : "사원",
+			position : "사원",
+			phone : "010-5555-6666",
+			email : "jungws@example.com",
+			hire_date : "2022-06-05"
+		},
+		// … 더 추가가능
+		];
+
+		// Tabulator 테이블 생성
+		const table = new Tabulator("#employee-table", {
+			data : employeeData,
+			layout : "fitColumns", // 컬럼 너비 자동 조정
+			pagination : "local", // 로컬 페이징
+			paginationSize : 50,  // 페이지당 행 수
+			columns : [ {
+				title : "사원번호",
+				field : "emp_no",
+			}, {
+				title : "성명",
+				field : "name",
+			}, {
+				title : "부서명",
+				field : "dept"
+			}, {
+				title : "직급",
+				field : "grade"
+			}, {
+				title : "직책",
+				field : "position"
+			}, {
+				title : "전화번호",
+				field : "phone"
+			}, {
+				title : "Email",
+				field : "email"
+			}, {
+				title : "입사일자",
+				field : "hire_date",
+				sorter : "date",
+				hozAlign : "center"
+			}, ],
+		});
+
+		// 검색 버튼 클릭 이벤트
+		document
+				.getElementById("btn-search")
+				.addEventListener(
+						"click",
+						function() {
+							const field = document.getElementById("sel-field").value;
+							const keyword = document
+									.getElementById("txt-search").value;
+
+							if (keyword.trim() === "") {
+								table.clearFilter();
+							} else {
+								table.setFilter(field, "like", keyword);
+							}
+						});
+
+		// 신규 버튼 예시
+		document.getElementById("btn-new").addEventListener("click",
+				function() {
+					alert("신규 등록 모달 띄우는 기능"); // 실제 모달이나 다른 화면 연결
+				});
+	</script>
+</body>
+</html>
