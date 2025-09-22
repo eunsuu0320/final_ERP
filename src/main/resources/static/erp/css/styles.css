@@ -11241,3 +11241,46 @@ body {
   font-size: 0.75rem;
   border-radius: 0.375rem !important;
 }
+
+/* 전체 테이블 테두리, 배경 */
+.tabulator {
+  border: 2px solid #444;
+  font-size: 14px;
+}
+
+/* 헤더 스타일 */
+.tabulator .tabulator-header {
+  background-color: #eeeeee;
+  color: white;
+  font-weight: bold;
+}
+
+/* 헤더 셀 */
+.tabulator .tabulator-col {
+  border-right: 1px solid #ddd;
+}
+
+/* 짝수 행, 홀수 행 색 다르게 */
+.tabulator .tabulator-row:nth-child(even) {
+  background-color: #f9f9f9;
+}
+.tabulator .tabulator-row:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+/* 마우스 오버 효과 */
+.tabulator .tabulator-row:hover {
+  background-color: #d9e2f3 !important;
+}
+
+/* 셀 텍스트 정렬 */
+.tabulator .tabulator-cell {
+  text-align: center;
+}
+
+/* 페이징 영역 */
+.tabulator .tabulator-footer {
+  background: #f2f2f2;
+  border-top: 1px solid #ccc;
+  font-size: 13px;
+}
