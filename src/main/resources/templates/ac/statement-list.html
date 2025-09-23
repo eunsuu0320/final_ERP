@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+  <meta charset="UTF-8">
+  <title>전표 통합관리</title>
+
+  <style>
+    /* 화면 구성에 맞춰 필요 시 숫자만 조정 */
+    #employee-table { height: calc(100vh - 260px); }
+    .select-badge { font-size:.9rem; }
+    .btn-type .btn { min-width:70px; }
+    .input-with-icon { display:flex; gap:6px; align-items:center; }
+    .input-with-icon .form-control { width: 220px; }
+  </style>
+</head>
+
+<body layout:fragment="content">
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container_fluid px-4">
+
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+          <h1 class="mb-0">전표 관리</h1>
+          <span class="badge text-bg-info select-badge">선택 <span id="sel-count">0</span>건</span>
+        </div>
+
+        <!-- 상단 액션 -->
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+          <a class="btn btn-outline-primary" th:href="@{/statements/sales/new}">매출전표 등록</a>
+          <a class="btn btn-outline-primary" th:href="@{/statements/buy/new}">매입전표 등록</a>
+
+          <!-- 전표 유형 토글 -->
+          <div class="btn-group btn-type ms-2" role="group" aria-label="type-filter">
+            <button type="button" class="btn btn-primary" data-type="ALL">전체</button>
+            <button type="button" class="btn btn-outline-primary" data-type="SALES">매출</button>
+            <button type="button" class="btn btn-outline-primary" data-type="BUY">매입</button>
+            <button type="button" class="btn btn-outline-primary" data-type="MONEY">수금</button>
+            <button type="button" class="btn btn-outline-primary" data-type="PAYMENT">지급</button>
+          </div>
+
+          <div class="ms-auto d-flex align-items-center gap-2">
+            <button id="btn-print" class="btn btn-secondary">인쇄</button>
+            <button id="btn-export" class="btn btn-dark">Excel</button>
+          </div>
+        </div>
+
+        <!-- 검색 바: 거래처명/전표번호는 공통 모달로 선택 -->
+        <div class="d-flex align-items-end flex-wrap gap-3 mb-2">
+          <div>
+            <label class="form-label">거래처명</label>
+            <div class="input-with-icon">
+              <input id="partnerName" type="text" class="form-control" placeholder="선택 또는 입력" readonly>
+              <button id="btn-find-partner" type="button" class="btn btn-outline-secondary" title="거래처 찾기">🔍</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">전표번호</label>
+            <div class="input-with-icon">
+              <input id="voucherNo" type="text" class="form-control" placeholder="선택 또는 입력" readonly>
+              <button id="btn-find-voucher" type="button" class="btn btn-outline-secondary" title="전표 찾기">🔍</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">From</label>
+            <input id="fromDate" type="date" class="form-control w-auto">
+          </div>
+
+          <div>
+            <label class="form-label">To</label>
+            <input id="toDate" type="date" class="form-control w-auto">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button id="btn-search" class="btn btn-warning">검색</button>
+            <button id="btn-reset" class="btn btn-outline-secondary">초기화</button>
+          </div>
+        </div>
+
+        <!-- 메인 테이블 -->
+        <div id="employee-table"></div>
+
+      </div>
+    </main>
+  </div>
+  <!-- 공통 모달 fragment + 공통 스크립트 -->
+  <div th:replace="~{common/modal :: commonModal}"></div>
+  <script th:src="@{/main/js/modal.js}"></script>
+
+  <!-- SheetJS (Excel) -->
+  <script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+
+  <!-- 페이지 전용 스크립트 -->
+  <script>
+  /* ---------------- utils ---------------- */
+  function toast(msg, ms=1800){
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:1055;font-size:.95rem;';
+    t.textContent=msg; document.body.appendChild(t);
+    setTimeout(()=>t.remove(), ms);
+  }
+
+  function paramsFor(page0, size){
+    return {
+      type:       currentType,
+      partner:    document.getElementById('partnerName').value || '',
+      voucherNo:  document.getElementById('voucherNo').value || '',
+      fromDate:   document.getElementById('fromDate').value || '',
+      toDate:     document.getElementById('toDate').value || '',
+      page:       page0 ?? 0,                 // Spring Page (0-base)
+      size:       size ?? mainTable?.getPageSize() ?? 20,
+    };
+  }
+
+  /* ---------------- 메인 테이블 ---------------- */
+  let currentType = 'ALL';
+
+  // ✅ 이름 충돌 방지: table -> mainTable
+  const mainTable = new Tabulator("#employee-table", {
+    layout: "fitColumns",
+    pagination: true,
+    paginationMode: "remote",
+    paginationSize: 20,
+    paginationSizeSelector: [20,50,100],
+
+    columns: [
+      {
+        titleFormatter:"rowSelection",
+        formatter:"rowSelection",
+        titleFormatterParams:{rowRange:"active"},
+        headerSort:false, width:55, hozAlign:"center", headerHozAlign:"center"
+      },
+      { title:"전표일자", field:"voucherDate", hozAlign:"center",
+        formatter:(cell)=>{
+          const v=cell.getValue(); if(!v) return "";
+          const d=new Date(v); return isNaN(d)? v : d.toISOString().slice(0,10);
+        }
+      },
+      { title:"전표번호", field:"voucherNo", hozAlign:"center", width:130 },
+      { title:"유형", field:"type", hozAlign:"center", width:100,
+        formatter:(cell)=>{
+          const map={SALES:"매출", BUY:"매입", MONEY:"수금", PAYMENT:"지급"};
+          const t=cell.getValue(); return `<span class="badge bg-secondary">${map[t] ?? t ?? '기타'}</span>`;
+        }
+      },
+      { title:"거래처명", field:"partnerName", minWidth:180 },
+      { title:"총액", field:"amountTotal", hozAlign:"right", minWidth:110,
+        formatter:(cell)=> Number(cell.getValue()??0).toLocaleString()
+      },
+      { title:"적요", field:"remark", minWidth:220 },
+    ],
+
+    ajaxURL: "/api/statements",
+    ajaxConfig: "GET",
+    ajaxContentType: "json",
+
+    ajaxURLGenerator: (url, config, params) => {
+      const page0 = (params.page ?? 1) - 1;
+      const q = new URLSearchParams(paramsFor(page0, params.size)).toString();
+      return url + "?" + q;
+    },
+
+    ajaxResponse: (url, params, resp) => {
+      return {
+        data: resp?.content ?? [],
+        last_page: Math.max(1, resp?.totalPages ?? 1),
+      };
+    },
+
+    rowSelected: updateSelCount,
+    rowDeselected: updateSelCount,
+  });
+
+  function updateSelCount(){
+    document.getElementById('sel-count').textContent = mainTable.getSelectedRows().length;
+  }
+
+  mainTable.on("tableBuilt", () => requestAnimationFrame(()=>mainTable.redraw(true)));
+  window.addEventListener('resize', () => mainTable.redraw(true));
+
+  /* ---------------- 유형 토글 ---------------- */
+  document.querySelectorAll('.btn-type .btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.btn-type .btn').forEach(b=>{
+        b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary');
+      });
+      btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary');
+
+      currentType = btn.getAttribute('data-type') || 'ALL';
+      mainTable.setPage(1);
+      mainTable.replaceData();
+    });
+  });
+
+  /* ---------------- 검색/초기화 ---------------- */
+  document.getElementById('btn-search').addEventListener('click', ()=>{
+    mainTable.setPage(1);
+    mainTable.replaceData();
+  });
+
+  document.getElementById('btn-reset').addEventListener?.('click', ()=>{
+    document.getElementById('partnerName').value='';
+    document.getElementById('voucherNo').value='';
+    document.getElementById('fromDate').value='';
+    document.getElementById('toDate').value='';
+    currentType='ALL';
+    document.querySelectorAll('.btn-type .btn').forEach(b=>{
+      b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary');
+      if(b.getAttribute('data-type')==='ALL'){
+        b.classList.remove('btn-outline-primary'); b.classList.add('btn-primary');
+      }
+    });
+    mainTable.setPage(1);
+    mainTable.replaceData();
+  });
+
+  /* ---------------- 인쇄 ---------------- */
+  const TYPE_LABEL = { SALES:"외상매출금", BUY:"제품매출", MONEY:"부가세예수금", PAYMENT:"지급" };
+  const isDebit = (type) => type === "BUY" || type === "PAYMENT";
+
+  function buildVoucherHTML(row){
+    const now=new Date();
+    const today=now.toISOString().slice(0,10);
+    const time=now.toTimeString().slice(0,8);
+    const typeKo=TYPE_LABEL[row.type] ?? (row.type ?? "");
+    const debit = isDebit(row.type) ? Number(row.amountTotal||0) : 0;
+    const credit= isDebit(row.type) ? 0 : Number(row.amountTotal||0);
+
+    return `
+    <section class="voucher">
+      <div class="v-head">
+        <div class="title">전 표</div>
+        <table class="approve">
+          <tr><th class="stamp" rowspan="2">결재</th><th>담당</th><th>대리</th><th>과장</th></tr>
+          <tr><td height="60"></td><td></td><td></td></tr>
+        </table>
+      </div>
+
+      <table class="meta">
+        <tr>
+          <td>회사명 : (주)구독핑 이알핑</td>
+          <td class="right">작성자 : SYSTEM</td>
+          <td class="right">전표번호 : ${row.voucherNo ?? ""}</td>
+        </tr>
+        <tr>
+          <td>거래처 : ${row.partnerName ?? ""}</td>
+          <td class="right" colspan="2">전표일자 : ${row.voucherDate ? row.voucherDate.toString().slice(0,10) : ""}</td>
+        </tr>
+      </table>
+
+      <table class="lines">
+        <thead>
+          <tr><th style="width:28%">계정명</th><th style="width:34%">적요</th><th style="width:19%">차변</th><th style="width:19%">대변</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>${typeKo}</td>
+            <td>${row.remark ?? ""}</td>
+            <td class="num">${debit.toLocaleString()}</td>
+            <td class="num">${credit.toLocaleString()}</td>
+          </tr>
+          <tr><td colspan="4" style="height:180px"></td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th class="left" colspan="2">합계 &nbsp;&nbsp; 매출/매입 : ${row.partnerName ?? ""}</th>
+            <th class="num">${debit.toLocaleString()}</th>
+            <th class="num">${credit.toLocaleString()}</th>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="foot">
+        <span>[ 1 / 1 ]</span>
+        <span class="right">${today} ${time}</span>
+      </div>
+    </section>
+    <div class="page-break"></div>`;
+  }
+
+  document.getElementById('btn-print').addEventListener('click', ()=>{
+    const rows = mainTable.getSelectedRows();
+    if(rows.length===0){ toast('인쇄할 행을 선택하세요.'); return; }
+
+    const html = rows.map(r=>buildVoucherHTML(r.getData())).join("");
+    const win = window.open('', '_blank', 'width=1200,height=900');
+    win.document.write(`<!DOCTYPE html>
+      <html><head><title>전표 인쇄</title>
+        <style>
+          *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif;}
+          body{margin:16px;}
+          .voucher{border:1px solid #bbb; padding:14px; border-radius:6px;}
+          .v-head{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;}
+          .title{font-size:28px; font-weight:700; letter-spacing:6px; padding:10px 6px;}
+          .approve{border-collapse:collapse; width:280px;}
+          .approve th,.approve td{border:1px solid #333; text-align:center; padding:6px 8px;}
+          .approve .stamp{width:46px}
+          .meta{width:100%; border-collapse:collapse; margin:6px 0 10px;}
+          .meta td{border:0; padding:4px 2px;}
+          .meta .right{text-align:right;}
+          .lines{width:100%; border-collapse:collapse; table-layout:fixed;}
+          .lines th,.lines td{border:1px solid #777; padding:8px 10px; text-align:center;}
+          .lines th{background:#f2f2f5;}
+          .lines td.left,.lines th.left{text-align:left;}
+          .lines td.num,.lines th.num{text-align:right;}
+          tfoot th{background:#fafafa;}
+          .foot{display:flex; justify-content:space-between; font-size:12px; margin-top:8px; color:#444;}
+          .right{text-align:right;}
+          .page-break{page-break-after:always; height:24px;}
+          @media print{ body{margin:0; padding:12mm;} .voucher{break-inside:avoid; page-break-inside:avoid;} .page-break{height:0;} }
+        </style>
+      </head><body>${html}</body></html>`);
+    win.document.close(); win.focus(); win.print();
+  });
+
+  /* ---------------- Excel (선택행) ---------------- */
+  document.getElementById('btn-export').addEventListener('click', ()=>{
+    const rows = mainTable.getSelectedRows();
+    if(rows.length===0){ toast('내보낼 행을 선택하세요.'); return; }
+
+    const mapType={SALES:"매출", BUY:"매입", MONEY:"수금", PAYMENT:"지급"};
+    const data = rows.map(r=>{
+      const d=r.getData();
+      return {
+        전표일자: d.voucherDate ? new Date(d.voucherDate).toISOString().slice(0,10) : '',
+        전표번호: d.voucherNo ?? '',
+        유형:     mapType[d.type] ?? (d.type??''),
+        거래처명: d.partnerName ?? '',
+        총액:     Number(d.amountTotal||0),
+        적요:     d.remark ?? '',
+      };
+    });
+
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "선택전표");
+    const today=new Date().toISOString().slice(0,10).replaceAll('-','');
+    XLSX.writeFile(wb, `statements_selected_${today}.xlsx`);
+  });
+
+
+  // 🔍 거래처 찾기
+  document.getElementById('btn-find-partner').addEventListener('click', ()=>{
+    openModal('partner', (row)=>{
+      document.getElementById('partnerName').value = row.partnerName ?? '';
+      mainTable.setPage(1); mainTable.replaceData();
+    });
+
+    // 모달 테이블 인스턴스 획득 (window.table 사용 X)
+    setTimeout(()=>{
+      const modalTable = Tabulator.findTable("#commonModalTable")[0];
+      if (!modalTable) return;
+      try {
+        modalTable.updateColumnDefinition("partnerCode", { headerFilter:"input" });
+        modalTable.updateColumnDefinition("partnerName", { headerFilter:"input" });
+        modalTable.updateColumnDefinition("picName",     { headerFilter:"input" });
+
+        modalTable.off("rowDblClick");
+        modalTable.on("rowDblClick", (e,row)=>{
+          const data = row.getData();
+          document.getElementById('partnerName').value = data.partnerName ?? '';
+          bootstrap.Modal.getInstance(document.getElementById("commonModal"))?.hide();
+          mainTable.setPage(1); mainTable.replaceData();
+        });
+      } catch(e) { /* noop */ }
+    }, 60);
+  });
+
+  // 🔍 전표 찾기
+  document.getElementById('btn-find-voucher').addEventListener('click', ()=>{
+    openModal('voucher', (row)=>{
+      document.getElementById('voucherNo').value = row.voucherNo ?? '';
+      mainTable.setPage(1); mainTable.replaceData();
+    });
+
+    setTimeout(()=>{
+      const modalTable = Tabulator.findTable("#commonModalTable")[0];
+      if (!modalTable) return;
+      try {
+        modalTable.updateColumnDefinition("voucherNo",   { headerFilter:"input" });
+        modalTable.updateColumnDefinition("partnerName", { headerFilter:"input" });
+        modalTable.updateColumnDefinition("remark",      { headerFilter:"input" });
+
+        modalTable.off("rowDblClick");
+        modalTable.on("rowDblClick", (e,row)=>{
+          const data = row.getData();
+          document.getElementById('voucherNo').value = data.voucherNo ?? '';
+          bootstrap.Modal.getInstance(document.getElementById("commonModal"))?.hide();
+          mainTable.setPage(1); mainTable.replaceData();
+        });
+      } catch(e) { /* noop */ }
+    }, 60);
+  });
+</script>
+
+</body>
+</html>

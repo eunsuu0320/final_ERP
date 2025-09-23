@@ -6,10 +6,28 @@
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">메뉴이름</h1>
+			<!-- 직원 검색 -->
+			<div class="mb-3">
+				<label>직원</label>
+				<div class="input-group">
+					<input type="hidden" id="employeeId" name="employeeId">
+					<input type="text" id="employeeName" class="form-control" placeholder="직원 이름" readonly>
+					<button class="btn btn-primary" onclick="openModal('employee', function(selected) {
+
+                    document.getElementById('employeeId').value = selected.empNo;
+                    document.getElementById('employeeName').value = selected.name;
+                })">
+						검색</button>
+				</div>
 			</div>
 		</main>
 	</div>
+
+	<!-- 공통 모달 -->
+	<div th:replace="common/modal :: commonModal"></div>
+
+	<!-- JS (modalConfigs + openModal 함수 불러오기) -->
+	<script src="/main/js/modal.js"></script>
+
 </body>
 </html>
