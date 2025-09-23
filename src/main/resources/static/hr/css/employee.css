@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+.modal-body {
+  height: 50rem;       /* 모달 전체 높이 고정 (기본정보 탭 기준) */
+  overflow-y: auto;    /* 넘칠 경우 스크롤 */
+}
+#contractInfo iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #ddd;
+}

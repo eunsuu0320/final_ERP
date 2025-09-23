@@ -20,8 +20,8 @@ public class Employee {
 	private Date birth; // 생년월일
 	private String email; // 이메일
 	private String dept; // 부서
-	private String grade; // 직급
-	private String position; // 직책
+	private String grade; // 직책
+	private String position; // 직급
 	private int salary; // 기본급
 
 	@JsonFormat(pattern = "yyyy-MM-dd")

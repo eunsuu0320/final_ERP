@@ -25,53 +25,50 @@ const modalConfigs = {
 let table; // Tabulator 인스턴스 전역 변수
 
 // === 모달 열기 함수 ===
-// === 모달 열기 함수 ===
-function openModal(type, onSelect) {
-	const config = modalConfigs[type];
-	if (!config) {
-		console.error(`modalConfigs[${type}] 설정이 없습니다.`);
-		return;
-	}
+window.openModal = function(type, onSelect, commonGroup) {
+  const config = modalConfigs[type];
+  if (!config) {
+    console.error(`modalConfigs[${type}] 설정이 없습니다.`);
+    return;
+  }
 
-	// 제목 설정
-	document.getElementById("commonModalLabel").textContent = config.title;
+  const labelEl = document.getElementById("commonModalLabel");
+  if (labelEl) labelEl.textContent = config.title;
 
-	// Tabulator 초기화
-	if (table) {
-		table.destroy();
-	}
+  if (table) table.destroy();
 
-	table = new Tabulator("#commonModalTable", {
-		ajaxURL: config.url,
-		layout: "fitColumns",
-		pagination: "local",
-		paginationSize: 10,
-		movableColumns: true,
-		columns: [
-			...config.columns,
-			{
-				title: "선택",
-				formatter: () => "<button class='btn btn-sm btn-primary'>선택</button>",
-				width: 100,
-				hozAlign: "center",
-				cellClick: (e, cell) => {
-					const selected = cell.getRow().getData();
+  let tabulatorOptions = {
+    ajaxURL: config.url,
+    layout: "fitColumns",
+    pagination: "local",
+    paginationSize: 10,
+    movableColumns: true,
+    columns: [
+      ...config.columns,
+      {
+        title: "선택",
+        formatter: () => "<button class='btn btn-sm btn-primary'>선택</button>",
+        width: 100,
+        hozAlign: "center",
+        cellClick: (e, cell) => {
+          const selected = cell.getRow().getData();
+          if (onSelect) onSelect(selected);
+          bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
+        }
+      }
+    ],
+    ajaxResponse: (url, params, response) => response
+  };
 
-					// onSelect 콜백에 데이터 넘기기
-					if (onSelect) {
-						onSelect(selected);
-					}
+  // 공통그룹 필요할 때만 파라미터 추가
+  if (commonGroup) {
+    tabulatorOptions.ajaxParams = { commonGroup: commonGroup };
+  }
 
-					bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
-				}
-			}
-		],
-		ajaxResponse: function(url, params, response) {
-			return response;
-		}
-	});
+  table = new Tabulator("#commonModalTable", tabulatorOptions);
 
-	const modal = new bootstrap.Modal(document.getElementById("commonModal"));
-	modal.show();
+  const modal = new bootstrap.Modal(document.getElementById("commonModal"));
+  modal.show();
 }
+
 
