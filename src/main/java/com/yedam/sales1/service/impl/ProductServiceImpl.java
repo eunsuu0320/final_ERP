@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.repository.ProductRepository;
@@ -67,4 +69,9 @@ public class ProductServiceImpl implements ProductService {
 
 		return Map.of("columns", columns, "rows", rows);
 	}
+
+    @Override
+    public Product saveProduct(Product product) {
+        return productRepository.save(product);
+    }
 }

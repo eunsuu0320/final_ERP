@@ -1,38 +1,88 @@
 document.addEventListener("DOMContentLoaded", function() {
+	// 테이블 컬럼을 위한 체크박스의 초기 값.
 	const defaultVisible = ["품목코드", "품목명", "규격/단위", "이미지", "비고"];
 
-	// 전역에서 접근 가능하게 함수 선언
+	// 이미지모달
 	window.showImageModal = function(url) {
+		// 이미지모달에 이미지 경로를 지정.
 		const modalImg = document.getElementById("modalImg");
 		modalImg.src = url;
 
-		// Bootstrap 5 모달 열기
+		// 모달 열기
 		const modal = new bootstrap.Modal(document.getElementById('imgModal'));
 		modal.show();
 	}
-	
-	window.showDetailModal = function(rowData) {
-    const contentDiv = document.getElementById("detailContent");
 
-    // 예: 간단히 row 데이터를 JSON 형태로 보여주기
-    contentDiv.innerHTML = `
-        <p><strong>품목코드:</strong> ${rowData["품목코드"]}</p>
-        <p><strong>품목명:</strong> ${rowData["품목명"]}</p>
-        <p><strong>규격/단위:</strong> ${rowData["규격/단위"]}</p>
-        <p><strong>비고:</strong> ${rowData["비고"]}</p>
-    `;
+	// 품목상세모달
+	window.showDetailModal = function(modalType) {
+		let modalName = '';
+		// 모달 열기
+		if (modalType === 'detail') {
+			modalName = '품목상세정보'
 
-    // Bootstrap 모달 열기
-    const modal = new bootstrap.Modal(document.getElementById("detailModal"));
-    modal.show();
-};
+		} else if (modalType === 'regist') {
+			modalName = '품목등록'
+		}
+		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
+		modal.show();
+		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 
-	// Tabulator 컬럼 정의
+
+	};
+
+	// 품목상세모달의 저장버튼 이벤트 -> 신규 등록 / 수정
+	window.saveModal = function() {
+		const form = document.getElementById("itemForm");
+		const formData = new FormData(form);
+		let modalName = document.querySelector('#newDetailModal .modal-title').innerHTML;
+
+		if (modalName === 'detail') {
+			// AJAX 요청
+			fetch("/api/registProduct", {
+				method: "POST",
+				body: formData
+			})
+				.then(res => res.json())
+				.then(data => {
+					console.log("품목저장 데이터 : ", data);
+					alert("저장되었습니다.");
+
+					const modal = bootstrap.Modal.getInstance(document.getElementById("newDetailModal"));
+					modal.hide();
+				})
+				.catch(err => {
+					console.error("품목저장실패 : ", err);
+					alert("저장에 실패했습니다.")
+				})
+
+		} else if (modalName === 'regist') {
+			// AJAX 요청
+			fetch("/api/modifyProduct", {
+				method: "POST",
+				body: formData
+			})
+				.then(res => res.json())
+				.then(data => {
+					console.log("품목수정 데이터 : ", data);
+					alert("저장되었습니다.");
+
+					const modal = bootstrap.Modal.getInstance(document.getElementById("newDetailModal"));
+					modal.hide();
+				})
+				.catch(err => {
+					console.error("품목수정실패 : ", err);
+					alert("저장에 실패했습니다.")
+				})
+		}
+	}
+
+	// 품목리스트 테이블 컬럼에 대한 정의
 	let tabulatorColumns = [
 		{
 			formatter: "rowSelection",
 			titleFormatter: "rowSelection",
 			hozAlign: "center",
+			headerHozAlign: "center",
 			headerSort: false,
 			width: 50,
 			frozen: true
@@ -41,22 +91,27 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (col === "상품규격" || col === "단위") return null;
 
 			let columnDef = {
-				title: col === "규격/단위" ? "규격/단위" : col,
-				field: col === "규격/단위" ? "규격/단위" : col,
-				visible: defaultVisible.includes(col) || col === "규격/단위"
+				title: col,
+				field: col,
+				visible: defaultVisible.includes(col)
 			};
 
 			if (col === "이미지") {
 				columnDef.formatter = function(cell) {
+					// cell.getValue() : 셀에 들어있는 데이터 값을 반환.
+					// cell.setValue(value) : 셀 데이터 값을 변경
+					// cell.getData() : 행 전체 데이터 객체 반환
+					// cell.getRow() : 셀이 속한 행 반환
+					// cell.getField() : 컬럼의 필드값 반환
 					const url = cell.getValue();
-					return `<img src="${url}" alt="이미지" style="height:40px; cursor:pointer;" onclick="showImageModal('${url}')">`;
+					return `<img src="${url}" alt="이미지" style="height:30px; cursor:pointer;" onclick="showImageModal('${url}')">`;
 				};
 			}
 			if (col === "품목코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
-					const rowData = cell.getData(); // 행 전체 데이터
-					return `<div style="cursor:pointer; color:blue;" onclick='showDetailModal(${JSON.stringify(rowData)})'>${value}</div>`;
+					// ajax 호출!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;
 				};
 			}
 
@@ -72,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		columns: tabulatorColumns,
 		placeholder: "데이터가 없습니다.",
 		movableColumns: true,
-		resizableRows: true
+		resizableRows: false
 	});
 
 	// 컬럼 토글 체크박스
