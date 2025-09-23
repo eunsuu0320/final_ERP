@@ -1,129 +1,463 @@
 <!DOCTYPE html>
-<html lang="ko"
-      xmlns:th="http://www.thymeleaf.org"
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/main}">
+<head>
+  <meta charset="UTF-8" />
+  <title>전표 통합관리</title>
 
-<body>
-<div layout:fragment="content">
-  <!-- 중요: layoutSidenav_content로 감싸야 짤리지 않음 -->
+  <!-- Tabulator (필수) -->
+  <link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js" defer></script>
+
+  <!-- Bootstrap JS (모달 동작용; 레이아웃에 이미 있으면 중복 무방) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+
+  <style>
+    #employee-table { height: calc(100vh - 260px); }
+    .btn-type .btn { min-width:70px; }
+    .input-with-icon { display:flex; gap:6px; align-items:center; }
+    .input-with-icon .form-control { width:220px; }
+    .toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
+
+    /* 전표 등록 모달 폼 */
+    .vf-box{background:#f4f5f7;border-radius:8px;padding:14px;border:1px solid #ddd}
+    .vf-label{font-weight:600}
+    .vf-hr{border-top:1px dashed #d7d7d7;margin:6px 0 10px}
+    .vf-num{text-align:right}
+  </style>
+</head>
+
+<body layout:fragment="content">
   <div id="layoutSidenav_content">
-    <main class="container-fluid px-4">
+    <main>
+      <div class="container_fluid px-4">
 
-      <h1 class="mt-4">회계 통합관리 (AC-001)</h1>
-      <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
-        <li class="breadcrumb-item active">전표 통합관리</li>
-      </ol>
-
-      <!-- 검색툴바 -->
-      <form th:action="@{/ac/statements}" method="get" class="row gy-2 gx-2 align-items-end" th:object="${form}">
-        <div class="col-auto">
-          <label class="form-label">유형</label>
-          <select class="form-select" th:field="*{type}">
-            <option value="ALL">전체</option>
-            <option value="SALES">매출</option>
-            <option value="BUY">매입</option>
-            <option value="MONEY">수금</option>
-            <option value="PAYMENT">지급</option>
-          </select>
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+          <h1 class="mb-0">전표 관리</h1>
         </div>
 
-        <div class="col-auto">
-          <label class="form-label">거래처/전표</label>
-          <input class="form-control" type="text" th:field="*{keyword}" placeholder="거래처명 또는 전표번호"/>
-        </div>
+        <!-- 상단 액션 -->
+        <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+          <!-- 모달 열기 버튼 -->
+          <button type="button" class="btn btn-outline-primary open-voucher-form" data-type="SALES">매출전표 등록</button>
+          <button type="button" class="btn btn-outline-primary open-voucher-form" data-type="BUY">매입전표 등록</button>
 
-        <div class="col-auto">
-          <label class="form-label">전표번호</label>
-          <input class="form-control" type="text" th:field="*{voucherNo}" placeholder="부분검색"/>
-        </div>
+          <!-- 전표 유형 토글 -->
+          <div class="btn-group btn-type ms-2" role="group" aria-label="type-filter">
+            <button type="button" class="btn btn-primary" data-type="ALL">전체</button>
+            <button type="button" class="btn btn-outline-primary" data-type="SALES">매출</button>
+            <button type="button" class="btn btn-outline-primary" data-type="BUY">매입</button>
+            <button type="button" class="btn btn-outline-primary" data-type="MONEY">수금</button>
+            <button type="button" class="btn btn-outline-primary" data-type="PAYMENT">지급</button>
+          </div>
 
-        <div class="col-auto">
-          <label class="form-label">From</label>
-          <input class="form-control" type="date" th:field="*{fromDate}"/>
-        </div>
-
-        <div class="col-auto">
-          <label class="form-label">To</label>
-          <input class="form-control" type="date" th:field="*{toDate}"/>
-        </div>
-
-        <input type="hidden" th:field="*{page}"/>
-        <input type="hidden" th:field="*{size}"/>
-
-        <div class="col-auto">
-          <button type="submit" class="btn btn-primary">검색</button>
-          <a th:href="@{/ac/statements}" class="btn btn-outline-secondary">초기화</a>
-        </div>
-      </form>
-
-      <!-- 목록 -->
-      <div class="card mt-3">
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-bordered table-hover table-sm mb-0">
-              <thead class="table-light">
-              <tr>
-                <th>전표일자</th>
-                <th>전표번호</th>
-                <th>유형</th>
-                <th>거래처명</th>
-                <th class="text-end">총액</th>
-                <th>적요</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr th:if="${page.totalElements == 0}">
-                <td colspan="6" class="text-center">데이터가 없습니다.</td>
-              </tr>
-              <tr th:each="row : ${page.content}">
-                <td th:text="${#temporals.format(row.voucherDate, 'yyyy-MM-dd')}">2025-09-01</td>
-                <td th:text="${row.voucherNo}">10001</td>
-                <td>
-                  <span class="badge bg-secondary" th:switch="${row.type}">
-                    <span th:case="'SALES'">매출</span>
-                    <span th:case="'BUY'">매입</span>
-                    <span th:case="'MONEY'">수금</span>
-                    <span th:case="'PAYMENT'">지급</span>
-                    <span th:case="*">기타</span>
-                  </span>
-                </td>
-                <td th:text="${row.partnerName}">거래처</td>
-                <td class="text-end" th:text="${#numbers.formatDecimal(row.amountTotal, 0, 'COMMA', 0, 'POINT')}">0</td>
-                <td th:text="${row.remark}">적요</td>
-              </tr>
-              </tbody>
-            </table>
+          <div class="ms-auto d-flex align-items-center gap-2">
+            <button id="btn-print" class="btn btn-secondary">인쇄</button>
+            <button id="btn-export" class="btn btn-dark">Excel</button>
           </div>
         </div>
+
+        <!-- 검색 바 -->
+        <div class="d-flex align-items-end flex-wrap gap-3 mb-2">
+          <div>
+            <label class="form-label">거래처명</label>
+            <div class="input-with-icon">
+              <input id="partnerName" type="text" class="form-control" placeholder="조회 후 등록" readonly>
+              <button id="btn-find-partner" type="button" class="btn btn-primary">검색</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">전표번호</label>
+            <div class="input-with-icon">
+              <input id="voucherNo" type="text" class="form-control" placeholder="조회 후 등록" readonly>
+              <button id="btn-find-voucher" type="button" class="btn btn-primary">검색</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label"></label>
+            <input id="fromDate" type="date" class="form-control w-auto">
+          </div>
+          <div>
+            <label class="form-label"></label>
+            <input id="toDate" type="date" class="form-control w-auto">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button id="btn-search" class="btn btn-warning">검색</button>
+            <button id="btn-reset" class="btn btn-outline-secondary">초기화</button>
+          </div>
+        </div>
+
+        <!-- 메인 테이블 -->
+        <div id="employee-table"></div>
+
       </div>
-
-      <!-- 페이지네이션 -->
-      <nav class="mt-3" th:if="${page.totalPages > 1}">
-        <ul class="pagination justify-content-center mb-0">
-          <li class="page-item" th:classappend="${!page.hasPrevious()} ? ' disabled'">
-            <a class="page-link"
-               th:href="@{/ac/statements(page=${page.number-1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Prev</a>
-          </li>
-
-          <li class="page-item"
-              th:each="i : ${#numbers.sequence(0, page.totalPages-1)}"
-              th:classappend="${i==page.number} ? ' active'">
-            <a class="page-link"
-               th:text="${i+1}"
-               th:href="@{/ac/statements(page=${i}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">1</a>
-          </li>
-
-          <li class="page-item" th:classappend="${!page.hasNext()} ? ' disabled'">
-            <a class="page-link"
-               th:href="@{/ac/statements(page=${page.number+1}, size=${page.size}, type=${form.type}, keyword=${form.keyword}, voucherNo=${form.voucherNo}, fromDate=${form.fromDate}, toDate=${form.toDate})}">Next</a>
-          </li>
-        </ul>
-      </nav>
-
     </main>
   </div>
-</div>
+
+  <!-- 공통 모달(fragment) + 공통 스크립트 -->
+  <div th:replace="~{common/modal :: commonModal}"></div>
+  <script th:src="@{/main/js/modal.js}" defer></script>
+
+  <!-- SheetJS -->
+  <script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js" defer></script>
+
+  <!-- ▼ 전표 등록 모달(데모) -->
+  <div class="modal fade" id="voucherFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header py-2">
+          <h5 class="modal-title"><span id="vf-title">전표 등록</span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="vf-box">
+            <div class="row g-2">
+              <!-- 1. 전표일자 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">전표일자</label>
+                <div class="input-group">
+                  <input id="vf-voucherDate" type="date" class="form-control">
+                </div>
+              </div>
+
+              <!-- 3. 전표번호(자동) -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">전표번호</label>
+                <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동 생성" readonly>
+              </div>
+
+              <!-- 2. 판매코드 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">판매코드</label>
+                <div class="input-group">
+                  <input id="vf-saleCode" type="text" class="form-control" placeholder="모달 연동 예정(데모)" >
+                  <button id="vf-find-saleCode" class="btn btn-outline-secondary" type="button">🔍</button>
+                </div>
+              </div>
+
+              <!-- 거래처 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">거래처</label>
+                <div class="input-group">
+                  <input id="vf-partnerName" type="text" class="form-control" placeholder="모달 연동 예정(데모)" >
+                  <button id="vf-find-partner" class="btn btn-outline-secondary" type="button">🔍</button>
+                </div>
+              </div>
+
+              <!-- 판매일자 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">판매일자</label>
+                <div class="input-group">
+                  <input id="vf-saleDate" type="date" class="form-control">
+                </div>
+              </div>
+
+              <!-- 담당자 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">담당자</label>
+                <div class="input-group">
+                  <input id="vf-empName" type="text" class="form-control" placeholder="모달 연동 예정(데모)" >
+                  <button id="vf-find-emp" class="btn btn-outline-secondary" type="button">🔍</button>
+                </div>
+              </div>
+
+              <!-- 작성일자 -->
+              <div class="col-md-6">
+                <label class="form-label vf-label">작성일자</label>
+                <div class="input-group">
+                  <input id="vf-writeDate" type="date" class="form-control">
+                </div>
+              </div>
+            </div>
+
+            <div class="vf-hr"></div>
+
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label vf-label">부가세유형</label>
+                <select id="vf-taxType" class="form-select">
+                  <option value="TAXABLE">과세(10%)</option>
+                  <option value="ZERO">영세(0%)</option>
+                  <option value="EXEMPT">면세(0%)</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label vf-label">공급가액</label>
+                <input id="vf-supply" type="text" class="form-control vf-num" value="0">
+              </div>
+              <div class="col-12">
+                <label class="form-label vf-label">부가세</label>
+                <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label vf-label">총 금액</label>
+                <input id="vf-total" type="text" class="form-control vf-num" value="0" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label vf-label">적요</label>
+                <input id="vf-remark" type="text" class="form-control" placeholder="">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+          <button id="vf-save" type="button" class="btn btn-primary">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ▲ 전표 등록 모달 -->
+
+  <!-- 페이지 스크립트 -->
+ <script>
+  window.addEventListener('DOMContentLoaded', () => {
+    /* ---------- 공통 ---------- */
+    function toast(msg, ms=1600){
+      const t=document.createElement('div'); 
+      t.className='toast-min'; 
+      t.textContent=msg;
+      document.body.appendChild(t); 
+      setTimeout(()=>t.remove(), ms);
+    }
+    const fmt = n => Number(n||0).toLocaleString();
+    const unfmt = s => Number(String(s||'').replace(/[^\d.-]/g,''))||0;
+
+    // Spring Security CSRF 메타에서 토큰/헤더명 읽기(레이아웃에 아래 메타가 있다고 가정)
+    // <meta name="_csrf" th:content="${_csrf.token}"/>
+    // <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    function getCsrf(){
+      const token  = document.querySelector('meta[name="_csrf"]')?.content;
+      const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+      return { token, header };
+    }
+
+    /* ---------- 목록 테이블 ---------- */
+    function paramsFor(page0, size){
+      return {
+        type:       currentType,
+        partner:    document.getElementById('partnerName').value || '',
+        voucherNo:  document.getElementById('voucherNo').value || '',
+        fromDate:   document.getElementById('fromDate').value || '',
+        toDate:     document.getElementById('toDate').value || '',
+        page:       page0 ?? 0,
+        size:       size ?? mainTable?.getPageSize() ?? 20,
+      };
+    }
+
+    let currentType='ALL';
+    const mainTable = new Tabulator("#employee-table",{
+      layout:"fitColumns",
+      pagination:true, paginationMode:"remote",
+      paginationSize:20, paginationSizeSelector:[20,50,100],
+      columns:[
+        {titleFormatter:"rowSelection",formatter:"rowSelection",titleFormatterParams:{rowRange:"active"},headerSort:false,width:55,hozAlign:"center",headerHozAlign:"center"},
+        {title:"전표번호",field:"voucherNo",hozAlign:"center",width:130},
+        {title:"유형",field:"type",hozAlign:"center",width:100,formatter:(c)=>{const m={SALES:"매출",BUY:"매입",MONEY:"수금",PAYMENT:"지급"};const t=c.getValue();return `<span class="badge bg-secondary">${m[t]??t??'기타'}</span>`;}},
+        {title:"거래처명",field:"partnerName",minWidth:180},
+        {title:"총액",field:"amountTotal",hozAlign:"right",minWidth:110,formatter:(c)=>fmt(c.getValue())},
+        {title:"적요",field:"remark",minWidth:220},
+        {title:"전표일자",field:"voucherDate",hozAlign:"center",formatter:(c)=>{const v=c.getValue();if(!v) return "";const d=new Date(v);return isNaN(d)?v:d.toISOString().slice(0,10);}},
+      ],
+      ajaxURL:"/api/statements",
+      ajaxConfig:"GET",
+      ajaxContentType:"json",
+      ajaxURLGenerator:(url,_c,p)=>{const page0=(p.page??1)-1; const q=new URLSearchParams(paramsFor(page0,p.size)).toString(); return url+"?"+q;},
+      ajaxResponse:(_u,_p,resp)=>({data:resp?.content??[], last_page:Math.max(1,resp?.totalPages??1)}),
+    });
+    mainTable.on("tableBuilt",()=>requestAnimationFrame(()=>mainTable.redraw(true)));
+    window.addEventListener('resize',()=>mainTable.redraw(true));
+
+    document.querySelectorAll('.btn-type .btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.btn-type .btn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-outline-primary');});
+        btn.classList.remove('btn-outline-primary'); btn.classList.add('btn-primary');
+        currentType = btn.getAttribute('data-type')||'ALL';
+        mainTable.setPage(1); mainTable.replaceData();
+      });
+    });
+    document.getElementById('btn-search').addEventListener('click',()=>{mainTable.setPage(1); mainTable.replaceData();});
+    document.getElementById('btn-reset').addEventListener('click',()=>{
+      ['partnerName','voucherNo','fromDate','toDate'].forEach(id=>document.getElementById(id).value='');
+      currentType='ALL'; 
+      document.querySelectorAll('.btn-type .btn').forEach(b=>{
+        b.classList.remove('btn-primary');b.classList.add('btn-outline-primary'); 
+        if(b.dataset.type==='ALL'){b.classList.remove('btn-outline-primary');b.classList.add('btn-primary');}
+      });
+      mainTable.setPage(1); mainTable.replaceData();
+    });
+
+    /* ---------- 인쇄/엑셀 ---------- */
+    const TYPE_LABEL={SALES:"외상매출금",BUY:"제품매출",MONEY:"부가세예수금",PAYMENT:"지급"};
+    const isDebit = t => t==="BUY"||t==="PAYMENT";
+    function buildVoucherHTML(row){
+      const now=new Date(), today=now.toISOString().slice(0,10), time=now.toTimeString().slice(0,8);
+      const typeKo=TYPE_LABEL[row.type]??(row.type??"");
+      const debit=isDebit(row.type)?Number(row.amountTotal||0):0;
+      const credit=isDebit(row.type)?0:Number(row.amountTotal||0);
+      return `
+      <section class="voucher">
+        <div class="v-head" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div class="title" style="font-size:28px;font-weight:700;letter-spacing:6px;padding:10px 6px">전 표</div>
+          <table class="approve" style="border-collapse:collapse;width:280px">
+            <tr><th class="stamp" rowspan="2" style="border:1px solid #333;width:46px">결재</th><th style="border:1px solid #333">담당</th><th style="border:1px solid #333">대리</th><th style="border:1px solid #333">과장</th></tr>
+            <tr><td style="border:1px solid #333;height:60px"></td><td style="border:1px solid #333"></td><td style="border:1px solid #333"></td></tr>
+          </table>
+        </div>
+        <table class="meta" style="width:100%;border-collapse:collapse;margin:6px 0 10px">
+          <tr><td>회사명 : (주)구독핑 이알핑</td><td style="text-align:right">작성자 : SYSTEM</td><td style="text-align:right">전표번호 : ${row.voucherNo??""}</td></tr>
+          <tr><td>거래처 : ${row.partnerName??""}</td><td style="text-align:right" colspan="2">전표일자 : ${row.voucherDate?String(row.voucherDate).slice(0,10):""}</td></tr>
+        </table>
+        <table class="lines" style="width:100%;border-collapse:collapse;table-layout:fixed">
+          <thead><tr><th style="border:1px solid #777;padding:8px 10px;background:#f2f2f5;width:28%">계정명</th><th style="border:1px solid #777;padding:8px 10px;background:#f2f2f5;width:34%">적요</th><th style="border:1px solid #777;padding:8px 10px;background:#f2f2f5;width:19%">차변</th><th style="border:1px solid #777;padding:8px 10px;background:#f2f2f5;width:19%">대변</th></tr></thead>
+          <tbody><tr><td style="border:1px solid #777;padding:8px 10px;text-align:center">${typeKo}</td><td style="border:1px solid #777;padding:8px 10px;text-align:center">${row.remark??""}</td><td style="border:1px solid #777;padding:8px 10px;text-align:right">${fmt(debit)}</td><td style="border:1px solid #777;padding:8px 10px;text-align:right">${fmt(credit)}</td></tr><tr><td colspan="4" style="height:180px"></td></tr></tbody>
+          <tfoot><tr><th style="border:1px solid #777;padding:8px 10px;text-align:left" colspan="2">합계 &nbsp;&nbsp; 매출/매입 : ${row.partnerName??""}</th><th style="border:1px solid #777;padding:8px 10px;text-align:right">${fmt(debit)}</th><th style="border:1px solid #777;padding:8px 10px;text-align:right">${fmt(credit)}</th></tr></tfoot>
+        </table>
+        <div class="foot" style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px;color:#444"><span>[ 1 / 1 ]</span><span>${today} ${time}</span></div>
+      </section>
+      <div class="page-break" style="page-break-after:always;height:24px"></div>`;
+    }
+    document.getElementById('btn-print').addEventListener('click',()=>{
+      const rows=mainTable.getSelectedRows(); if(!rows.length) return toast('인쇄할 행을 선택하세요.');
+      const html=rows.map(r=>buildVoucherHTML(r.getData())).join("");
+      const w=window.open('','_blank','width=1200,height=900');
+      w.document.write(`<!doctype html><html><head><title>전표 인쇄</title><style>*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif}body{margin:16px}</style></head><body>${html}</body></html>`); 
+      w.document.close(); w.focus(); w.print();
+    });
+    document.getElementById('btn-export').addEventListener('click',()=>{
+      const rows=mainTable.getSelectedRows(); if(!rows.length) return toast('내보낼 행을 선택하세요.');
+      const map={SALES:"매출",BUY:"매입",MONEY:"수금",PAYMENT:"지급"};
+      const data=rows.map(r=>{const d=r.getData();return{전표일자:d.voucherDate?new Date(d.voucherDate).toISOString().slice(0,10):'',전표번호:d.voucherNo??'',유형:map[d.type]??(d.type??''),거래처명:d.partnerName??'',총액:Number(d.amountTotal||0),적요:d.remark??''}});
+      const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(data); 
+      XLSX.utils.book_append_sheet(wb,ws,"선택전표");
+      const today=new Date().toISOString().slice(0,10).replaceAll('-',''); 
+      XLSX.writeFile(wb,`statements_selected_${today}.xlsx`);
+    });
+
+    /* ---------- 공통 모달(검색) 버튼 ---------- */
+    document.getElementById('btn-find-partner').addEventListener('click',()=>{
+      openModal('partner',(row)=>{document.getElementById('partnerName').value=row.partnerName??''; mainTable.setPage(1); mainTable.replaceData();});
+    });
+    document.getElementById('btn-find-voucher').addEventListener('click',()=>{
+      openModal('voucher',(row)=>{document.getElementById('voucherNo').value=row.voucherNo??''; mainTable.setPage(1); mainTable.replaceData();});
+    });
+
+    /* ---------- 전표 등록 모달(저장 연동) ---------- */
+    const vfEl    = document.getElementById('voucherFormModal');
+    const vfModal = (window.bootstrap?.Modal && vfEl) ? new bootstrap.Modal(vfEl) : null;
+    let currentVoucherType = 'SALES'; // 모달 오픈한 버튼 타입 기억
+
+    // 버튼 클릭으로 모달 열기
+    document.querySelectorAll('.open-voucher-form').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        currentVoucherType = btn.dataset.type === 'BUY' ? 'BUY' : 'SALES';
+        openVoucherForm(currentVoucherType);
+      });
+    });
+
+    function openVoucherForm(type){
+      if(!vfModal){ toast('부트스트랩 모달 스크립트가 로드되지 않았습니다.'); return; }
+
+      document.getElementById('vf-title').textContent = (type==='BUY' ? '매입전표 등록' : '매출전표 등록');
+
+      const today = new Date().toISOString().slice(0,10);
+      document.getElementById('vf-voucherDate').value = today;
+      document.getElementById('vf-saleDate').value    = today;
+      document.getElementById('vf-writeDate').value   = today;
+
+      const yyyy = today.slice(0,4);
+      const seq  = String(Math.floor(Math.random()*9000)+1000);
+      document.getElementById('vf-voucherNo').value = `${yyyy}-${seq}`;
+
+      ['vf-saleCode','vf-partnerName','vf-empName','vf-remark'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('vf-taxType').value = 'TAXABLE';
+      setAmounts(0, 'TAXABLE');
+
+      // 데모(돋보기)
+      document.getElementById('vf-find-saleCode').onclick = ()=>toast('판매코드 모달 연결 예정(데모)');
+      document.getElementById('vf-find-partner').onclick  = ()=>toast('거래처 모달 연결 예정(데모)');
+      document.getElementById('vf-find-emp').onclick      = ()=>toast('담당자 모달 연결 예정(데모)');
+
+      vfModal.show();
+    }
+
+    // 금액 계산
+    const $supply = document.getElementById('vf-supply');
+    const $vat    = document.getElementById('vf-vat');
+    const $total  = document.getElementById('vf-total');
+    const $taxSel = document.getElementById('vf-taxType');
+
+    function setAmounts(supply, taxType){
+      const rate = (taxType==='TAXABLE') ? 0.1 : 0.0;
+      const vat  = Math.round(supply * rate);
+      const tot  = supply + vat;
+      $supply.value = fmt(supply);
+      $vat.value    = fmt(vat);
+      $total.value  = fmt(tot);
+    }
+    $supply.addEventListener('input', ()=> setAmounts(unfmt($supply.value), $taxSel.value));
+    $supply.addEventListener('blur',  ()=> setAmounts(unfmt($supply.value), $taxSel.value));
+    $taxSel.addEventListener('change',()=> setAmounts(unfmt($supply.value), $taxSel.value));
+
+ // 저장(실제 호출)
+    document.getElementById('vf-save').addEventListener('click', async () => {
+      const payload = {
+        type: document.getElementById('vf-title').textContent.includes('매입') ? 'BUY' : 'SALES',
+        voucherDate: document.getElementById('vf-voucherDate').value || null,
+        voucherNo: document.getElementById('vf-voucherNo').value || null,
+        saleCode: document.getElementById('vf-saleCode').value || null,
+        partnerName: document.getElementById('vf-partnerName').value || null,
+        saleDate: document.getElementById('vf-saleDate').value || null,
+        empName: document.getElementById('vf-empName').value || null,
+        writeDate: document.getElementById('vf-writeDate').value || null,
+        taxType: document.getElementById('vf-taxType').value || 'TAXABLE',
+        supply: Number(String(document.getElementById('vf-supply').value).replace(/[^\d.-]/g,'')) || 0,
+        vat: Number(String(document.getElementById('vf-vat').value).replace(/[^\d.-]/g,'')) || 0,
+        total: Number(String(document.getElementById('vf-total').value).replace(/[^\d.-]/g,'')) || 0,
+        remark: document.getElementById('vf-remark').value || null,
+      };
+
+      
+      const token  = document.querySelector('meta[name="_csrf"]')?.content;
+      const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+      
+      
+      try {
+    	  const res = await fetch('/api/statements', {
+    		  method: 'POST',
+    		  headers: {
+    		    'Content-Type': 'application/json',
+    		    ...(token ? { [header]: token } : {}),   // ★ CSRF 헤더 추가
+    		  },
+    		  body: JSON.stringify(payload),
+    		});
+
+        if (!res.ok) {
+          const err = await res.text();
+          throw new Error(err || 'save failed');
+        }
+
+        // 성공 처리: 모달 닫고 테이블 리로드
+        toast('저장되었습니다.');
+        vfModal?.hide();
+        // 첫 페이지로 리셋 후 새로고침(원하는 페이지 유지면 replaceData만)
+        mainTable.setPage(1);
+        mainTable.replaceData();
+
+      } catch (e) {
+        console.error(e);
+        toast('저장 실패: ' + (e.message || ''));
+      }
+    });
+  });
+</script>
+
 </body>
 </html>

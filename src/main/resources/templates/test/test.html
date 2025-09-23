@@ -13,6 +13,7 @@
 					<input type="hidden" id="employeeId" name="employeeId">
 					<input type="text" id="employeeName" class="form-control" placeholder="직원 이름" readonly>
 					<button class="btn btn-primary" onclick="openModal('employee', function(selected) {
+
                     document.getElementById('employeeId').value = selected.empNo;
                     document.getElementById('employeeName').value = selected.name;
                 })">
