@@ -26,7 +26,3 @@
     max-width: 50%; /* 가로 최대 폭 */
 }
 
-#detailModal .modal-dialog {
-    top: 10%; /* 화면 상단에서 10% 아래 */
-    max-width: 50%; /* 가로 최대 폭 */
-}

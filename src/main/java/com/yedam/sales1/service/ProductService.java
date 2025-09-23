@@ -9,4 +9,6 @@ public interface ProductService {
 	List<Product> getAllProduct();
 	
 	Map<String, Object> getTableDataFromProducts(List<Product> products);
+
+	Product saveProduct(Product product);
 }
