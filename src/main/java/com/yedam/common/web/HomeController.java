@@ -1,4 +1,4 @@
-package com.yedam.web;
+package com.yedam.common.web;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,7 +12,7 @@ public class HomeController {
 		return "index";
 	}
 
-	@GetMapping("main")
+	@GetMapping("/main")
 	public String main(Model model) {
 		return "layout/main";
 	}
@@ -27,7 +27,7 @@ public class HomeController {
 		return "test/test";
 	}
 	
-	@GetMapping("login")
+	 @GetMapping("/common/login")
 	public String login(Model model) {
 		return "common/login";
 	}
