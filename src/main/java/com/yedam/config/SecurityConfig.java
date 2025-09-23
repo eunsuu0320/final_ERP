@@ -1,62 +1,55 @@
 package com.yedam.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.yedam.common.service.UserService;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+    @Autowired UserService UserService;
+
+	/*
+	 * @Bean public PasswordEncoder passwordEncoder() { return new
+	 * BCryptPasswordEncoder(); }
+	 */
+
     @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
     }
 
     @Bean
-    public DaoAuthenticationProvider authProvider(UserService userService) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
-    }
-
-    @Bean
-    public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, AuthenticationManager authManager) throws Exception {
-        CustomAuthenticationFilter customFilter = new CustomAuthenticationFilter();
-        customFilter.setAuthenticationManager(authManager);
-
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/common/login", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/common/login", "/css/**", "/js/**", "/erp/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
-            		.loginPage("/common/login")         // GET: 내가 만든 로그인 화면
-            	    .loginProcessingUrl("/common/login")// POST: 같은 URL에서 로그인 처리
-            	    .defaultSuccessUrl("/main", true)       // 성공 후 이동할 페이지
-            	    .failureUrl("/common/login?error=true")
-            	    .permitAll()
+                .loginPage("/common/login")              // 로그인 페이지
+                .loginProcessingUrl("/doLogin")   // HTML에서 지정한 action
+                .defaultSuccessUrl("/", true)     // 성공 시 이동
+                .failureUrl("/login?error=true")  // 실패 시 이동
             )
             .logout(logout -> logout
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/login?logout=true")
-                    .permitAll()
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/login?logout=true")
             )
-            .addFilterAt(customFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable()); // 필요 시 enable
 
         return http.build();
     }
 }
+

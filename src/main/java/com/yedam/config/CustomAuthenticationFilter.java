@@ -16,11 +16,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
         String username = obtainUsername(request);
         String password = obtainPassword(request);
         String companyCode = request.getParameter("companyCode");
-        
-        CustomAuthenticationFilter customFilter = new CustomAuthenticationFilter();
-        customFilter.setFilterProcessesUrl("/login"); // 꼭 추가해야함!
 
-        
         if (username == null) username = "";
         if (password == null) password = "";
         if (companyCode == null) companyCode = "";
@@ -34,7 +30,9 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
                 new UsernamePasswordAuthenticationToken(combinedUsername, password);
 
         setDetails(request, authRequest);
-
+        
+        System.out.println("Login Attempt => companyCode=" + companyCode + ", username=" + username + ", password=" + password);
+        
         return this.getAuthenticationManager().authenticate(authRequest);
     }
 }

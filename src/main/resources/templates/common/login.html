@@ -7,7 +7,7 @@
         <meta name="description" content="" />
         <meta name="author" content="" />
         <title>Login - SB Admin</title>
-        <link href="erp/css/styles.css" rel="stylesheet" />
+        <link th:href="@{/erp/css/styles.css}" rel="stylesheet" />
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
     </head>
     <body class="bg-primary">
@@ -20,25 +20,31 @@
                                 <div class="card shadow-lg border-0 rounded-lg mt-5">
                                     <div class="card-header"><h3 class="text-center font-weight-light my-4">로그인</h3></div>
                                     <div class="card-body">
-                                        <form th:action="@{/login}" method="post">
-                                        	<div class="form-floating mb-3">
-                                                <input class="form-control" id="inputEmail" type="email" placeholder="name@example.com" />
-                                                <label for="inputEmail">회사코드</label>
-                                            </div>
-                                            <div class="form-floating mb-3">
-                                                <input class="form-control" id="inputEmail" type="email" placeholder="name@example.com" />
-                                                <label for="inputEmail">ID</label>
-                                            </div>
-                                            <div class="form-floating mb-3">
-                                                <input class="form-control" id="inputPassword" type="password" placeholder="Password" />
-                                                <label for="inputPassword">PW</label>
-                                            </div>
-                                            <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
+										<form th:action="@{/doLogin}" method="post" onsubmit="mergeUserId()">
+											<div class="form-floating mb-3">
+												<input class="form-control" id="inputCompanyCode" type="text"
+													placeholder="회사코드" required />
+													<label for="inputCompanyCode">회사코드</label>
+											</div>
+											<div class="form-floating mb-3">
+												<input class="form-control" id="inputId" type="text" placeholder="ID" required />
+													<label for="inputId">ID</label>
+											</div>
+											<div class="form-floating mb-3">
+												<input class="form-control" id="inputPassword"
+													type="password" name="password" placeholder="PW" required />
+												<label for="inputPassword">PW</label>
+											</div>
+	
+											<!-- 실제 Spring Security에서 인식하는 username -->
+											<input type="hidden" id="username" name="username" />
+
+											<div class="d-flex align-items-center justify-content-between mt-4 mb-0">
                                                 <a class="small" href="password.html">비밀번호 찾기</a>
-                                                <a class="btn btn-primary" href="index.html">Login</a>
+                                                <button class="btn btn-primary" type="submit">Login</button>
                                             </div>
-                                        </form>
-                                    </div>
+										</form>
+								</div>
                                 </div>
                             </div>
                         </div>
@@ -47,6 +53,13 @@
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="erp/js/scripts.js"></script>
+        <script th:src="@{/erp/js/scripts.js}"></script>
+        <script>
+			function mergeUserId() {
+			    const company = document.getElementById("inputCompanyCode").value.trim();
+			    const userId = document.getElementById("inputId").value.trim();
+			    document.getElementById("username").value = company + ":" + userId; // 구분자 : 사용
+			}
+		</script>
     </body>
 </html>

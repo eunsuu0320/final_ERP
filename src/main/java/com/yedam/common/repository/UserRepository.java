@@ -9,5 +9,5 @@ import com.yedam.common.domain.SystemUser;
 public interface UserRepository extends JpaRepository<SystemUser, String> {
 	Optional<SystemUser> findByUserId(String userId);
 
-	Optional<SystemUser> findByUserIdAndCompanyCode(String username, String companyCode);
+	Optional<SystemUser> findByUserIdAndCompanyCode(String userId, String companyCode);
 }
