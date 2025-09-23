@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 
-import com.yedam.hr.domain.Employee;
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.service.ProductService;
 
@@ -36,6 +38,12 @@ public class ProductController {
         model.addAttribute("rows", tableData.get("rows"));
 
         return "sales1/productList"; // => templates/sales1/itemList.html
+    }
+    
+    @PostMapping
+    public ResponseEntity<Product> saveProduct(@ModelAttribute Product product) {
+        Product saved = productService.saveProduct(product);
+        return ResponseEntity.ok(saved);
     }
     
 }
