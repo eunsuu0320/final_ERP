@@ -1,0 +1,32 @@
+@charset "UTF-8";
+
+/*검색바*/
+.searchTool {
+	border: 1px solid #ccc;
+	padding: 30px;
+}
+
+.containerBox {
+	padding: 30px;
+}
+
+#productTable {
+	height: 500px; /* 테이블 전체 높이 고정 */
+	width: 100%; /* 테이블 가로폭 100% */
+}
+
+.tabulator-cell img {
+	max-height: 40px;
+	display: block;
+	margin: 0 auto;
+}
+
+#imgModal .modal-dialog {
+    top: 20%; /* 화면 상단에서 10% 아래 */
+    max-width: 50%; /* 가로 최대 폭 */
+}
+
+#detailModal .modal-dialog {
+    top: 10%; /* 화면 상단에서 10% 아래 */
+    max-width: 50%; /* 가로 최대 폭 */
+}

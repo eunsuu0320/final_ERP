@@ -11886,3 +11886,32 @@ html, body {
   border-color: #0d6efd;
 }
 
+/* 공통 체크박스 스타일 */
+#employee-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;   /* 살짝 둥글게 */
+  border: 1px solid #adb5bd; /* 회색 테두리 */
+  cursor: pointer;
+  appearance: none;         /* 브라우저 기본 제거 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;   /* 기본 흰색 */
+  transition: all 0.2s ease-in-out;
+}
+
+/* 체크됐을 때 */
+#employee-table input[type="checkbox"]:checked {
+  background-color: #0d6efd; /* Bootstrap primary 파랑 */
+  border-color: #0d6efd;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='white' d='M16.7 5.3a1 1 0 010 1.4l-7.6 7.6a1 1 0 01-1.4 0L3.3 9.9a1 1 0 111.4-1.4l3.6 3.6 6.9-6.9a1 1 0 011.4 0z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0.75rem 0.75rem;
+}
+
+.form-label.required::before {
+	content: "*";
+	color: red !important;
+	margin-right: 2px;
+}

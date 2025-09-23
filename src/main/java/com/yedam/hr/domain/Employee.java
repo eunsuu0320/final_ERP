@@ -1,6 +1,7 @@
 package com.yedam.hr.domain;
 
 import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -8,7 +9,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Employees {
+public class Employee {
 
 	@Id
 	private String empNo; // 사원번호
@@ -22,9 +23,14 @@ public class Employees {
 	private String grade; // 직급
 	private String position; // 직책
 	private int salary; // 기본급
+
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	private Date hireDate; // 입사일자
+
+	@JsonFormat(pattern = "yyyy-MM-dd")
 	private Date resignDate; // 퇴사일자
-	private int holyDays; // 휴가일수
+
+	private Integer holyDays; // 휴가일수
 	private int depCnt; // 부양가족수
 	private String resignReason; // 퇴사사유
 	private String bankCode; // 은행코드

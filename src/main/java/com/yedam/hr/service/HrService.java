@@ -1,5 +1,9 @@
 package com.yedam.hr.service;
 
-public interface HrService {
+import java.util.List;
 
+import com.yedam.hr.domain.Employee;
+
+public interface HrService {
+	List<Employee> getAllEmployees();
 }
