@@ -63,16 +63,45 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">부서</label>
-											<input type="hidden" name="">
-											<input type="text" name="dept" id="dept" class="form-control" readonly>
+											<input type="hidden" id="DEPT" value="DEPT">
+											 <input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="deptName" id="dept" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('dept').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      },
+										      document.getElementById('DEPT').value
+										  	)">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직위/직급</label>
-											<input type="text" name="grade" id="grade" class="form-control" readonly>
+											<label class="form-label required">직급</label>
+											<input type="hidden" id="POSITION" value="POSITION">
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="position" id="position" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('position').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      },
+										      document.getElementById('POSITION').value
+										  	)">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직책</label>
-											<input type="text" name="position" id="position" class="form-control" readonly>
+											<input type="hidden" id="DUTY" value="DUTY">
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="grade" id="grade" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('grade').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      },
+										      document.getElementById('DUTY').value
+										  	)">
 										</div>
 									</div>
 
@@ -112,7 +141,17 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">은행</label>
-											<input type="text" name="bankCode" id="bankCode" class="form-control">
+											<input type="hidden" id="BANK" value="BANK">
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="bankCode" id="bankCode" class="form-control"
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('bankCode').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      },
+										      document.getElementById('BANK').value
+										  	)">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">예금주</label>
@@ -127,7 +166,8 @@
 									<div class="row mb-3">
 										<div class="col-md-3">
 											<label class="form-label required">우편번호</label>
-											<input type="text" name="postalCode" id="postalCode" class="form-control">
+											<input type="text" name="postalCode" id="postalCode" class="form-control" readonly
+											onclick="execDaumPostcode()">
 										</div>
 										<div class="col-md-9">
 											<label class="form-label required">주소</label>
@@ -139,7 +179,47 @@
 
 							<!-- 근로계약서 탭 -->
 							<div class="tab-pane fade" id="contractInfo">
-								<p>여기에 근로계약서 작성 관련 입력폼/업로드 UI 추가 예정</p>
+							  <form id="contractForm">
+							    <!-- 성명 / 사원번호 / 부서 -->
+							    <div class="row mb-3">
+							      <div class="col-md-4">
+							        <label class="form-label">성명</label>
+							        <input type="text" name="name" id="name" class="form-control">
+							      </div>
+							      <div class="col-md-4">
+							        <label class="form-label">사원번호</label>
+							        <input type="text" name="empNo" id="empNo" class="form-control">
+							      </div>
+							      <div class="col-md-4">
+							        <label class="form-label">부서</label>
+							        <input type="text" name="dept" id="dept" class="form-control">
+							      </div>
+							    </div>
+
+							     <!-- 근로계약서 원본 PDF -->
+							    <div class="mb-3" style="height: 27.2rem;">
+							      <label class="form-label">근로계약서 원본</label>
+							      <iframe src="/hr/pdf/contract.pdf"
+							              style="width:100%; height:100%; border:1px solid #ddd;"
+							              frameborder="0"></iframe>
+							    </div>
+
+							    <!-- 사원 서명 -->
+							    <div class="row mb-3" style="margin-top: 2.55rem;">
+							      <div class="col-md-6">
+							        <label class="form-label">사원 서명</label>
+							        <input type="text" name="cSign" id="cSign" class="form-control">
+							      </div>
+							    </div>
+
+							    <!-- 계약 동의 -->
+								<div class="form-check d-flex justify-content-end mb-3">
+								  <input class="form-check-input me-2" type="checkbox" id="agreeContract" name="agreeContract">
+								  <label class="form-check-label" for="agreeContract">
+								    계약 내용에 동의합니다.
+								  </label>
+								</div>
+							  </form>
 							</div>
 						</div>
 					</div>
@@ -147,12 +227,5 @@
 			</div>
 		</div>
 	</div>
-
-		<!-- 공통 모달 -->
-	<div th:replace="common/modal :: commonModal"></div>
-
-	<!-- JS (modalConfigs + openModal 함수 불러오기) -->
-	<script src="/main/js/modal.js"></script>
-
 </body>
 </html>

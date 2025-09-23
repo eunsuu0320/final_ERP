@@ -16,7 +16,7 @@ public class CommonCodeController {
 	@Autowired CommonCodeService commonCodeService;
 
 	@ResponseBody
-	@GetMapping("/commonCode")
+	@GetMapping("/api/modal/commonCode")
 	public List<CommonCode> commonCodes(String commonGroup) {
 		return commonCodeService.findByCodeGroup(commonGroup);
 	}
