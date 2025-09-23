@@ -2,17 +2,17 @@
 
 // === 공통 설정 ===
 const modalConfigs = {
-	employee: {
-		url: "/api/modal/employee",
-		title: "직원 검색",
-		columns: [
-			{ title: "사원번호", field: "empNo" },
-			{ title: "성명", field: "name" },
-			{ title: "부서", field: "dept" },
-			{ title: "직급", field: "grade" }
-		]
-	},
-	 // ✅ 추가: 거래처 검색
+   employee: {
+      url: "/api/modal/employee",
+      title: "직원 검색",
+      columns: [
+         { title: "사원번호", field: "empNo" },
+         { title: "성명", field: "name" },
+         { title: "부서", field: "dept" },
+         { title: "직급", field: "grade" }
+      ]
+   },
+    // ✅ 추가: 거래처 검색
   partner: {
     url: "/api/partners",               // 서버 API에 맞게
     title: "거래처 검색",
@@ -40,94 +40,85 @@ const modalConfigs = {
       { title: "적요", field: "remark", minWidth: 200 },
     ],
   },
-	commonCode: {
-		url: "/api/modal/commonCode",
-		title: "공통코드 검색",
-		columns: [
-			{ title: "코드", field: "codeId" },
-			{ title: "코드명", field: "codeName" },
-		]
-	}
+   commonCode: {
+      url: "/api/modal/commonCode",
+      title: "공통코드 검색",
+      columns: [
+         { title: "코드", field: "codeId" },
+         { title: "코드명", field: "codeName" },
+      ]
+   }
 };
 
 let table; // Tabulator 인스턴스 전역 변수
 
-// === 모달 열기 함수 ===
-window.openModal = function(type, onSelect, commonGroup) {
-  const config = modalConfigs[type];
-  if (!config) {
-    console.error(`modalConfigs[${type}] 설정이 없습니다.`);
-    return;
-  }
+function openModal(type, onSelect, commonGroup) {
+    const config = modalConfigs[type];
+    if (!config) {
+        console.error(`modalConfigs[${type}] 설정이 없습니다.`);
+        return;
+    }
 
-  const labelEl = document.getElementById("commonModalLabel");
-  if (labelEl) labelEl.textContent = config.title;
+    // 제목 설정
+    document.getElementById("commonModalLabel").textContent = config.title;
 
-  if (table) table.destroy();
+    // Tabulator 초기화
+    if (table) {
+        table.destroy();
+    }
 
-  let tabulatorOptions = {
-    ajaxURL: config.url,
-    layout: "fitColumns",
-    pagination: "local",
-    paginationSize: 10,
-    movableColumns: true,
-    columns: [
-      ...config.columns,
-      {
-        title: "선택",
-        formatter: () => "<button class='btn btn-sm btn-primary'>선택</button>",
-        width: 100,
-        hozAlign: "center",
-        cellClick: (e, cell) => {
-          const selected = cell.getRow().getData();
-          if (onSelect) onSelect(selected);
-          bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
+    table = new Tabulator("#commonModalTable", {
+        ajaxURL: config.url,
+        ajaxParams: commonGroup ? { commonGroup: commonGroup } : {}, // 공통그룹 파라미터
+        layout: "fitColumns",
+        pagination: "local",
+        paginationSize: 10,
+        movableColumns: true,
+        columns: [
+            ...config.columns,
+            {
+                title: "선택",
+                formatter: () => "<button class='btn btn-sm btn-primary'>선택</button>",
+                width: 100,
+                hozAlign: "center",
+                cellClick: (e, cell) => {
+                    const selected = cell.getRow().getData();
+                    if (onSelect) {
+                        onSelect(selected);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
+                }
+            }
+        ],
+        ajaxResponse: function (url, params, response) {
+            return response; // 필요 시 response.data 로 변경
         }
-      }
-    ],
-    ajaxResponse: (url, params, response) => response
-  };
+    });
 
-  // 공통그룹 필요할 때만 파라미터 추가
-  if (commonGroup) {
-    tabulatorOptions.ajaxParams = { commonGroup: commonGroup };
-  }
+    // 검색 이벤트 연결
+    const searchInput = document.getElementById("commonModalSearch");
+    if (searchInput) {
+        searchInput.value = ""; // 초기화
+        searchInput.oninput = function () {
+            const keyword = this.value.trim();
+            if (keyword) {
+                const allFields = table.getColumns()
+                    .map(col => col.getField())
+                    .filter(f => f && f !== ""); // field 없는 버튼 컬럼 제외
 
+                const filters = allFields.map(f => ({
+                    field: f,
+                    type: "like",
+                    value: keyword
+                }));
 
-  table = new Tabulator("#commonModalTable", tabulatorOptions);
-					bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
-				}
-			}
-		],
-		ajaxResponse: function(url, params, response) {
-			return response;
-		}
-	});
+                table.setFilter([filters]);
+            } else {
+                table.clearFilter();
+            }
+        };
+    }
 
-	// 검색 이벤트 연결
-	const searchInput = document.getElementById("commonModalSearch");
-	if (searchInput) {
-	    searchInput.value = ""; // 초기화
-	    searchInput.addEventListener("input", function () {
-	        const keyword = this.value.trim();
-	        if (keyword) {
-	            table.setFilter([
-	                [
-	                    { field: "empNo", type: "like", value: keyword },
-	                    { field: "name", type: "like", value: keyword },
-	                    { field: "dept", type: "like", value: keyword },
-	                    { field: "grade", type: "like", value: keyword }
-	                ]
-	            ]);
-	        } else {
-	            table.clearFilter(); // 검색어 없으면 초기화
-	        }
-	    });
-	}
-
-	const modal = new bootstrap.Modal(document.getElementById("commonModal"));
-	modal.show();
-
+    const modal = new bootstrap.Modal(document.getElementById("commonModal"));
+    modal.show();
 }
-
-
