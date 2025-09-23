@@ -1,14 +1,42 @@
 package com.yedam.hr.web;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.yedam.hr.domain.Employee;
+import com.yedam.hr.service.HrService;
 
 @Controller
 public class HrController {
 
-	@GetMapping("/employee")
-	public String employee(Model model) {
+	@Autowired HrService hrService;
+
+	// 사원 등록 페이지
+	@GetMapping("/empPage")
+	public String getEmployee (Model model) {
 		return "hr/employee";
+	}
+
+	@ResponseBody
+	@GetMapping("/selectAllEmp")
+	public List<Employee> employee (Model model) {
+		return hrService.getAllEmployees();
+	}
+
+	// 사원 등록 모달 html
+	@GetMapping("/employee")
+	public String getEmployeeString (Model model) {
+		return "hr/employeeModal";
+	}
+
+	// 수당 및 공제 관리
+	@GetMapping("/allowDeduct")
+	public String getAllowDeduct (Model model) {
+		return "hr/allowDeduct";
 	}
 }

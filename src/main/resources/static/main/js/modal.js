@@ -40,6 +40,14 @@ const modalConfigs = {
       { title: "적요", field: "remark", minWidth: 200 },
     ],
   },
+	commonCode: {
+		url: "/api/modal/commonCode",
+		title: "공통코드 검색",
+		columns: [
+			{ title: "코드", field: "codeId" },
+			{ title: "코드명", field: "codeName" },
+		]
+	}
 };
 
 let table; // Tabulator 인스턴스 전역 변수
@@ -90,7 +98,29 @@ function openModal(type, onSelect) {
 			return response;
 		}
 	});
+	
+	// 검색 이벤트 연결
+	const searchInput = document.getElementById("commonModalSearch");
+	if (searchInput) {
+	    searchInput.value = ""; // 초기화
+	    searchInput.addEventListener("input", function () {
+	        const keyword = this.value.trim();
+	        if (keyword) {
+	            table.setFilter([
+	                [
+	                    { field: "empNo", type: "like", value: keyword },
+	                    { field: "name", type: "like", value: keyword },
+	                    { field: "dept", type: "like", value: keyword },
+	                    { field: "grade", type: "like", value: keyword }
+	                ]
+	            ]);
+	        } else {
+	            table.clearFilter(); // 검색어 없으면 초기화
+	        }
+	    });
+	}
 
+	
 	const modal = new bootstrap.Modal(document.getElementById("commonModal"));
 	modal.show();
 }
