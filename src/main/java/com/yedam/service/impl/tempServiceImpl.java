@@ -1,5 +1,8 @@
 package com.yedam.service.impl;
 
-public interface tempServiceImpl {
+import org.springframework.stereotype.Service;
+
+@Service
+public class tempServiceImpl {
 
 }

@@ -1,15 +1,14 @@
-package com.yedam.service;
+package com.yedam.sales2.service;
 
-import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Map;
 
-import com.yedam.repository.SalesPlanRepository;
+import com.yedam.sales2.domain.Sales;
 
-import lombok.RequiredArgsConstructor;
-
-@RequiredArgsConstructor
-@Service
-public class salesPlanService {
-
-	private final SalesPlanRepository salesPlanRepository;
+public interface salesService {
 	
+	List<Sales> findAll(); // 조회
+	
+	// 연도별 통계 데이터를 조회하는 새로운 메서드 추가
+	List<Map<String, Object>> findSalesStatsByYear(); 
 }
