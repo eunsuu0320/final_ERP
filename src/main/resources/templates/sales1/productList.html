@@ -13,7 +13,7 @@
 		<main>
 			<div class="containerBox">
 				<div class="container-fluid px-4">
-					<h3 class="mt-4">품목관리</h3>
+					<h1 class="mt-4">품목관리</h1>
 					<ol class="breadcrumb mb-4">
 						<li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
 						<li class="breadcrumb-item active">품목관리</li>
@@ -23,7 +23,7 @@
 				<!-- 버튼 영역 -->
 				<div class="d-flex align-items-center mb-3 justify-content-end">
 					<button class="btn btn-warning me-2">검색</button>
-					<button class="btn btn-primary me-2">신규</button>
+					<button class="btn btn-primary me-2" onclick="showDetailModal('regist')">신규</button>
 					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-dark me-2">초기화</button>
 					<button class="btn btn-secondary me-2">이력조회</button>
@@ -59,6 +59,7 @@
 
 				<!-- Tabulator 테이블 -->
 				<div id="productTable"></div>
+
 				<!-- 이미지 모달 -->
 				<div class="modal fade" id="imgModal" tabindex="-1"
 					aria-hidden="true">
@@ -78,22 +79,95 @@
 				</div>
 
 				<!-- 신규/상세 모달 -->
-				<div class="modal fade" id="detailModal" tabindex="-1"
+				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-lg modal-dialog-centered">
 						<div class="modal-content">
+							<!-- 모달 헤더 -->
 							<div class="modal-header">
-								<h5 class="modal-title" id="detailModalLabel">품목 상세</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-							</div>
-							<div class="modal-body">
-								<div id="detailContent">
-									<!-- 상세 내역 -->
+								<h5 class="modal-title"></h5>
+								<div>
+									<button type="button" class="btn btn-primary" onclick="saveModal()">저장</button>
+									<button type="button" class="btn btn-dark" onclick="resetModal()">초기화</button>
+									<button type="button" class="btn btn-secondary" onclick="getModal()">가져오기</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
+							<!-- 모달 바디 -->
+							<div class="modal-body">
+								<form id="itemForm">
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목코드*</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="itemCode"
+												disabled placeholder="자동생성">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목명*</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="itemName"
+												required>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">규격*</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="spec" required>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">단위*</label>
+										<div class="col-sm-9">
+											<select class="form-select" name="unit" required>
+												<option value="">선택</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목그룹*</label>
+										<div class="col-sm-9">
+											<select class="form-select" name="itemGroup" required>
+												<option value="">선택</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">입고단가</label>
+										<div class="col-sm-9">
+											<input type="number" class="form-control" name="inPrice">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">출고단가</label>
+										<div class="col-sm-9">
+											<input type="number" class="form-control" name="outPrice">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">창고</label>
+										<div class="col-sm-9">
+											<select class="form-select" name="warehouse">
+												<option value="">선택</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목 이미지</label>
+										<div class="col-sm-9">
+											<input type="file" class="form-control" name="itemImage"
+												accept="image/*">
+
+										</div>
+									</div>
+								</form>
+							</div>
+
+
 						</div>
 					</div>
 				</div>
+
 
 			</div>
 		</main>
