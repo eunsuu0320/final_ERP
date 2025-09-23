@@ -33,7 +33,7 @@ public class UserService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
         return User.builder()
-                .username(userId)  // 그대로 저장 (필요 시 userId만 넣어도 됨)
+                .username(combined)  // 그대로 저장 (필요 시 userId만 넣어도 됨)
                 .password("{noop}"+user.getUserPw())
                 .roles(user.getRoleCode()) // DB에 "USER" 저장되어 있으면 자동으로 "ROLE_USER" 적용됨
                 .build();
