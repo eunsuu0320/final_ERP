@@ -3,54 +3,44 @@
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/main}">
 
+<head>
+    <!-- Tabulator CSS -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <!-- Custom CSS for layout -->
+    <style>
+        .flex-nowrap {
+            flex-wrap: nowrap !important;
+        }
+    </style>
+</head>
+
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="container-fluid px-4">
-				<h1 class="mt-4">영업계획목록</h1>
+				<h1 class="mt-4">영업계획목록(IY002)</h1>
 
-				<div class="row">
+				<!-- flex-nowrap을 추가하여 줄바꿈을 방지 -->
+				<div class="row flex-nowrap">
 
-					<div class="col">
+					<!-- flex-grow-1을 추가하여 테이블이 남은 공간을 모두 차지하도록 설정 -->
+					<div class="col flex-grow-1">
 						<div class="d-flex justify-content-end gap-2 mb-3">
-							<!-- 버튼들 -->
+							<!-- 버튼 -->
 							<button class="btn btn-primary me-2">신규</button>
 							<button class="btn btn-secondary me-2">Excel</button>
 							<button class="btn btn-secondary me-2">인쇄</button>
-							</button>
 						</div>
 
-						<!-- 표 -->
-						<table class="table table-bordered text-center align-middle">
-							<thead class="table">
-								<tr>
-									<th scope="col"><input class="form-check-input"
-										type="checkbox" /></th>
-									<th scope="col">년도</th>
-									<th scope="col">총 매출액</th>
-									<th scope="col">총 영업이익</th>
-									<th scope="col">신규 거래처수</th>
-									<th scope="col">재거래율</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr class="table">
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-									<td></td>
-								</tr>
-							</tbody>
-						</table>
+						<!-- Tabulator가 테이블을 생성할 div -->
+						<div id="sales-table"></div>
 					</div>
-
-					<!-- 📌 오른쪽: 유의사항 (사이드바 느낌) -->
+	
+					<!--오른쪽: 유의사항 -->
 					<div class="col-auto ms-3 bg-light rounded p-3 shadow-sm"
 						style="min-width: 250px;">
 						<h5 class="text-danger fw-bold">유의사항</h5>
-
+		
 						<!-- 미수금 상위 거래처 -->
 						<div class="mb-4 border p-2">
 							<strong>미수금 상위 5 거래처</strong>
@@ -64,7 +54,7 @@
 								</tbody>
 							</table>
 						</div>
-
+		
 						<!-- 여신초과 거래처 -->
 						<div class="border p-2">
 							<strong>여신초과 거래처</strong>
@@ -86,5 +76,9 @@
 			<!-- container-fluid 끝 -->
 		</main>
 	</div>
+	
+	<!-- Tabulator JS -->
+    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+	<script th:src="@{/sales2/js/salesList.js}"></script>
 </body>
 </html>
