@@ -47,7 +47,8 @@ public class SecurityConfig {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
             );
-//            .csrf(csrf -> csrf.disable()); // 필요 시 enable
+//            .csrf(csrf -> csrf.disable()) // 필요 시 enable
+
 
         return http.build();
     }
