@@ -11,37 +11,38 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Product;
-import com.yedam.sales1.service.ProductService;
+import com.yedam.sales1.service.PartnerService;
 
 @Controller
-public class ProductController {
+public class PartnerController {
 
 	
-    private final ProductService productService;
+    private final PartnerService partnerService;
 
     @Autowired
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public PartnerController(PartnerService partnerService) {
+        this.partnerService = partnerService;
     }
 
-    @GetMapping("productList")
-    public String productList(Model model) {
-        List<Product> products = productService.getAllProduct();
+    @GetMapping("partnerList")
+    public String partnerList(Model model) {
+        List<Partner> partners = partnerService.getAllPartner();
         
-        Map<String, Object> tableData = productService.getTableDataFromProducts(products);
+        Map<String, Object> tableData = partnerService.getTableDataFromPartners(partners);
 
         model.addAttribute("columns", tableData.get("columns"));
         model.addAttribute("rows", tableData.get("rows"));
 
-        return "sales1/productList";
+        return "sales1/partnerList";
     }
     
     
     // 품목 등록
-    @PostMapping("api/registProduct")
-    public ResponseEntity<Product> registProduct(@ModelAttribute Product product) {
-        Product saved = productService.saveProduct(product);
+    @PostMapping("api/registPartner")
+    public ResponseEntity<Partner> registPartner(@ModelAttribute Partner partner) {
+        Partner saved = partnerService.savePartner(partner);
         return ResponseEntity.ok(saved);
     }
     
