@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["품목코드", "품목명", "규격/단위", "이미지", "비고"];
+	const defaultVisible = ["거래처코드", "거래처명", "거래처유형", "전화번호", "이메일", "비고"];
 
 	// 이미지모달
 	window.showImageModal = function(url) {
