@@ -14,7 +14,7 @@ public class HrPDF {
 	@GeneratedValue(strategy = GenerationType.IDENTITY) // Long을 쓰면 DB의 AUTO_INCREMENT 사용
 	private Long pdfKey;   // PK (자동 증가)
 
-	private String signId; // 근로계약서 ID
+	private Long signId; // 근로계약서 ID
 	private String pdf;
 
 }

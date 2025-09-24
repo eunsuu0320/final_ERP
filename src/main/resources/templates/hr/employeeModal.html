@@ -63,21 +63,17 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">부서</label>
-											<input type="hidden" id="DEPT" value="DEPT">
 											 <input type="hidden" id="deptCode" name="deptCode">
-											<input type="text" name="deptName" id="dept" class="form-control" readonly
+											<input type="text" name="dept" id="dept" class="form-control" readonly
 											onclick="openModal(
 										      'commonCode',
 										      function(selected) {
 										        document.getElementById('dept').value = selected.codeName;
 										        document.getElementById('deptCode').value = selected.codeId;
-										      },
-										      document.getElementById('DEPT').value
-										  	)">
+										      }, 'DEPT')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직급</label>
-											<input type="hidden" id="POSITION" value="POSITION">
 											<input type="hidden" id="deptCode" name="deptCode">
 											<input type="text" name="position" id="position" class="form-control" readonly
 											onclick="openModal(
@@ -85,13 +81,10 @@
 										      function(selected) {
 										        document.getElementById('position').value = selected.codeName;
 										        document.getElementById('deptCode').value = selected.codeId;
-										      },
-										      document.getElementById('POSITION').value
-										  	)">
+										      }, 'POSITION')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직책</label>
-											<input type="hidden" id="DUTY" value="DUTY">
 											<input type="hidden" id="deptCode" name="deptCode">
 											<input type="text" name="grade" id="grade" class="form-control" readonly
 											onclick="openModal(
@@ -99,9 +92,7 @@
 										      function(selected) {
 										        document.getElementById('grade').value = selected.codeName;
 										        document.getElementById('deptCode').value = selected.codeId;
-										      },
-										      document.getElementById('DUTY').value
-										  	)">
+										      }, 'DUTY')">
 										</div>
 									</div>
 
@@ -141,7 +132,6 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">은행</label>
-											<input type="hidden" id="BANK" value="BANK">
 											<input type="hidden" id="deptCode" name="deptCode">
 											<input type="text" name="bankCode" id="bankCode" class="form-control"
 											onclick="openModal(
@@ -149,9 +139,7 @@
 										      function(selected) {
 										        document.getElementById('bankCode').value = selected.codeName;
 										        document.getElementById('deptCode').value = selected.codeId;
-										      },
-										      document.getElementById('BANK').value
-										  	)">
+										      }, 'BANK')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">예금주</label>
@@ -166,7 +154,7 @@
 									<div class="row mb-3">
 										<div class="col-md-3">
 											<label class="form-label required">우편번호</label>
-											<input type="text" name="postalCode" id="postalCode" class="form-control" readonly
+											<input type="number" name="postalCode" id="postalCode" class="form-control" readonly
 											onclick="execDaumPostcode()">
 										</div>
 										<div class="col-md-9">
@@ -179,7 +167,7 @@
 
 							<!-- 근로계약서 탭 -->
 							<div class="tab-pane fade" id="contractInfo">
-							  <form id="contractForm">
+							  <form id="contractForm" method="post" enctype="multipart/form-data">
 
 							     <!-- 근로계약서 원본 PDF -->
 							    <div class="mb-3" style="height: 32.55rem;">
@@ -215,8 +203,6 @@
 			</div>
 		</div>
 				</div>
-
-
 	<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 	<script type="text/javascript">
 	const canvas = document.getElementById("signature-pad");
@@ -256,6 +242,61 @@
 	    alert("서명이 비어 있습니다.");
 	  }
 	});
+
+	 // 저장 버튼 클릭 이벤트
+	const header = document.querySelector('meta[name="_csrf_header"]').content;
+    const token = document.querySelector('meta[name="_csrf"]').content;
+
+    document.getElementById("btn-save-emp").addEventListener("click", function() {
+    	  const empForm = document.getElementById("empForm");
+    	  const contractForm = document.getElementById("contractForm");
+
+    	  // empForm + contractForm 합쳐서 FormData 생성
+    	  const formData = new FormData(empForm);
+    	  new FormData(contractForm).forEach((value, key) => formData.append(key, value));
+
+    	  // 사인 이미지(Base64)를 Blob으로 변환해 FormData에 추가
+    	  const cSignData = document.getElementById("cSign").value;
+    	  if (cSignData) {
+    	    const byteString = atob(cSignData.split(',')[1]);
+    	    const mimeString = cSignData.split(',')[0].split(':')[1].split(';')[0];
+    	    const ab = new ArrayBuffer(byteString.length);
+    	    const ia = new Uint8Array(ab);
+    	    for (let i = 0; i < byteString.length; i++) {
+    	      ia[i] = byteString.charCodeAt(i);
+    	    }
+    	    const blob = new Blob([ab], { type: mimeString });
+    	    formData.append("signImg", blob, "signature.png");
+    	  }
+
+    	  // 디버깅: FormData 안에 뭐 들어갔는지 확인
+    	  for (let pair of formData.entries()) {
+    	    console.log(pair[0] + ": " + pair[1]);
+    	  }
+
+    	  fetch("/saveContract", {
+    	    method: "POST",
+    	    headers: {
+    	      'X-CSRF-Token': token   // ✅ Content-Type 절대 넣지 말 것
+    	    },
+    	    body: formData
+    	  })
+    	  .then(res => res.text())   // 서버가 문자열 리턴하니까 text()로 받기
+    	  .then(data => {
+    	    console.log("응답:", data);
+    	    if (data === "success") {
+    	      alert("사원 등록 성공!");
+    	      const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
+    	      modal.hide();
+    	    } else {
+    	      alert("사원 등록 실패: " + data);
+    	    }
+    	  })
+    	  .catch(err => {
+    	    console.error("저장 오류:", err);
+    	    alert("서버 오류 발생!");
+    	  });
+    	});
 
 	</script>
 		</div>
