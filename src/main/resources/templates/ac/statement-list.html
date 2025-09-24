@@ -71,8 +71,7 @@
           <div>
             <label class="form-label">전표번호</label>
             <div class="input-with-icon">
-              <input id="voucherNo" type="text" class="form-control" placeholder="조회 후 등록" readonly>
-              <button id="btn-find-voucher" type="button" class="btn btn-primary">검색</button>
+              <input id="voucherNo" type="text" class="form-control" placeholder="조회 후 등록">
             </div>
           </div>
 
@@ -408,53 +407,56 @@
 
  // 저장(실제 호출)
     document.getElementById('vf-save').addEventListener('click', async () => {
-      const payload = {
-        type: document.getElementById('vf-title').textContent.includes('매입') ? 'BUY' : 'SALES',
+  const type = document.getElementById('vf-title').textContent.includes('매입') ? 'BUY' : 'SALES';
+
+  const body = (type === 'BUY')
+    ? {
         voucherDate: document.getElementById('vf-voucherDate').value || null,
-        voucherNo: document.getElementById('vf-voucherNo').value || null,
-        saleCode: document.getElementById('vf-saleCode').value || null,
+        buyCode: document.getElementById('vf-saleCode').value || null,
         partnerName: document.getElementById('vf-partnerName').value || null,
-        saleDate: document.getElementById('vf-saleDate').value || null,
-        empName: document.getElementById('vf-empName').value || null,
-        writeDate: document.getElementById('vf-writeDate').value || null,
-        taxType: document.getElementById('vf-taxType').value || 'TAXABLE',
-        supply: Number(String(document.getElementById('vf-supply').value).replace(/[^\d.-]/g,'')) || 0,
-        vat: Number(String(document.getElementById('vf-vat').value).replace(/[^\d.-]/g,'')) || 0,
-        total: Number(String(document.getElementById('vf-total').value).replace(/[^\d.-]/g,'')) || 0,
+        employee: document.getElementById('vf-empName').value || null,
+        taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
+        amountSupply: unfmt(document.getElementById('vf-supply').value),
+        amountVat:    unfmt(document.getElementById('vf-vat').value),
+        amountTotal:  unfmt(document.getElementById('vf-total').value),
+        remark: document.getElementById('vf-remark').value || null,
+      }
+    : {
+        voucherDate: document.getElementById('vf-voucherDate').value || null,
+        salesCode: document.getElementById('vf-saleCode').value || null,
+        partnerName: document.getElementById('vf-partnerName').value || null,
+        employee: document.getElementById('vf-empName').value || null,
+        taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
+        amountSupply: unfmt(document.getElementById('vf-supply').value),
+        amountVat:    unfmt(document.getElementById('vf-vat').value),
+        amountTotal:  unfmt(document.getElementById('vf-total').value),
         remark: document.getElementById('vf-remark').value || null,
       };
 
-      
-      const token  = document.querySelector('meta[name="_csrf"]')?.content;
-      const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
-      
-      
-      try {
-    	  const res = await fetch('/api/statements', {
-    		  method: 'POST',
-    		  headers: {
-    		    'Content-Type': 'application/json',
-    		    ...(token ? { [header]: token } : {}),   // ★ CSRF 헤더 추가
-    		  },
-    		  body: JSON.stringify(payload),
-    		});
+  const url = (type === 'BUY') ? '/api/statements/buy' : '/api/statements/sales';
 
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(err || 'save failed');
-        }
+  const token  = document.querySelector('meta[name="_csrf"]')?.content;
+  const header = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
 
-        // 성공 처리: 모달 닫고 테이블 리로드
-        toast('저장되었습니다.');
-        vfModal?.hide();
-        // 첫 페이지로 리셋 후 새로고침(원하는 페이지 유지면 replaceData만)
-        mainTable.setPage(1);
-        mainTable.replaceData();
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { [header]: token } : {}) },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text() || 'save failed');
 
-      } catch (e) {
-        console.error(e);
-        toast('저장 실패: ' + (e.message || ''));
-      }
+    const { voucherNo } = await res.json();
+    // 모달 전표번호 즉시 갱신 (서버 발번값)
+    document.getElementById('vf-voucherNo').value = voucherNo;
+
+    toast(`저장되었습니다: ${voucherNo}`);
+    vfModal?.hide();
+    mainTable.setPage(1);
+    mainTable.replaceData();
+  } catch (e) {
+    console.error(e); toast('저장 실패: ' + (e.message || ''));
+  }
     });
   });
 </script>

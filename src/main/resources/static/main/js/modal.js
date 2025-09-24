@@ -14,14 +14,21 @@ const modalConfigs = {
    },
     // ✅ 추가: 거래처 검색
   partner: {
-    url: "/api/partners",               // 서버 API에 맞게
+    url: "/api/partners",
     title: "거래처 검색",
     columns: [
+      { // 선택 체크박스
+        titleFormatter: "rowSelection",
+        formatter: "rowSelection",
+        titleFormatterParams: { rowRange: "active" },
+        headerSort: false, hozAlign: "center", width: 60
+      },
       { title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
-      { title: "거래처명", field: "partnerName", minWidth: 200 },
-      { title: "담당자", field: "picName", width: 120 },
-      { title: "연락처", field: "tel", width: 140 },
+      { title: "거래처명",   field: "partnerName", minWidth: 200 },
+      { title: "연락처",     field: "tel",         width: 140 },
+      { title: "담당자",     field: "picName",     width: 120 },
     ],
+    selectable: 1, // 단일 선택
   },
 
   // ✅ 추가: 전표 검색

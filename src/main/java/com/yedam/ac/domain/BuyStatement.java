@@ -2,32 +2,31 @@ package com.yedam.ac.domain;
 
 import java.time.LocalDate;
 
-import com.yedam.ac.domain.Statement.StatementBuilder;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "BUY_STATEMENT")
-@SequenceGenerator(name="buy_stmt_seq", sequenceName="BUY_STATEMENT_SEQ", allocationSize=1)
-@Data
+@Entity @Table(name="BUY_STATEMENT")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class BuyStatement {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "buy_stmt_seq")
     @Column(name = "VOUCHER_NO")
-    private Long voucherNo;
+    private String voucherNo;          // 부모 STATEMENT 번호 그대로 사용 (setter 없음)
 
     @Column(name = "VOUCHER_DATE")
     private LocalDate voucherDate;
 
-    @Column(name = "BUY_CODE")             // ★ 매입은 BUY_CODE
+    @Column(name = "BUY_CODE")
     private String buyCode;
 
     @Column(name = "PARTNER_NAME")
@@ -50,9 +49,5 @@ public class BuyStatement {
 
     @Column(name = "REMARK")
     private String remark;
-
-	public static StatementBuilder builder() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
+
