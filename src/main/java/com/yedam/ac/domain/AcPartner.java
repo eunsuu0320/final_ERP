@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Getter @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Partner {
+public class AcPartner {
 
     @Id
     @Column(name = "PARTNER_CODE", length = 20, nullable = false)

@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Repository
 @RequiredArgsConstructor
-public class PartnerLookupRepository {
+public class AcPartnerLookupRepository {
 
     private final EntityManager em;
 

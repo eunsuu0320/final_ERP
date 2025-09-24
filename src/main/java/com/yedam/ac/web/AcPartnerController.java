@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.yedam.ac.repository.PartnerLookupRepository;
+import com.yedam.ac.repository.AcPartnerLookupRepository;
 import com.yedam.ac.web.dto.PartnerLookupDto;
 
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AcPartnerController {
 
-    private final PartnerLookupRepository repo;
+    private final AcPartnerLookupRepository repo;
 
     @GetMapping("/api/partners")
     public List<PartnerLookupDto> partners(@RequestParam(value = "q", required = false) String q) {
