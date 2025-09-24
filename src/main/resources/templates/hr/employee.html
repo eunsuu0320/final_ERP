@@ -38,9 +38,8 @@
 	</div>
 
 	<div th:replace="common/modal :: commonModal"></div>
-	<script src="/hr/js/employee.js"></script>
-	<script src="/main/js/modal.js"></script>
 	<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script src="/hr/js/employee.js"></script>
 	<script>
 	  // 전역에서 호출 가능하도록 window에 등록
 	  window.execDaumPostcode = function() {
@@ -53,5 +52,6 @@
 	    }).open();
 	  }
 	</script>
+
 </body>
 </html>
