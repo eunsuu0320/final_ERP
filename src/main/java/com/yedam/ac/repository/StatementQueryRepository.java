@@ -11,7 +11,7 @@ import com.yedam.ac.domain.Statement;
 import com.yedam.ac.web.dto.UnifiedStatementRow;
 
 @Repository
-public interface StatementQueryRepository extends JpaRepository<Statement, Long> {
+public interface StatementQueryRepository extends JpaRepository<Statement, String> {
 
     // 목록: ROWNUM 상/하한으로 잘라서 반환 (Pageable 없음!)
     @Query(

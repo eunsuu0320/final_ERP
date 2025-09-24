@@ -28,18 +28,18 @@ public class AcStatementApiController {
         return queryService.search(form);
     }
 
-    @PostMapping("/api/statements")
-    public ResponseEntity<?> create(@RequestBody StatementCreateRequest req) {
-        Long newNo = commandService.save(req);
-
-        String formatted = (req.getVoucherDate() != null)
-                ? req.getVoucherDate().getYear() + "-" + newNo
-                : String.valueOf(newNo);
-
-        return ResponseEntity.ok(java.util.Map.of(
-            "result", "ok",
-            "type", req.getType(),
-            "voucherNo", formatted
-        ));
-    }
+//    @PostMapping("/api/statements")
+//    public ResponseEntity<?> create(@RequestBody StatementCreateRequest req) {
+//        Long newNo = commandService.save(req);
+//
+//        String formatted = (req.getVoucherDate() != null)
+//                ? req.getVoucherDate().getYear() + "-" + newNo
+//                : String.valueOf(newNo);
+//
+//        return ResponseEntity.ok(java.util.Map.of(
+//            "result", "ok",
+//            "type", req.getType(),
+//            "voucherNo", formatted
+//        ));
+//    }
 }

@@ -9,10 +9,14 @@
 				<div class="modal-content">
 					<div class="modal-header">
 						<h5 class="modal-title" id="commonModalLabel">검색</h5>
-
+						
 					  	<!-- 🔍 검색창 추가 -->
-					 	 <input type="text" id="commonModalSearch" class="form-control ms-3" placeholder="검색어 입력" style="width: 200px;">
-					
+					 	<input type="text" id="commonModalSearch" class="form-control ms-3" placeholder="검색어 입력" style="width: 200px;">
+						
+						<button class="btn btn-success btn-sm" onclick="exportExcel()">Excel 내보내기</button>
+						<button class="btn btn-danger btn-sm" onclick="exportPDF()">PDF 내보내기</button>
+						
+						<!-- 닫기 버튼 -->
 					  	<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 					</div>
 					<div class="modal-body">
