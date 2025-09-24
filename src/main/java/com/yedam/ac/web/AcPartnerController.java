@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-public class PartnerController {
+public class AcPartnerController {
 
     private final PartnerLookupRepository repo;
 
