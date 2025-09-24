@@ -27,21 +27,19 @@ public class ProductController {
 
     @GetMapping("itemList")
     public String itemList(Model model) {
-        // 1. 전체 상품 조회
         List<Product> products = productService.getAllProduct();
-
-        // 2. 테이블 데이터 변환
+        
         Map<String, Object> tableData = productService.getTableDataFromProducts(products);
 
-        // 3. 모델에 담기
         model.addAttribute("columns", tableData.get("columns"));
         model.addAttribute("rows", tableData.get("rows"));
 
-        return "sales1/productList"; // => templates/sales1/itemList.html
+        return "sales1/productList";
     }
     
-    @PostMapping
-    public ResponseEntity<Product> saveProduct(@ModelAttribute Product product) {
+    // 품목 등록
+    @PostMapping("/registProduct")
+    public ResponseEntity<Product> registProduct(@ModelAttribute Product product) {
         Product saved = productService.saveProduct(product);
         return ResponseEntity.ok(saved);
     }

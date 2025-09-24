@@ -29,13 +29,55 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 	};
+	/*
+		// 품목상세/등록 모달의 단위 select 태그 입력+선택
+		const unitSelect = document.getElementById('unitSelect');
+	
+		// Choices.js 적용
+		if (unitSelect) {
+			const choices = new Choices(unitSelect, {
+				removeItemButton: false,   // 선택 해제 버튼 필요 없으면 false
+				duplicateItemsAllowed: false,
+				addItems: true,           // 사용자가 직접 입력 가능
+				searchEnabled: true,
+				shouldSort: false         // 옵션 정렬 비활성화
+			});
+	
+		}
+	*/
+
+	window.applyComboSelect = function(selector) {
+		const selects = document.querySelectorAll(selector);
+
+		selects.forEach(select => {
+			if (select) {
+				if (select.choicesInstance) {
+					select.choicesInstance.destroy();
+				}
+
+				const choices = new Choices(select, {
+					removeItemButton: false,
+					duplicateItemsAllowed: false,
+					addItems: true,
+					searchEnabled: true,
+					shouldSort: false
+				});
+
+				select.choicesInstance = choices;
+			}
+		});
+	}
+	applyComboSelect('.comboSelect');
 
 	// 품목상세모달의 저장버튼 이벤트 -> 신규 등록 / 수정
 	window.saveModal = function() {
 		const form = document.getElementById("itemForm");
 		const formData = new FormData(form);
 		let modalName = document.querySelector('#newDetailModal .modal-title').innerHTML;
-
+		if (!formData.get("productName") || !formData.get("unit") || !formData.get("size") || !formData.get("productGroup")) {
+			alert("필수항목을 입력하세요!");
+			return;
+		}
 		if (modalName === 'detail') {
 			// AJAX 요청
 			fetch("/api/registProduct", {
@@ -127,7 +169,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		columns: tabulatorColumns,
 		placeholder: "데이터가 없습니다.",
 		movableColumns: true,
-		resizableRows: false
+		resizableRows: false,
+		pagination: "local",
+		paginationSize: 10
 	});
 
 	// 컬럼 토글 체크박스

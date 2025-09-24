@@ -15,5 +15,6 @@ public interface ProductRepository extends
 	@Query("SELECT p FROM Product p")
 	List<Product> findAll();
 	
+	Product findTopByOrderByProductCodeDesc();
 	
 }

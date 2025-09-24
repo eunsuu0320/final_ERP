@@ -7,12 +7,12 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.repository.ProductRepository;
 import com.yedam.sales1.service.ProductService;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -71,7 +71,24 @@ public class ProductServiceImpl implements ProductService {
 	}
 
     @Override
+    @Transactional
     public Product saveProduct(Product product) {
+    	String newProductCode = generateProductCode();
+    	product.setProductCode(newProductCode);
+    	
         return productRepository.save(product);
+    }
+    
+    private String generateProductCode() {
+    	Product product = productRepository.findTopByOrderByProductCodeDesc();
+    	
+    	int nextNumber = 1;
+    	if (product != null) {
+    		String ProductCode = product.getProductCode();
+    		String ProductNumber = ProductCode.replaceAll("\\D",  "");
+    		nextNumber = Integer.parseInt(ProductNumber)+1;
+    	}
+    	
+    	return String.format("P%04d", nextNumber);
     }
 }

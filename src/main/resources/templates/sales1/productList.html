@@ -7,6 +7,8 @@
 <link
 	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
 	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
@@ -27,9 +29,6 @@
 						onclick="showDetailModal('regist')">신규</button>
 					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-dark me-2">초기화</button>
-					<button class="btn btn-secondary me-2">이력조회</button>
-					<button class="btn btn-secondary me-2">인쇄</button>
-					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
 
 				<!-- 검색 바 -->
@@ -47,6 +46,12 @@
 						<label for="warehouse" class="me-3">창고</label> <input type="text"
 							class="form-control w-auto" placeholder="검색어 입력" id="warehouse">
 					</div>
+				</div>
+
+				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-secondary me-2">이력조회</button>
+					<button class="btn btn-secondary me-2">인쇄</button>
+					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
 
 				<!-- 컬럼 선택 체크박스 -->
@@ -103,36 +108,47 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">품목코드*</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="itemCode"
+											<input type="text" class="form-control" name="productCode"
 												disabled placeholder="자동생성">
 										</div>
 									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">품목명*</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="itemName"
+											<input type="text" class="form-control" name="productName"
 												required>
 										</div>
 									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">규격*</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="spec" required>
+											<select class="form-select comboSelect" name="size" required>
+												<option value="" disabled selected>규격을 선택하세요</option>
+												<option value="S">S</option>
+												<option value="M">M</option>
+												<option value="L">L</option>
+											</select>
 										</div>
 									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">단위*</label>
 										<div class="col-sm-9">
-											<select class="form-select" name="unit" required>
-												<option value="">선택</option>
+											<select class="form-select comboSelect" name="unit" required>
+												<option value="" disabled selected>단위를 선택하세요</option>
+												<option value="kg">kg</option>
+												<option value="cm">cm</option>
 											</select>
 										</div>
+
 									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">품목그룹*</label>
 										<div class="col-sm-9">
-											<select class="form-select" name="itemGroup" required>
-												<option value="">선택</option>
+											<select class="form-select comboSelect" name="productGroup"
+												required>
+												<option value="" disabled selected>품목그룹을 선택하세요</option>
+												<option value="잡화">잡화</option>
+												<option value="공구">공구</option>
 											</select>
 										</div>
 									</div>
@@ -151,15 +167,18 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">창고</label>
 										<div class="col-sm-9">
-											<select class="form-select" name="warehouse">
-												<option value="">선택</option>
+											<select class="form-select comboSelect" name="warehouse"
+												required>
+												<option value="" disabled selected>품목그룹을 선택하세요</option>
+												<option value="본사창고">본사창고</option>
+												<option value="예담창고">예담창고</option>
 											</select>
 										</div>
 									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">품목 이미지</label>
 										<div class="col-sm-9">
-											<input type="file" class="form-control" name="itemImage"
+											<input type="file" class="form-control" name="productImage"
 												accept="image/*">
 
 										</div>
@@ -184,10 +203,11 @@
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<!-- 분리한 JS 파일 -->
-	<script th:src="@{/erp/js/sales1/productList.js}"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+	<script
+		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+	<script th:src="@{/erp/js/sales1/productList.js}"></script>
 
 </body>
 </html>
