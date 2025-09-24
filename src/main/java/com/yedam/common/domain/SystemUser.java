@@ -2,8 +2,13 @@ package com.yedam.common.domain;
 
 import java.util.Date;
 
+import com.yedam.hr.domain.Employee;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -23,4 +28,8 @@ public class SystemUser {
 	private Date createdDate;
 	private String usageStatus;
 	private String remk;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empCode", referencedColumnName = "empNo", insertable = false, updatable = false)
+    private Employee employee;
 }
