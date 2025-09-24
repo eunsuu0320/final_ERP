@@ -13,8 +13,8 @@
 					  	<!-- 🔍 검색창 추가 -->
 					 	<input type="text" id="commonModalSearch" class="form-control ms-3" placeholder="검색어 입력" style="width: 200px;">
 						
-						<button class="btn btn-success btn-sm" onclick="exportExcel()">Excel 내보내기</button>
-						<button class="btn btn-danger btn-sm" onclick="exportPDF()">PDF 내보내기</button>
+						<button class="btn btn-success btn-sm" onclick="ExportHelper.exportExcel(table, document.getElementById('commonModalLabel').textContent)">Excel 내보내기</button>
+  						<button class="btn btn-danger btn-sm" onclick="ExportHelper.exportPDF(table, document.getElementById('commonModalLabel').textContent)">PDF 내보내기</button>
 						
 						<!-- 닫기 버튼 -->
 					  	<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
