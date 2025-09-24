@@ -1,13 +1,13 @@
+// src/main/java/com/yedam/ac/service/impl/StatementQueryServiceImpl.java
 package com.yedam.ac.service.impl;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import com.yedam.ac.repository.StatementQueryRepository;
 import com.yedam.ac.service.StatementQueryService;
@@ -20,27 +20,27 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StatementQueryServiceImpl implements StatementQueryService {
 
-    private final StatementQueryRepository repository;
+    private final StatementQueryRepository repo;
 
     @Override
     public Page<UnifiedStatementRow> search(StatementSearchForm form) {
-        int page = form.getPage() == null ? 0 : Math.max(form.getPage(), 0);
-        int size = form.getSize() == null ? 10 : Math.max(form.getSize(), 1);
-        int start = page * size;
-        int end   = start + size;
-        Pageable pageable = PageRequest.of(page, size);
+        final String type      = (form.getType() == null || form.getType().isBlank()) ? "ALL" : form.getType();
+        final String keyword   = form.getKeyword()   == null ? "" : form.getKeyword().trim();   // ✅ keyword 사용
+        final String voucherNo = form.getVoucherNo() == null ? "" : form.getVoucherNo().trim();
 
-        String type = StringUtils.hasText(form.getType()) ? form.getType().toUpperCase() : "ALL";
-        String keyword = StringUtils.hasText(form.getKeyword()) ? form.getKeyword().trim() : null;
-        String voucherNo = StringUtils.hasText(form.getVoucherNo()) ? form.getVoucherNo().trim() : null;
+        final LocalDate fromDate = form.getFromDate();
+        final LocalDate toDate   = form.getToDate();
 
-        long total = repository.countUnified(
-                type, keyword, voucherNo, form.getFromDate(), form.getToDate());
+        final int page  = form.getPage() == null ? 0  : Math.max(0, form.getPage());
+        final int size  = form.getSize() == null ? 20 : Math.max(1, form.getSize());
+        final int start = page * size;
+        final int end   = start + size;
 
-        List<UnifiedStatementRow> content = repository.searchUnifiedList(
-                type, keyword, voucherNo, form.getFromDate(), form.getToDate(),
-                start, end);
+        List<UnifiedStatementRow> rows = repo.searchUnifiedList(
+                type, keyword, voucherNo, fromDate, toDate, start, end
+        );
+        long total = repo.countUnified(type, keyword, voucherNo, fromDate, toDate);
 
-        return new PageImpl<>(content, pageable, total);
+        return new PageImpl<>(rows, PageRequest.of(page, size), total);
     }
 }
