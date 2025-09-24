@@ -1,15 +1,17 @@
 // src/main/java/com/yedam/ac/service/impl/StatementServiceImpl.java
 package com.yedam.ac.service.impl;
 
+import java.time.LocalDate;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.ac.domain.BuyStatement;
 import com.yedam.ac.domain.SalesStatement;
 import com.yedam.ac.repository.BuyStatementRepository;
-import com.yedam.ac.repository.CommonQueryRepository;
 import com.yedam.ac.repository.SalesStatementRepository;
 import com.yedam.ac.service.StatementService;
+import com.yedam.ac.util.VoucherNoGenerator;
 import com.yedam.ac.web.dto.BuyCreateReq;
 import com.yedam.ac.web.dto.SalesCreateReq;
 import com.yedam.ac.web.dto.StatementCreateRes;
@@ -21,48 +23,55 @@ import lombok.RequiredArgsConstructor;
 public class StatementServiceImpl implements StatementService {
 
     private final SalesStatementRepository salesRepo;
-    private final BuyStatementRepository buyRepo;
-    private final CommonQueryRepository commonQuery;
+    private final BuyStatementRepository   buyRepo;
 
-    @Override
     @Transactional
+    @Override
     public StatementCreateRes createSalesStatement(SalesCreateReq req) {
-        String voucherNo = commonQuery.nextVoucherNo("SALES", req.getVoucherDate());
+        LocalDate d = req.getVoucherDate() != null ? req.getVoucherDate() : LocalDate.now();
+        String prefix = VoucherNoGenerator.monthPrefix(d);        // "yyMM-"
+        String maxNo  = salesRepo.findMaxVoucherNoLike(prefix);   // 그달 최대
+        String next   = VoucherNoGenerator.nextFromMax(maxNo);    // "0001"
+        String voucherNo = prefix + next;                         // "2509-0001"
 
-        salesRepo.save(SalesStatement.builder()
-                .voucherNo(voucherNo)
-                .voucherDate(req.getVoucherDate())
-                .salesCode(req.getSalesCode())
-                .partnerName(req.getPartnerName())
-                .employee(req.getEmployee())
-                .taxCode(req.getTaxCode())
-                .amountSupply(req.getAmountSupply())
-                .amountVat(req.getAmountVat())
-                .amountTotal(req.getAmountTotal())
-                .remark(req.getRemark())
-                .build());
+        SalesStatement e = new SalesStatement();
+        e.setVoucherNo(voucherNo);
+        e.setVoucherDate(d);
+        e.setSalesCode(req.getSalesCode());
+        e.setPartnerName(req.getPartnerName());
+        e.setEmployee(req.getEmployee());
+        e.setTaxCode(req.getTaxCode());
+        e.setAmountSupply(req.getAmountSupply() == null ? 0L : req.getAmountSupply());
+        e.setAmountVat   (req.getAmountVat()   == null ? 0L : req.getAmountVat());
+        e.setAmountTotal (req.getAmountTotal() == null ? 0L : req.getAmountTotal());
+        e.setRemark(req.getRemark());
 
+        salesRepo.save(e);
         return new StatementCreateRes(voucherNo);
     }
 
-    @Override
     @Transactional
+    @Override
     public StatementCreateRes createBuyStatement(BuyCreateReq req) {
-        String voucherNo = commonQuery.nextVoucherNo("BUY", req.getVoucherDate());
+        LocalDate d = req.getVoucherDate() != null ? req.getVoucherDate() : LocalDate.now();
+        String prefix = VoucherNoGenerator.monthPrefix(d);       // "yyMM-"
+        String maxNo  = buyRepo.findMaxVoucherNoLike(prefix);
+        String next   = VoucherNoGenerator.nextFromMax(maxNo);   // "0001"
+        String voucherNo = prefix + next;                        // "2509-0001"
 
-        buyRepo.save(BuyStatement.builder()
-                .voucherNo(voucherNo)
-                .voucherDate(req.getVoucherDate())
-                .buyCode(req.getBuyCode())
-                .partnerName(req.getPartnerName())
-                .employee(req.getEmployee())
-                .taxCode(req.getTaxCode())
-                .amountSupply(req.getAmountSupply())
-                .amountVat(req.getAmountVat())
-                .amountTotal(req.getAmountTotal())
-                .remark(req.getRemark())
-                .build());
+        BuyStatement e = new BuyStatement();
+        e.setVoucherNo(voucherNo);
+        e.setVoucherDate(d);
+        e.setBuyCode(req.getBuyCode());
+        e.setPartnerName(req.getPartnerName());
+        e.setEmployee(req.getEmployee());
+        e.setTaxCode(req.getTaxCode());
+        e.setAmountSupply(req.getAmountSupply() == null ? 0L : req.getAmountSupply());
+        e.setAmountVat   (req.getAmountVat()   == null ? 0L : req.getAmountVat());
+        e.setAmountTotal (req.getAmountTotal() == null ? 0L : req.getAmountTotal());
+        e.setRemark(req.getRemark());
 
+        buyRepo.save(e);
         return new StatementCreateRes(voucherNo);
     }
 }

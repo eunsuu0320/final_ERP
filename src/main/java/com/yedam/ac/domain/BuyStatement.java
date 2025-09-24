@@ -6,22 +6,17 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Entity @Table(name="BUY_STATEMENT")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
+@Getter @Setter
+@Entity
+@Table(name = "BUY_STATEMENT")
 public class BuyStatement {
 
     @Id
-    @Column(name = "VOUCHER_NO")
-    private String voucherNo;          // 부모 STATEMENT 번호 그대로 사용 (setter 없음)
+    @Column(name = "VOUCHER_NO", length = 20, nullable = false)
+    private String voucherNo;             // 예: 2509-0001
 
     @Column(name = "VOUCHER_DATE")
     private LocalDate voucherDate;
@@ -49,5 +44,7 @@ public class BuyStatement {
 
     @Column(name = "REMARK")
     private String remark;
-}
 
+    // @Column(name = "VOUCHER_NO_NUM_BAK")
+    // private Long voucherNoNumBak;
+}

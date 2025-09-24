@@ -26,10 +26,11 @@ public class PartnerLookupRepository {
             List<Object[]> rows = em.createNativeQuery("""
                 SELECT *
                   FROM (
-                        SELECT p.PARTNER_CODE,
+                        SELECT
+                               p.PARTNER_CODE,
                                p.PARTNER_NAME,
-                               COALESCE(p.PARTNER_PHONE, p.TEL)        AS TEL,
-                               COALESCE(p.MANAGER,      p.PIC_NAME)    AS PIC_NAME
+                               NVL(p.PARTNER_PHONE, '') AS TEL,
+                               NVL(p.MANAGER,      '')  AS PIC_NAME
                           FROM PARTNER p
                          ORDER BY p.PARTNER_NAME
                        )
@@ -54,17 +55,18 @@ public class PartnerLookupRepository {
             List<Object[]> rows = em.createNativeQuery("""
                 SELECT *
                   FROM (
-                        SELECT p.PARTNER_CODE,
+                        SELECT
+                               p.PARTNER_CODE,
                                p.PARTNER_NAME,
-                               COALESCE(p.PARTNER_PHONE, p.TEL)        AS TEL,
-                               COALESCE(p.MANAGER,      p.PIC_NAME)    AS PIC_NAME
+                               NVL(p.PARTNER_PHONE, '') AS TEL,
+                               NVL(p.MANAGER,      '')  AS PIC_NAME
                           FROM PARTNER p
                          WHERE (:q IS NOT NULL AND :q <> '')
                            AND (
                                 p.PARTNER_NAME  LIKE '%' || :q || '%'
                              OR p.PARTNER_CODE  LIKE '%' || :q || '%'
-                             OR COALESCE(p.PARTNER_PHONE, p.TEL) LIKE '%' || :q || '%'
-                             OR COALESCE(p.MANAGER, p.PIC_NAME) LIKE '%' || :q || '%'
+                             OR p.PARTNER_PHONE LIKE '%' || :q || '%'
+                             OR p.MANAGER       LIKE '%' || :q || '%'
                            )
                          ORDER BY p.PARTNER_NAME
                        )
@@ -73,8 +75,8 @@ public class PartnerLookupRepository {
 
             return rows.stream()
                        .map(r -> new PartnerLookupDto(
-                           nvl(r[0]), nvl(r[1]), nvl(r[2]), nvl(r[3]
-                       )))
+                           nvl(r[0]), nvl(r[1]), nvl(r[2]), nvl(r[3])
+                       ))
                        .toList();
         } catch (PersistenceException e) {
             log.error("search('{}') query failed", q, e);

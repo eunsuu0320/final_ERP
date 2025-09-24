@@ -1,3 +1,4 @@
+// src/main/java/com/yedam/ac/repository/StatementQueryRepository.java
 package com.yedam.ac.repository;
 
 import java.time.LocalDate;
@@ -19,19 +20,32 @@ public interface StatementQueryRepository extends JpaRepository<Statement, Strin
         "SELECT * FROM ( " +
         "  SELECT U1.*, ROWNUM rn FROM ( " +
         "    SELECT U0.* FROM ( " +
-        "      SELECT ss.VOUCHER_NO AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES' AS type, " +
-        "             ss.AMOUNT_TOTAL AS amountTotal, ss.PARTNER_NAME AS partnerName, ss.REMARK AS remark " +
+        "      SELECT " +
+        "         TO_CHAR(ss.VOUCHER_NO)   AS voucherNo, " +      // 문자열 통일
+        "         ss.VOUCHER_DATE         AS voucherDate, " +
+        "         'SALES'                 AS type, " +
+        "         ss.AMOUNT_TOTAL         AS amountTotal, " +
+        "         ss.PARTNER_NAME         AS partnerName, " +
+        "         ss.REMARK               AS remark " +
         "        FROM SALES_STATEMENT ss " +
         "      UNION ALL " +
-        "      SELECT bs.VOUCHER_NO AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY'   AS type, " +
-        "             bs.AMOUNT_TOTAL AS amountTotal, bs.PARTNER_NAME AS partnerName, bs.REMARK AS remark " +
+        "      SELECT " +
+        "         TO_CHAR(bs.VOUCHER_NO)  AS voucherNo, " +
+        "         bs.VOUCHER_DATE         AS voucherDate, " +
+        "         'BUY'                   AS type, " +
+        "         bs.AMOUNT_TOTAL         AS amountTotal, " +
+        "         bs.PARTNER_NAME         AS partnerName, " +
+        "         bs.REMARK               AS remark " +
         "        FROM BUY_STATEMENT bs " +
         "    ) U0 " +
         "    WHERE (:type = 'ALL' OR U0.type = :type) " +
-        "      AND (:keyword IS NULL OR U0.partnerName LIKE '%' || :keyword || '%' OR U0.voucherNo LIKE '%' || :keyword || '%') " +
-        "      AND (:voucherNo IS NULL OR U0.voucherNo LIKE '%' || :voucherNo || '%') " +
-        "      AND (:fromDate IS NULL OR U0.voucherDate >= :fromDate) " +
-        "      AND (:toDate   IS NULL OR U0.voucherDate <= :toDate) " +
+        "      AND ( :keyword = '' " +
+        "            OR U0.partnerName LIKE '%' || :keyword || '%' " +
+        "            OR U0.voucherNo   LIKE '%' || :keyword || '%' " +
+        "          ) " +
+        "      AND ( :voucherNo = '' OR U0.voucherNo LIKE '%' || :voucherNo || '%' ) " +
+        "      AND ( :fromDate IS NULL OR U0.voucherDate >= :fromDate ) " +
+        "      AND ( :toDate   IS NULL OR U0.voucherDate <= :toDate   ) " +
         "    ORDER BY U0.voucherDate DESC, U0.voucherNo DESC " +
         "  ) U1 WHERE ROWNUM <= :end " +
         ") X WHERE X.rn > :start",
@@ -50,17 +64,20 @@ public interface StatementQueryRepository extends JpaRepository<Statement, Strin
     @Query(
       value =
         "SELECT COUNT(1) FROM ( " +
-        "  SELECT ss.VOUCHER_NO AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES' AS type, ss.PARTNER_NAME AS partnerName, ss.AMOUNT_TOTAL AS amountTotal, ss.REMARK AS remark " +
+        "  SELECT TO_CHAR(ss.VOUCHER_NO) AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES' AS type, ss.PARTNER_NAME AS partnerName, ss.AMOUNT_TOTAL AS amountTotal, ss.REMARK AS remark " +
         "    FROM SALES_STATEMENT ss " +
         "  UNION ALL " +
-        "  SELECT bs.VOUCHER_NO AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY'   AS type, bs.PARTNER_NAME AS partnerName, bs.AMOUNT_TOTAL AS amountTotal, bs.REMARK AS remark " +
+        "  SELECT TO_CHAR(bs.VOUCHER_NO) AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY'   AS type, bs.PARTNER_NAME AS partnerName, bs.AMOUNT_TOTAL AS amountTotal, bs.REMARK AS remark " +
         "    FROM BUY_STATEMENT bs " +
         ") U0 " +
         "WHERE (:type = 'ALL' OR U0.type = :type) " +
-        "  AND (:keyword IS NULL OR U0.partnerName LIKE '%' || :keyword || '%' OR U0.voucherNo LIKE '%' || :keyword || '%') " +
-        "  AND (:voucherNo IS NULL OR U0.voucherNo LIKE '%' || :voucherNo || '%') " +
-        "  AND (:fromDate IS NULL OR U0.voucherDate >= :fromDate) " +
-        "  AND (:toDate   IS NULL OR U0.voucherDate <= :toDate)",
+        "  AND ( :keyword = '' " +
+        "        OR U0.partnerName LIKE '%' || :keyword || '%' " +
+        "        OR U0.voucherNo   LIKE '%' || :keyword || '%' " +
+        "      ) " +
+        "  AND ( :voucherNo = '' OR U0.voucherNo LIKE '%' || :voucherNo || '%' ) " +
+        "  AND ( :fromDate IS NULL OR U0.voucherDate >= :fromDate ) " +
+        "  AND ( :toDate   IS NULL OR U0.voucherDate <= :toDate   )",
       nativeQuery = true
     )
     long countUnified(
