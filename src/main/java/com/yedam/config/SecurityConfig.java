@@ -34,20 +34,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/common/login", "/css/**", "/js/**", "/erp/**", "/hr/pdf/**").permitAll()
+                .requestMatchers("/common/login", "/css/**", "/js/**", "/erp/**", "/hr/pdf/**", "/").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/common/login")              // 로그인 페이지
                 .loginProcessingUrl("/doLogin")   // HTML에서 지정한 action
-                .defaultSuccessUrl("/", true)     // 성공 시 이동
+                .defaultSuccessUrl("/index", true)     // 성공 시 이동
                 .failureUrl("/login?error=true")  // 실패 시 이동
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
-            )
-            .csrf(csrf -> csrf.disable()); // 필요 시 enable
+            );
+//            .csrf(csrf -> csrf.disable()) // 필요 시 enable
 
         return http.build();
     }
