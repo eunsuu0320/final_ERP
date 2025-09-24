@@ -68,18 +68,18 @@ public class StatementServiceImpl implements StatementService {
                 .voucherStatusCode("NORMAL")
                 .build());
 
-        buyRepo.save(BuyStatement.builder()
-                .voucherNo(voucherNo)
-                .voucherDate(req.getVoucherDate())
-                .buyCode(req.getBuyCode())
-                .partnerName(req.getPartnerName())
-                .employee(req.getEmployee())
-                .taxCode(req.getTaxCode())
-                .amountSupply(req.getAmountSupply())
-                .amountVat(req.getAmountVat())
-                .amountTotal(req.getAmountTotal())
-                .remark(req.getRemark())
-                .build());
+//        buyRepo.save(BuyStatement.builder()
+//                .voucherNo(voucherNo)
+//                .voucherDate(req.getVoucherDate())
+//                .buyCode(req.getBuyCode())
+//                .partnerName(req.getPartnerName())
+//                .employee(req.getEmployee())
+//                .taxCode(req.getTaxCode())
+//                .amountSupply(req.getAmountSupply())
+//                .amountVat(req.getAmountVat())
+//                .amountTotal(req.getAmountTotal())
+//                .remark(req.getRemark())
+//                .build());
 
         return new StatementCreateRes(voucherNo);
     }

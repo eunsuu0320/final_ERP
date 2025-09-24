@@ -51,7 +51,7 @@ public class SecurityConfig {
                     .frameOptions(frame -> frame.sameOrigin()) // iframe 허용
             );
 
-//            .csrf(csrf -> csrf.disable()); // 필요 시 enable
+//            .csrf(csrf -> csrf.disable()) // 필요 시 enable
 
         return http.build();
     }
