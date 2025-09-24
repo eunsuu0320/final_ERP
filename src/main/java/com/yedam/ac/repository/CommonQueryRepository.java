@@ -1,5 +1,5 @@
 package com.yedam.ac.repository;
 
 public interface CommonQueryRepository {
-	String nextVoucherNo(); // 예: 2025-0001
+    String nextVoucherNo(String voucherType, java.time.LocalDate voucherDate); // 예: nextVoucherNo("SALES", 2025-09-24) -> "2509-0001"
 }
