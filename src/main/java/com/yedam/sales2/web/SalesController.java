@@ -18,6 +18,7 @@ public class SalesController {
 	@Autowired
 	 private salesService salesService;
 
+	// 영업계획목록 html
 	@GetMapping("salesList")
     public String salesList() {
         return "sales2/salesList";
@@ -25,12 +26,11 @@ public class SalesController {
 	
 	// JSON 데이터를 반환하는 API
     @GetMapping("salesJson")
-    @ResponseBody // 이 어노테이션이 있어야 Spring이 JSON 데이터로 인식합니다.
+    @ResponseBody 
     public List<Sales> salesJson() {
         return salesService.findAll();
     }
     
-    // 기존의 salesJson 메서드 대신, 통계 데이터를 반환하는 새로운 메서드를 추가
     @GetMapping("/api/sales/stats")
     @ResponseBody
     public List<Map<String, Object>> getSalesStats() {
@@ -38,6 +38,18 @@ public class SalesController {
         return salesService.findSalesStatsByYear(); 
     }
     
-	
+    // 영업계획등록 html
+    @GetMapping("insertSales")
+    public String insertSales() {
+    	return "sales2/insertSalesModal";
+    }
+    
+    // Tabulator의 ajaxURL과 일치하도록 경로 수정
+    @GetMapping("/api/sales/last-year-qty")
+    @ResponseBody
+    public List<Map<String, Object>> insertsSalesStats() {
+        // 서비스 레이어에서 연도별 통계 데이터를 가져오는 메서드를 호출
+        return salesService.findSalesPlanData(); 
+    }
 	
 }
