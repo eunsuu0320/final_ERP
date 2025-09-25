@@ -1,16 +1,27 @@
 document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["거래처코드", "거래처명", "거래처유형", "전화번호", "이메일", "비고"];
+	const defaultVisible = ["단가그룹코드", "단가그룹명", "단가", "사용구분", "거래처설정", "품목설정"];
+
+	// 이미지모달
+	window.showImageModal = function(url) {
+		// 이미지모달에 이미지 경로를 지정.
+		const modalImg = document.getElementById("modalImg");
+		modalImg.src = url;
+
+		// 모달 열기
+		const modal = new bootstrap.Modal(document.getElementById('imgModal'));
+		modal.show();
+	}
 
 	// 품목상세모달
 	window.showDetailModal = function(modalType) {
 		let modalName = '';
 		// 모달 열기
 		if (modalType === 'detail') {
-			modalName = '거래처 상세정보'
+			modalName = '품목상세정보'
 
 		} else if (modalType === 'regist') {
-			modalName = '거래처등록'
+			modalName = '품목등록'
 		}
 		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
 		modal.show();
@@ -18,6 +29,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 	};
+	/*
+		// 품목상세/등록 모달의 단위 select 태그 입력+선택
+		const unitSelect = document.getElementById('unitSelect');
+	
+		// Choices.js 적용
+		if (unitSelect) {
+			const choices = new Choices(unitSelect, {
+				removeItemButton: false,   // 선택 해제 버튼 필요 없으면 false
+				duplicateItemsAllowed: false,
+				addItems: true,           // 사용자가 직접 입력 가능
+				searchEnabled: true,
+				shouldSort: false         // 옵션 정렬 비활성화
+			});
+	
+		}
+	*/
 
 	window.applyComboSelect = function(selector) {
 		const selects = document.querySelectorAll(selector);
@@ -54,8 +81,8 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 
 
-		if (modalName === '거래처 상세정보') {
-			fetch("/api/modifyPartner", {
+		if (modalName === '품목상세정보') {
+			fetch("/api/modifyProduct", {
 				method: "POST",
 				body: formData,
 				headers: {
@@ -65,17 +92,17 @@ document.addEventListener("DOMContentLoaded", function() {
 			})
 				.then(res => res.json())
 				.then(data => {
-					console.log("거래처수정 데이터 : ", data);
+					console.log("품목수정 데이터 : ", data);
 					alert("저장되었습니다.");
 					bootstrap.Modal.getInstance(document.getElementById("newDetailModal")).hide();
 				})
 				.catch(err => {
-					console.error("거래처수정실패 : ", err);
+					console.error("품목수정실패 : ", err);
 					alert("저장에 실패했습니다.")
 				});
 
-		} else if (modalName === '거래처등록') {
-			fetch("/api/registPartner", {
+		} else if (modalName === '품목등록') {
+			fetch("/api/registProduct", {
 				method: "POST",
 				body: formData,
 				headers: {
@@ -85,12 +112,12 @@ document.addEventListener("DOMContentLoaded", function() {
 			})
 				.then(res => res.json())
 				.then(data => {
-					console.log("거래처등록 데이터 : ", data);
+					console.log("품목등록 데이터 : ", data);
 					alert("저장되었습니다.");
 					bootstrap.Modal.getInstance(document.getElementById("newDetailModal")).hide();
 				})
 				.catch(err => {
-					console.error("거래처등록실패 : ", err);
+					console.error("품목등록실패 : ", err);
 					alert("저장에 실패했습니다.")
 				});
 		}
@@ -109,6 +136,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			frozen: true
 		},
 		...columns.map(col => {
+			if (col === "상품규격" || col === "단위") return null;
 
 			let columnDef = {
 				title: col,
@@ -116,7 +144,18 @@ document.addEventListener("DOMContentLoaded", function() {
 				visible: defaultVisible.includes(col)
 			};
 
-			if (col === "거래처코드") {
+			if (col === "이미지") {
+				columnDef.formatter = function(cell) {
+					// cell.getValue() : 셀에 들어있는 데이터 값을 반환.
+					// cell.setValue(value) : 셀 데이터 값을 변경
+					// cell.getData() : 행 전체 데이터 객체 반환
+					// cell.getRow() : 셀이 속한 행 반환
+					// cell.getField() : 컬럼의 필드값 반환
+					const url = cell.getValue();
+					return `<img src="${url}" alt="이미지" style="height:30px; cursor:pointer;" onclick="showImageModal('${url}')">`;
+				};
+			}
+			if (col === "품목코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
 					// ajax 호출!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

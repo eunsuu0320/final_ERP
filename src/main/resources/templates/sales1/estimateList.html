@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+<head>
+<meta name="_csrf" content="${_csrf.token}" />
+<meta name="_csrf_header" content="${_csrf.headerName}" />
+<link rel="stylesheet" th:href="@{/erp/css/sales1/salesStyle.css}" />
+<link
+	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+</head>
+<body layout:fragment="content">
+
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="containerBox">
+				<div class="container-fluid px-4">
+					<h1 class="mt-4">견적서관리</h1>
+					<ol class="breadcrumb mb-4">
+						<li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
+						<li class="breadcrumb-item active">견적서관리</li>
+					</ol>
+				</div>
+
+				<!-- 버튼 영역 -->
+				<!-- ㅣㅣ -->
+				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
+					<button class="btn btn-primary me-2"
+						onclick="showDetailModal('regist')">신규</button>
+					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
+					<button class="btn btn-dark me-2">초기화</button>
+				</div>
+
+				<!-- 검색 바 -->
+				<div class="searchTool d-flex align-items-center mb-3">
+					<div class="me-5 d-flex align-items-center">
+						<label for="partnerName" class="me-3">거래처명</label> <input
+							type="text" class="form-control w-auto" placeholder="검색어 입력"
+							id="partnerName">
+					</div>
+				</div>
+
+				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-secondary me-2">이력조회</button>
+					<button class="btn btn-secondary me-2">인쇄</button>
+					<button class="btn btn-secondary me-2">Excel</button>
+				</div>
+
+				<!-- 컬럼 선택 체크박스 -->
+				<div class="mb-2">
+					<label th:each="col : ${columns}" class="me-2"> <input
+						type="checkbox" class="colCheckbox" th:value="${col}"
+						th:checked="${col == '거래처코드' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
+						<span th:text="${col}"></span>
+					</label>
+				</div>
+
+
+				<!-- Tabulator 테이블 -->
+				<div id="productTable"></div>
+
+				<!-- 결제정보 모달 -->
+				<div class="modal fade" id="paymentModal" tabindex="-1"
+					aria-hidden="true">
+					<div class="modal-dialog modal-xl">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title" id="ModalLabel">결제정보</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+							</div>
+							<div
+								class="modal-body d-flex justify-content-center align-items-center">
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 신규/상세 모달 -->
+				<div class="modal fade" id="newDetailModal" tabindex="-1"
+					aria-hidden="true">
+					<div class="modal-dialog modal-lg modal-dialog-centered">
+						<div class="modal-content">
+							<!-- 모달 헤더 -->
+							<div class="modal-header">
+								<h5 class="modal-title"></h5>
+								<div>
+									<button type="button" class="btn btn-primary"
+										onclick="saveModal()">저장</button>
+									<button type="button" class="btn btn-dark"
+										onclick="resetModal()">초기화</button>
+									<button type="button" class="btn btn-secondary"
+										onclick="getModal()">가져오기</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+								</div>
+							</div>
+							<div>
+								<div class="btn-group btn-type ms-2" role="group"
+									aria-label="type-filter" id="partnerTab">
+									<button type="button" class="btn btn-primary"
+										data-type="PARTNER">거래처</button>
+									<button type="button" class="btn btn-outline-primary"
+										data-type="LOANPRICE">여신/단가</button>
+									<button type="button" class="btn btn-outline-primary"
+										data-type="PAYMENT">결제정보</button>
+								</div>
+							</div>
+							<!-- 모달 바디 -->
+							<div class="modal-body">
+								<!-- 탭 1: 거래처 -->
+								<div id="tab-partner" class="tab-content">
+									<!-- 기존 partnerForm 내용 전체 여기에 들어감 -->
+									<form id="partnerForm">
+										<!-- 거래처명 + 대표자명 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">거래처명*</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="partnerName"
+													required>
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">대표자명</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+											</div>
+										</div>
+
+										<!-- 거래처유형 라디오 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">거래처유형*</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<div class="form-check me-3">
+													<input class="form-check-input" type="radio"
+														name="partnerType" value="공급처" id="supplier" required>
+													<label class="form-check-label" for="supplier">공급처</label>
+												</div>
+												<div class="form-check">
+													<input class="form-check-input" type="radio"
+														name="partnerType" value="판매처" id="buyer" required>
+													<label class="form-check-label" for="buyer">판매처</label>
+												</div>
+											</div>
+										</div>
+
+										<!-- 담당자 + 사업자등록번호 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">담당자</label>
+											<div class="col-sm-9 d-flex">
+												<input type="text" class="form-control me-2" name="manager">
+												<button class="btn btn-outline-secondary" type="button">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">사업자등록번호</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control"
+													name="businessNumber">
+											</div>
+										</div>
+
+										<!-- 연락처 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">연락처*</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="contact"
+													required>
+											</div>
+										</div>
+
+										<!-- 업태 / 업종 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">업태</label>
+											<div class="col-sm-9">
+												<select class="form-select comboSelect" name="businessType">
+													<option value="" disabled selected>업태 선택</option>
+													<option value="제조업">제조업</option>
+													<option value="도매업">도매업</option>
+												</select>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">업종</label>
+											<div class="col-sm-9">
+												<select class="form-select comboSelect" name="industry">
+													<option value="" disabled selected>업종 선택</option>
+													<option value="인형">인형</option>
+													<option value="부품">부품</option>
+												</select>
+											</div>
+										</div>
+
+										<!-- 우편번호 + 주소 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">우편번호</label>
+											<div class="col-sm-9 d-flex">
+												<input type="text" class="form-control me-2" name="zipcode"
+													id="zipcode" readonly>
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="execDaumPostcode()">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">주소</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="address"
+													id="address" readonly placeholder="우편번호 검색 시 자동 입력">
+											</div>
+										</div>
+
+										<div id="postcodeLayer">
+											<div class="close-btn text-end">
+												<button type="button" class="btn-close"
+													onclick="document.getElementById('postcodeLayer').style.display='none'">
+												</button>
+											</div>
+										</div>
+
+										<!-- E-mail -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">E-mail</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<input type="text" class="form-control email-input me-1"
+													name="emailId"> <span class="me-1">@</span> <select
+													class="form-select email-select" name="emailDomain">
+													<option value="" disabled selected>도메인 선택</option>
+													<option value="naver.com">naver.com</option>
+													<option value="gmail.com">gmail.com</option>
+													<option value="daum.net">daum.net</option>
+													<option value="hotmail.com">hotmail.com</option>
+												</select>
+											</div>
+										</div>
+
+										<!-- 비고 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">비고</label>
+											<div class="col-sm-9">
+												<textarea class="form-control" name="remarks" rows="3"></textarea>
+											</div>
+										</div>
+									</form>
+								</div>
+
+								<!-- 탭 2: 여신/단가 -->
+								<div id="tab-loanprice" class="tab-content d-none">
+									<form id="loanForm">
+										<!-- 수금/지급예정일 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">수금/지급예정일</label>
+											<div class="col-sm-9">
+												매월 <input type="text" class="form-control"
+													name="partnerName" required>일
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">구매단가그룹</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+												<input type="text" class="form-control" name="ceoName">%
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">영업단가그룹</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+												<input type="text" class="form-control" name="ceoName">%
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">여신기간</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">개월
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">여신한도</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">비고</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="remarks">
+											</div>
+										</div>
+
+									</form>
+								</div>
+
+								<!-- 탭 3: 결제정보 -->
+								<div id="tab-payment" class="tab-content d-none">
+									<!-- 상단 버튼 -->
+									<div class="d-flex justify-content-end mb-2">
+										<button class="btn btn-primary me-2" onclick="savePayment()">저장</button>
+										<button class="btn btn-secondary" onclick="resetPayment()">초기화</button>
+									</div>
+
+									<!-- 테이블 -->
+									<div class="table-responsive">
+										<table class="table table-bordered align-middle text-center">
+											<thead class="table-light">
+												<tr>
+													<th><input type="checkbox" id="selectAllPaymentRows" /></th>
+													<th>콘텐츠코드</th>
+													<th>은행</th>
+													<th>계좌번호</th>
+													<th>예금주명</th>
+													<th>가상계좌</th>
+													<th>사용구분</th>
+												</tr>
+											</thead>
+											<tbody id="paymentTableBody">
+												<!-- 예시: 5행 -->
+												<tr>
+													<td><input type="checkbox" class="paymentRowCheckbox" /></td>
+													<td><input type="text" class="form-control"
+														name="contentCode" /></td>
+													<td><input type="text" class="form-control"
+														name="bank" /></td>
+													<td><input type="text" class="form-control"
+														name="accountNumber" /></td>
+													<td><input type="text" class="form-control"
+														name="accountHolder" /></td>
+													<td><input type="text" class="form-control"
+														name="virtualAccount" /></td>
+													<td><select class="form-select" name="usageType">
+															<option value="">선택</option>
+															<option value="Y">사용</option>
+															<option value="N">미사용</option>
+													</select></td>
+												</tr>
+												<!-- 추가 행은 JS로 복제 가능 -->
+											</tbody>
+										</table>
+									</div>
+
+									<!-- 페이징 (정적인 예시) -->
+									<div class="d-flex justify-content-center mt-2">
+										<nav>
+											<ul class="pagination pagination-sm">
+												<li class="page-item disabled"><a class="page-link"
+													href="#">◀</a></li>
+												<li class="page-item active"><a class="page-link"
+													href="#">1</a></li>
+												<li class="page-item"><a class="page-link" href="#">2</a></li>
+												<li class="page-item"><a class="page-link" href="#">3</a></li>
+												<li class="page-item"><a class="page-link" href="#">▶</a></li>
+											</ul>
+										</nav>
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+					</div>
+				</div>
+
+
+			</div>
+		</main>
+	</div>
+	<div id="modalOverlay" class="modal-overlay" style="display: none;"></div>
+
+	<script th:inline="javascript">
+		var columns = /*[[${columns}]]*/[];
+		var rows = /*[[${rows}]]*/[];
+	</script>
+	<script
+		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script>
+		function execDaumPostcode() {
+			new daum.Postcode({
+				oncomplete : function(data) {
+					document.getElementById("zipcode").value = data.zonecode;
+					document.getElementById("address").value = data.roadAddress
+							|| data.jibunAddress;
+				}
+			}).open();
+		}
+	</script>
+	<script
+		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+	<!-- 분리한 JS 파일 -->
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+	<script th:src="@{/erp/js/sales1/estimateList.js}"></script>
+
+</body>
+</html>
