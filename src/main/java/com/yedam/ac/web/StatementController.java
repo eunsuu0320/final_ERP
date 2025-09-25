@@ -23,21 +23,19 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/statements")
 public class StatementController {
     private final StatementService svc;
-    private final StatementQueryService queryService;  // 추가
+    private final StatementQueryService queryService;
 
-    // ▼ 목록 조회 (Tabulator가 호출)
+    /** 목록 조회: Tabulator가 호출, Page<UnifiedStatementRow> JSON 반환 */
     @GetMapping
     public Page<UnifiedStatementRow> search(StatementSearchForm form) {
-        return queryService.search(form);
+        return queryService.search(form);   // 이미 네 ServiceImpl과 시그니처 일치
     }
 
-    // ▼ 등록(매출)
     @PostMapping("/sales")
     public ResponseEntity<StatementCreateRes> createSales(@RequestBody SalesCreateReq req) {
         return ResponseEntity.ok(svc.createSalesStatement(req));
     }
 
-    // ▼ 등록(매입)
     @PostMapping("/buy")
     public ResponseEntity<StatementCreateRes> createBuy(@RequestBody BuyCreateReq req) {
         return ResponseEntity.ok(svc.createBuyStatement(req));
