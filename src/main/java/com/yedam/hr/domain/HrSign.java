@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import lombok.Data;
 
 @Entity
@@ -11,7 +12,8 @@ import lombok.Data;
 public class HrSign {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY) // Long을 쓰면 DB의 AUTO_INCREMENT 사용
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hr_sign_seq")
+	@SequenceGenerator(name = "hr_sign_seq", sequenceName = "HR_SIGN_SEQ", allocationSize = 1)
 	private Long signId;
 
 	private String companyCode;
