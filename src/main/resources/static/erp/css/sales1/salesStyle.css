@@ -22,7 +22,33 @@
 }
 
 #imgModal .modal-dialog {
-    top: 20%; /* 화면 상단에서 10% 아래 */
-    max-width: 50%; /* 가로 최대 폭 */
+	top: 20%; /* 화면 상단에서 10% 아래 */
+	max-width: 50%; /* 가로 최대 폭 */
 }
 
+#partnerTab {
+	padding: 10px;
+}
+
+#postcodeLayer {
+	display: none;
+	position: fixed; /* 반드시 fixed */
+	width: 400px;
+	height: 530px; /* 푸터까지 포함 */
+	bottom: 100px; /* 아래 여백 */
+	right: 300px; /* 오른쪽 여백 */
+	z-index: 9999;
+	background-color: #fff;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	border: 2px solid #ccc;
+	overflow: hidden;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1100; /* 모달보다 위 */
+  display: none;
+  pointer-events: auto;
+}

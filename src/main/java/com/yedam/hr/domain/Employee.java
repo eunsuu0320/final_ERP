@@ -4,6 +4,8 @@ import java.util.Date;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Data;
@@ -19,6 +21,7 @@ public class Employee {
 	private String name; // 성명
 	private String phone; // 전화번호
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date birth; // 생년월일
 	private String email; // 이메일
@@ -27,9 +30,11 @@ public class Employee {
 	private String grade; // 직책
 	private Integer salary; // 기본급
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date hireDate; // 입사일자
 
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date resignDate; // 퇴사일자
 
