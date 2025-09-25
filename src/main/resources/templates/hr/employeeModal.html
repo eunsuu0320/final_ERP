@@ -103,7 +103,7 @@
 										</div>
 										<div class="col-md-6">
 											<label class="form-label required">휴가일수</label>
-											<input type="number" name="holyDays" id="salary" class="form-control">
+											<input type="number" name="holyDays" id="holyDays" class="form-control">
 										</div>
 									</div>
 
@@ -169,33 +169,44 @@
 							<div class="tab-pane fade" id="contractInfo">
 							  <form id="contractForm" method="post" enctype="multipart/form-data">
 
-							     <!-- 근로계약서 원본 PDF -->
+							    <!-- PDF 보기 + 불러오기 -->
+							    <div class="d-flex justify-content-between align-items-center mb-2">
+							      <small class="text-muted">
+							        * 뷰어에서 작성 후 “다운로드/저장” → 아래 버튼으로 파일을 불러오세요.
+							      </small>
+							      <div>
+							        <button type="button" id="btn-pdf-pick" class="btn btn-outline-secondary btn-sm">
+							          PDF 불러오기
+							        </button>
+							      </div>
+							    </div>
+
 							    <div class="mb-3" style="height: 32.55rem;">
 							      <iframe src="/hr/pdf/contract.pdf"
 							              style="width:100%; height:100%; border:1px solid #ddd;"
 							              frameborder="0"></iframe>
 							    </div>
 
-							<!-- 사원 서명 -->
-								<div class="row mb-3" style="margin-top: 1rem; width: 100%;">
-								    <label class="form-label">사원 서명</label>
-								    <canvas id="signature-pad" style="width:100%; height:10rem; margin-left: 0.8rem; border:1px solid #000;"></canvas>
-									<input type="hidden" name="cSign" id="cSign">
+							    <!-- 사용자가 저장한 PDF 업로드 -->
+							    <input type="file" id="pdfFile" name="pdfFile" accept="application/pdf" style="display:none;" />
+							    <div id="pdfFileName" class="small text-success" style="min-height:1.25rem;"></div>
 
-								    <!-- 버튼 왼쪽 / 체크박스 오른쪽 -->
-								    <div class="mt-2 d-flex justify-content-between align-items-center">
-								      <div>
-								        <button type="button" id="clear-sign" class="btn btn-secondary btn-sm">지우기</button>
-								        <button type="button" id="save-sign" class="btn btn-primary btn-sm">저장</button>
-								      </div>
-								      <div class="form-check">
-								        <input class="form-check-input me-2" type="checkbox" id="agreeContract" name="agreeContract">
-								        <label class="form-check-label" for="agreeContract">
-								          계약 내용에 동의합니다.
-								        </label>
-								      </div>
-								    </div>
-								</div>
+							    <!-- 사원 서명 -->
+							    <div class="row mb-3" style="margin-top: 1rem; width: 100%;">
+							      <label class="form-label">사원 서명</label>
+							      <canvas id="signature-pad" style="width:100%; height:10rem; margin-left: 0.8rem; border:1px solid #000;"></canvas>
+							      <input type="hidden" name="cSign" id="cSign">
+							      <div class="mt-2 d-flex justify-content-between align-items-center">
+							        <div>
+							          <button type="button" id="clear-sign" class="btn btn-secondary btn-sm">지우기</button>
+							        </div>
+							        <div class="form-check">
+							          <input class="form-check-input me-2" type="checkbox" id="agreeContract" name="agreeContract">
+							          <label class="form-check-label" for="agreeContract">계약 내용에 동의합니다.</label>
+							        </div>
+							      </div>
+							    </div>
+							  </form>
 							</div>
 						</div>
 					</form>
@@ -232,72 +243,75 @@
 	  signaturePad.clear();
 	});
 
-	// 저장 버튼
-	document.getElementById("save-sign").addEventListener("click", function () {
-	  if (!signaturePad.isEmpty()) {
-	    const dataURL = signaturePad.toDataURL();
+	 // PDF 불러오기 버튼 → 파일 선택
+	  document.getElementById("btn-pdf-pick").addEventListener("click", function () {
+	    document.getElementById("pdfFile").click();
+	  });
+
+	  // 파일 선택되면 파일명 표시
+	  document.getElementById("pdfFile").addEventListener("change", function (e) {
+	    const file = e.target.files && e.target.files[0];
+	    const label = document.getElementById("pdfFileName");
+	    label.textContent = file ? `선택됨: ${file.name}` : "";
+	  });
+
+	// 저장
+	  document.getElementById("btn-save-emp").addEventListener("click", function () {
+	    const empForm = document.getElementById("empForm");
+	    const contractForm = document.getElementById("contractForm");
+	    const pdfInput = document.getElementById("pdfFile");
+
+	    // 1) 체크: PDF 선택 여부 (iframe에서 저장 후 반드시 불러오게)
+	    if (!pdfInput.files || pdfInput.files.length === 0) {
+	      alert("계약서 PDF를 먼저 뷰어에서 저장한 뒤, [PDF 불러오기]로 선택해 주세요.");
+	      return;
+	    }
+
+	    // 2) 체크: 동의 여부
+	    if (!document.getElementById("agreeContract").checked) {
+	      alert("계약 내용 동의에 체크해 주세요.");
+	      return;
+	    }
+
+	    // 3) 사인 이미지 Base64 → Blob
+	    const formData = new FormData(empForm);
+	    new FormData(contractForm).forEach((value, key) => formData.append(key, value));
+	    formData.append("pdfFile", pdfInput.files[0]); // 최종 PDF
+
+	    const dataURL = signaturePad.toDataURL("image/png");
 	    document.getElementById("cSign").value = dataURL;
-	    alert("서명이 저장되었습니다!");
-	  } else {
-	    alert("서명이 비어 있습니다.");
-	  }
-	});
 
-	 // 저장 버튼 클릭 이벤트
-	const header = document.querySelector('meta[name="_csrf_header"]').content;
-    const token = document.querySelector('meta[name="_csrf"]').content;
+	    if (dataURL) {
+	      const byteString = atob(dataURL.split(',')[1]);
+	      const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
+	      const ab = new ArrayBuffer(byteString.length);
+	      const ia = new Uint8Array(ab);
+	      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+	      const blob = new Blob([ab], { type: mimeString });
+	      formData.append("signImg", blob, "signature.png");
+	    }
 
-    document.getElementById("btn-save-emp").addEventListener("click", function() {
-    	  const empForm = document.getElementById("empForm");
-    	  const contractForm = document.getElementById("contractForm");
-
-    	  // empForm + contractForm 합쳐서 FormData 생성
-    	  const formData = new FormData(empForm);
-    	  new FormData(contractForm).forEach((value, key) => formData.append(key, value));
-
-    	  // 사인 이미지(Base64)를 Blob으로 변환해 FormData에 추가
-    	  const cSignData = document.getElementById("cSign").value;
-    	  if (cSignData) {
-    	    const byteString = atob(cSignData.split(',')[1]);
-    	    const mimeString = cSignData.split(',')[0].split(':')[1].split(';')[0];
-    	    const ab = new ArrayBuffer(byteString.length);
-    	    const ia = new Uint8Array(ab);
-    	    for (let i = 0; i < byteString.length; i++) {
-    	      ia[i] = byteString.charCodeAt(i);
-    	    }
-    	    const blob = new Blob([ab], { type: mimeString });
-    	    formData.append("signImg", blob, "signature.png");
-    	  }
-
-    	  // 디버깅: FormData 안에 뭐 들어갔는지 확인
-    	  for (let pair of formData.entries()) {
-    	    console.log(pair[0] + ": " + pair[1]);
-    	  }
-
-    	  fetch("/saveContract", {
-    	    method: "POST",
-    	    headers: {
-    	      'X-CSRF-Token': token   // ✅ Content-Type 절대 넣지 말 것
-    	    },
-    	    body: formData
-    	  })
-    	  .then(res => res.text())   // 서버가 문자열 리턴하니까 text()로 받기
-    	  .then(data => {
-    	    console.log("응답:", data);
-    	    if (data === "success") {
-    	      alert("사원 등록 성공!");
-    	      const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
-    	      modal.hide();
-    	    } else {
-    	      alert("사원 등록 실패: " + data);
-    	    }
-    	  })
-    	  .catch(err => {
-    	    console.error("저장 오류:", err);
-    	    alert("서버 오류 발생!");
-    	  });
-    	});
-
+	    // 4) 전송
+	    fetch("/saveContract", {
+	      method: "POST",
+	      headers: { "X-CSRF-Token": document.querySelector('meta[name="_csrf"]').content },
+	      body: formData
+	    })
+	      .then(res => res.text())
+	      .then(data => {
+	        if (data === "success") {
+	          alert("사원 등록 성공!");
+	          const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
+	          modal && modal.hide();
+	        } else {
+	          alert("사원 등록 실패: " + data);
+	        }
+	      })
+	      .catch(err => {
+	        console.error("저장 오류:", err);
+	        alert("서버 오류 발생!");
+	      });
+	  });
 	</script>
 		</div>
 </body>

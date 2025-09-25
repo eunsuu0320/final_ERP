@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,11 +49,14 @@ public class HrController {
 	@ResponseBody
 	public String saveContract(
 	        @ModelAttribute Employee employee,
-	        @RequestParam(value="signImg", required=false) MultipartFile signImg) {
+	        @RequestParam(value="signImg", required=false) MultipartFile signImg,
+	        @RequestParam(value="pdfFile", required=false) MultipartFile pdfFile,
+	     // 🔹 같은 name의 값들을 모두 받기 (권장)
+	        @RequestParam MultiValueMap<String, String> params) {
 	    try {
 	        HrSign sign = new HrSign();
 	        HrPDF pdf = new HrPDF();
-	        hrService.saveContract(employee, sign, pdf, signImg);
+	        hrService.saveContract(employee, sign, pdf, signImg, pdfFile, params);
 	        return "success";
 	    } catch (Exception e) {
 	        return "fail: " + e.getMessage();
