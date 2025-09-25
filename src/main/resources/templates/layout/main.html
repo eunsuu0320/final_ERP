@@ -7,13 +7,14 @@
         <meta name="description" content="" />
         <meta name="author" content="" />
         <title>Dashboard - SB Admin</title>
+        <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/style.min.css" rel="stylesheet" />
         <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
         <link href="/erp/css/styles.css" rel="stylesheet" />
-            <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
         <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
         <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
-        
+        <meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
     </head>
     <body class="sb-nav-fixed">
     	<!-- header -->
@@ -38,5 +39,21 @@
     <script src="erp/js/datatables-simple-demo.js"></script>
 	<script src="erp/assets/demo/chart-area-demo.js"></script>
 	<script src="erp/assets/demo/chart-bar-demo.js"></script>
+
+	<!-- jsPDF -->
+	<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+	<!-- AutoTable -->
+	<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.28/dist/jspdf.plugin.autotable.min.js"></script>
+
+	<!-- 한글 폰트 -->
+	<script src="/fonts/NanumGothic-Regular-normal.js"></script>
+
+	<!-- Excel Export -->
+	<script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
+
+	<!-- modal.js -->
+	<script src="/main/js/modal.js"></script>
+	<script src="/main/js/export.js"></script>
     </body>
 </html>

@@ -7,6 +7,10 @@ import com.yedam.sales1.domain.Product;
 
 public interface ProductService {
 	List<Product> getAllProduct();
+    List<Product> getFilterProduct(String productName, String productGroup, String warehouseCode);
+
 	
 	Map<String, Object> getTableDataFromProducts(List<Product> products);
+
+	Product saveProduct(Product product);
 }

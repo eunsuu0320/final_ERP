@@ -63,16 +63,36 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">부서</label>
-											<input type="hidden" name="">
-											<input type="text" name="dept" id="dept" class="form-control" readonly>
+											 <input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="dept" id="dept" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('dept').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      }, 'DEPT')">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직위/직급</label>
-											<input type="text" name="grade" id="grade" class="form-control" readonly>
+											<label class="form-label required">직급</label>
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="position" id="position" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('position').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      }, 'POSITION')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직책</label>
-											<input type="text" name="position" id="position" class="form-control" readonly>
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="grade" id="grade" class="form-control" readonly
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('grade').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      }, 'DUTY')">
 										</div>
 									</div>
 
@@ -112,7 +132,14 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">은행</label>
-											<input type="text" name="bankCode" id="bankCode" class="form-control">
+											<input type="hidden" id="deptCode" name="deptCode">
+											<input type="text" name="bankCode" id="bankCode" class="form-control"
+											onclick="openModal(
+										      'commonCode',
+										      function(selected) {
+										        document.getElementById('bankCode').value = selected.codeName;
+										        document.getElementById('deptCode').value = selected.codeId;
+										      }, 'BANK')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">예금주</label>
@@ -127,7 +154,8 @@
 									<div class="row mb-3">
 										<div class="col-md-3">
 											<label class="form-label required">우편번호</label>
-											<input type="text" name="postalCode" id="postalCode" class="form-control">
+											<input type="number" name="postalCode" id="postalCode" class="form-control" readonly
+											onclick="execDaumPostcode()">
 										</div>
 										<div class="col-md-9">
 											<label class="form-label required">주소</label>
@@ -139,20 +167,138 @@
 
 							<!-- 근로계약서 탭 -->
 							<div class="tab-pane fade" id="contractInfo">
-								<p>여기에 근로계약서 작성 관련 입력폼/업로드 UI 추가 예정</p>
+							  <form id="contractForm" method="post" enctype="multipart/form-data">
+
+							     <!-- 근로계약서 원본 PDF -->
+							    <div class="mb-3" style="height: 32.55rem;">
+							      <iframe src="/hr/pdf/contract.pdf"
+							              style="width:100%; height:100%; border:1px solid #ddd;"
+							              frameborder="0"></iframe>
+							    </div>
+
+							<!-- 사원 서명 -->
+								<div class="row mb-3" style="margin-top: 1rem; width: 100%;">
+								    <label class="form-label">사원 서명</label>
+								    <canvas id="signature-pad" style="width:100%; height:10rem; margin-left: 0.8rem; border:1px solid #000;"></canvas>
+									<input type="hidden" name="cSign" id="cSign">
+
+								    <!-- 버튼 왼쪽 / 체크박스 오른쪽 -->
+								    <div class="mt-2 d-flex justify-content-between align-items-center">
+								      <div>
+								        <button type="button" id="clear-sign" class="btn btn-secondary btn-sm">지우기</button>
+								        <button type="button" id="save-sign" class="btn btn-primary btn-sm">저장</button>
+								      </div>
+								      <div class="form-check">
+								        <input class="form-check-input me-2" type="checkbox" id="agreeContract" name="agreeContract">
+								        <label class="form-check-label" for="agreeContract">
+								          계약 내용에 동의합니다.
+								        </label>
+								      </div>
+								    </div>
+								</div>
 							</div>
 						</div>
-					</div>
+					</form>
 				</div>
 			</div>
 		</div>
-	</div>
+				</div>
+	<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+	<script type="text/javascript">
+	const canvas = document.getElementById("signature-pad");
+	const signaturePad = new SignaturePad(canvas);
 
-		<!-- 공통 모달 -->
-	<div th:replace="common/modal :: commonModal"></div>
+	function resizeCanvas() {
+		  const ratio = Math.max(window.devicePixelRatio || 1, 1);
+		  canvas.width = canvas.offsetWidth * ratio;
+		  canvas.height = canvas.offsetHeight * ratio;
+		  canvas.getContext("2d").scale(ratio, ratio);
+		}
 
-	<!-- JS (modalConfigs + openModal 함수 불러오기) -->
-	<script src="/main/js/modal.js"></script>
+	// 모달 열릴 때
+	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
+	  resizeCanvas();
+	  signaturePad.clear();
+	});
 
+	// 탭 전환될 때 (근로계약서 탭 들어갈 때)
+	document.getElementById("contract-tab").addEventListener("shown.bs.tab", function () {
+	  resizeCanvas();
+	  signaturePad.clear();
+	});
+
+	// 지우기 버튼
+	document.getElementById("clear-sign").addEventListener("click", function () {
+	  signaturePad.clear();
+	});
+
+	// 저장 버튼
+	document.getElementById("save-sign").addEventListener("click", function () {
+	  if (!signaturePad.isEmpty()) {
+	    const dataURL = signaturePad.toDataURL();
+	    document.getElementById("cSign").value = dataURL;
+	    alert("서명이 저장되었습니다!");
+	  } else {
+	    alert("서명이 비어 있습니다.");
+	  }
+	});
+
+	 // 저장 버튼 클릭 이벤트
+	const header = document.querySelector('meta[name="_csrf_header"]').content;
+    const token = document.querySelector('meta[name="_csrf"]').content;
+
+    document.getElementById("btn-save-emp").addEventListener("click", function() {
+    	  const empForm = document.getElementById("empForm");
+    	  const contractForm = document.getElementById("contractForm");
+
+    	  // empForm + contractForm 합쳐서 FormData 생성
+    	  const formData = new FormData(empForm);
+    	  new FormData(contractForm).forEach((value, key) => formData.append(key, value));
+
+    	  // 사인 이미지(Base64)를 Blob으로 변환해 FormData에 추가
+    	  const cSignData = document.getElementById("cSign").value;
+    	  if (cSignData) {
+    	    const byteString = atob(cSignData.split(',')[1]);
+    	    const mimeString = cSignData.split(',')[0].split(':')[1].split(';')[0];
+    	    const ab = new ArrayBuffer(byteString.length);
+    	    const ia = new Uint8Array(ab);
+    	    for (let i = 0; i < byteString.length; i++) {
+    	      ia[i] = byteString.charCodeAt(i);
+    	    }
+    	    const blob = new Blob([ab], { type: mimeString });
+    	    formData.append("signImg", blob, "signature.png");
+    	  }
+
+    	  // 디버깅: FormData 안에 뭐 들어갔는지 확인
+    	  for (let pair of formData.entries()) {
+    	    console.log(pair[0] + ": " + pair[1]);
+    	  }
+
+    	  fetch("/saveContract", {
+    	    method: "POST",
+    	    headers: {
+    	      'X-CSRF-Token': token   // ✅ Content-Type 절대 넣지 말 것
+    	    },
+    	    body: formData
+    	  })
+    	  .then(res => res.text())   // 서버가 문자열 리턴하니까 text()로 받기
+    	  .then(data => {
+    	    console.log("응답:", data);
+    	    if (data === "success") {
+    	      alert("사원 등록 성공!");
+    	      const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
+    	      modal.hide();
+    	    } else {
+    	      alert("사원 등록 실패: " + data);
+    	    }
+    	  })
+    	  .catch(err => {
+    	    console.error("저장 오류:", err);
+    	    alert("서버 오류 발생!");
+    	  });
+    	});
+
+	</script>
+		</div>
 </body>
 </html>

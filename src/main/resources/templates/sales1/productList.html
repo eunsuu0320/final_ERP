@@ -3,17 +3,21 @@
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/main}">
 <head>
+<meta name="_csrf" content="${_csrf.token}" />
+<meta name="_csrf_header" content="${_csrf.headerName}" />
 <link rel="stylesheet" th:href="@{/erp/css/sales1/salesStyle.css}" />
 <link
 	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
 	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="containerBox">
 				<div class="container-fluid px-4">
-					<h3 class="mt-4">품목관리</h3>
+					<h1 class="mt-4">품목관리</h1>
 					<ol class="breadcrumb mb-4">
 						<li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
 						<li class="breadcrumb-item active">품목관리</li>
@@ -22,13 +26,11 @@
 
 				<!-- 버튼 영역 -->
 				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2">검색</button>
-					<button class="btn btn-primary me-2">신규</button>
+					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
+					<button class="btn btn-primary me-2"
+						onclick="showDetailModal('regist')">신규</button>
 					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-dark me-2">초기화</button>
-					<button class="btn btn-secondary me-2">이력조회</button>
-					<button class="btn btn-secondary me-2">인쇄</button>
-					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
 
 				<!-- 검색 바 -->
@@ -48,6 +50,12 @@
 					</div>
 				</div>
 
+				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-secondary me-2">이력조회</button>
+					<button class="btn btn-secondary me-2">인쇄</button>
+					<button class="btn btn-secondary me-2">Excel</button>
+				</div>
+
 				<!-- 컬럼 선택 체크박스 -->
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
@@ -56,9 +64,11 @@
 						<span th:text="${col}"></span>
 					</label>
 				</div>
+				
 
 				<!-- Tabulator 테이블 -->
 				<div id="productTable"></div>
+
 				<!-- 이미지 모달 -->
 				<div class="modal fade" id="imgModal" tabindex="-1"
 					aria-hidden="true">
@@ -78,22 +88,119 @@
 				</div>
 
 				<!-- 신규/상세 모달 -->
-				<div class="modal fade" id="detailModal" tabindex="-1"
+				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-lg modal-dialog-centered">
 						<div class="modal-content">
+							<!-- 모달 헤더 -->
 							<div class="modal-header">
-								<h5 class="modal-title" id="detailModalLabel">품목 상세</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-							</div>
-							<div class="modal-body">
-								<div id="detailContent">
-									<!-- 상세 내역 -->
+								<h5 class="modal-title"></h5>
+								<div>
+									<button type="button" class="btn btn-primary"
+										onclick="saveModal()">저장</button>
+									<button type="button" class="btn btn-dark"
+										onclick="resetModal()">초기화</button>
+									<button type="button" class="btn btn-secondary"
+										onclick="getModal()">가져오기</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
+							<!-- 모달 바디 -->
+							<div class="modal-body">
+								<form id="itemForm">
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목코드*</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="productCode"
+												disabled placeholder="자동생성">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목명*</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="productName"
+												required>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">규격*</label>
+										<div class="col-sm-9">
+											<select class="form-select comboSelect" name="productSize"
+												required>
+												<option value="" disabled selected>규격을 선택하세요</option>
+												<option value="S">S</option>
+												<option value="M">M</option>
+												<option value="L">L</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">단위*</label>
+										<div class="col-sm-9">
+											<select class="form-select comboSelect" name="unit" required>
+												<option value="" disabled selected>단위를 선택하세요</option>
+												<option value="kg">kg</option>
+												<option value="cm">cm</option>
+											</select>
+										</div>
+
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목그룹*</label>
+										<div class="col-sm-9">
+											<select class="form-select comboSelect" name="productGroup"
+												required>
+												<option value="" disabled selected>품목그룹을 선택하세요</option>
+												<option value="잡화">잡화</option>
+												<option value="공구">공구</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">입고단가</label>
+										<div class="col-sm-9">
+											<input type="number" class="form-control" name="inPrice">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">출고단가</label>
+										<div class="col-sm-9">
+											<input type="number" class="form-control" name="outPrice">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">창고</label>
+										<div class="col-sm-9">
+											<select class="form-select comboSelect" name="warehouseCode"
+												required>
+												<option value="" disabled selected>품목그룹을 선택하세요</option>
+												<option value="본사창고">본사창고</option>
+												<option value="예담창고">예담창고</option>
+											</select>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">비고</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" name="remarks">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">품목 이미지</label>
+										<div class="col-sm-9">
+											<input type="file" class="form-control" name="productImage"
+												accept="image/*">
+
+										</div>
+									</div>
+								</form>
+							</div>
+
+
 						</div>
 					</div>
 				</div>
+
 
 			</div>
 		</main>
@@ -106,10 +213,11 @@
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<!-- 분리한 JS 파일 -->
-	<script th:src="@{/erp/js/sales1/productList.js}"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+	<script
+		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+	<script th:src="@{/erp/js/sales1/productList.js}"></script>
 
 </body>
 </html>
