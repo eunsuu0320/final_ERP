@@ -17,5 +17,5 @@ public interface salesService {
 	List<Map<String, Object>> findSalesPlanData();
 	
 	// 등록
-	String insertSales(SalesPlan salesPlan);
+	SalesPlan saveSalesPlan(SalesPlan salesplan);
 }

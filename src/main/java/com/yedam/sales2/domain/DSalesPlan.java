@@ -1,14 +1,12 @@
 package com.yedam.sales2.domain;
 
 import java.util.Date;
-import java.util.List;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,18 +17,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "SALES_PLAN")
-public class SalesPlan {
+@Table(name = "SALES_PLAN_DETAIL")
+public class DSalesPlan {
+
+	// 영업세부계획
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE)
-	private int salesPlanCode; // 영업계획코드
+	private int SalesPlanDetailCode; // 영업세부계획코드
+	private String qtr; // 분기
+	private Long purpSales; // 목표매출
+	private Long purpProfitAmt; // 목표영업이익
+	private Long newVendCnt; // 목표신규거래처 수
 	
-	private Date planYear; // 계획년도
-	private Date regDate; // 등록일자
-	private String empCode; // 사원번호
-	private String companyCode; // 회사고유코드
-	
-	@Transient
-	private List<DSalesPlan> details;
+	private int salesPlanCode; // FK: SalesPlan
 }
