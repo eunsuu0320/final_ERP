@@ -20,23 +20,45 @@ public interface StatementQueryRepository extends JpaRepository<Statement, Strin
         "SELECT * FROM ( " +
         "  SELECT U1.*, ROWNUM rn FROM ( " +
         "    SELECT U0.* FROM ( " +
+        /* ===== 매출 ===== */
         "      SELECT " +
-        "         TO_CHAR(ss.VOUCHER_NO)   AS voucherNo, " +      // 문자열 통일
-        "         ss.VOUCHER_DATE         AS voucherDate, " +
-        "         'SALES'                 AS type, " +
-        "         ss.AMOUNT_TOTAL         AS amountTotal, " +
-        "         ss.PARTNER_NAME         AS partnerName, " +
-        "         ss.REMARK               AS remark " +
+        "         TO_CHAR(ss.VOUCHER_NO)   AS voucherNo, " +
+        "         ss.VOUCHER_DATE          AS voucherDate, " +
+        "         'SALES'                  AS type, " +
+        "         ss.AMOUNT_TOTAL          AS amountTotal, " +
+        "         ss.PARTNER_NAME          AS partnerName, " +
+        "         ss.REMARK                AS remark " +
         "        FROM SALES_STATEMENT ss " +
         "      UNION ALL " +
+        /* ===== 매입 ===== */
         "      SELECT " +
-        "         TO_CHAR(bs.VOUCHER_NO)  AS voucherNo, " +
-        "         bs.VOUCHER_DATE         AS voucherDate, " +
-        "         'BUY'                   AS type, " +
-        "         bs.AMOUNT_TOTAL         AS amountTotal, " +
-        "         bs.PARTNER_NAME         AS partnerName, " +
-        "         bs.REMARK               AS remark " +
+        "         TO_CHAR(bs.VOUCHER_NO)   AS voucherNo, " +
+        "         bs.VOUCHER_DATE          AS voucherDate, " +
+        "         'BUY'                    AS type, " +
+        "         bs.AMOUNT_TOTAL          AS amountTotal, " +
+        "         bs.PARTNER_NAME          AS partnerName, " +
+        "         bs.REMARK                AS remark " +
         "        FROM BUY_STATEMENT bs " +
+        "      UNION ALL " +
+        /* ===== 수금 ===== */
+        "      SELECT " +
+        "         TO_CHAR(ms.VOUCHER_NO)   AS voucherNo, " +
+        "         ms.VOUCHER_DATE          AS voucherDate, " +
+        "         'MONEY'                  AS type, " +
+        "         ms.AMOUNT_TOTAL          AS amountTotal, " +
+        "         ms.PARTNER_NAME          AS partnerName, " +
+        "         ms.REMARK                AS remark " +
+        "        FROM MONEY_STATEMENT ms " +
+        "      UNION ALL " +
+        /* ===== 지급 ===== */
+        "      SELECT " +
+        "         TO_CHAR(ps.VOUCHER_NO)   AS voucherNo, " +
+        "         ps.VOUCHER_DATE          AS voucherDate, " +
+        "         'PAYMENT'                AS type, " +
+        "         ps.AMOUNT_TOTAL          AS amountTotal, " +
+        "         ps.PARTNER_NAME          AS partnerName, " +
+        "         ps.REMARK                AS remark " +
+        "        FROM PAYMENT_STATEMENT ps " +
         "    ) U0 " +
         "    WHERE (:type = 'ALL' OR U0.type = :type) " +
         "      AND ( :keyword = '' " +
@@ -64,16 +86,26 @@ public interface StatementQueryRepository extends JpaRepository<Statement, Strin
     @Query(
       value =
         "SELECT COUNT(1) FROM ( " +
+        /* 매출 */
         "  SELECT TO_CHAR(ss.VOUCHER_NO) AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES' AS type, ss.PARTNER_NAME AS partnerName, ss.AMOUNT_TOTAL AS amountTotal, ss.REMARK AS remark " +
         "    FROM SALES_STATEMENT ss " +
         "  UNION ALL " +
+        /* 매입 */
         "  SELECT TO_CHAR(bs.VOUCHER_NO) AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY'   AS type, bs.PARTNER_NAME AS partnerName, bs.AMOUNT_TOTAL AS amountTotal, bs.REMARK AS remark " +
         "    FROM BUY_STATEMENT bs " +
+        "  UNION ALL " +
+        /* 수금 */
+        "  SELECT TO_CHAR(ms.VOUCHER_NO) AS voucherNo, ms.VOUCHER_DATE AS voucherDate, 'MONEY' AS type, ms.PARTNER_NAME AS partnerName, ms.AMOUNT_TOTAL AS amountTotal, ms.REMARK AS remark " +
+        "    FROM MONEY_STATEMENT ms " +
+        "  UNION ALL " +
+        /* 지급 */
+        "  SELECT TO_CHAR(ps.VOUCHER_NO) AS voucherNo, ps.VOUCHER_DATE AS voucherDate, 'PAYMENT' AS type, ps.PARTNER_NAME AS partnerName, ps.AMOUNT_TOTAL AS amountTotal, ps.REMARK AS remark " +
+        "    FROM PAYMENT_STATEMENT ps " +
         ") U0 " +
         "WHERE (:type = 'ALL' OR U0.type = :type) " +
         "  AND ( :keyword = '' " +
         "        OR U0.partnerName LIKE '%' || :keyword || '%' " +
-        "        OR U0.voucherNo   LIKE '%' || :keyword || '%' " +
+        "        OR U0.voucherNo   LIKE '%' || :voucherNo || '%' " +
         "      ) " +
         "  AND ( :voucherNo = '' OR U0.voucherNo LIKE '%' || :voucherNo || '%' ) " +
         "  AND ( :fromDate IS NULL OR U0.voucherDate >= :fromDate ) " +
