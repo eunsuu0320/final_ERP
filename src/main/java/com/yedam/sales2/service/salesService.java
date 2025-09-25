@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.yedam.sales2.domain.Sales;
+import com.yedam.sales2.domain.SalesPlan;
 
 public interface salesService {
 	
@@ -11,4 +12,10 @@ public interface salesService {
 	
 	// 연도별 통계 데이터를 조회하는 새로운 메서드 추가
 	List<Map<String, Object>> findSalesStatsByYear(); 
+	
+	// 모달조회
+	List<Map<String, Object>> findSalesPlanData();
+	
+	// 등록
+	SalesPlan saveSalesPlan(SalesPlan salesplan);
 }
