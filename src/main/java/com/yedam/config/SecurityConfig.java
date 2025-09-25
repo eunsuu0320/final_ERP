@@ -30,13 +30,13 @@ public class SecurityConfig {
         http
             .addFilterBefore(new CaptchaFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/common/login", "/common/findPassword", "/css/**", "/js/**", "/erp/**", "/hr/**", "/api/**", "/ac/**", "/sales2/**").permitAll()
+                .requestMatchers("/", "/common/login", "/common/findPassword", "/css/**", "/js/**", "/erp/**", "/hr/**", "/main/**", "/subscription", "/api/**", "/ac/**", "/sales2/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/common/login")
                 .loginProcessingUrl("/doLogin")
-                .defaultSuccessUrl("/", true)
+                .defaultSuccessUrl("/main", true)
                 .failureUrl("/common/login?error=true")
             )
             .logout(logout -> logout
