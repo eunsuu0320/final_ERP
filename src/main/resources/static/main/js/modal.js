@@ -61,8 +61,43 @@ const modalConfigs = {
          { title: "코드", field: "codeId" },
          { title: "코드명", field: "codeName" },
       ]
-   }
+   },
+   
+   // 매입처 모달
+      supplier: {
+    url: "/api/suppliers",
+    title: "매입처(공급처) 검색",
+    columns: [
+      { title:"공급처코드", field:"supplierCode", width:140, hozAlign:"center" },
+      { title:"공급처명",   field:"supplierName", minWidth:200 },
+      { title:"연락처",     field:"phone", width:140 },
+      { title:"주소",       field:"address", minWidth:220 },
+      { title:"비고",       field:"remark", minWidth:160 },
+    ],
+    selectable: 1,
+  },
+
+  // 구매코드 모달
+  buy: {
+    url: "/api/buys/lookup",
+    title: "구매코드 검색",
+    columns: [
+      { title:"구매코드",    field:"buyCode",      width:140, hozAlign:"center" },
+      { title:"매입처",      field:"partnerName",  minWidth:160 },
+      { title:"품목",        field:"productName",  minWidth:180 },
+      { title:"총금액",      field:"amountTotal",  width:120, hozAlign:"right",
+        formatter:(c)=> Number(c.getValue()||0).toLocaleString() },
+      { title:"구매일자",    field:"purchaseDate", width:120, hozAlign:"center",
+        formatter:(cell)=>{ const v=cell.getValue(); if(!v) return ""; const d=new Date(v); return isNaN(d)? v : d.toISOString().slice(0,10); } },
+      { title:"세금유형",    field:"taxCode",      width:100, hozAlign:"center" },
+    ],
+    selectable: 1,
+  },
+   
+   
 };
+
+
 
 let table; // Tabulator 인스턴스 전역 변수
 
