@@ -51,7 +51,7 @@
 				</div>
 
 				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-secondary me-2">이력조회</button>
+					<button class="btn btn-secondary me-2" onclick="getHistory('product')">이력조회</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
 					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
@@ -64,7 +64,7 @@
 						<span th:text="${col}"></span>
 					</label>
 				</div>
-				
+
 
 				<!-- Tabulator 테이블 -->
 				<div id="productTable"></div>
@@ -109,10 +109,11 @@
 							<div class="modal-body">
 								<form id="itemForm">
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목코드*</label>
+										<label class="col-sm-3 col-form-label">품목코드</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productCode"
-												disabled placeholder="자동생성">
+											<input type="text" class="form-control"
+												id="displayProductCode" readonly placeholder="자동생성">
+											<input type="hidden" name="productCode" id="productCode">
 										</div>
 									</div>
 									<div class="row mb-3">
@@ -173,7 +174,7 @@
 										<div class="col-sm-9">
 											<select class="form-select comboSelect" name="warehouseCode"
 												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
+												<option value="" disabled selected>창고를 선택하세요</option>
 												<option value="본사창고">본사창고</option>
 												<option value="예담창고">예담창고</option>
 											</select>
@@ -210,13 +211,14 @@
 		var columns = /*[[${columns}]]*/[];
 		var rows = /*[[${rows}]]*/[];
 	</script>
+	
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-	<!-- 분리한 JS 파일 -->
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+	<script th:src="@{/erp/js/sales1/salesCommon.js}"></script>
 	<script th:src="@{/erp/js/sales1/productList.js}"></script>
 
 </body>
