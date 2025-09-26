@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>구독 신청</title>
+  <!-- 아이콘 & 폰트 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'SUIT', sans-serif;
+      background: #f4f6fa;
+      padding-top: 40px;
+      overflow-x: hidden; /* 좌우 슬라이드 시 가로 스크롤 방지 */
+    }
+    .container {
+      width: 1050px;
+      margin: 60px auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 20px;
+      position: relative;
+      /* 높이 고정 제거! 페이지 높이는 아래 .pages-wrapper가 책임짐 */
+      overflow-x: hidden; /* 가로만 숨김 */
+    }
+
+    /* 단계 표시 */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px 0;
+      font-size: 14px;
+    }
+    .circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 5px;
+      color: #fff;
+      font-weight: bold;
+      transition: all 0.3s;
+    }
+    .circle.active {
+      background: linear-gradient(145deg, #8a6cf7, #4a2fbf);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    }
+    .line {
+      width: 100px;
+      height: 2px;
+      background: #999;
+      margin: 0 5px;
+    }
+    .step-label { margin-top: 5px; font-size: 13px; }
+
+    /* 페이지 래퍼: 높이를 JS로 유동 조절 */
+    .pages-wrapper {
+      position: relative;
+      width: 100%;
+      overflow: hidden; /* 좌우 슬라이드 되는 오프스크린 페이지 숨김 */
+      transition: height 0.3s ease; /* 높이 변화도 부드럽게 */
+    }
+
+    /* 페이지 (좌우 슬라이드) */
+    .page {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      transform: translateX(100%);        /* 기본은 오른쪽 대기 */
+      transition: transform 0.5s ease-in-out;
+      will-change: transform;
+    }
+    .page.active { transform: translateX(0); }
+    .page.hidden-left  { transform: translateX(-100%); }
+    .page.hidden-right { transform: translateX(100%); }
+
+    /* 본문 */
+    .form-sections { display: flex; }
+    .section.sub-info {
+      flex: 1.3;
+      border-right: 1px solid #eee;
+      padding: 20px;
+      background: #fafafa;
+    }
+    .section.user-info {
+      flex: 2;
+      padding: 20px;
+    }
+    .section h3 {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #6a4fbf;
+    }
+    .section h4 { margin-top: 35px; margin-bottom: 10px; font-size: 15px; }
+
+    /* 포함 서비스 */
+    .services { margin-top: 15px; }
+    .service {
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 10px 0;
+      font-size: 14px;
+      justify-content: space-between;
+      background: #fff;
+      transition: all 0.2s ease;
+    }
+    .service:hover { background: #f3f6ff; }
+    .service:hover i { color: #4a2fbf; }     /* 오른쪽 아이콘 색 강조 */
+    .service:hover .service-icon { background: #28a745; } /* 체크 원 더 진하게 */
+
+    .service-icon {
+      width: 20px; height: 20px;
+      background: #19cc66;
+      border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      color: #fff; font-size: 14px;
+    }
+
+    /* 사용자 입력 */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 20px;
+    }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { font-size: 13px; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      padding: 7px; border: 1px solid #999; border-radius: 2px; font-size: 13px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group.full { grid-column: 1 / span 2; }
+    .form-group input:focus, .form-group select:focus {
+      border: 1px solid #6a4fbf; outline: none;
+      box-shadow: 0 0 4px rgba(106, 79, 191, 0.4);
+    }
+    .email-input { display: flex; align-items: center; gap: 6px; }
+    .email-input input { flex: 1; }
+    .email-input select { min-width: 200px; padding: 7px; }
+
+    /* 아코디언 (STEP2) */
+    .accordion {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .accordion-item { border-bottom: 1px solid #eee; }
+    .accordion-item:last-child { border-bottom: none; }
+    .accordion-header {
+      width: 100%;
+      text-align: left;
+      padding: 12px 15px;
+      background: #f9f9f9;
+      border: none;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .accordion-header i { transition: transform 0.25s ease; }
+    .accordion-header.active i { transform: rotate(180deg); }
+    .accordion-content {
+	  display: none;
+	  padding: 0 15px;
+	  font-size: 13px;
+	  line-height: 1.6;
+	  background: #fff;
+	  border-top: 1px solid #eee;
+	}
+	
+	.accordion-content.open {
+	  display: block;
+	  padding: 12px 15px;
+	}
+    .accordion-content p { margin: 0 0 10px; }
+
+    /* 전자서명 영역 */
+    .agreement-box {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+    }
+    .sign-box {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-width: 260px;
+    }
+    .sign-box textarea {
+      resize: none;
+      padding: 6px;
+      border: 1px solid #aaa;
+      border-radius: 4px;
+      height: 90px;
+    }
+    .sign-box button {
+      width: 90px;
+      padding: 6px 10px;
+      font-size: 12px;
+      border: 1px solid #aaa;
+      background: #eee;
+      cursor: pointer;
+    }
+
+    /* 버튼 */
+    .form-footer {
+      margin-top: 20px;
+      display: flex; justify-content: space-between; gap: 10px;
+    }
+    .btn {
+      flex: 1; padding: 14px; font-size: 16px; font-weight: bold;
+      border: none; cursor: pointer; transition: all 0.3s;
+      position: relative;
+    }
+    .btn-prev { background: #f9c9c9; }
+    .btn-next { background: #c4d9f7; }
+    .btn i { position: absolute; top: 50%; transform: translateY(-50%); }
+    .btn-prev i { left: 20px; }
+    .btn-next i { right: 20px; }
+    .btn:hover { opacity: 0.9; }
+    
+    .agreement-box {
+	  background: #f5f5f5;
+	  padding: 20px;
+	  border-radius: 6px;
+	  margin-top: 15px;
+	  display: flex;
+	  gap: 20px;
+	  align-items: flex-start;
+	}
+	
+	.agreement-left {
+	  flex: 1;
+	  font-size: 14px;
+	  line-height: 1.6;
+	}
+	
+	.agreement-right {
+	  flex: 1.2;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 10px;
+	}
+	
+	#signaturePad {
+	  border: 1px solid #aaa;
+	  border-radius: 4px;
+	  background: #fff;
+	  cursor: crosshair;
+	  width: 100%;
+	  height: auto; /* width=500 height=200 비율 유지 */
+	}
+	
+	.sign-actions {
+	  display: flex;
+	  gap: 10px;
+	}
+	
+	.sign-actions button {
+	  padding: 8px 14px;
+	  font-size: 14px;
+	  border: 1px solid #aaa;
+	  background: #eee;
+	  cursor: pointer;
+	  border-radius: 4px;
+	}
+	
+	.sign-actions button:hover {
+	  background: #ddd;
+	}
+   
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 단계 표시 -->
+    <div class="stepper">
+      <div style="text-align:center">
+        <div class="circle step-circle active" data-step="1">1</div>
+        <div class="step-label">구독 정보</div>
+      </div>
+      <div class="line"></div>
+      <div style="text-align:center">
+        <div class="circle step-circle" data-step="2">2</div>
+        <div class="step-label">계약서</div>
+      </div>
+      <div class="line"></div>
+      <div style="text-align:center">
+        <div class="circle step-circle" data-step="3">3</div>
+        <div class="step-label">결제</div>
+      </div>
+    </div>
+
+    <!-- 페이지 -->
+    <div class="pages-wrapper" id="pagesWrapper">
+      <!-- STEP 1 -->
+      <div class="page active" id="step1">
+        <div class="form-sections">
+          <div class="section sub-info">
+            <h3>구독 정보</h3>
+            <p><strong>(월 ₩30,000)</strong></p>
+            <h4>포함 서비스</h4>
+            <div class="services">
+              <div class="service"><span><div class="service-icon">✔</div> 회계</span> <i class="fa-regular fa-file-lines"></i></div>
+              <div class="service"><span><div class="service-icon">✔</div> 인사</span> <i class="fa-solid fa-user"></i></div>
+              <div class="service"><span><div class="service-icon">✔</div> 영업</span> <i class="fa-solid fa-chart-line"></i></div>
+            </div>
+          </div>
+          <div class="section user-info">
+            <h3>사용자 정보</h3>
+            <form>
+              <div class="form-grid">
+                <div class="form-group">
+				  <label>회사명*</label>
+				  <input type="text" id="companyName" placeholder="예) OO주식회사" required>
+				</div>
+				<div class="form-group">
+				  <label>대표자명*</label>
+				  <input type="text" id="ceoName" placeholder="예) 홍길동" required>
+				</div>
+                <div class="form-group">
+                  <label>사업자 등록번호*</label>
+                  <input type="text" placeholder="123-45-67890" required>
+                </div>
+                <div class="form-group">
+                  <label>주소</label>
+                  <input type="text" placeholder="도로명 주소">
+                </div>
+                <div class="form-group">
+                  <label>마스터 사용자 ID*</label>
+                  <input type="text" placeholder="관리자 계정 ID" required>
+                </div>
+                <div class="form-group">
+                  <label>마스터 PW*</label>
+                  <input type="password" placeholder="초기 비밀번호" required>
+                </div>
+                <div class="form-group">
+                  <label>담당자명</label>
+                  <input type="text" placeholder="예) 김길동">
+                </div>
+                <div class="form-group">
+                  <label>담당자 연락처</label>
+                  <input type="text" placeholder="010-1234-5678">
+                </div>
+                <div class="form-group full">
+                  <label>담당자 이메일</label>
+                  <div class="email-input">
+                    <input type="text" placeholder="example" required>
+                    <span>@</span>
+                    <select>
+                      <option value="gmail.com">gmail.com</option>
+                      <option value="naver.com">naver.com</option>
+                      <option value="daum.net">daum.net</option>
+                      <option value="company.com">company.com</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group full">
+                  <label>구독 기간*</label>
+                  <select>
+                    <option>1개월</option>
+                    <option>3개월</option>
+                    <option>6개월</option>
+                    <option>12개월</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-next" onclick="goToStep(2)">
+            다음으로 <i class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="page hidden-right" id="step2">
+        <div class="section">
+          <h3>ERP 시스템 이용계약서</h3>
+
+          <!-- 아코디언 -->
+          <div class="accordion">
+            <div class="accordion-item">
+              <button class="accordion-header">
+                [ 서비스 이용 계약서 ]
+                <i class="fa fa-chevron-down"></i>
+              </button>
+              <div class="accordion-content">
+                <p><strong>제1조 (목적)</strong><br>
+                본 계약은 [회사명]이 제공하는 ERP 시스템(이하 "서비스")의 이용과 관련하여, 서비스 제공자와 이용자 간의 권리와 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+
+                <p><strong>제2조 (서비스 범위)</strong><br>
+                1. 서비스 제공자는 ERP 시스템의 회계, 인사, 영업 관련 기능을 제공합니다.<br>
+                2. 서비스의 구체적인 내용과 범위는 회사의 정책에 따라 변경될 수 있습니다.</p>
+
+                <p><strong>제3조 (이용자의 의무)</strong><br>
+                1. 이용자는 서비스를 본래의 목적에 맞게 사용해야 합니다.<br>
+                2. 불법적인 용도로 서비스를 이용하거나, 타인의 권리를 침해해서는 안 됩니다.</p>
+
+                <p><strong>제4조 (계약 기간 및 해지)</strong><br>
+                1. 기본 계약 기간은 구독 신청 시 선택한 기간으로 합니다.<br>
+                2. 이용자는 계약기간 중 해지를 원할 경우 회사가 정한 절차에 따라 해지 신청을 해야 하며, 이미 납부한 요금은 환불되지 않습니다.</p>
+
+                <p><strong>제5조 (책임 제한)</strong><br>
+                회사는 천재지변, 시스템 장애, 외부 요인으로 인한 서비스 중단에 대하여 책임을 지지 않습니다. 단, 회사의 고의 또는 중대한 과실로 인한 경우에는 예외로 합니다.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                [ 개인정보 수집 · 이용 동의서 ]
+                <i class="fa fa-chevron-down"></i>
+              </button>
+              <div class="accordion-content">
+                <p><strong>1. 수집하는 개인정보 항목</strong><br>
+                - 회사명, 대표자명, 사업자 등록번호, 담당자명, 연락처, 이메일 주소</p>
+
+                <p><strong>2. 개인정보의 수집 및 이용 목적</strong><br>
+                1) 서비스 가입 및 관리<br>
+                2) 계약 이행 및 서비스 제공<br>
+                3) 요금 청구 및 결제 관리<br>
+                4) 고객 상담 및 공지사항 전달</p>
+
+                <p><strong>3. 개인정보의 보관 및 이용 기간</strong><br>
+                수집된 개인정보는 서비스 이용 계약이 유지되는 동안 보관하며, 계약 해지 시 즉시 파기합니다. 단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관할 수 있습니다.</p>
+
+                <p><strong>4. 동의 거부 권리</strong><br>
+                이용자는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 서비스 이용이 제한될 수 있습니다.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 계약 동의/서명 -->
+          <div class="agreement-box">
+			  <div class="agreement-left">
+			    <p>본 계약서의 모든 내용을 확인하였으며, 이에 동의합니다.</p>
+			    <p>계약일자 : <strong id="contractDate"></strong></p>
+			    <p>구독 회사명 : <span id="contractCompany">__________</span></p>
+			    <p>대표자명 : <span id="contractCeo">__________</span></p>
+			  </div>
+			
+			  <div class="agreement-right">
+			    <label>전자서명*</label>
+			    <canvas id="signaturePad" width="500" height="200"></canvas>
+			    <div class="sign-actions">
+			      <button type="button" id="clearSign">초기화</button>
+			    </div>
+			  </div>
+		  </div>
+
+        <div class="form-footer">
+          <button class="btn btn-prev" onclick="goToStep(1)">
+            <i class="fa fa-arrow-left"></i> 이전으로
+          </button>
+          <button class="btn btn-next" onclick="goToStep(3)">
+            다음으로 <i class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="page hidden-right" id="step3">
+        <div class="section">
+          <h3>결제</h3>
+          <p>여기에 결제 화면이 들어갑니다...</p>
+        </div>
+        <div class="form-footer">
+          <button class="btn btn-prev" onclick="goToStep(2)">
+            <i class="fa fa-arrow-left"></i> 이전으로
+          </button>
+          <button class="btn btn-next">
+            결제하기 <i class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    // 활성 페이지 높이에 맞춰 래퍼 높이 조정
+    function resizeWrapper() {
+      const wrapper = document.getElementById('pagesWrapper');
+      const activePage = document.querySelector('.page.active');
+      if (!wrapper || !activePage) return;
+      // 활성 페이지의 실제 콘텐츠 높이로 래퍼를 맞춤
+      wrapper.style.height = activePage.scrollHeight + 'px';
+    }
+
+    function goToStep(step) {
+   	  if (step === currentStep) return;
+
+   	  const currentPage = document.getElementById('step' + currentStep);
+   	  const nextPage = document.getElementById('step' + step);
+
+   	  if (step > currentStep) {
+   	    currentPage.classList.remove('active');
+   	    currentPage.classList.add('hidden-left');
+   	    nextPage.classList.remove('hidden-left','hidden-right');
+   	  } else {
+   	    currentPage.classList.remove('active');
+   	    currentPage.classList.add('hidden-right');
+   	    nextPage.classList.remove('hidden-right','hidden-left');
+   	  }
+   	  nextPage.classList.add('active');
+
+   	  document.querySelectorAll('.step-circle').forEach(c => {
+   	    c.classList.toggle('active', c.dataset.step == step);
+   	  });
+
+   	  currentStep = step;
+
+   	  // STEP2 들어갈 때 값 채우기
+   	  if (step === 2) {
+   	    const company = document.getElementById("companyName").value || "__________";
+   	    const ceo = document.getElementById("ceoName").value || "__________";
+   	    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd 형식
+
+   	    document.getElementById("contractCompany").textContent = "[ " + company + " ]";
+   	    document.getElementById("contractCeo").textContent = "[ " + ceo + " ]";
+   	    document.getElementById("contractDate").textContent = "[ " + today + " ]";
+   	  }
+
+   	  requestAnimationFrame(resizeWrapper);
+   	}
+
+    // 아코디언 초기화 (열고 닫을 때마다 래퍼 높이 재계산)
+    function initAccordion() {
+      document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const content = header.nextElementSibling;
+          header.classList.toggle('active');
+          content.classList.toggle('open');
+          // 콘텐츠가 열리고 닫힌 뒤 높이 반영
+          requestAnimationFrame(resizeWrapper);
+        });
+      });
+    }
+
+    // 전자서명 초기화 버튼
+    function initSignReset() {
+      const btn = document.getElementById('signReset');
+      const textarea = document.querySelector('.sign-box textarea');
+      if (btn && textarea) {
+        btn.addEventListener('click', () => {
+          textarea.value = '';
+        });
+      }
+    }
+
+    // 초기 세팅
+    document.addEventListener('DOMContentLoaded', () => {
+      initAccordion();
+      initSignReset();
+      resizeWrapper(); // 첫 페이지 높이 맞춤
+      window.addEventListener('resize', resizeWrapper);
+    });
+    
+ 	// 서명 패드 기능 (마우스 + 터치 지원, 좌표 보정)
+    let canvas = document.getElementById("signaturePad");
+    let ctx = canvas.getContext("2d");
+    let drawing = false;
+
+    function getPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches) {
+        return {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        };
+      } else {
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      drawing = true;
+      const pos = getPosition(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const pos = getPosition(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+
+    function stopDrawing(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      drawing = false;
+    }
+
+    // 마우스 이벤트
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", draw);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
+
+    // 터치 이벤트 (모바일/태블릿)
+    canvas.addEventListener("touchstart", startDrawing);
+    canvas.addEventListener("touchmove", draw);
+    canvas.addEventListener("touchend", stopDrawing);
+    canvas.addEventListener("touchcancel", stopDrawing);
+
+    // 초기화 버튼
+    document.getElementById("clearSign").addEventListener("click", () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+    
+  </script>
+</body>
+</html>
