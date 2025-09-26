@@ -16,8 +16,11 @@ public interface PriceRepository extends
 
 	List<Price> findAll();
 	
+	@Query("SELECT MAX(p.priceGroupCode) FROM Price p")
+	String findMaxPriceGroupCode();
+	
 	@Query("SELECT MAX(p.priceUniqueCode) FROM Price p")
-	String findMaxPriceCode();
+	Long findMaxPriceUniqueCode();
 	
 //	@Query("SELECT p FROM Price p " +
 //		       "WHERE (:productName IS NULL OR p.productName = :productName) " +
