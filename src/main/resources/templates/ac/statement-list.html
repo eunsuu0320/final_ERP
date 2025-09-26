@@ -92,7 +92,7 @@
           </div>
 
           <div>
-            <label class="form-label"></label>
+            <label class="form-label">판매일자(전표일자)</label>
             <input id="fromDate" type="date" class="form-control w-auto">
           </div>
           <div>
@@ -103,7 +103,6 @@
           <div class="d-flex gap-2">
             <button id="btn-search" class="btn btn-warning">검색</button>
             <button id="btn-reset" class="btn btn-outline-secondary">초기화</button>
-            <!-- ✅ 새로고침 버튼 -->
             <button id="btn-refresh" class="btn btn-outline-secondary">새로고침</button>
           </div>
         </div>
@@ -127,10 +126,7 @@
   <div th:replace="~{common/modal :: commonModal}"></div>
   <script th:src="@{/main/js/modal.js}" defer></script>
 
-  <!-- SheetJS -->
-  <script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js" defer></script>
-
-  <!-- ▼ 전표 등록 모달 -->
+  <!-- ▼▼▼▼▼ 전표 등록 모달 ▼▼▼▼▼ -->
   <div class="modal fade" id="voucherFormModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -142,30 +138,21 @@
         <div class="modal-body">
           <div class="vf-box">
             <div class="row g-2">
-              <!-- 전표일자 -->
               <div class="col-md-6">
-                <label class="form-label vf-label">전표일자</label>
-                <div class="input-group">
-                  <input id="vf-voucherDate" type="date" class="form-control">
-                </div>
+                <label class="form-label vf-label" id="lbl-voucherDate">전표일자</label>
+                <div class="input-group"><input id="vf-voucherDate" type="date" class="form-control"></div>
               </div>
-
-              <!-- 전표번호(서버 예측값 표시) -->
               <div class="col-md-6">
                 <label class="form-label vf-label">전표번호</label>
                 <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동발번" readonly>
               </div>
-
-              <!-- 판매/매입 코드 -->
               <div class="col-md-6">
-                <label class="form-label vf-label">판매코드</label>
+                <label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
                 <div class="input-group">
                   <input id="vf-saleCode" type="text" class="form-control" placeholder="">
                   <button id="vf-find-saleCode" class="btn btn-outline-secondary" type="button">🔍</button>
                 </div>
               </div>
-
-              <!-- 거래처 -->
               <div class="col-md-6">
                 <label class="form-label vf-label">거래처</label>
                 <div class="input-group">
@@ -173,16 +160,10 @@
                   <button id="vf-find-partner" class="btn btn-outline-secondary" type="button">🔍</button>
                 </div>
               </div>
-
-              <!-- 판매일자 -->
               <div class="col-md-6">
-                <label class="form-label vf-label">판매일자</label>
-                <div class="input-group">
-                  <input id="vf-saleDate" type="date" class="form-control">
-                </div>
+                <label class="form-label vf-label" id="lbl-saleDate">판매일자</label>
+                <div class="input-group"><input id="vf-saleDate" type="date" class="form-control"></div>
               </div>
-
-              <!-- 담당자 -->
               <div class="col-md-6">
                 <label class="form-label vf-label">담당자</label>
                 <div class="input-group">
@@ -190,13 +171,9 @@
                   <button hidden id="vf-find-emp" class="btn btn-outline-secondary" type="button">🔍</button>
                 </div>
               </div>
-
-              <!-- 작성일자 -->
               <div class="col-md-6">
                 <label class="form-label vf-label">작성일자</label>
-                <div class="input-group">
-                  <input id="vf-writeDate" type="date" class="form-control">
-                </div>
+                <div class="input-group"><input id="vf-writeDate" type="date" class="form-control"></div>
               </div>
             </div>
 
@@ -222,7 +199,8 @@
               </div>
               <div class="col-12">
                 <label class="form-label vf-label">총 금액</label>
-                <input id="vf-total" type="text" class="form-control vf-num" value="0" readonly>
+                <!-- 총액 직접 입력 가능하게 readonly 제거 -->
+                <input id="vf-total" type="text" class="form-control vf-num" value="0">
               </div>
               <div class="col-12">
                 <label class="form-label vf-label">적요</label>
@@ -239,6 +217,10 @@
       </div>
     </div>
   </div>
+  <!-- ▲▲▲▲▲ 전표 등록 모달 끝 ▲▲▲▲▲ -->
+
+  <!-- SheetJS -->
+  <script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js" defer></script>
 
   <!-- 페이지 스크립트 -->
   <script>
@@ -254,19 +236,53 @@
     const fmt   = n => Number(n||0).toLocaleString();
     const unfmt = s => Number(String(s||'').replace(/[^\d.-]/g,''))||0;
 
-    /* 로딩 오버레이 제어 */
+    /* ===== 부가세 연산 (유형별) =====
+       - 요구사항: 총액 기준일 때 부가세는 "총액의 10%" (과세)
+       - 공급가액 기준일 때는 부가세 = 공급가액의 10% (과세)
+       - 영세/면세는 항상 0
+    */
+    const FRACTION = {
+      TAXABLE: { num: 10, den: 100 }, // 10%
+      ZERO:    { num: 0,  den: 100 }, // 0%
+      EXEMPT:  { num: 0,  den: 100 }, // 0%
+    };
+    const normType = (t) => {
+      const x = String(t||'').toUpperCase();
+      return (x in FRACTION) ? x : 'TAXABLE';
+    };
+
+    // 공급가액 기준: VAT = round(supply * 10%), TOTAL = supply + VAT
+    function computeFromSupply(supply, taxType){
+      const { num, den } = FRACTION[normType(taxType)];
+      if (num === 0) return { supply, vat: 0, total: supply };
+      const vat   = Math.round(supply * num / den);
+      const total = supply + vat;
+      return { supply, vat, total };
+    }
+
+    // 총액(부가세 포함) 기준: **요구사항대로** VAT = round(total * 10%), SUPPLY = total - vat
+    function computeFromTotal(total, taxType){
+      const { num, den } = FRACTION[normType(taxType)];
+      if (num === 0) return { supply: total, vat: 0, total };
+      const vat    = Math.round(total * num / den);
+      const supply = total - vat;
+      return { supply, vat, total };
+    }
+
+    // 현재 수치/모드 상태 저장
+    const lastCalc = { mode: 'SUPPLY', supply: 0, vat: 0, total: 0, taxType: 'TAXABLE' };
+
     const $overlay = document.getElementById('tbl-loading');
     const showLoading = () => $overlay?.classList.add('show');
     const hideLoading = () => $overlay?.classList.remove('show');
 
-    /* 겹 모달 */
+    /* 겹치는 백드롭 정리 */
     const cmEl = document.getElementById('commonModal');
     if (cmEl) {
       cmEl.addEventListener('show.bs.modal', () => {
         const opened = document.querySelectorAll('.modal.show').length;
         const z = 1065 + opened * 10;
-        cmEl.classList.add('stack-top');
-        cmEl.style.zIndex = z;
+        cmEl.classList.add('stack-top'); cmEl.style.zIndex = z;
         setTimeout(() => {
           const bds = document.querySelectorAll('.modal-backdrop');
           const last = bds[bds.length - 1];
@@ -275,7 +291,6 @@
       });
     }
 
-    /* 로그인 사용자명(담당자 자동 세팅) */
     let currentUserName = '';
     fetch('/api/me', { credentials: 'same-origin' })
       .then(r => r.ok ? r.json() : {} )
@@ -284,20 +299,17 @@
 
     /* ---------- 목록 테이블 ---------- */
     let currentType='ALL';
-
     function paramsFor(page0, size){
       return {
-        type:       currentType,
-        keyword:    document.getElementById('partnerName').value || '',
-        voucherNo:  document.getElementById('voucherNo').value || '',
-        fromDate:   document.getElementById('fromDate').value || '',
-        toDate:     document.getElementById('toDate').value || '',
-        page:       page0 ?? 0,
-        size:       size ?? mainTable?.getPageSize() ?? 20,
+        type: currentType,
+        keyword:  document.getElementById('partnerName').value || '',
+        voucherNo:document.getElementById('voucherNo').value || '',
+        fromDate: document.getElementById('fromDate').value || '',
+        toDate:   document.getElementById('toDate').value || '',
+        page:     page0 ?? 0,
+        size:     size ?? mainTable?.getPageSize() ?? 20,
       };
     }
-
-    // 안전 JSON 요청
     async function fetchPageJson(url) {
       const res  = await fetch(url, { method: 'GET', headers: { 'Accept':'application/json' }});
       const ctyp = (res.headers.get('content-type') || '').toLowerCase();
@@ -309,26 +321,24 @@
       return text ? JSON.parse(text) : {};
     }
 
+    let allSelected = false;
     const mainTable = new Tabulator("#employee-table",{
       layout:"fitColumns",
       pagination:true, paginationMode:"remote",
       paginationSize:20, paginationSizeSelector:[20,50,100],
+      initialSort: [{ column: "voucherNo", dir: "desc" }],
+      selectable:true, selectableRangeMode:"drag",
       columns:[
-        {titleFormatter:"rowSelection",formatter:"rowSelection",titleFormatterParams:{rowRange:"active"},headerSort:false,width:55,hozAlign:"center",headerHozAlign:"center"},
-        {title:"전표번호",field:"voucherNo",hozAlign:"center",width:130},
-        {
-          title:"유형", field:"type", hozAlign:"center", width:100,
-          formatter:(c)=>{
-            const t = c.getValue();
-            const map = {
-              SALES:{label:"매출",cls:"bg-primary"},
-              BUY:{label:"매입",cls:"bg-success"},
-              MONEY:{label:"수금",cls:"bg-info"},
-              PAYMENT:{label:"지급",cls:"bg-warning"},
-            };
-            const m = map[t] || {label:t||"기타",cls:"bg-secondary"};
-            return `<span class="badge ${m.cls}">${m.label}</span>`;
-          }
+        { titleFormatter:"rowSelection", formatter:"rowSelection",
+          titleFormatterParams:{rowRange:"active"},
+          headerSort:false,width:55,hozAlign:"center",headerHozAlign:"center",
+          headerClick:()=>{ if(!allSelected){ mainTable.selectRow("visible"); } else { mainTable.deselectRow(); } allSelected = !allSelected; }
+        },
+        { title:"전표번호", field:"voucherNo", hozAlign:"center", width:130,
+          sorter:(a,b)=>{ const [ay, an] = String(a ?? "").split("-"); const [by, bn] = String(b ?? "").split("-"); if (ay !== by) return ay.localeCompare(by); return (parseInt(an,10)||0) - (parseInt(bn,10)||0); }
+        },
+        { title:"유형", field:"type", hozAlign:"center", width:100,
+          formatter:(c)=>{ const t=c.getValue(); const map={SALES:{label:"매출",cls:"bg-primary"}, BUY:{label:"매입",cls:"bg-success"}, MONEY:{label:"수금",cls:"bg-info"}, PAYMENT:{label:"지급",cls:"bg-warning"}}; const m = map[t] || {label:t||"기타",cls:"bg-secondary"}; return `<span class="badge ${m.cls}">${m.label}</span>`; }
         },
         {title:"거래처명",field:"partnerName",minWidth:180},
         {title:"총액",field:"amountTotal",hozAlign:"right",minWidth:110,formatter:(c)=>fmt(c.getValue())},
@@ -336,36 +346,27 @@
         {title:"전표일자",field:"voucherDate",hozAlign:"center",width:120,
           formatter:(c)=>{const v=c.getValue();if(!v) return "";const d=new Date(v);return isNaN(d)?String(v).slice(0,10):d.toISOString().slice(0,10);}
         },
+        {title:"제품명", field:"productName", visible:false},
       ],
       ajaxURL: "/api/statements",
       ajaxRequestFunc: async (_url, _config, params) => {
-        showLoading();                               // 오버레이 ON
+        showLoading();
         try {
           const page0 = (params?.page ?? 1) - 1;
           const query = paramsFor(page0, params?.size);
           const fullUrl = `/api/statements?${new URLSearchParams(query).toString()}`;
-          console.log("[STATEMENTS] GET", fullUrl);
-
           const json = await fetchPageJson(fullUrl);
           const rows = Array.isArray(json) ? json : (json.content ?? []);
-          const last = Array.isArray(json)
-            ? 1
-            : Math.max(1, json.totalPages ?? Math.ceil((json.totalElements || 0) / (json.size || query.size)));
+          const last = Array.isArray(json) ? 1 : Math.max(1, json.totalPages ?? Math.ceil((json.totalElements || 0) / (json.size || query.size)));
           return { data: rows, last_page: last };
-        } finally {
-          hideLoading();                              // 오버레이 OFF (성공/실패 무관)
-        }
+        } finally { hideLoading(); }
       },
-      ajaxError(error){
-        console.error("[STATEMENTS] ajax error:", error);
-        toast("데이터 로드 실패: " + (error?.message || ''));
-      },
+      ajaxError(error){ console.error("[STATEMENTS] ajax error:", error); toast("데이터 로드 실패: " + (error?.message || '')); },
     });
 
     mainTable.on("tableBuilt",()=>requestAnimationFrame(()=>mainTable.redraw(true)));
     window.addEventListener('resize',()=>mainTable.redraw(true));
 
-    // 탭 전환
     document.querySelectorAll('.btn-type .btn').forEach(btn=>{
       btn.addEventListener('click',()=>{
         document.querySelectorAll('.btn-type .btn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-outline-primary');});
@@ -375,7 +376,6 @@
       });
     });
 
-    // 검색/초기화
     document.getElementById('btn-search').addEventListener('click',()=> mainTable.setPage(1));
     document.getElementById('btn-reset').addEventListener('click',()=>{
       ['partnerName','voucherNo','fromDate','toDate'].forEach(id=>document.getElementById(id).value='');
@@ -387,7 +387,13 @@
       mainTable.setPage(1);
     });
 
-    // ✅ 새로고침 버튼: 버튼 스피너 + 오버레이
+    const $btnFindPartnerTop = document.getElementById('btn-find-partner');
+    const $partnerNameTop    = document.getElementById('partnerName');
+    $btnFindPartnerTop?.addEventListener('click', () => {
+      if (typeof openModal !== 'function') { console.warn('[partner search] openModal() not found.'); return; }
+      openModal('partner', (row) => { if ($partnerNameTop) $partnerNameTop.value = row?.partnerName || row?.supplierName || ''; });
+    });
+
     const $refresh = document.getElementById('btn-refresh');
     $refresh?.addEventListener('click', async ()=>{
       if ($refresh.disabled) return;
@@ -396,7 +402,9 @@
       $refresh.innerHTML = `새로고침 <span class="spinner-border spinner-border-sm ms-1" role="status" aria-label="loading"></span>`;
       showLoading();
       try {
-        await mainTable.replaceData();               // 내부에서 ajaxRequestFunc 호출
+        const cur = mainTable.getPage() || 1;
+        await mainTable.setPage(cur);
+        mainTable.setSort("voucherNo","desc");
       } finally {
         hideLoading();
         $refresh.disabled = false;
@@ -404,123 +412,364 @@
       }
     });
 
-    /* ---------- 전표 등록 모달(저장 연동) ---------- */
+    /* ---------- Excel ---------- */
+    function yyyymmdd() {
+      const d = new Date();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      return `${d.getFullYear()}${m}${day}`;
+    }
+
+    document.getElementById('btn-export')?.addEventListener('click', () => {
+      const filename = `statements_${yyyymmdd()}.xlsx`;
+      try {
+        if (typeof mainTable.download === 'function') {
+          mainTable.download("xlsx", filename, { sheetName: "Statements" });
+          return;
+        }
+      } catch(e) { console.warn('[EXPORT] Tabulator download fallback', e); }
+
+      try {
+        const data = mainTable.getData(true);
+        const rows = data.map(r => ({
+          전표번호: r.voucherNo || '',
+          유형: r.type || '',
+          거래처명: r.partnerName || '',
+          총액: r.amountTotal || 0,
+          적요: r.remark || '',
+          전표일자: r.voucherDate ? String(r.voucherDate).slice(0,10) : ''
+        }));
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(rows);
+        XLSX.utils.book_append_sheet(wb, ws, "Statements");
+        XLSX.writeFile(wb, filename);
+      } catch(e) { console.error('[EXPORT] failed', e); toast('엑셀 내보내기 실패'); }
+    });
+
+    /* ---------- 전표 양식 인쇄 ---------- */
+    function buildVoucherHTML(rows){
+      const now = new Date();
+      const nowStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${now.toLocaleTimeString()}`;
+      const css = `
+        <style>
+          @page { size: A4; margin: 12mm; }
+          body { font-family: 'Malgun Gothic', system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif; color:#222; }
+          .page { page-break-after: always; }
+          .title { text-align:center; font-size:28px; font-weight:700; letter-spacing:4px; margin-bottom:8px; }
+          .head { display:flex; justify-content:space-between; margin:6px 0 10px; font-size:12px; }
+          .grid { width:100%; border-collapse:collapse; font-size:12px; }
+          .grid th, .grid td { border:1px solid #bdbdbd; padding:6px 8px; }
+          .grid thead th { background:#efefef; }
+          .sum { font-weight:700; }
+          .r { text-align:right; }
+          .c { text-align:center; }
+          .note { font-size:11px; color:#666; margin-top:8px; }
+          .small { font-size:11px; }
+          .stamp { border:1px solid #bdbdbd; width:280px; margin-left:auto; margin-bottom:6px; }
+          .stamp table { width:100%; border-collapse:collapse; }
+          .stamp th, .stamp td { border:1px solid #bdbdbd; text-align:center; padding:4px 0; font-size:12px; }
+        </style>
+      `;
+      const pages = rows.map((r, idx)=>{
+        const type = (r.type || '').toUpperCase();
+        const company = '㈜가장많이쓰는ERP';
+        const writer = currentUserName || 'guest';
+        const vno = r.voucherNo || '';
+        const total   = Number(r.amountTotal || r.total || 0);
+        let supply    = Number(r.amountSupply || 0);
+        let vat       = Number(r.amountVat || 0);
+
+        const taxType = normType(r.taxCode || 'TAXABLE');
+
+        // 화면/저장 데이터가 비었으면 재계산
+        if (!supply && !vat && total){
+          const parts = computeFromTotal(total, taxType); // 여기서도 총액의 10%
+          supply = parts.supply; vat = parts.vat;
+        } else if (supply && !vat){
+          const parts = computeFromSupply(supply, taxType);
+          vat = parts.vat;
+        } else if (!supply && vat){
+          // vat만 있는 드문 케이스 → 총액 가정 후 역산
+          const parts = computeFromTotal(total || (vat*10), taxType);
+          supply = parts.supply; vat = parts.vat;
+        }
+
+        const itemName = r.productName || r.remark || r.partnerName || '';
+
+        let lines = [];
+        if (type === 'SALES') {
+          lines = [
+            { acct:'외상매출금',   desc:itemName, debit: total,  credit: 0 },
+            { acct:'제품매출',     desc:itemName, debit: 0,      credit: supply },
+            { acct:'부가세예수금', desc:itemName, debit: 0,      credit: vat },
+          ];
+        } else if (type === 'BUY') {
+          lines = [
+            { acct:'상품',         desc:itemName, debit: supply, credit: 0 },
+            { acct:'부가세대급금', desc:itemName, debit: vat,    credit: 0 },
+            { acct:'외상매입금',   desc:itemName, debit: 0,      credit: total },
+          ];
+        } else {
+          lines = [{ acct:'기타', desc:itemName, debit: total, credit: 0 }];
+        }
+        const debitSum  = lines.reduce((s,x)=>s + (x.debit||0), 0);
+        const creditSum = lines.reduce((s,x)=>s + (x.credit||0),0);
+        const foot = (type==='SALES')
+          ? `매출 : 세금계산서 / ${r.partnerName||''} / ${fmt(supply)} , ${fmt(vat)}`
+          : `매입 : 세금계산서 / ${r.partnerName||''} / ${fmt(supply)} , ${fmt(vat)}`;
+
+        const bodyRows = lines.map(x=>`
+          <tr>
+            <td class="c">${x.acct}</td>
+            <td>${x.desc||''}</td>
+            <td class="r">${x.debit?fmt(x.debit):''}</td>
+            <td class="r">${x.credit?fmt(x.credit):''}</td>
+          </tr>`).join('');
+        const empty = Array.from({length:7 - lines.length}).map(()=>`<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`).join('');
+
+        return `
+          <div class="page">
+            <div class="title">전 표</div>
+            <div class="stamp">
+              <table>
+                <tr><th rowspan="2" style="width:50px;">결<br>재</th><th>담당</th><th>대리</th><th>과장</th></tr>
+                <tr><td style="height:50px;"></td><td></td><td></td></tr>
+              </table>
+            </div>
+            <div class="head">
+              <div>회사명 : ${company}</div>
+              <div>작성자 : ${writer}</div>
+              <div>전표번호 : ${vno}</div>
+            </div>
+            <table class="grid">
+              <thead>
+                <tr><th class="c" style="width:120px;">계정명</th><th class="c">적요</th><th class="c" style="width:140px;">차변</th><th class="c" style="width:140px;">대변</th></tr>
+              </thead>
+              <tbody>
+                ${bodyRows}
+                ${empty}
+                <tr class="sum"><td class="c">합계</td><td class="small">${foot}</td><td class="r">${fmt(debitSum)}</td><td class="r">${fmt(creditSum)}</td></tr>
+              </tbody>
+            </table>
+            <div class="note">[ ${idx+1} / ${rows.length} ]</div>
+            <div class="note r">${nowStr}</div>
+          </div>
+        `;
+      }).join('');
+      return `<!doctype html><html><head><meta charset="utf-8">${css}</head><body>${pages}</body></html>`;
+    }
+
+    document.getElementById('btn-print')?.addEventListener('click', () => {
+      const selected = mainTable.getSelectedData();
+      if (!selected || selected.length === 0){ toast('인쇄할 전표를 체크박스로 선택하세요.'); return; }
+      const html = buildVoucherHTML(selected);
+      const w = window.open('', '_blank'); if (!w) { toast('팝업이 차단되었습니다.'); return; }
+      w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
+    });
+
+    /* ---------- 전표 등록 모달 ---------- */
     const vfEl    = document.getElementById('voucherFormModal');
     const vfModal = (window.bootstrap?.Modal && vfEl) ? new bootstrap.Modal(vfEl) : null;
     const q = (sel) => vfEl ? vfEl.querySelector(sel) : null;
 
-    let currentVoucherType = 'SALES';
-
     async function fetchNextVoucherNo(type, dateStr){
-      const $vno = q('#vf-voucherNo');
-      if(!$vno){ console.warn('[voucher] #vf-voucherNo not found'); return; }
+      const $vno = q('#vf-voucherNo'); if(!$vno) return;
       try{
-        $vno.classList.add('vf-loading');
-        $vno.value = '발번 조회중...';
+        $vno.classList.add('vf-loading'); $vno.value = '발번 조회중...';
         const qs = new URLSearchParams({ type, ...(dateStr?{date:dateStr}:{}) });
         const res = await fetch(`/api/vouchers/next?${qs.toString()}`, { method:'GET' });
-        const text = await res.text();
-        if(!res.ok) throw new Error(text||'fetch failed');
-        const j = text ? JSON.parse(text) : {};
-        $vno.value = j?.voucherNo || '';
-      }catch(e){
-        console.error(e);
-        $vno.value = '';
-        toast('전표번호 조회 실패');
-      }finally{
-        $vno.classList.remove('vf-loading');
-      }
+        const text = await res.text(); if(!res.ok) throw new Error(text||'fetch failed');
+        const j = text ? JSON.parse(text) : {}; $vno.value = j?.voucherNo || '';
+      }catch(e){ console.error(e); $vno.value = ''; toast('전표번호 조회 실패'); }
+      finally{ $vno.classList.remove('vf-loading'); }
+    }
+
+    // === 외부 리스너 격리를 위한 헬퍼들 ===
+    function resetField(el){
+      if(!el) return null;
+      const clone = el.cloneNode(true);
+      el.replaceWith(clone);          // 기존 리스너 전부 제거
+      return clone;
+    }
+
+    function rewireNumericFields(){
+      const $taxSel0 = q('#vf-taxType');
+      const $sup0    = q('#vf-supply');
+      const $vat0    = q('#vf-vat');
+      const $tot0    = q('#vf-total');
+
+      const $taxSel = resetField($taxSel0);
+      const $supply = resetField($sup0);
+      const $vat    = resetField($vat0);
+      const $total  = resetField($tot0);
+      if (!($taxSel && $supply && $vat && $total)) return;
+
+      const syncView = (p) => {
+        lastCalc.supply = p.supply; lastCalc.vat = p.vat; lastCalc.total = p.total; lastCalc.taxType = $taxSel.value;
+        $supply.value = fmt(p.supply);
+        $vat.value    = fmt(p.vat);
+        $total.value  = fmt(p.total);
+      };
+
+      // ===== 공급가액 입력 → 공급기준
+      $supply.addEventListener('input', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($supply.value);
+        const p = computeFromSupply(raw, $taxSel.value);
+        lastCalc.mode = 'SUPPLY';
+        syncView(p);
+      }, { capture:true });
+
+      $supply.addEventListener('focus', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($supply.value);
+        $supply.value = raw ? String(raw) : '';
+        setTimeout(() => { try { $supply.setSelectionRange($supply.value.length, $supply.value.length); } catch(_){} }, 0);
+      }, { capture:true });
+
+      $supply.addEventListener('blur', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($supply.value);
+        const p = computeFromSupply(raw, $taxSel.value);
+        lastCalc.mode = 'SUPPLY';
+        syncView(p);
+      }, { capture:true });
+
+      // ===== 총액 입력 → 총액기준(요구사항: VAT=총액의 10%)
+      $total.addEventListener('input', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($total.value);
+        const p = computeFromTotal(raw, $taxSel.value);
+        lastCalc.mode = 'TOTAL';
+        syncView(p);
+      }, { capture:true });
+
+      $total.addEventListener('focus', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($total.value);
+        $total.value = raw ? String(raw) : '';
+        setTimeout(() => { try { $total.setSelectionRange($total.value.length, $total.value.length); } catch(_){} }, 0);
+      }, { capture:true });
+
+      $total.addEventListener('blur', (e) => {
+        e.stopImmediatePropagation();
+        const raw = unfmt($total.value);
+        const p = computeFromTotal(raw, $taxSel.value);
+        lastCalc.mode = 'TOTAL';
+        syncView(p);
+      }, { capture:true });
+
+      // 세금유형 변경 시 현재 모드 유지하여 재계산
+      $taxSel.addEventListener('change', (e) => {
+        e.stopImmediatePropagation();
+        const p = (lastCalc.mode === 'TOTAL')
+          ? computeFromTotal(lastCalc.total, $taxSel.value)
+          : computeFromSupply(lastCalc.supply, $taxSel.value);
+        syncView(p);
+      }, { capture:true });
+
+      // 숫자 입력 보호
+      ['wheel','mousewheel'].forEach(evt=>{
+        [$supply, $total].forEach($el=>{
+          $el.addEventListener(evt, (e)=> {
+            if (document.activeElement === $el) { e.preventDefault(); e.stopImmediatePropagation(); }
+          }, { passive:false, capture:true });
+        });
+      });
+      [$supply, $total].forEach($el=>{
+        $el.addEventListener('keydown', (e) => {
+          if (['ArrowUp','ArrowDown','PageUp','PageDown'].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); }
+        }, { capture:true });
+      });
+
+      // 초기값(총액 0 → 공급/부가세 0)
+      syncView(computeFromTotal(0, $taxSel.value));
+      lastCalc.mode = 'TOTAL';
+
+      return { $taxSel, $supply, $vat, $total, syncView };
     }
 
     document.querySelectorAll('.open-voucher-form').forEach(btn=>{
-      btn.addEventListener('click',()=>{
-        currentVoucherType = btn.dataset.type === 'BUY' ? 'BUY' : 'SALES';
-        openVoucherForm(currentVoucherType);
-      });
+      btn.addEventListener('click',()=>{ openVoucherForm(btn.dataset.type === 'BUY' ? 'BUY' : 'SALES'); });
     });
 
+    let vfBindings = null;
+
     function openVoucherForm(type){
-      if(!vfEl){ toast('전표 등록 모달 DOM(#voucherFormModal)을 찾지 못했습니다.'); return; }
-      if(!vfModal){ toast('부트스트랩 모달 스크립트가 로드되지 않았습니다.'); return; }
+      if(!vfEl || !vfModal){ toast('전표 등록 모달을 로드할 수 없습니다.'); return; }
+      const $title=q('#vf-title'), $voucherDt=q('#vf-voucherDate'), $saleDt=q('#vf-saleDate'), $writeDt=q('#vf-writeDate'),
+            $voucherNo=q('#vf-voucherNo'), $saleCode=q('#vf-saleCode'), $partner=q('#vf-partnerName'),
+            $emp=q('#vf-empName'), $taxSel=q('#vf-taxType'), $remark=q('#vf-remark'),
+            $findPartnerBtn=q('#vf-find-partner'), $findSaleBtn=q('#vf-find-saleCode'), $findEmpBtn=q('#vf-find-emp'),
+            $lblSaleCode=q('#lbl-saleCode'), $lblSaleDate=q('#lbl-saleDate'), $lblVoucherDate=q('#lbl-voucherDate');
 
-      const $title      = q('#vf-title');
-      const $voucherDt  = q('#vf-voucherDate');
-      const $saleDt     = q('#vf-saleDate');
-      const $writeDt    = q('#vf-writeDate');
-      const $voucherNo  = q('#vf-voucherNo');
-      const $saleCode   = q('#vf-saleCode');
-      const $partner    = q('#vf-partnerName');
-      const $emp        = q('#vf-empName');
-      const $taxSel     = q('#vf-taxType');
-      const $remark     = q('#vf-remark');
-      const $findPartnerBtn = q('#vf-find-partner');
-      const $findSaleBtn    = q('#vf-find-saleCode');
-      const $findEmpBtn     = q('#vf-find-emp');
-
-      if(!$title || !$voucherDt || !$voucherNo){
-        console.warn('[voucher] modal essential elements missing', { $title, $voucherDt, $voucherNo });
-        toast('전표 등록 모달 구성요소를 찾지 못했습니다.');
-        return;
+      if (type==='BUY') {
+        $title.textContent='매입전표 등록';
+        if($lblSaleCode) $lblSaleCode.textContent='구매코드';
+        if($lblSaleDate) $lblSaleDate.textContent='구매일자';
+        if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
+      } else {
+        $title.textContent='매출전표 등록';
+        if($lblSaleCode) $lblSaleCode.textContent='판매코드';
+        if($lblSaleDate) $lblSaleDate.textContent='판매일자';
+        if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
       }
 
-      $title.textContent = (type==='BUY' ? '매입전표 등록' : '매출전표 등록');
+      const today=new Date().toISOString().slice(0,10);
+      if($voucherDt) $voucherDt.value=today; if($saleDt) $saleDt.value=today; if($writeDt) $writeDt.value=today;
+      if($voucherNo) $voucherNo.value=''; fetchNextVoucherNo(type, today);
 
-      const today = new Date().toISOString().slice(0,10);
-      if($voucherDt) $voucherDt.value = today;
-      if($saleDt)    $saleDt.value    = today;
-      if($writeDt)   $writeDt.value   = today;
+      if($saleCode) $saleCode.value=''; if($partner) $partner.value=''; if($remark) $remark.value='';
+      if($emp) $emp.value=(typeof currentUserName==='string'?currentUserName:'');
+      if($taxSel) $taxSel.value='TAXABLE';
 
-      $voucherNo.value = '';
-      fetchNextVoucherNo(type, today);
+      // 숫자 필드/리스너 세팅
+      vfBindings = rewireNumericFields();
 
-      if($saleCode) $saleCode.value = '';
-      if($partner)  $partner.value  = '';
-      if($remark)   $remark.value   = '';
-      if($emp)      $emp.value      = (typeof currentUserName === 'string' ? currentUserName : '');
-
-      if($taxSel)   $taxSel.value   = 'TAXABLE';
-      setAmounts(0, 'TAXABLE');
-
-      if($voucherDt){
-        $voucherDt.onchange = ()=> fetchNextVoucherNo(type, $voucherDt.value || '');
-      }
+      if($voucherDt){ $voucherDt.onchange=()=> fetchNextVoucherNo(type, $voucherDt.value||''); }
 
       if($findPartnerBtn){
-        $findPartnerBtn.onclick = ()=> openModal('partner',(row)=>{ if($partner) $partner.value = row?.partnerName ?? ''; });
+        $findPartnerBtn.onclick=()=> {
+          const partnerModalType = (type==='BUY') ? 'supplier' : 'partner';
+          openModal(partnerModalType,(row)=>{ if($partner) $partner.value = row?.partnerName || row?.supplierName || ''; });
+        };
       }
+
       if($findSaleBtn){
-        $findSaleBtn.onclick = ()=> openModal('sales',(row)=>{ if($saleCode) $saleCode.value = row?.salesCode ?? ''; });
+        $findSaleBtn.onclick=()=> {
+          const modalType=(type==='BUY')?'buy':'sales';
+          openModal(modalType,(row)=>{
+            if($saleCode) $saleCode.value=(type==='BUY') ? (row?.buyCode??'') : (row?.salesCode??'');
+            const pickedPartner = row?.partnerName || row?.supplierName || row?.correspondent || row?.customerName || row?.partner || row?.clientName || row?.buyerName || '';
+            if ($partner && pickedPartner) $partner.value = pickedPartner;
+            const pickedDate = (type==='BUY') ? (row?.purchaseDate || row?.buyDate) : (row?.salesDate);
+            if ($saleDt && pickedDate) { const d=new Date(pickedDate); $saleDt.value=isNaN(d)?String(pickedDate).slice(0,10):d.toISOString().slice(0,10); }
+            if ($taxSel && row?.taxCode) { const tc=String(row.taxCode).toUpperCase(); if (['TAXABLE','ZERO','EXEMPT'].includes(tc)) $taxSel.value=tc; }
+
+            // 코드에서 총액을 가져온 경우: 총액 기준으로 채움(부가세 = 총액의 10%)
+            const pickedTotal = [row?.amountTotal,row?.salesAmount,row?.buyAmountTotal,row?.amount,row?.total].map(unfmt).find(v=>v>0)||0;
+            if (vfBindings) {
+              const { syncView } = vfBindings;
+              const p = computeFromTotal(pickedTotal, $taxSel.value);
+              lastCalc.mode = 'TOTAL';
+              syncView(p);
+              if (!pickedTotal) toast('선택한 코드에 총금액 정보가 없어 금액을 0으로 설정했어요.');
+            }
+          });
+        };
       }
-      if($findEmpBtn){
-        $findEmpBtn.onclick = ()=> toast('담당자는 로그인 사용자로 자동 입력됩니다.');
-      }
+
+      if($findEmpBtn){ $findEmpBtn.onclick = ()=> toast('담당자는 로그인 사용자로 자동 입력됩니다.'); }
 
       vfModal.show();
     }
+    /* ---------- 전표 등록 모달 끝 ---------- */
 
-    // 금액 계산
-    const $supply = document.getElementById('vf-supply');
-    const $vat    = document.getElementById('vf-vat');
-    const $total  = document.getElementById('vf-total');
-    const $taxSel = document.getElementById('vf-taxType');
-
-    function setAmounts(supply, taxType){
-      const rate = (taxType==='TAXABLE') ? 0.1 : 0.0;
-      const vat  = Math.round(supply * rate);
-      const tot  = supply + vat;
-      $supply.value = fmt(supply);
-      $vat.value    = fmt(vat);
-      $total.value  = fmt(tot);
-    }
-    $supply.addEventListener('input', ()=> setAmounts(unfmt($supply.value), $taxSel.value));
-    $supply.addEventListener('blur',  ()=> setAmounts(unfmt($supply.value), $taxSel.value));
-    $taxSel.addEventListener('change',()=> setAmounts(unfmt($supply.value), $taxSel.value));
-
-    // 저장
-    document.getElementById('vf-save').addEventListener('click', async () => {
-      const type = document.getElementById('vf-title').textContent.includes('매입') ? 'BUY' : 'SALES';
-
-      const body = (type === 'BUY')
+    // 저장 버튼
+    const $saveBtn = document.getElementById('vf-save');
+    $saveBtn?.addEventListener('click', async () => {
+      const isBuy = document.getElementById('vf-title').textContent.includes('매입');
+      const body = isBuy
         ? {
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             buyCode: document.getElementById('vf-saleCode').value || null,
@@ -544,8 +793,7 @@
             remark: document.getElementById('vf-remark').value || null,
           };
 
-      const url = (type === 'BUY') ? '/api/statements/buy' : '/api/statements/sales';
-
+      const url = isBuy ? '/api/statements/buy' : '/api/statements/sales';
       const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
       const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
 
@@ -559,23 +807,17 @@
           body: JSON.stringify(body),
         });
         const text = await res.text();
-        console.log("[SAVE]", url, "status:", res.status, "body:", text);
-        if (res.status === 403) {
-          throw new Error('403 Forbidden - CSRF 토큰 누락/만료. 새로고침 후 다시 시도하거나 로그인 상태를 확인하세요.');
-        }
+        if (res.status === 403) { throw new Error('403 Forbidden - CSRF 토큰 누락/만료. 새로고침 후 다시 시도하거나 로그인 상태를 확인하세요.'); }
         if (!res.ok) throw new Error(text || 'save failed');
 
         const { voucherNo } = text ? JSON.parse(text) : {};
         if (voucherNo) document.getElementById('vf-voucherNo').value = voucherNo;
 
         toast(`저장되었습니다${voucherNo ? `: ${voucherNo}` : ''}`);
-        vfModal?.hide();
-
-        // 저장 후 목록 즉시 재조회
+        (window.bootstrap?.Modal.getInstance(document.getElementById('voucherFormModal')))?.hide?.();
         document.getElementById('btn-refresh')?.click();
-      } catch (e) {
-        console.error(e); toast('저장 실패: ' + (e.message || ''));
-      }
+        setTimeout(()=> mainTable.setSort("voucherNo","desc"), 0);
+      } catch (e) { console.error(e); toast('저장 실패: ' + (e.message || '')); }
     });
   });
   </script>
