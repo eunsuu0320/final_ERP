@@ -1,165 +1,126 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
 
 <head>
     <!-- Tabulator CSS -->
     <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
-    <!-- Custom CSS for layout -->
+    <!-- Custom CSS -->
     <style>
         .flex-nowrap {
             flex-wrap: nowrap !important;
         }
     </style>
-   <meta name="_csrf" th:content="${_csrf.token}" />
-   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 </head>
 
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">영업계획목록(IY002)</h1>
+<div id="layoutSidenav_content">
+    <main>
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">영업계획목록(IY002)</h1>
 
-				<!-- flex-nowrap을 추가하여 줄바꿈을 방지 -->
-				<div class="row flex-nowrap">
+            <div class="row flex-nowrap">
+                <!-- 테이블 영역 -->
+                <div class="col flex-grow-1">
+                    <div class="d-flex justify-content-end gap-2 mb-3">
+                        <button id="btn-new" class="btn btn-primary me-2">신규</button>
+                        <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '영업계획')">Excel</button>
+                        <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '영업계획')">PDF</button>
+                    </div>
 
-					<!-- flex-grow-1을 추가하여 테이블이 남은 공간을 모두 차지하도록 설정 -->
-					<div class="col flex-grow-1">
-						<div class="d-flex justify-content-end gap-2 mb-3">
-							<!-- 버튼 -->
-							<button id="btn-new" class="btn btn-primary me-2" >신규</button>
-							<button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '영업계획')">Excel</button>
-							<button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '영업계획')">PDF</button>
-						</div>
+                    <!-- 메인 목록 테이블 -->
+                    <div id="sales-table"></div>
+                </div>
 
-						<!-- Tabulator가 테이블을 생성할 div -->
-						<div id="sales-table"></div>
-					</div>
-	
-				<!-- 영업계획 등록 모달 -->
-				<div class="modal fade" id="insertSalesModal" tabindex="-1" aria-hidden="true">
-				  <div class="modal-dialog" style="max-width: 1400px;">
-				    <div class="modal-content">
-				
-				      <!-- 모달 헤더 -->
-				      <div class="modal-header">
-				        <h5 class="modal-title">영업계획 등록</h5>
-				        <div class="ms-auto d-flex gap-2">
-				          <button type="button" class="btn btn-primary" id="btn-save-sales">저장</button>
-				          <button type="button" class="btn btn-outline-dark" id="btn-reset-sales">초기화</button>
-				          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				        </div>
-				      </div>
-				
-				      <!-- 모달 바디 -->
-				      <div class="modal-body">
-				        <div class="row">
-				          
-				          <div class="container-fluid">
-							  <div class="row">
-							    <!-- 왼쪽 : 작년 영업매출 -->
-							    <div class="col-md-6">
-							      <h5 class="mb-3">작년 영업매출</h5>
-							      <div id="lastYearTable"></div>
-							    </div>
-							
-							    <!-- 오른쪽 : 올해 영업계획 등록 -->
-							    <div class="col-md-6">
-							      <h5 class="mb-3">올해 영업계획 등록</h5>
-							      <div id="thisYearTable"></div>
-							    </div>
-							  </div>
-							</div>
+                <!-- 유의사항 영역 -->
+                <div class="col-auto ms-3 bg-light rounded p-3 shadow-sm" style="min-width: 250px;">
+                    <h5 class="text-danger fw-bold">유의사항</h5>
 
-				        </div>
-				      </div>
-				    </div>
-				  </div>
-				</div>
-				
-				
-<!-- 영업계획 수정 모달 -->
-<div class="modal fade" id="editSalesModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog" style="max-width: 1400px;">
-    <div class="modal-content">
+                    <div class="mb-4 border p-2">
+                        <strong>미수금 상위 5 거래처</strong>
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                            <tr><td>거래처 a</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-      <!-- 모달 헤더 -->
-      <div class="modal-header">
-        <h5 class="modal-title">영업계획 수정</h5>
-        <div class="ms-auto d-flex gap-2">
-          <button type="button" class="btn btn-primary" id="btn-save-edit-sales">저장</button>
-          <button type="button" class="btn-outline-dark btn-close-edit" data-bs-dismiss="modal">닫기</button>
-        </div>
-      </div>
-
-      <!-- 모달 바디 -->
-      <div class="modal-body">
-        <div class="row">
-          <div class="container-fluid">
-            <div class="row">
-              <!-- 올해 영업계획 수정 테이블 -->
-              <div class="col-md-12">
-                <h5 class="mb-3">올해 영업계획</h5>
-                <div id="editThisYearTable"></div>
-              </div>
+                    <div class="border p-2">
+                        <strong>여신초과 거래처</strong>
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                            <tr><td>거래처 f</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            <tr><td>-</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <!-- 등록 모달 -->
+            <div class="modal fade" id="insertSalesModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">영업계획 등록</h5>
+                            <div class="ms-auto d-flex gap-2">
+                                <button type="button" class="btn btn-primary" id="btn-save-sales">저장</button>
+                                <button type="button" class="btn btn-outline-dark" id="btn-reset-sales">초기화</button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5 class="mb-3">작년 영업매출</h5>
+                                    <div id="lastYearTable"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="mb-3">올해 영업계획 등록</h5>
+                                    <div id="thisYearTable"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 수정 모달 -->
+            <div class="modal fade" id="modifySalesModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">영업계획 수정</h5>
+                            <div class="ms-auto d-flex gap-2">
+                                <button type="button" class="btn btn-primary" id="btn-update-sales">저장</button>
+                                <button type="button" class="btn btn-outline-dark" id="btn-cancel-update">취소</button>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                        </div>
+                        <div class="modal-body">
+                            <div id="editYearTable"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
-      </div>
-
-    </div>
-  </div>
+    </main>
 </div>
-				
-				
-	
-					<!--오른쪽: 유의사항 -->
-					<div class="col-auto ms-3 bg-light rounded p-3 shadow-sm"
-						style="min-width: 250px;">
-						<h5 class="text-danger fw-bold">유의사항</h5>
-		
-						<!-- 미수금 상위 거래처 -->
-						<div class="mb-4 border p-2">
-							<strong>미수금 상위 5 거래처</strong>
-							<table class="table table-borderless mb-0">
-								<tbody>
-									<tr><td>거래처 a</td></tr>
-									<tr><td></td></tr>
-									<tr><td>-</td></tr>
-									<tr><td>-</td></tr>
-									<tr><td>-</td></tr>
-								</tbody>
-							</table>
-						</div>
-		
-						<!-- 여신초과 거래처 -->
-						<div class="border p-2">
-							<strong>여신초과 거래처</strong>
-							<table class="table table-borderless mb-0">
-								<tbody>
-									<tr><td>거래처f</td></tr>
-									<tr><td></td></tr>
-									<tr><td>-</td></tr>
-									<tr><td>-</td></tr>
-									<tr><td>-</td></tr>
-								</tbody>
-							</table>
-						</div>
-					</div>
 
-				</div>
-				<!-- row 끝 -->
-			</div>
-			<!-- container-fluid 끝 -->
-		</main>
-	</div>
-	
-	<!-- Tabulator JS -->
-    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-	<script th:src="@{/sales2/js/salesList.js}"></script>
+<!-- Tabulator JS -->
+<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+<!-- 기존 JS 파일 연결 -->
+<script th:src="@{/sales2/js/salesList.js}"></script>
 </body>
 </html>
-
-

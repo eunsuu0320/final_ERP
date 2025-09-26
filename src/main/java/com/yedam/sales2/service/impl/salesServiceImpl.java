@@ -62,5 +62,10 @@ public class salesServiceImpl implements salesService{
         return savedMaster;
     }
 
+	@Override
+	public List<SalesPlan> getPlanByYear(int year) {
+		return salesPlanRepository.findByPlanYear(year);
+	}
+
     
 }

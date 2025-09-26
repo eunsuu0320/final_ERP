@@ -1,18 +1,16 @@
 package com.yedam.sales2.web;
 
 import java.time.LocalDate;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales2.domain.DSalesPlan;
@@ -116,4 +114,10 @@ public class SalesController {
         return Map.of("exists", exists);
     }
 
+    // 연도별 영업계획 조회
+    @GetMapping("/api/sales/plan/{year}")
+    @ResponseBody
+    public List<SalesPlan> getPlanByYear(@PathVariable int year) {
+        return salesService.getPlanByYear(year);
+    }
 }

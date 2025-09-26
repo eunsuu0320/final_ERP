@@ -19,4 +19,6 @@ public interface salesService {
 	// 등록
 	SalesPlan saveSalesPlan(SalesPlan salesplan);
 	
+	List<SalesPlan> getPlanByYear(int year);
+
 }

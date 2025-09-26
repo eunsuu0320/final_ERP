@@ -48,5 +48,9 @@ public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> {
 	        + "ORDER BY salesYear",
 	       nativeQuery = true)
 	List<Map<String, Object>> findSalesStatsByYear();
+	
+	@Query(value = "SELECT * FROM sales_plan WHERE EXTRACT(YEAR FROM plan_year) = :year", nativeQuery = true)
+	List<SalesPlan> findByPlanYear(@Param("year") Integer year);
+
 
 }
