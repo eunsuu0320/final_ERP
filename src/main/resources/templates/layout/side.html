@@ -7,8 +7,7 @@
 <body>
 	<div th:fragment="side">
 		<div id="layoutSidenav_nav">
-			<nav class="sb-sidenav accordion sb-sidenav-dark"
-				id="sidenavAccordion">
+			<nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
 				<div class="sb-sidenav-menu">
 					<div class="nav">
 						<!-- 공통 -->
@@ -25,17 +24,11 @@
 						<div class="collapse" id="collapseLayoutss"
 							aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
 							<nav class="sb-sidenav-menu-nested nav">
-
 								<a class="nav-link" href="test">test</a>
 								<a class="nav-link" href="">구독 관리</a>
 								<a class="nav-link" href="">권한 관리</a>
 								<a class="nav-link" href="">공통코드 관리</a>
-
-								<a class="nav-link" href="test">test</a> <a class="nav-link"
-									href="">Light</a> <a class="nav-link" href="">Light</a> <a
-									class="nav-link" href="">Light</a> <a class="nav-link" href="">Light</a>
 								<a class="nav-link" href="">Light</a>
-
 							</nav>
 						</div>
 
@@ -53,45 +46,44 @@
 						<div class="collapse" id="collapseLayouts"
 							aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
 							<nav class="sb-sidenav-menu-nested nav">
+								<a class="nav-link" href="layout-static.html">Static Navigation</a>
+								<a class="nav-link" href="salesList">영업계획목록</a>
 
 								<a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-								<a class="nav-link" href="layout-static.html">Static
-									Navigation</a> <a class="nav-link" href="salesList">영업계획목록</a> <a
-									class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-									data-bs-target="#pagesCollapseAuth" aria-expanded="false"
-									aria-controls="pagesCollapseAuth"> 해민
+									data-bs-target="#pagesCollapseAuth_sales" aria-expanded="false"
+									aria-controls="pagesCollapseAuth_sales"> 해민
 									<div class="sb-sidenav-collapse-arrow">
 										<i class="fas fa-angle-down"></i>
 									</div>
 								</a>
-								<div class="collapse" id="pagesCollapseAuth"
+								<div class="collapse" id="pagesCollapseAuth_sales"
 									aria-labelledby="headingOne"
 									data-bs-parent="#sidenavAccordionPages">
 									<nav class="sb-sidenav-menu-nested nav">
-										<a class="nav-link" href="productList">품목관리</a> <a
-											class="nav-link" href="partnerList">거래처관리</a> <a
-											class="nav-link" href="priceList">단가관리</a><a
-											class="nav-link" href="estimateList">견적서</a> <a
-											class="nav-link" href="ordersList">주문서</a><a
-											class="nav-link" href="shipmentList">출하지시서</a> <a
-											class="nav-link" href="invoiceList">청구서</a>
+										<a class="nav-link" href="productList">품목관리</a>
+										<a class="nav-link" href="partnerList">거래처관리</a>
+										<a class="nav-link" href="priceList">단가관리</a>
+										<a class="nav-link" href="estimateList">견적서</a>
+										<a class="nav-link" href="ordersList">주문서</a>
+										<a class="nav-link" href="shipmentList">출하지시서</a>
+										<a class="nav-link" href="invoiceList">청구서</a>
 									</nav>
 								</div>
+
 								<a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-									data-bs-target="#pagesCollapseAuth1" aria-expanded="false"
-									aria-controls="pagesCollapseAuth1"> 이영
+									data-bs-target="#pagesCollapseAuth1_sales" aria-expanded="false"
+									aria-controls="pagesCollapseAuth1_sales"> 이영
 									<div class="sb-sidenav-collapse-arrow">
 										<i class="fas fa-angle-down"></i>
 									</div>
 								</a>
-								<div class="collapse" id="pagesCollapseAuth1"
+								<div class="collapse" id="pagesCollapseAuth1_sales"
 									aria-labelledby="headingOne"
 									data-bs-parent="#sidenavAccordionPages">
 									<nav class="sb-sidenav-menu-nested nav">
-										<a class="nav-link" href="salesList">영업계획목록</a> <a
-											class="nav-link" href="register.html">Register</a> <a
-											class="nav-link" href="password.html">Forgot Password</a>
-
+										<a class="nav-link" href="salesList">영업계획목록</a>
+										<a class="nav-link" href="register.html">Register</a>
+										<a class="nav-link" href="password.html">Forgot Password</a>
 									</nav>
 								</div>
 							</nav>
@@ -99,8 +91,8 @@
 
 						<!-- 인사 -->
 						<a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-							data-bs-target="#collapseLayout" aria-expanded="false"
-							aria-controls="collapseLayout">
+							data-bs-target="#collapseLayout_hr" aria-expanded="false"
+							aria-controls="collapseLayout_hr">
 							<div class="sb-nav-link-icon">
 								<i class="fas fa-columns"></i>
 							</div> 인사
@@ -108,20 +100,22 @@
 								<i class="fas fa-angle-down"></i>
 							</div>
 						</a>
-						<div class="collapse" id="collapseLayout"
+						<div class="collapse" id="collapseLayout_hr"
 							aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
 							<nav class="sb-sidenav-menu-nested nav">
-								<a class="nav-link" href="empPage">사원 관리</a> <a class="nav-link"
-									href="allowDeduct">수당/공제 관리</a> <a class="nav-link" href="#">급여대장</a>
-								<a class="nav-link" href="#">근태항목 관리</a> <a class="nav-link"
-									href="#">출/퇴근 기록부</a> <a class="nav-link" href="#">출/퇴근 현황</a>
+								<a class="nav-link" href="empPage">사원 관리</a>
+								<a class="nav-link" href="allowDeduct">수당/공제 관리</a>
+								<a class="nav-link" href="#">급여대장</a>
+								<a class="nav-link" href="#">근태항목 관리</a>
+								<a class="nav-link" href="#">출/퇴근 기록부</a>
+								<a class="nav-link" href="#">출/퇴근 현황</a>
 							</nav>
 						</div>
 
 						<!-- 회계 -->
 						<a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-							data-bs-target="#collapsePages" aria-expanded="false"
-							aria-controls="collapsePages">
+							data-bs-target="#collapsePages_acc" aria-expanded="false"
+							aria-controls="collapsePages_acc">
 							<div class="sb-nav-link-icon">
 								<i class="fas fa-book-open"></i>
 							</div> 회계
@@ -129,41 +123,38 @@
 								<i class="fas fa-angle-down"></i>
 							</div>
 						</a>
-						<div class="collapse" id="collapsePages"
+						<div class="collapse" id="collapsePages_acc"
 							aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-							<nav class="sb-sidenav-menu-nested nav accordion"
-								id="sidenavAccordionPages">
+							<nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
 								<a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-									data-bs-target="#pagesCollapseAuth" aria-expanded="false"
-									aria-controls="pagesCollapseAuth"> 전표 관리
+									data-bs-target="#pagesCollapseAuth_acc" aria-expanded="false"
+									aria-controls="pagesCollapseAuth_acc"> 전표 관리
 									<div class="sb-sidenav-collapse-arrow">
 										<i class="fas fa-angle-down"></i>
 									</div>
 								</a>
-								<div class="collapse" id="pagesCollapseAuth"
+								<div class="collapse" id="pagesCollapseAuth_acc"
 									aria-labelledby="headingOne"
 									data-bs-parent="#sidenavAccordionPages">
 									<nav class="sb-sidenav-menu-nested nav">
-										<a class="nav-link" href="statements">전표 통합 관리</a> <a
-											class="nav-link" href="register.html">일반전표 등록</a>
+										<a class="nav-link" href="statements">전표 통합 관리</a>
+										<a class="nav-link" href="register.html">일반전표 등록</a>
 									</nav>
 								</div>
-								<a class="nav-link" href="#">거래명세서</a> <a class="nav-link"
-									href="#">분개장</a> <a class="nav-link" href="#">손익계산서</a>
+								<a class="nav-link" href="#">거래명세서</a>
+								<a class="nav-link" href="#">분개장</a>
+								<a class="nav-link" href="#">손익계산서</a>
 							</nav>
 						</div>
+					</div>
+				</div>
+
+				<!-- 사이드 푸터 -->
+				<div class="sb-sidenav-footer">
+					<div class="small">1조 파이팅</div>
+				</div>
 			</nav>
 		</div>
-
-	</div>
-	</div>
-
-	<!-- 사이드 푸터 -->
-	<div class="sb-sidenav-footer">
-		<div class="small">1조 파이팅</div>
-	</div>
-	</nav>
-	</div>
 	</div>
 </body>
 </html>
