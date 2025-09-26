@@ -6,8 +6,10 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -39,86 +41,118 @@ public class HrServiceImpl implements HrService {
 	}
 
 	@Override
-	public void saveContract(Employee employee, HrSign sign, HrPDF pdf, MultipartFile signImg) {
-		// 1. 사원 등록 (없으면 insert)
-		employee.setCompanyCode("C001");
-		try {
-			if (!employeeRepository.existsById(employee.getEmpNo())) {
-				employeeRepository.save(employee);
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("사원 저장 중 오류 발생", e);
-		}
+	public void saveContract(Employee employee,
+	                         HrSign sign,
+	                         HrPDF pdf,
+	                         MultipartFile signImg,
+	                         MultipartFile pdfFile,
+	                         MultiValueMap<String, String> params) {
+	    String signFileName = null;
 
-		String signPath = null;
-		try {
-			// 2. 서명 이미지 저장 (static/hr/sign/)
-			String signDir = "src/main/resources/static/hr/sign/";
-			File signDirFile = new File(signDir);
-			if (!signDirFile.exists())
-				signDirFile.mkdirs();
+	    // 1. 사원 등록 (없으면 insert)
+	    employee.setCompanyCode("C001");
+	    try {
+	        if (!employeeRepository.existsById(employee.getEmpNo())) {
+	            employeeRepository.save(employee);
+	        }
+	    } catch (Exception e) {
+	        throw new RuntimeException("사원 저장 중 오류 발생", e);
+	    }
 
-			// UUID 앞 4자리 + 사원번호 + 이름
-			String uuid = UUID.randomUUID().toString().substring(0, 4);
-			String signFileName = uuid + "_" + employee.getEmpNo() + "_" + employee.getName() + ".png";
+	    // 2. 서명 이미지 저장
+	    String signPath = null;
+	    try {
+	        if (signImg == null || signImg.isEmpty()) {
+	            throw new RuntimeException("서명 이미지가 전달되지 않았습니다.");
+	        }
 
-			File signFile = new File(signDir, signFileName);
-			signImg.transferTo(signFile);
+	        String uploadDir = System.getProperty("user.dir") + "/uploads/hr/sign/";
+	        File signDirFile = new File(uploadDir);
+	        if (!signDirFile.exists()) signDirFile.mkdirs();
 
-			// DB에는 static 이후 경로 저장
-			signPath = "/hr/sign/" + signFileName;
-		} catch (Exception e) {
-			throw new RuntimeException("서명 이미지 저장 중 오류 발생", e);
-		}
+	        String uuid = UUID.randomUUID().toString().substring(0, 4);
+	        String safeName = employee.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
+	        signFileName = uuid + "_" + employee.getEmpNo() + "_" + safeName + ".png";
 
-		// 3. 서명 이미지 작성 중인 pdf에 삽입
-		String pdfPath = null;
-		try {
-			// 3. iframe에서 편집된 PDF (임시 저장본)
-			String inputPdf = "src/main/resources/static/hr/temp/contract_current.pdf";
+	        File signFile = new File(uploadDir, signFileName);
+	        signImg.transferTo(signFile);
 
-			// 3-1. 최종 PDF 저장 경로 (static/hr/pdf/)
-			String pdfDir = "src/main/resources/static/hr/pdf/";
-			File pdfDirFile = new File(pdfDir);
-			if (!pdfDirFile.exists())
-				pdfDirFile.mkdirs();
+	        signPath = "/hr/sign/" + signFileName; // DB 저장용
+	    } catch (Exception e) {
+	        throw new RuntimeException("서명 이미지 저장 중 오류 발생: " + e.getMessage(), e);
+	    }
 
-			String pdfFileName = employee.getEmpNo() + employee.getName() + "_contract.pdf";
-			pdfPath = "/hr/pdf/" + pdfFileName; // DB 저장용 경로 (웹 접근용)
-			String outputPath = pdfDir + pdfFileName; // 실제 저장 경로
+	    // 3. PDF 처리
+	    String pdfPath = null;
+	    try {
+	        // ✅ 사용자가 입력한 PDF 업로드 확인
+	        if (pdfFile == null || pdfFile.isEmpty()) {
+	            throw new RuntimeException("계약서 PDF 파일이 전달되지 않았습니다.");
+	        }
 
-			// 3-2. PDF 복사 및 열기
-			PdfDocument pdfDoc = new PdfDocument(new PdfReader(inputPdf), new PdfWriter(outputPath));
-			Document document = new Document(pdfDoc);
+	        // 1) 임시 저장
+	        String tempPdf = System.getProperty("user.dir") + "/uploads/hr/pdf/contract_temp.pdf";
+	        pdfFile.transferTo(new File(tempPdf));
 
-			// 4. 서명 이미지 삽입 (위치 좌표 지정 가능)
-			String realSignPath = "src/main/resources/static" + signPath; // 실제 파일 경로
-			ImageData imageData = ImageDataFactory.create(realSignPath);
-			Image image = new Image(imageData);
-			image.setFixedPosition(1, 450, 95); // (page=1, x=400, y=150)
-			image.scaleToFit(120, 60);
+	        // 2) 최종 PDF 저장 경로
+	        String pdfDir = System.getProperty("user.dir") + "/uploads/hr/pdf/";
+	        File pdfDirFile = new File(pdfDir);
+	        if (!pdfDirFile.exists()) pdfDirFile.mkdirs();
 
-			document.add(image);
+	        String safeName = employee.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
+	        String pdfFileName = employee.getEmpNo() + "_" + safeName + "_contract.pdf";
 
-			document.close();
-			pdfDoc.close();
+	        pdfPath = "/hr/pdf/" + pdfFileName;       // DB 저장용 경로
+	        String outputPath = pdfDir + pdfFileName; // 실제 파일 경로
 
-		} catch (Exception e) {
-			throw new RuntimeException("PDF 사본 저장/서명 삽입 중 오류 발생", e);
-		}
+	        // 3) PDF 열고 flatten
+	        PdfDocument pdfDoc = new PdfDocument(new PdfReader(tempPdf), new PdfWriter(outputPath));
+	        Document document = new Document(pdfDoc);
 
-		// 4. 근로계약서 테이블, pdf 테이블에 저장
-		sign.setCompanyCode(employee.getCompanyCode());
-		sign.setEmpNo(employee.getEmpNo());
-		sign.setEmpName(employee.getName());
-		sign.setEmpDept(employee.getDept());
-		sign.setImg(signPath);
-		HrSign savedSign = hrSignRepository.save(sign);
+	        PdfAcroForm form = PdfAcroForm.getAcroForm(pdfDoc, true);
+	        form.flattenFields(); // 사용자가 입력한 값 그대로 굳히기
 
-		pdf.setSignId(savedSign.getSignId());
-		pdf.setPdf(pdfPath);
-		hrPDFRepository.save(pdf);
+	        // 4) 서명 이미지 삽입
+	        String realSignPath = System.getProperty("user.dir") + "/uploads/hr/sign/" + signFileName;
+	        File signFile = new File(realSignPath);
+
+	        if (!signFile.exists()) {
+	            throw new RuntimeException("서명 이미지 파일이 존재하지 않습니다: " + realSignPath);
+	        }
+
+	        ImageData imageData = ImageDataFactory.create(realSignPath);
+	        Image image = new Image(imageData);
+	        image.setFixedPosition(1, 280, 65); // 좌표 조정 필요
+	        image.scaleToFit(120, 60);
+
+	        document.add(image);
+
+	        document.close();
+	        pdfDoc.close();
+
+	    } catch (Exception e) {
+	        throw new RuntimeException("PDF 사본 저장/서명 삽입 중 오류 발생: " + e.getMessage(), e);
+	    }
+
+	    // 4. DB 저장
+	    sign.setCompanyCode(employee.getCompanyCode());
+	    sign.setEmpNo(employee.getEmpNo());
+	    sign.setEmpName(employee.getName());
+	    sign.setEmpDept(employee.getDept());
+	    sign.setImg(signPath);
+	    HrSign savedSign = hrSignRepository.save(sign);
+
+	    pdf.setSignId(savedSign.getSignId());
+	    pdf.setPdf(pdfPath);
+	    hrPDFRepository.save(pdf);
+
+	    List<String> names    = params.getOrDefault("name",    List.of());
+	    List<String> ceoNames = params.getOrDefault("ceoName", List.of());
+	    List<String> years    = params.getOrDefault("year",    List.of());
+	    List<String> months   = params.getOrDefault("month",   List.of());
+	    List<String> days     = params.getOrDefault("day",     List.of());
 	}
+
 
 	@Override
 	public int saveEmp(Employee employee) {

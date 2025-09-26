@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yedam.sales1.domain.Partner;
-import com.yedam.sales1.domain.Product;
 
 @Repository
 public interface PartnerRepository extends
@@ -16,16 +15,12 @@ public interface PartnerRepository extends
 
 	List<Partner> findAll();
 	
-	@Query("SELECT MAX(p.productCode) FROM Product p")
+	@Query("SELECT MAX(p.partnerCode) FROM Partner p")
 	String findMaxPartnerCode();
 	
-	@Query("SELECT p FROM Product p " +
-		       "WHERE (:productName IS NULL OR p.productName = :productName) " +
-		       "AND (:productGroup IS NULL OR p.productGroup = :productGroup) " +
-		       "AND (:warehouseCode IS NULL OR p.warehouseCode = :warehouseCode)")
-		List<Partner> findByFilter(
-		        @Param("productName") String productName,
-		        @Param("productGroup") String productGroup,
-		        @Param("warehouseCode") String warehouseCode);
+//	@Query("SELECT p FROM Partner p " +
+//		       "WHERE (:partnerName IS NULL OR p.partnerName = :partnerName) ")
+//		List<Partner> findByFilter(
+//		        @Param("productName") String productName);
 
 }
