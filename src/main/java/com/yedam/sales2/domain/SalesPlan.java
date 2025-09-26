@@ -23,7 +23,7 @@ import lombok.NoArgsConstructor;
 public class SalesPlan {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sales_plan_seq")
 	private int salesPlanCode; // 영업계획코드
 	
 	private Date planYear; // 계획년도
