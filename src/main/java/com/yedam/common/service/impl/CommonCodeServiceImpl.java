@@ -1,6 +1,8 @@
 package com.yedam.common.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,5 +19,17 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 	@Override
 	public List<CommonCode> findByCodeGroup(String codeGroup) {
 		return commonCodeRepository.findByCodeGroup(codeGroup);
+	}
+
+	@Override
+	public Map<String, List<CommonCode>> getCodes(String str) {
+		String[] godeStrings = str.split(",");
+
+		Map<String, List<CommonCode>> map = new HashMap<String, List<CommonCode>>();
+
+		for (String code : godeStrings) {
+			map.put(code, commonCodeRepository.findByCodeGroup(code));
+		}
+		return map;
 	}
 }

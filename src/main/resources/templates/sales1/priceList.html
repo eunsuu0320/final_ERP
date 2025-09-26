@@ -38,8 +38,9 @@
 				<!-- 검색 바 -->
 				<div class="searchTool d-flex align-items-center mb-3">
 					<div class="me-5 d-flex align-items-center">
-						<label for="partnerName" class="me-3">거래처명</label> <input type="text"
-							class="form-control w-auto" placeholder="검색어 입력" id="partnerName">
+						<label for="partnerName" class="me-3">거래처명</label> <input
+							type="text" class="form-control w-auto" placeholder="검색어 입력"
+							id="partnerName">
 					</div>
 				</div>
 
@@ -53,7 +54,7 @@
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '거래처코드' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
+						th:checked="${col == '단가그룹코드' or col == '단가그룹명' or col == '단가' or col == '거래처설정' or col == '품목설정' or col == '사용구분'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -100,93 +101,55 @@
 							<div class="modal-body">
 								<form id="itemForm">
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목코드*</label>
+										<label class="col-sm-3 col-form-label">단가그룹코드</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productCode"
+											<input type="text" class="form-control" name="priceGroupCode"
 												disabled placeholder="자동생성">
 										</div>
 									</div>
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목명*</label>
+										<label class="col-sm-3 col-form-label">단가그룹명*</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productName"
+											<input type="text" class="form-control" name="priceGroupName"
 												required>
 										</div>
 									</div>
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">규격*</label>
+										<label class="col-sm-3 col-form-label">단가*</label>
 										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productSize"
+											<input type="number" class="form-control" name="price"
 												required>
-												<option value="" disabled selected>규격을 선택하세요</option>
-												<option value="S">S</option>
-												<option value="M">M</option>
-												<option value="L">L</option>
-											</select>
 										</div>
 									</div>
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">단위*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="unit" required>
-												<option value="" disabled selected>단위를 선택하세요</option>
-												<option value="kg">kg</option>
-												<option value="cm">cm</option>
-											</select>
+										<label class="col-sm-3 col-form-label">단가유형*</label>
+										<div class="col-sm-9 d-flex align-items-center">
+											<div class="form-check me-3">
+												<input class="form-check-input" type="radio"
+													name="priceType" id="priceType1" value="기준단가" required>
+												<label class="form-check-label" for="unit1">기준단가</label>
+											</div>
+											<div class="form-check me-3">
+												<input class="form-check-input" type="radio"
+													name="priceType" id="priceType2" value="거래처별단가"> <label
+													class="form-check-label" for="unit2">거래처별단가</label>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input" type="radio"
+													name="priceType" id="priceType3" value="품목별단가"> <label
+													class="form-check-label" for="unit3">품목별단가</label>
+											</div>
 										</div>
+									</div>
 
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목그룹*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productGroup"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="잡화">잡화</option>
-												<option value="공구">공구</option>
-											</select>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">입고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="inPrice">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">출고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="outPrice">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">창고</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="warehouseCode"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="본사창고">본사창고</option>
-												<option value="예담창고">예담창고</option>
-											</select>
-										</div>
-									</div>
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">비고</label>
 										<div class="col-sm-9">
 											<input type="text" class="form-control" name="remarks">
 										</div>
 									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목 이미지</label>
-										<div class="col-sm-9">
-											<input type="file" class="form-control" name="productImage"
-												accept="image/*">
-
-										</div>
-									</div>
 								</form>
 							</div>
-
 
 						</div>
 					</div>
@@ -203,11 +166,11 @@
 	</script>
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-	<!-- 분리한 JS 파일 -->
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+	<script th:src="@{/erp/js/sales1/salesCommon.js}"></script>
 	<script th:src="@{/erp/js/sales1/priceList.js}"></script>
 </body>
 </html>

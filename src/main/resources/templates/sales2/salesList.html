@@ -30,8 +30,8 @@
 						<div class="d-flex justify-content-end gap-2 mb-3">
 							<!-- 버튼 -->
 							<button id="btn-new" class="btn btn-primary me-2" >신규</button>
-							<button class="btn btn-secondary me-2">Excel</button>
-							<button class="btn btn-secondary me-2">인쇄</button>
+							<button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '영업계획')">Excel</button>
+							<button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '영업계획')">PDF</button>
 						</div>
 
 						<!-- Tabulator가 테이블을 생성할 div -->
@@ -59,9 +59,9 @@
 				          
 				          <div class="container-fluid">
 							  <div class="row">
-							    <!-- 왼쪽 : 작년 영업계획 -->
+							    <!-- 왼쪽 : 작년 영업매출 -->
 							    <div class="col-md-6">
-							      <h5 class="mb-3">작년 영업계획</h5>
+							      <h5 class="mb-3">작년 영업매출</h5>
 							      <div id="lastYearTable"></div>
 							    </div>
 							
@@ -78,6 +78,42 @@
 				    </div>
 				  </div>
 				</div>
+				
+				
+<!-- 영업계획 수정 모달 -->
+<div class="modal fade" id="editSalesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog" style="max-width: 1400px;">
+    <div class="modal-content">
+
+      <!-- 모달 헤더 -->
+      <div class="modal-header">
+        <h5 class="modal-title">영업계획 수정</h5>
+        <div class="ms-auto d-flex gap-2">
+          <button type="button" class="btn btn-primary" id="btn-save-edit-sales">저장</button>
+          <button type="button" class="btn-outline-dark btn-close-edit" data-bs-dismiss="modal">닫기</button>
+        </div>
+      </div>
+
+      <!-- 모달 바디 -->
+      <div class="modal-body">
+        <div class="row">
+          <div class="container-fluid">
+            <div class="row">
+              <!-- 올해 영업계획 수정 테이블 -->
+              <div class="col-md-12">
+                <h5 class="mb-3">올해 영업계획</h5>
+                <div id="editThisYearTable"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+				
+				
 	
 					<!--오른쪽: 유의사항 -->
 					<div class="col-auto ms-3 bg-light rounded p-3 shadow-sm"

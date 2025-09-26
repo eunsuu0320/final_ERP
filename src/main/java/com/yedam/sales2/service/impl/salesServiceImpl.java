@@ -27,15 +27,16 @@ public class salesServiceImpl implements salesService{
 	public List<Sales> findAll() {
 		return salesRepository.findAll();
 	}
-
+	
+	// 년도별 영업계획
 	@Override
 	public List<Map<String, Object>> findSalesStatsByYear() {
-		return salesRepository.findSalesStatsByYear();
+		return salesPlanRepository.findSalesStatsByYear();
 	}
-
+	
 	@Override
-	public List<Map<String, Object>> findSalesPlanData() {
-		return salesRepository.findSalesPlanData();
+	public List<Map<String, Object>> findLastYearSalesData() {
+		return salesRepository.findLastYearSalesData();
 	}
 
     @Override
@@ -53,19 +54,13 @@ public class salesServiceImpl implements salesService{
         if (detailList != null && !detailList.isEmpty()) {
             for (DSalesPlan detail : detailList) {
                 // FK 연결
-                detail.setSalesPlanCode(savedMaster.getSalesPlanCode()); 
-                // 시퀀스 초기화
-                detail.setSalesPlanDetailCode(0);
+            	detail.setSalesPlan(savedMaster); // 객체로 세팅
             }
             dsalesPlanRepository.saveAll(detailList);
         }
 
         return savedMaster;
     }
-
-
-
-
 
     
 }

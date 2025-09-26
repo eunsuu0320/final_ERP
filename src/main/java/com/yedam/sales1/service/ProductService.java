@@ -13,4 +13,8 @@ public interface ProductService {
 	Map<String, Object> getTableDataFromProducts(List<Product> products);
 
 	Product saveProduct(Product product);
+	
+	Product getProductByProductCode(String productCode);
+	
+
 }

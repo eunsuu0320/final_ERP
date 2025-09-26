@@ -7,7 +7,7 @@
 			<div class="modal-dialog modal-xl">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title">사원 등록</h5>
+						<h5 class="modal-title"  id="empModalTitle">사원 등록</h5>
 
 						<div>
 							<button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
@@ -63,36 +63,15 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">부서</label>
-											 <input type="hidden" id="deptCode" name="deptCode">
-											<input type="text" name="dept" id="dept" class="form-control" readonly
-											onclick="openModal(
-										      'commonCode',
-										      function(selected) {
-										        document.getElementById('dept').value = selected.codeName;
-										        document.getElementById('deptCode').value = selected.codeId;
-										      }, 'DEPT')">
+											<select id="dept" name="dept" class="form-control" ></select>
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직급</label>
-											<input type="hidden" id="deptCode" name="deptCode">
-											<input type="text" name="position" id="position" class="form-control" readonly
-											onclick="openModal(
-										      'commonCode',
-										      function(selected) {
-										        document.getElementById('position').value = selected.codeName;
-										        document.getElementById('deptCode').value = selected.codeId;
-										      }, 'POSITION')">
+											<select id="position" name="position" class="form-control" ></select>
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직책</label>
-											<input type="hidden" id="deptCode" name="deptCode">
-											<input type="text" name="grade" id="grade" class="form-control" readonly
-											onclick="openModal(
-										      'commonCode',
-										      function(selected) {
-										        document.getElementById('grade').value = selected.codeName;
-										        document.getElementById('deptCode').value = selected.codeId;
-										      }, 'DUTY')">
+											<select id="grade" name="grade" class="form-control" ></select>
 										</div>
 									</div>
 
@@ -132,13 +111,13 @@
 									<div class="row mb-3">
 										<div class="col-md-4">
 											<label class="form-label required">은행</label>
-											<input type="hidden" id="deptCode" name="deptCode">
-											<input type="text" name="bankCode" id="bankCode" class="form-control"
+											<input type="hidden" id="bankCode" name="bankCode">
+											<input type="text" id="bankCodeName" class="form-control"
 											onclick="openModal(
 										      'commonCode',
 										      function(selected) {
-										        document.getElementById('bankCode').value = selected.codeName;
-										        document.getElementById('deptCode').value = selected.codeId;
+										        document.getElementById('bankCodeName').value = selected.codeName;
+										        document.getElementById('bankCode').value = selected.codeId;
 										      }, 'BANK')">
 										</div>
 										<div class="col-md-4">
@@ -230,6 +209,9 @@
 	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
 	  resizeCanvas();
 	  signaturePad.clear();
+	  getCode('POSITION', 'position');
+	  getCode('DUTY', 'grade');
+	  getCode('DEPT', 'dept');
 	});
 
 	// 탭 전환될 때 (근로계약서 탭 들어갈 때)
@@ -254,6 +236,9 @@
 	    const label = document.getElementById("pdfFileName");
 	    label.textContent = file ? `선택됨: ${file.name}` : "";
 	  });
+
+	  const header = document.querySelector('meta[name="_csrf_header"]').content;
+	  const token = document.querySelector('meta[name="_csrf"]').content;
 
 	// 저장
 	  document.getElementById("btn-save-emp").addEventListener("click", function () {
@@ -294,22 +279,22 @@
 	    // 4) 전송
 	    fetch("/saveContract", {
 	      method: "POST",
-	      headers: { "X-CSRF-Token": document.querySelector('meta[name="_csrf"]').content },
+	      headers: {'X-CSRF-Token': token},
 	      body: formData
 	    })
 	      .then(res => res.text())
 	      .then(data => {
 	        if (data === "success") {
-	          alert("사원 등록 성공!");
+	          alert("사원이 등록되었습니다.");
 	          const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
 	          modal && modal.hide();
 	        } else {
-	          alert("사원 등록 실패: " + data);
+	          alert("사원 등록에 실패하였습니다. " + data);
 	        }
 	      })
 	      .catch(err => {
 	        console.error("저장 오류:", err);
-	        alert("서버 오류 발생!");
+	        alert("서버에 오류가 생겼습니다. 다시 시도해 주세요.");
 	      });
 	  });
 	</script>
