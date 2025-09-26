@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import com.yedam.sales2.domain.SalesPlan;
 
 @Repository
-public interface SalesPlanRepository extends JpaRepository<SalesPlan, String> { }
+public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> { }
 

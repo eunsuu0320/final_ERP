@@ -5,4 +5,4 @@ import org.springframework.stereotype.Repository;
 import com.yedam.sales2.domain.DSalesPlan;
 
 @Repository
-public interface DSalesPlanRepository extends JpaRepository<DSalesPlan, String> { }
+public interface DSalesPlanRepository extends JpaRepository<DSalesPlan, Integer> { }
