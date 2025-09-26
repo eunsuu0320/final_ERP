@@ -12,9 +12,6 @@ import com.yedam.hr.domain.HrSign;
 public interface HrService {
 	List<Employee> getAllEmployees();
 
-	// 임시 사원만 등록
-	public int saveEmp(Employee employee);
-
 	   // 사원 + 근로계약서 + pdf 등록
     void saveContract(Employee employee,
                       HrSign sign,
@@ -22,4 +19,10 @@ public interface HrService {
                       MultipartFile signImg,
                       MultipartFile pdfFile,
                       MultiValueMap<String, String> params);
+
+    // 단건조회
+    public Employee getEmployee(String empNo);
+
+    // 수정
+    public Employee updateEmployee(Employee emp);
 }

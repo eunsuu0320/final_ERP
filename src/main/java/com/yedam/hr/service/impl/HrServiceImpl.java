@@ -4,8 +4,10 @@ import java.io.File;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.dialect.SelectItemReferenceStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +26,8 @@ import com.yedam.hr.repository.EmployeeRepository;
 import com.yedam.hr.repository.HrPDFRepository;
 import com.yedam.hr.repository.HrSignRepository;
 import com.yedam.hr.service.HrService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class HrServiceImpl implements HrService {
@@ -145,19 +149,44 @@ public class HrServiceImpl implements HrService {
 	    pdf.setSignId(savedSign.getSignId());
 	    pdf.setPdf(pdfPath);
 	    hrPDFRepository.save(pdf);
-
-	    List<String> names    = params.getOrDefault("name",    List.of());
-	    List<String> ceoNames = params.getOrDefault("ceoName", List.of());
-	    List<String> years    = params.getOrDefault("year",    List.of());
-	    List<String> months   = params.getOrDefault("month",   List.of());
-	    List<String> days     = params.getOrDefault("day",     List.of());
 	}
 
-
+	// 단건조회
 	@Override
-	public int saveEmp(Employee employee) {
-		employee.setCompanyCode("C001");
-		employeeRepository.save(employee);
-		return 1;
+	@Transactional(readOnly = true)
+	public Employee getEmployee(String empNo) {
+	    return employeeRepository.findById(empNo)
+	            .orElseThrow(() -> new EntityNotFoundException("사원 없음: " + empNo));
 	}
+
+	// 수정
+	@Override
+	  @Transactional
+	    public Employee updateEmployee(Employee req) {
+	        // 존재 확인 후 부분 업데이트 (허용 필드만 덮어쓰기)
+	        return employeeRepository.findById(req.getEmpNo())
+	            .map(exist -> {
+	                exist.setName(req.getName());
+	                exist.setPhone(req.getPhone());
+	                exist.setBirth(req.getBirth());
+	                exist.setEmail(req.getEmail());
+	                exist.setDept(req.getDept());
+	                exist.setPosition(req.getPosition());
+	                exist.setGrade(req.getGrade());
+	                exist.setSalary(req.getSalary());
+	                exist.setHireDate(req.getHireDate());
+	                exist.setResignDate(req.getResignDate());
+	                exist.setHolyDays(req.getHolyDays());
+	                exist.setDepCnt(req.getDepCnt());
+	                exist.setResignReason(req.getResignReason());
+	                exist.setBankCode(req.getBankCode());
+	                exist.setAccHolder(req.getAccHolder());
+	                exist.setAccNo(req.getAccNo());
+	                exist.setPostalCode(req.getPostalCode());
+	                exist.setAddress(req.getAddress());
+
+	                return exist;
+	            })
+	            .orElse(null);
+	    }
 }
