@@ -19,8 +19,7 @@ import lombok.NoArgsConstructor;
 public class Sales {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-//	private String saleCode;
+	private String saleCode;
 	
 	private String correspondent; // 거래처
 	private String productCode; // 품목코드
@@ -35,6 +34,7 @@ public class Sales {
 	private Long profitAmount; // 이익금액
 	private Date salesDate; // 판매일자
 	private String companyCode; // 회사고유코드
+	
 	
 	
 	
