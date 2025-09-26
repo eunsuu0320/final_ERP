@@ -30,3 +30,5 @@ public class AcPartner {
     @Column(name = "MANAGER", length = 20, nullable = false)
     private String manager;
 }
+
+//S
