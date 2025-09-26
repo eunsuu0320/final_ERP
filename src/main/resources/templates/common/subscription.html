@@ -27,12 +27,15 @@
     }
 
     /* 단계 표시 */
+    .stepper > div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     .stepper {
       display: flex;
       justify-content: center;
-      align-items: center;
-      margin: 30px 0;
-      font-size: 14px;
+      align-items: flex-start;
     }
     .circle {
       width: 40px;
@@ -42,7 +45,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 0 5px;
+      margin-bottom: 6px; /* 라벨과 간격 */
       color: #fff;
       font-weight: bold;
       transition: all 0.3s;
@@ -52,20 +55,21 @@
       box-shadow: 0 3px 6px rgba(0,0,0,0.2);
     }
     .line {
-      width: 100px;
+      width: 250px;            /* 선 길이 고정 */
       height: 2px;
       background: #999;
-      margin: 0 5px;
+      margin-top: 20px;        /* 원 중앙 맞춤 */
+      flex: 0 0 auto;          /* flex 확장 금지 */
     }
     .step-label { margin-top: 5px; font-size: 13px; }
 
     /* 페이지 래퍼: 높이를 JS로 유동 조절 */
-    .pages-wrapper {
-      position: relative;
-      width: 100%;
-      overflow: hidden; /* 좌우 슬라이드 되는 오프스크린 페이지 숨김 */
-      transition: height 0.3s ease; /* 높이 변화도 부드럽게 */
-    }
+	.pages-wrapper {
+	  position: relative;
+	  width: 100%;
+	  overflow: hidden;
+	  transition: height 0.3s ease; /* 추가 */
+	}
 
     /* 페이지 (좌우 슬라이드) */
     .page {
@@ -173,49 +177,60 @@
     }
     .accordion-header i { transition: transform 0.25s ease; }
     .accordion-header.active i { transform: rotate(180deg); }
-    .accordion-content {
-	  display: none;
-	  padding: 0 15px;
-	  font-size: 13px;
-	  line-height: 1.6;
-	  background: #fff;
-	  border-top: 1px solid #eee;
+	.accordion-content {
+	  height: 0;
+	  overflow: hidden;
+	  transition: height 0.3s ease;
 	}
-	
 	.accordion-content.open {
-	  display: block;
-	  padding: 12px 15px;
+	  height: auto; /* JS에서 scrollHeight로 덮어씀 */
 	}
     .accordion-content p { margin: 0 0 10px; }
 
     /* 전자서명 영역 */
     .agreement-box {
       background: #f5f5f5;
-      padding: 15px;
+      padding: 20px;
       border-radius: 6px;
       margin-top: 15px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
     }
-    .sign-box {
-      margin-top: 10px;
+    .agreement-left {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-top: 30px;
+    }
+    .agreement-right {
+      flex: 1.2;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      max-width: 260px;
+      gap: 10px;
     }
-    .sign-box textarea {
-      resize: none;
-      padding: 6px;
+    #signaturePad {
       border: 1px solid #aaa;
       border-radius: 4px;
-      height: 90px;
+      background: #fff;
+      cursor: crosshair;
+      width: 100%;
+      height: auto; /* width=500 height=200 비율 유지 */
     }
-    .sign-box button {
-      width: 90px;
-      padding: 6px 10px;
-      font-size: 12px;
+    .sign-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .sign-actions button {
+      padding: 8px 14px;
+      font-size: 14px;
       border: 1px solid #aaa;
       background: #eee;
       cursor: pointer;
+      border-radius: 4px;
+    }
+    .sign-actions button:hover {
+      background: #ddd;
     }
 
     /* 버튼 */
@@ -234,57 +249,70 @@
     .btn-prev i { left: 20px; }
     .btn-next i { right: 20px; }
     .btn:hover { opacity: 0.9; }
-    
-    .agreement-box {
-	  background: #f5f5f5;
-	  padding: 20px;
-	  border-radius: 6px;
-	  margin-top: 15px;
+
+    .biz-inputs, .phone-inputs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .biz-inputs input, .phone-inputs input {
+      width: 70px;
+      padding: 6px;
+      border: 1px solid #999;
+      border-radius: 2px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .error-msg {
+      color: red;
+      font-size: 12px;
+      margin-top: 4px;
+      min-height: 16px;     /* ← 항상 공간 확보 */
+      visibility: hidden;   /* 안 보이게 */
+    }
+    .error-msg.active {
+      visibility: visible;  /* 에러 있을 때만 보이게 */
+    }
+    /* 결제 수단 버튼 */
+	.pay-methods {
 	  display: flex;
-	  gap: 20px;
-	  align-items: flex-start;
+	  gap: 10px;
+	  margin-top: 10px;
 	}
-	
-	.agreement-left {
+	.pay-btn {
 	  flex: 1;
-	  font-size: 14px;
-	  line-height: 1.6;
-	}
-	
-	.agreement-right {
-	  flex: 1.2;
-	  display: flex;
-	  flex-direction: column;
-	  gap: 10px;
-	}
-	
-	#signaturePad {
-	  border: 1px solid #aaa;
+	  padding: 10px;
+	  font-weight: bold;
+	  border: none;
 	  border-radius: 4px;
-	  background: #fff;
-	  cursor: crosshair;
-	  width: 100%;
-	  height: auto; /* width=500 height=200 비율 유지 */
-	}
-	
-	.sign-actions {
-	  display: flex;
-	  gap: 10px;
-	}
-	
-	.sign-actions button {
-	  padding: 8px 14px;
-	  font-size: 14px;
-	  border: 1px solid #aaa;
-	  background: #eee;
 	  cursor: pointer;
-	  border-radius: 4px;
 	}
+	.pay-btn.kakao { background: #ffeb00; color: #000; }
+	.pay-btn.naver { background: #03c75a; color: #fff; }
 	
-	.sign-actions button:hover {
-	  background: #ddd;
+	/* 결제 요약 테이블 */
+	.summary-table {
+	  width: 100%;
+	  border-collapse: collapse;
+	  margin-top: 10px;
+	  font-size: 14px;
 	}
-   
+	.summary-table td {
+	  padding: 6px 0;
+	}
+	.summary-table .right {
+	  text-align: right;
+	}
+	.summary-table .total td {
+	  border-top: 2px solid #000;
+	  padding-top: 8px;
+	  font-size: 15px;
+	}
+	.agree-box {
+	  margin-top: 15px;
+	  font-size: 13px;
+	}
+    
   </style>
 </head>
 <body>
@@ -314,7 +342,7 @@
         <div class="form-sections">
           <div class="section sub-info">
             <h3>구독 정보</h3>
-            <p><strong>(월 ₩30,000)</strong></p>
+            <p><strong>(월 ₩30,000) VAT 별도</strong></p>
             <h4>포함 서비스</h4>
             <div class="services">
               <div class="service"><span><div class="service-icon">✔</div> 회계</span> <i class="fa-regular fa-file-lines"></i></div>
@@ -327,58 +355,78 @@
             <form>
               <div class="form-grid">
                 <div class="form-group">
-				  <label>회사명*</label>
-				  <input type="text" id="companyName" placeholder="예) OO주식회사" required>
-				</div>
-				<div class="form-group">
-				  <label>대표자명*</label>
-				  <input type="text" id="ceoName" placeholder="예) 홍길동" required>
-				</div>
+                  <label>회사명</label>
+                  <input type="text" id="companyName" placeholder="예) OO주식회사" required>
+                  <span class="error-msg"></span>
+                </div>
                 <div class="form-group">
-                  <label>사업자 등록번호*</label>
-                  <input type="text" placeholder="123-45-67890" required>
+                  <label>대표자명</label>
+                  <input type="text" id="ceoName" placeholder="예) 홍길동" required>
+                  <span class="error-msg"></span>
+                </div>
+                <div class="form-group">
+                  <label>사업자 등록번호</label>
+                  <div class="biz-inputs">
+                    <input type="text" id="biz1" maxlength="3" required> -
+                    <input type="text" id="biz2" maxlength="2" required> -
+                    <input type="text" id="biz3" maxlength="5" required>
+                  </div>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group">
                   <label>주소</label>
-                  <input type="text" placeholder="도로명 주소">
+                  <input type="text" id="address" placeholder="도로명 주소" required>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group">
-                  <label>마스터 사용자 ID*</label>
-                  <input type="text" placeholder="관리자 계정 ID" required>
+                  <label>마스터 사용자 ID</label>
+                  <input type="text" id="masterId" placeholder="관리자 계정 ID" required>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group">
-                  <label>마스터 PW*</label>
-                  <input type="password" placeholder="초기 비밀번호" required>
+                  <label>마스터 PW</label>
+                  <input type="password" id="masterPw" placeholder="초기 비밀번호" required>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group">
                   <label>담당자명</label>
-                  <input type="text" placeholder="예) 김길동">
+                  <input type="text" id="managerName" placeholder="예) 김길동" required>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group">
                   <label>담당자 연락처</label>
-                  <input type="text" placeholder="010-1234-5678">
+                  <div class="phone-inputs">
+                    <input type="text" id="phone1" maxlength="3" required> -
+                    <input type="text" id="phone2" maxlength="4" required> -
+                    <input type="text" id="phone3" maxlength="4" required>
+                  </div>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group full">
                   <label>담당자 이메일</label>
                   <div class="email-input">
-                    <input type="text" placeholder="example" required>
+                    <input type="text" id="emailFront" placeholder="example" required>
                     <span>@</span>
-                    <select>
+                    <select id="emailDomain" required>
+                      <option value="">선택</option>
                       <option value="gmail.com">gmail.com</option>
                       <option value="naver.com">naver.com</option>
                       <option value="daum.net">daum.net</option>
                       <option value="company.com">company.com</option>
                     </select>
                   </div>
+                  <span class="error-msg"></span>
                 </div>
                 <div class="form-group full">
-                  <label>구독 기간*</label>
-                  <select>
+                  <label>구독 기간</label>
+                  <select id="subPeriod" required>
+                    <option value="">선택</option>
                     <option>1개월</option>
                     <option>3개월</option>
                     <option>6개월</option>
                     <option>12개월</option>
                   </select>
+                  <span class="error-msg"></span>
                 </div>
               </div>
             </form>
@@ -450,193 +498,387 @@
 
           <!-- 계약 동의/서명 -->
           <div class="agreement-box">
-			  <div class="agreement-left">
-			    <p>본 계약서의 모든 내용을 확인하였으며, 이에 동의합니다.</p>
-			    <p>계약일자 : <strong id="contractDate"></strong></p>
-			    <p>구독 회사명 : <span id="contractCompany">__________</span></p>
-			    <p>대표자명 : <span id="contractCeo">__________</span></p>
-			  </div>
-			
-			  <div class="agreement-right">
-			    <label>전자서명*</label>
-			    <canvas id="signaturePad" width="500" height="200"></canvas>
-			    <div class="sign-actions">
-			      <button type="button" id="clearSign">초기화</button>
-			    </div>
-			  </div>
-		  </div>
+            <div class="agreement-left">
+              <p>본 계약서의 모든 내용을 확인하였으며, 이에 동의합니다.</p>
+              <p>계약일자 : <strong id="contractDate"></strong></p>
+              <p>구독 회사명 : <span id="contractCompany">__________</span></p>
+              <p>대표자명 : <span id="contractCeo">__________</span></p>
+              <p>계약 만료일자 : <strong id="contractEndDate">__________</strong></p>
+            </div>
 
-        <div class="form-footer">
-          <button class="btn btn-prev" onclick="goToStep(1)">
-            <i class="fa fa-arrow-left"></i> 이전으로
-          </button>
-          <button class="btn btn-next" onclick="goToStep(3)">
-            다음으로 <i class="fa fa-arrow-right"></i>
-          </button>
+            <div class="agreement-right">
+              <label>전자서명</label>
+              <canvas id="signaturePad" width="500" height="200"></canvas>
+              <div class="sign-actions">
+                <button type="button" id="clearSign">초기화</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-footer">
+            <button class="btn btn-prev" onclick="goToStep(1)">
+              <i class="fa fa-arrow-left"></i> 이전으로
+            </button>
+            <button class="btn btn-next" onclick="goToStep(3)">
+              다음으로 <i class="fa fa-arrow-right"></i>
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- STEP 3 -->
-      <div class="page hidden-right" id="step3">
-        <div class="section">
-          <h3>결제</h3>
-          <p>여기에 결제 화면이 들어갑니다...</p>
-        </div>
-        <div class="form-footer">
-          <button class="btn btn-prev" onclick="goToStep(2)">
-            <i class="fa fa-arrow-left"></i> 이전으로
-          </button>
-          <button class="btn btn-next">
-            결제하기 <i class="fa fa-arrow-right"></i>
-          </button>
-        </div>
+      <!-- STEP 3 -->
+<div class="page hidden-right" id="step3">
+  <div class="form-sections">
+    
+    <!-- 결제 정보 -->
+    <div class="section sub-info">
+      <h3>결제 정보</h3>
+
+
+      <h4>간편 결제 수단</h4>
+      <div class="pay-methods">
+        <form action="/pay/kakao" method="post">
+		  <!-- JS에서 총액 계산된 값 넘기기 -->
+		  <input type="hidden" name="amount" id="finalAmount" value="360000"/>
+		  <!-- 회사명도 함께 넘김 -->
+		  <input type="hidden" name="companyName" id="companyNameInput" value=""/>
+		  <button type="submit" class="pay-btn kakao">카카오 페이</button>
+		</form>
+        <button class="pay-btn naver">네이버 페이</button>
       </div>
+    </div>
+
+    <!-- 최종 결제 내역 -->
+	<div class="section user-info">
+	  <h3>최종 결제 내역</h3>
+	  <div class="summary">
+	    <p><strong>ERP</strong></p>
+	    <p id="summaryPeriod">___개월 구독 / 월 ₩30,000</p>
+	    <table class="summary-table">
+	      <tr>
+	        <td>기본 요금</td>
+	        <td class="right" id="summaryBase">₩0</td>
+	      </tr>
+	      <tr>
+	        <td>부가세</td>
+	        <td class="right" id="summaryTax">₩0</td>
+	      </tr>
+	      <tr class="total">
+	        <td><strong>총 결제 금액</strong></td>
+	        <td class="right" id="summaryTotal"><strong>₩0</strong></td>
+	      </tr>
+	    </table>
+	  </div>
+	  <div class="agree-box">
+	    <label><input type="checkbox" id="agreePayment"> 위 결제 금액에 동의합니다.</label>
+	  </div>
+	</div>
+  </div>
+	
+	  <!-- 하단 버튼 -->
+	  <div class="form-footer">
+	    <button class="btn btn-prev" onclick="goToStep(2)">
+	      <i class="fa fa-arrow-left"></i> 이전으로
+	    </button>
+	    <button class="btn btn-next" onclick="submitPayment()">
+	      결제하기 <i class="fa fa-arrow-right"></i>
+	    </button>
+	  </div>
+	</div>
+
     </div>
   </div>
 
-  <script>
-    let currentStep = 1;
+<script>
+  let currentStep = 1;
 
-    // 활성 페이지 높이에 맞춰 래퍼 높이 조정
-    function resizeWrapper() {
-      const wrapper = document.getElementById('pagesWrapper');
-      const activePage = document.querySelector('.page.active');
-      if (!wrapper || !activePage) return;
-      // 활성 페이지의 실제 콘텐츠 높이로 래퍼를 맞춤
-      wrapper.style.height = activePage.scrollHeight + 'px';
-    }
+  	// 활성 페이지 높이에 맞춰 래퍼 높이 조정 (초기/전환/리사이즈/아코디언/에러 때 호출)
+	function resizeWrapper() {
+	  const wrapper = document.getElementById('pagesWrapper');
+	  const activePage = document.querySelector('.page.active');
+	  if (!wrapper || !activePage) return;
+	  wrapper.style.height = activePage.scrollHeight + 'px'; // 즉시 최종 높이로
+	}
 
-    function goToStep(step) {
-   	  if (step === currentStep) return;
 
-   	  const currentPage = document.getElementById('step' + currentStep);
-   	  const nextPage = document.getElementById('step' + step);
-
-   	  if (step > currentStep) {
-   	    currentPage.classList.remove('active');
-   	    currentPage.classList.add('hidden-left');
-   	    nextPage.classList.remove('hidden-left','hidden-right');
-   	  } else {
-   	    currentPage.classList.remove('active');
-   	    currentPage.classList.add('hidden-right');
-   	    nextPage.classList.remove('hidden-right','hidden-left');
-   	  }
-   	  nextPage.classList.add('active');
-
-   	  document.querySelectorAll('.step-circle').forEach(c => {
-   	    c.classList.toggle('active', c.dataset.step == step);
-   	  });
-
-   	  currentStep = step;
-
-   	  // STEP2 들어갈 때 값 채우기
-   	  if (step === 2) {
-   	    const company = document.getElementById("companyName").value || "__________";
-   	    const ceo = document.getElementById("ceoName").value || "__________";
-   	    const today = new Date().toISOString().split("T")[0]; // yyyy-mm-dd 형식
-
-   	    document.getElementById("contractCompany").textContent = "[ " + company + " ]";
-   	    document.getElementById("contractCeo").textContent = "[ " + ceo + " ]";
-   	    document.getElementById("contractDate").textContent = "[ " + today + " ]";
-   	  }
-
-   	  requestAnimationFrame(resizeWrapper);
-   	}
-
-    // 아코디언 초기화 (열고 닫을 때마다 래퍼 높이 재계산)
-    function initAccordion() {
-      document.querySelectorAll('.accordion-header').forEach(header => {
-        header.addEventListener('click', () => {
-          const content = header.nextElementSibling;
-          header.classList.toggle('active');
-          content.classList.toggle('open');
-          // 콘텐츠가 열리고 닫힌 뒤 높이 반영
-          requestAnimationFrame(resizeWrapper);
-        });
+  // 숫자만 입력
+  function onlyNumberInput(selector) {
+    document.querySelectorAll(selector).forEach(input => {
+      input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, ""); // 숫자 이외 제거
       });
-    }
-
-    // 전자서명 초기화 버튼
-    function initSignReset() {
-      const btn = document.getElementById('signReset');
-      const textarea = document.querySelector('.sign-box textarea');
-      if (btn && textarea) {
-        btn.addEventListener('click', () => {
-          textarea.value = '';
-        });
-      }
-    }
-
-    // 초기 세팅
-    document.addEventListener('DOMContentLoaded', () => {
-      initAccordion();
-      initSignReset();
-      resizeWrapper(); // 첫 페이지 높이 맞춤
-      window.addEventListener('resize', resizeWrapper);
     });
-    
- 	// 서명 패드 기능 (마우스 + 터치 지원, 좌표 보정)
-    let canvas = document.getElementById("signaturePad");
-    let ctx = canvas.getContext("2d");
-    let drawing = false;
+  }
 
-    function getPosition(e) {
-      const rect = canvas.getBoundingClientRect();
-      if (e.touches) {
-        return {
-          x: e.touches[0].clientX - rect.left,
-          y: e.touches[0].clientY - rect.top
-        };
-      } else {
-        return {
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top
-        };
-      }
+  // 자동 포커스 이동
+  function autoMoveNext(selector) {
+    document.querySelectorAll(selector).forEach(input => {
+      input.addEventListener("input", () => {
+        const maxLength = input.getAttribute("maxlength");
+        if (maxLength && input.value.length >= maxLength) {
+          let next = input.nextElementSibling;
+          while (next && next.tagName !== "INPUT") {
+            next = next.nextElementSibling;
+          }
+          if (next) next.focus();
+        }
+      });
+    });
+  }
+
+  // 에러 메시지 표시/초기화
+  function showError(input, message) {
+    const container = input.closest(".form-group");
+    const errorSpan = container.querySelector(".error-msg");
+    if (errorSpan) {
+      errorSpan.textContent = message;
+      errorSpan.classList.add("active");
+    }
+    input.focus();
+    requestAnimationFrame(resizeWrapper); // 에러로 높이 변했을 때 맞춤
+  }
+
+  function clearErrors() {
+    document.querySelectorAll(".error-msg").forEach(span => {
+      span.textContent = "";
+      span.classList.remove("active");
+    });
+    requestAnimationFrame(resizeWrapper);
+  }
+
+  // STEP1 검증
+  function validateStep1() {
+    clearErrors();
+
+    const companyName = document.getElementById("companyName");
+    const ceoName = document.getElementById("ceoName");
+    const biz1 = document.getElementById("biz1");
+    const biz2 = document.getElementById("biz2");
+    const biz3 = document.getElementById("biz3");
+    const address = document.getElementById("address");
+    const masterId = document.getElementById("masterId");
+    const masterPw = document.getElementById("masterPw");
+    const managerName = document.getElementById("managerName");
+    const phone1 = document.getElementById("phone1");
+    const phone2 = document.getElementById("phone2");
+    const phone3 = document.getElementById("phone3");
+    const emailFront = document.getElementById("emailFront");
+    const emailDomain = document.getElementById("emailDomain");
+    const subPeriod = document.getElementById("subPeriod");
+
+    if (!companyName.value.trim()) { showError(companyName, "회사명을 입력해주세요."); return false; }
+    if (!ceoName.value.trim()) { showError(ceoName, "대표자명을 입력해주세요."); return false; }
+    if (!biz1.value.trim() || !biz2.value.trim() || !biz3.value.trim()) { showError(biz1, "사업자 등록번호를 모두 입력해주세요."); return false; }
+    if (!address.value.trim()) { showError(address, "주소를 입력해주세요."); return false; }
+    if (!masterId.value.trim()) { showError(masterId, "마스터 사용자 ID를 입력해주세요."); return false; }
+    if (!masterPw.value.trim()) { showError(masterPw, "마스터 PW를 입력해주세요."); return false; }
+    if (!managerName.value.trim()) { showError(managerName, "담당자명을 입력해주세요."); return false; }
+    if (!phone1.value.trim() || !phone2.value.trim() || !phone3.value.trim()) { showError(phone1, "연락처를 모두 입력해주세요."); return false; }
+    if (!emailFront.value.trim()) { showError(emailFront, "이메일 앞부분을 입력해주세요."); return false; }
+    if (!emailDomain.value.trim()) { showError(emailDomain, "이메일 도메인을 선택해주세요."); return false; }
+    if (!subPeriod.value.trim()) { showError(subPeriod, "구독 기간을 선택해주세요."); return false; }
+
+    // 사업자 등록번호 형식 검증 (3-2-5)
+    const biz = `${biz1.value}-${biz2.value}-${biz3.value}`;
+    if (!/^\d{3}-\d{2}-\d{5}$/.test(biz)) {
+      showError(biz1, "사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)");
+      return false;
     }
 
-    function startDrawing(e) {
-      e.preventDefault();
-      drawing = true;
-      const pos = getPosition(e);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
+    // 연락처 형식 검증 (2~3 - 3~4 - 4)
+    const phone = `${phone1.value}-${phone2.value}-${phone3.value}`;
+    if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone)) {
+      showError(phone1, "연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)");
+      return false;
     }
 
-    function draw(e) {
-      if (!drawing) return;
-      e.preventDefault();
-      const pos = getPosition(e);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.stroke();
+    return true;
+  }
+
+  // STEP 이동
+	function goToStep(step) {
+	  if (step === currentStep) return;
+	
+	  // STEP1 → STEP2 이동 시 검증
+	  if (currentStep === 1 && step === 2) {
+	    if (!validateStep1()) return;
+	  }
+	
+	  const currentPage = document.getElementById('step' + currentStep);
+	  const nextPage = document.getElementById('step' + step);
+	
+	  if (step > currentStep) {
+	    currentPage.classList.remove('active');
+	    currentPage.classList.add('hidden-left');
+	    nextPage.classList.remove('hidden-left','hidden-right');
+	  } else {
+	    currentPage.classList.remove('active');
+	    currentPage.classList.add('hidden-right');
+	    nextPage.classList.remove('hidden-right','hidden-left');
+	  }
+	  nextPage.classList.add('active');
+	
+	  document.querySelectorAll('.step-circle').forEach(c => {
+	    c.classList.toggle('active', c.dataset.step == step);
+	  });
+	
+	  currentStep = step;
+	
+	  // STEP2 들어갈 때 계약서 내용 채우기
+	  if (step === 2) {
+	    const company = document.getElementById("companyName").value || "__________";
+	    const ceo = document.getElementById("ceoName").value || "__________";
+	    const today = new Date();
+	    const subPeriod = document.getElementById("subPeriod").value;
+	
+	    // 계약 시작일
+	    const startDateStr = today.toISOString().split("T")[0];
+	
+	    // 계약 종료일 계산
+	    let endDate = new Date(today);
+	    if (subPeriod.includes("개월")) {
+	      const months = parseInt(subPeriod.replace("개월", ""));
+	      endDate.setMonth(endDate.getMonth() + months);
+	    }
+	    const endDateStr = endDate.toISOString().split("T")[0];
+	
+	    document.getElementById("contractCompany").textContent = "[ " + company + " ]";
+	    document.getElementById("contractCeo").textContent = "[ " + ceo + " ]";
+	    document.getElementById("contractDate").textContent = "[ " + startDateStr + " ]";
+	    document.getElementById("contractEndDate").textContent = "[ " + endDateStr + " ]";
+	 }
+
+  // STEP3 들어갈 때 결제 내역 채우기
+  if (step === 3) {
+    const subPeriod = document.getElementById("subPeriod").value;
+    let months = 0;
+    if (subPeriod.includes("개월")) {
+      months = parseInt(subPeriod.replace("개월", ""));
     }
 
-    function stopDrawing(e) {
-      if (!drawing) return;
-      e.preventDefault();
-      drawing = false;
-    }
+    const unitPrice = 30000;
+    const basePrice = months * unitPrice;
+    const tax = Math.round(basePrice * 0.1);
+    const total = basePrice + tax;
 
-    // 마우스 이벤트
+    document.getElementById("summaryPeriod").textContent = subPeriod + " 구독 / 월 ₩" + unitPrice.toLocaleString();
+    document.getElementById("summaryBase").textContent = "₩" + basePrice.toLocaleString();
+    document.getElementById("summaryTax").textContent = "₩" + tax.toLocaleString();
+    document.getElementById("summaryTotal").textContent = "₩" + total.toLocaleString();
+  }
+
+  // 높이 재조정
+  requestAnimationFrame(resizeWrapper);
+  nextPage.addEventListener('transitionend', resizeWrapper, { once: true });
+}
+
+
+  function initAccordion() {
+	  document.querySelectorAll('.accordion-header').forEach(header => {
+	    header.addEventListener('click', () => {
+	      const content = header.nextElementSibling;
+	      header.classList.toggle('active');
+	      content.classList.toggle('open');
+
+	      // 클릭 즉시 한 번 조정
+	      resizeWrapper();
+
+	      // transition 끝난 뒤 최종 높이 다시 조정
+	      content.addEventListener('transitionend', resizeWrapper, { once: true });
+	    });
+	  });
+	}
+
+  function resizeWrapper() {
+	  const wrapper = document.getElementById('pagesWrapper');
+	  const activePage = document.querySelector('.page.active');
+	  if (!wrapper || !activePage) return;
+
+	  wrapper.style.height = activePage.scrollHeight + 'px';
+	}
+
+  // 전자서명 (마우스 + 터치 지원, 좌표 보정)
+  let canvas, ctx, drawing = false;
+  function getPosition(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
+    } else {
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+  }
+  function startDrawing(e) {
+    e.preventDefault();
+    drawing = true;
+    const pos = getPosition(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+  }
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getPosition(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+  function stopDrawing(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    drawing = false;
+  }
+
+  // 초기 세팅
+  document.addEventListener('DOMContentLoaded', () => {
+    initAccordion();
+    resizeWrapper();                // 첫 페이지 높이 맞춤
+    window.addEventListener('resize', resizeWrapper);
+
+    // 서명 패드 초기화
+    canvas = document.getElementById("signaturePad");
+    ctx = canvas.getContext("2d");
     canvas.addEventListener("mousedown", startDrawing);
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDrawing);
     canvas.addEventListener("mouseleave", stopDrawing);
+    canvas.addEventListener("touchstart", startDrawing, {passive:false});
+    canvas.addEventListener("touchmove", draw, {passive:false});
+    canvas.addEventListener("touchend", stopDrawing, {passive:false});
+    canvas.addEventListener("touchcancel", stopDrawing, {passive:false});
 
-    // 터치 이벤트 (모바일/태블릿)
-    canvas.addEventListener("touchstart", startDrawing);
-    canvas.addEventListener("touchmove", draw);
-    canvas.addEventListener("touchend", stopDrawing);
-    canvas.addEventListener("touchcancel", stopDrawing);
-
-    // 초기화 버튼
     document.getElementById("clearSign").addEventListener("click", () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
-    
-  </script>
+
+    // 숫자 입력 제한 & 자동 포커스 이동
+    onlyNumberInput("#biz1, #biz2, #biz3, #phone1, #phone2, #phone3");
+    autoMoveNext("#biz1, #biz2, #biz3, #phone1, #phone2, #phone3");
+  });
+
+  // 폰트/아이콘 로드 완료 후 한 번 더 높이 보정 (초기 잘림 방지)
+  window.addEventListener('load', resizeWrapper);
+  
+  function toggleAccordion(header) {
+	  const content = header.nextElementSibling;
+	  header.classList.toggle('active');
+	  content.classList.toggle('open');
+
+	  // 아코디언을 열거나 닫을 때 바로 최종 높이 계산
+	  requestAnimationFrame(resizeWrapper);
+	}
+
+</script>
+
 </body>
 </html>

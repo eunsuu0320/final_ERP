@@ -5,6 +5,9 @@
 	<div th:fragment="commonModal">
 		<div class="modal fade" id="commonModal" tabindex="-1"
 			aria-hidden="true">
+
+			<!-- 더 넓게 + 내부 스크롤 허용 -->
+
 			<div class="modal-dialog modal-xl modal-dialog-scrollable"
 				style="width: calc(100vw - 24px); max-width: 1400px;">
 				<div class="modal-content">
@@ -26,8 +29,11 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 					</div>
 
+					<!-- 모달 바디: 가로/세로 스크롤 모두 허용 + 오른쪽 패딩 최소화 -->
 					<div class="modal-body p-2" style="overflow: auto;">
 						<!-- Tabulator 테이블 컨테이너 -->
+						<!-- 최소 너비 확보: 열이 많아도 오른쪽 버튼 열이 안 잘림 -->
+
 						<div id="commonModalTable" style="width: 100%; min-width: 980px;"></div>
 					</div>
 				</div>
