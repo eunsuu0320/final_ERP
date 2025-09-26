@@ -1,140 +1,312 @@
-const tabled = new Tabulator("#employee-table", {
-		layout : "fitColumns",
-		pagination : "local",
-		paginationSize : 50,
+async function loadCodeMaps(groups = ["DEPT", "DUTY", "POSITION"]) {
+	const maps = {};
+	await Promise.all(groups.map(async (g) => {
+		const res = await fetch(`/api/modal/commonCode?commonGroup=${g}`);
+		const list = await res.json();
+		maps[g] = Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
+	}));
+	return maps;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+	const tableEl = document.getElementById("employee-table");
+	if (!tableEl) {
+		console.error("#employee-table 엘리먼트를 찾을 수 없습니다.");
+		return;
+	}
+
+	// ▼ 조회/등록 모드 토글 헬퍼
+	function setModalMode(mode) {
+		const modalEl = document.getElementById("empModal");
+		if (!modalEl) return;
+		modalEl.dataset.mode = mode;
+
+		const titleEl = document.getElementById("empModalTitle") || modalEl.querySelector(".modal-title");
+		if (titleEl) titleEl.textContent = (mode === "view" ? "사원 조회" : "사원 등록");
+
+		// 입력 토글 (empForm 전체)
+		const formEls = modalEl.querySelectorAll("#empForm input, #empForm select, #empForm textarea");
+		formEls.forEach(el => {
+			if (mode === "view") {
+				el.setAttribute("readonly", "readonly");
+				// select/checkbox/radio는 disabled
+				if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio" || el.type === "file") {
+					el.disabled = true;
+				}
+			} else {
+				el.removeAttribute("readonly");
+				if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio" || el.type === "file") {
+					el.disabled = false;
+				}
+			}
+		});
+
+		// 사번은 항상 수정 불가(조회/등록 공통 정책이면 유지, 필요시 조정)
+		const empNoInput = document.getElementById("empNo");
+		if (empNoInput) empNoInput.readOnly = true;
+
+		// 계약 섹션 / 저장 버튼 토글
+		const contractSection = document.getElementById("contract-section");
+		const btnPdfPick = document.getElementById("btn-pdf-pick");
+		const pdfFile = document.getElementById("pdfFile");
+		const agreeChk = document.getElementById("agreeContract");
+		const btnSave = document.getElementById("btn-save-emp");
+		const resetBtn = document.getElementById("btn-save-reset");
+
+		if (mode === "view") {
+			contractSection?.classList.add("d-none");
+			if (btnPdfPick) btnPdfPick.disabled = true;
+			if (pdfFile) pdfFile.disabled = true;
+			if (agreeChk) agreeChk.disabled = true;
+			if (btnSave) {
+				btnSave.disabled = true;
+				btnSave.title = "조회 모드에서는 저장할 수 없습니다.";
+
+				if (resetBtn) {
+					resetBtn.disabled = true;
+					resetBtn.title = "조회 모드에서는 초기화할 수 없습니다.";
+				}
+			}
+		} else {
+			contractSection?.classList.remove("d-none");
+			if (btnPdfPick) btnPdfPick.disabled = false;
+			if (pdfFile) pdfFile.disabled = false;
+			if (agreeChk) agreeChk.disabled = false;
+			if (btnSave) {
+				btnSave.disabled = false;
+				btnSave.title = "";
+
+				// ★ 등록 모드에선 다시 활성화
+				if (resetBtn) {
+					resetBtn.disabled = false;
+					resetBtn.title = "";
+				}
+			}
+			// 등록 모드에서는 사번 입력 가능하게 하려면 아래 주석 해제
+			// if (empNoInput) empNoInput.readOnly = false;
+		}
+	}
+
+	const CODE = await loadCodeMaps(["DEPT", "DUTY", "POSITION"]);
+
+	const table = new Tabulator(tableEl, {
+		layout: "fitColumns",
+		pagination: "local",
+		paginationSize: 22,
 		selectable: true,
-		columns : [ {
-			  title: "선택",
-			  formatter: "rowSelection",  // 체크박스
-			  titleFormatter: "rowSelection", // 헤더에도 전체선택 체크박스
-			  hozAlign: "center",
-			  headerSort: false,
-			  width: 44,                 // 기본 폭
-			  hozAlign: "center",        // 바디 셀 가로 정렬
-			  headerHozAlign: "center",  // 헤더 가로 정렬
-			  cellClick: function(e, cell){
-			    cell.getRow().toggleSelect();
-			  }
-			}, {
-			title : "사원번호",
-			field : "empNo",   // 엔티티 필드명과 매칭
-		}, {
-			title : "성명",
-			field : "name",
-		}, {
-			title : "부서명",
-			field : "dept"
-		}, {
-			title : "직급",
-			field : "grade"
-		}, {
-			title : "직책",
-			field : "position"
-		}, {
-			title : "전화번호",
-			field : "phone"
-		}, {
-			title : "Email",
-			field : "email"
-		}, {
-			title : "입사일자",
-			field : "hireDate",
-			sorter : "date",
-			hozAlign : "center"
-		}, ],
+		columns: [
+			{
+				title: "선택",
+				formatter: "rowSelection",
+				titleFormatter: "rowSelection",
+				headerSort: false,
+				width: 44,
+				hozAlign: "center",
+				headerHozAlign: "center",
+				cellClick: (e, cell) => cell.getRow().toggleSelect(),
+			},
+			{ title: "사원번호", field: "empNo" },
+			{ title: "성명", field: "name" },
+			{ title: "부서명", field: "dept", formatter: "lookup", formatterParams: CODE.DEPT },
+			{ title: "직급", field: "grade", formatter: "lookup", formatterParams: CODE.DUTY },
+			{ title: "직책", field: "position", formatter: "lookup", formatterParams: CODE.POSITION },
+			{ title: "전화번호", field: "phone" },
+			{ title: "Email", field: "email" },
+			{ title: "입사일자", field: "hireDate", sorter: "date", hozAlign: "center" },
+		],
 	});
 
-	// 서버에서 전체 사원 조회 (fetch)
-	fetch("/selectAllEmp")
-		.then(res => res.json())
-		.then(data => {
-			tabled.setData(data);
-		})
-		.catch(err => console.error("데이터 불러오기 실패:", err));
+	window.tabled = table;
 
-	// 검색 버튼
-	document.getElementById("btn-search").addEventListener("click", function() {
-		const field = document.getElementById("sel-field").value;
-		const keyword = document.getElementById("txt-search").value;
+	// ▼ 더블클릭: 단건 조회 → 조회 모달(읽기 전용)
+	window.tabled?.on("rowDblClick", async (e, row) => {
+		const r = row.getData();
+		if (!r?.empNo) return;
 
-		if (keyword.trim() === "") {
-			tabled.clearFilter();
-		} else {
-			tabled.setFilter(field, "like", keyword);
+		try {
+			const res = await fetch(`/api/employees/${encodeURIComponent(r.empNo)}`);
+			if (!res.ok) throw new Error(await res.text());
+			const emp = await res.json();
+
+			const modalEl = document.getElementById("empModal");
+			if (!modalEl) return;
+			setModalMode("view");
+
+			// 필드 채우기
+			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
+			setVal("empNo", emp.empNo);
+			setVal("name", emp.name);
+			setVal("phone", emp.phone);
+			setVal("birth", (emp.birth || "").toString().slice(0, 10));
+			setVal("email", emp.email);
+			setVal("dept", emp.dept);
+			setVal("position", emp.position);
+			setVal("grade", emp.grade);
+			setVal("salary", emp.salary);
+			setVal("hireDate", (emp.hireDate || "").toString().slice(0, 10));
+			setVal("resignDate", (emp.resignDate || "").toString().slice(0, 10));
+			setVal("holyDays", emp.holyDays);
+			setVal("depCnt", emp.depCnt);
+			setVal("resignReason", emp.resignReason);
+			setVal("bankCode", emp.bankCode);
+			setVal("accHolder", emp.accHolder);
+			setVal("accNo", emp.accNo);
+			setVal("postalCode", emp.postalCode);
+			setVal("address", emp.address);
+
+			new bootstrap.Modal(modalEl).show();
+		} catch (err) {
+			console.error(err);
+			alert("단건 조회에 실패했습니다.");
 		}
 	});
 
-	// 신규 버튼
-	document.getElementById("btn-new").addEventListener("click", function() {
- 		const modal = new bootstrap.Modal(document.getElementById("empModal"));
-  		modal.show();
+	// 신규 버튼: 등록 모드로 전환(입력 가능, 저장 가능)
+	document.getElementById("btn-new")?.addEventListener("click", () => {
+		const modalEl = document.getElementById("empModal");
+		if (!modalEl) return;
+
+		// 폼 초기화
+		document.getElementById("empForm")?.reset();
+		document.getElementById("contractForm")?.reset();
+		const pdfLabel = document.getElementById("pdfFileName");
+		if (pdfLabel) pdfLabel.textContent = "";
+
+		setModalMode("create");
+		const titleEl = document.getElementById("empModalTitle") || modalEl.querySelector(".modal-title");
+		if (titleEl) titleEl.textContent = "사원 등록";
+
+		new bootstrap.Modal(modalEl).show();
 	});
 
-	// 사원 등록 모달 - 초기화 버튼
-	document.getElementById("btn-save-reset").addEventListener("click", function() {
-	    const form = document.getElementById("empForm");
-
-	    if (form) {
-	        form.reset();  // ✅ form 안 input, select, textarea 값 전부 초기화
-	    }
-
-	    // 혹시 readonly 필드나 hidden 값도 같이 지워주고 싶으면 따로 처리
-	    document.getElementById("deptCode").value = "";
-	    document.getElementById("dept").value = "";
-	    document.getElementById("position").value = "";
-	    document.getElementById("grade").value = "";
-	    document.getElementById("bankCode").value = "";
+	// 데이터 주입
+	table.on("tableBuilt", async () => {
+		try {
+			const res = await fetch("/selectAllEmp");
+			const data = await res.json();
+			table.setData(data);
+		} catch (e) {
+			console.error("데이터 불러오기 실패:", e);
+		}
 	});
 
+	// ===== 검색 =====
+	const FIELD_MAP = { emp_no: "empNo", name: "name", dept: "dept" };
+	function debounce(fn, delay = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
 
-	// 인쇄 버튼
-	document.querySelector(".btn-secondary").addEventListener("click", function() {
-	    const selected = tabled.getSelectedData();
+	function applySearch() {
+		const rawField = document.getElementById("sel-field").value;
+		const keyword = (document.getElementById("txt-search").value || "").trim();
+		const field = FIELD_MAP[rawField] || rawField;
 
-	    if (selected.length === 0) {
-	        alert("인쇄할 사원을 선택하세요.");
-	        return;
-	    }
+		table.clearFilter();
+		if (!keyword) return;
 
-	    // HTML 테이블 문자열로 출력 데이터 만들기
-	    let printContents = `
-	        <h3>선택된 사원 목록</h3>
-	        <table border="1" cellspacing="0" cellpadding="5">
-	          <thead>
-	            <tr>
-	              <th>사원번호</th>
-	              <th>성명</th>
-	              <th>부서명</th>
-	              <th>직급</th>
-	              <th>직책</th>
-	              <th>전화번호</th>
-	              <th>Email</th>
-	              <th>입사일자</th>
-	            </tr>
-	          </thead>
-	          <tbody>
-	    `;
+		if (field === "dept") {
+			const kw = keyword.toLowerCase();
+			table.setFilter((data) => {
+				const code = (data.dept || "").toString().toLowerCase();
+				const name = (CODE.DEPT?.[data.dept] || "").toString().toLowerCase();
+				return code.includes(kw) || name.includes(kw);
+			});
+			return;
+		}
+		table.setFilter(field, "like", keyword);
+	}
 
-	    selected.forEach(emp => {
-	        printContents += `
-	          <tr>
-	            <td>${emp.empNo}</td>
-	            <td>${emp.name}</td>
-	            <td>${emp.dept}</td>
-	            <td>${emp.grade}</td>
-	            <td>${emp.position}</td>
-	            <td>${emp.phone}</td>
-	            <td>${emp.email}</td>
-	            <td>${emp.hireDate}</td>
-	          </tr>
-	        `;
-	    });
-
-	    printContents += `</tbody></table>`;
-
-	    // 새 창 열고 인쇄 실행
-	    const printWindow = window.open("", "_blank");
-	    printWindow.document.write(printContents);
-	    printWindow.document.close();
-	    printWindow.print();
+	document.getElementById("btn-search").addEventListener("click", applySearch);
+	document.getElementById("txt-search").addEventListener("keydown", (e) => {
+		if (e.key === "Enter") applySearch();
 	});
+	document.getElementById("txt-search").addEventListener("input", debounce(applySearch, 300));
+
+	// 초기화
+	const resetBtn = document.getElementById("btn-save-reset");
+	if (resetBtn) {
+		resetBtn.addEventListener("click", () => {
+			const form = document.getElementById("empForm");
+			if (form) form.reset();
+		});
+	}
+
+	// 인쇄
+	const printBtn = document.querySelector(".btn-secondary");
+	if (printBtn) {
+		printBtn.addEventListener("click", () => {
+			const selected = table.getSelectedData();
+			if (selected.length === 0) { alert("인쇄할 사원을 선택하세요."); return; }
+
+			const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
+			const rows = selected.map(emp => `
+      <tr>
+        <td>${emp.empNo ?? ""}</td>
+        <td>${emp.name ?? ""}</td>
+        <td>${toName("DEPT", emp.dept)}</td>
+        <td>${toName("DUTY", emp.grade)}</td>
+        <td>${toName("POSITION", emp.position)}</td>
+        <td>${emp.phone ?? ""}</td>
+        <td>${emp.email ?? ""}</td>
+        <td>${emp.hireDate ?? ""}</td>
+      </tr>`).join("");
+
+			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+			const count = selected.length;
+
+			const html = `
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>선택된 사원 목록</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @page { size: A4 portrait; margin: 8mm; }
+    html, body { height: 100%; }
+    body { margin: 0; font-size: 12px; }
+    .print-wrap { width: 100%; padding: 0; }
+    .print-header { text-align: center; margin: 0 0 8px 0; }
+    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
+    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    table.print th, table.print td {
+      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
+    }
+    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
+    tbody tr:nth-child(even) td { background: #fcfcfc; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { page-break-inside: avoid; }
+    col.empno{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
+    col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
+  </style>
+</head>
+<body>
+  <div class="print-wrap">
+    <div class="print-header"><h3 class="m-0">선택된 사원 목록</h3></div>
+    <div class="meta"><div>총 <strong>${count}</strong>명</div><div>생성일시: ${now}</div></div>
+    <table class="print">
+      <colgroup>
+        <col class="empno"><col class="name"><col class="dept"><col class="grade">
+        <col class="position"><col class="phone"><col class="email"><col class="hire">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>사원번호</th><th>성명</th><th>부서명</th><th>직급</th>
+          <th>직책</th><th>전화번호</th><th>Email</th><th>입사일자</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <script>window.addEventListener('load', () => window.print());</script>
+</body>
+</html>`;
+
+			const w = window.open("", "_blank");
+			if (!w) { alert("팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요."); return; }
+			w.document.open();
+			w.document.write(html);
+			w.document.close();
+		});
+	}
+});

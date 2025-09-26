@@ -1,6 +1,7 @@
 package com.yedam.common.web;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,7 +18,13 @@ public class CommonCodeController {
 
 	@ResponseBody
 	@GetMapping("/api/modal/commonCode")
-	public List<CommonCode> commonCodes(String commonGroup) {
+	public List<CommonCode> commonCode(String commonGroup) {
 		return commonCodeService.findByCodeGroup(commonGroup);
+	}
+
+	@ResponseBody
+	@GetMapping("/api/modal/commonCodes")
+	public Map<String, List<CommonCode>> commonCodes(String commonGroup) {
+		return commonCodeService.getCodes(commonGroup);
 	}
 }

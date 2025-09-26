@@ -5,3 +5,14 @@
 */
 // This file is intentionally blank
 // Use this file to add JavaScript to your project
+
+function getCode(commonGroup, selector) {
+	fetch(`/api/modal/commonCode?commonGroup=${commonGroup}`)
+		.then(res => res.json())
+		.then(data => {
+			const position = document.querySelector(`#${selector}`);
+			for (const option of data) {
+				position.insertAdjacentHTML('beforeend', `<option value="${option.codeId}">${option.codeName}</opiton>`)
+			}
+		})
+}
