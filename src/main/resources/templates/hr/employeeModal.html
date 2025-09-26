@@ -255,6 +255,9 @@
 	    label.textContent = file ? `선택됨: ${file.name}` : "";
 	  });
 
+	  const header = document.querySelector('meta[name="_csrf_header"]').content;
+	   const token = document.querySelector('meta[name="_csrf"]').content;
+
 	// 저장
 	  document.getElementById("btn-save-emp").addEventListener("click", function () {
 	    const empForm = document.getElementById("empForm");
@@ -294,7 +297,7 @@
 	    // 4) 전송
 	    fetch("/saveContract", {
 	      method: "POST",
-	      headers: { "X-CSRF-Token": document.querySelector('meta[name="_csrf"]').content },
+	      headers: {'X-CSRF-Token': token},
 	      body: formData
 	    })
 	      .then(res => res.text())
