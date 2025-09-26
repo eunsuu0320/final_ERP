@@ -14,8 +14,9 @@ public interface salesService {
 	List<Map<String, Object>> findSalesStatsByYear(); 
 	
 	// 모달조회
-	List<Map<String, Object>> findSalesPlanData();
+	List<Map<String, Object>> findLastYearSalesData();
 	
 	// 등록
 	SalesPlan saveSalesPlan(SalesPlan salesplan);
+	
 }

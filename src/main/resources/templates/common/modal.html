@@ -5,14 +5,13 @@
 	<div th:fragment="commonModal">
 		<div class="modal fade" id="commonModal" tabindex="-1"
 			aria-hidden="true">
-			<!-- ✅ 더 넓게 + 내부 스크롤 허용 -->
 			<div class="modal-dialog modal-xl modal-dialog-scrollable"
 				style="width: calc(100vw - 24px); max-width: 1400px;">
 				<div class="modal-content">
 					<div class="modal-header">
 						<h5 class="modal-title" id="commonModalLabel">검색</h5>
 
-						<!-- 🔍 검색창 -->
+						<!-- 검색창 -->
 						<input type="text" id="commonModalSearch"
 							class="form-control ms-3" placeholder="검색어 입력"
 							style="width: 220px;">
@@ -27,10 +26,8 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 					</div>
 
-					<!-- ✅ 모달 바디: 가로/세로 스크롤 모두 허용 + 오른쪽 패딩 최소화 -->
 					<div class="modal-body p-2" style="overflow: auto;">
 						<!-- Tabulator 테이블 컨테이너 -->
-						<!-- ✅ 최소 너비 확보: 열이 많아도 오른쪽 버튼 열이 안 잘림 -->
 						<div id="commonModalTable" style="width: 100%; min-width: 980px;"></div>
 					</div>
 				</div>
@@ -46,22 +43,16 @@
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
 	<style>
-/* 모달이 다른 모달 위에 열릴 때 우선순위 한 단계 올리고 싶으면 주석 해제
-    #commonModal { z-index: 1065; }
-    .modal-backdrop.show { z-index: 1060; }
-    */
-
-/* ▶ 핵심: Tabulator의 내부 tableholder가 오른쪽을 잘라먹지 않도록 */
 #commonModal .tabulator {
 	width: 100%;
 }
 
 #commonModal .tabulator .tabulator-tableholder {
-	overflow-x: auto !important; /* 가로 스크롤 강제 허용 */
-	padding-bottom: 2px; /* 스크롤바 겹침 완화 */
+	overflow-x: auto !important;
+	padding-bottom: 2px; 
 }
 
-/* 헤더/툴바 간격 약간 */
+
 #commonModal .tabulator {
 	margin-top: 4px;
 }

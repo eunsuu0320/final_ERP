@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,11 @@ public class SalesPlan {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sales_plan_seq")
+	@SequenceGenerator(
+		    name = "sales_plan_seq",
+		    sequenceName = "SALES_PLAN_SEQ", // 실제 DB 시퀀스명
+		    allocationSize = 1
+		)
 	private int salesPlanCode; // 영업계획코드
 	
 	private Date planYear; // 계획년도
