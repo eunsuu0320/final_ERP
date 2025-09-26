@@ -23,7 +23,7 @@ public class DSalesPlan {
 	// 영업세부계획
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sales_plan_detail_seq")
 	private int SalesPlanDetailCode; // 영업세부계획코드
 	private String qtr; // 분기
 	private Long purpSales; // 목표매출
