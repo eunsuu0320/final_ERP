@@ -538,13 +538,7 @@
 
       <h4>간편 결제 수단</h4>
       <div class="pay-methods">
-        <form action="/pay/kakao" method="post">
-		  <!-- JS에서 총액 계산된 값 넘기기 -->
-		  <input type="hidden" name="amount" id="finalAmount" value="360000"/>
-		  <!-- 회사명도 함께 넘김 -->
-		  <input type="hidden" name="companyName" id="companyNameInput" value=""/>
-		  <button type="submit" class="pay-btn kakao">카카오 페이</button>
-		</form>
+		<button class="pay-btn kakao">카카오 페이</button>
         <button class="pay-btn naver">네이버 페이</button>
       </div>
     </div>
