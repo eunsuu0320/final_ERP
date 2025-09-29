@@ -31,12 +31,13 @@ public class SecurityConfig {
             .addFilterBefore(new CaptchaFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/common/login", "/common/findPassword", "/css/**", "/js/**", "/erp/**", "/hr/**", "/main/**", "/subscription", "/api/**", "/ac/**", "/sales2/**").permitAll()
+                .requestMatchers("/pay/kakao/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/common/login")
                 .loginProcessingUrl("/doLogin")
-                .defaultSuccessUrl("/main", true)
+                .defaultSuccessUrl("/dashboard", true)
                 .failureUrl("/common/login?error=true")
             )
             .logout(logout -> logout
@@ -44,8 +45,10 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/common/login?logout=true")
             )
             .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin())
-            );
-        	//.csrf(csrf -> csrf.disable()) // 필요 시 enable
+            )
+        	.csrf(csrf -> csrf
+        	    .ignoringRequestMatchers("/api/**", "/pay/**") // REST API만 CSRF 제외
+        	);
 
 
 
