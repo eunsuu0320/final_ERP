@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+    <!-- Tabulator CSS -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        .flex-nowrap {
+            flex-wrap: nowrap !important;
+        }
+    </style>
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body layout:fragment="content">
+<div id="layoutSidenav_content">
+    <main>
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">사원별 영업이익목록(IY005)</h1>
+
+            <div class="row flex-nowrap">
+                <!-- 테이블 영역 -->
+                <div class="col flex-grow-1">
+                    <div class="d-flex justify-content-end gap-2 mb-3">
+                        <button id="btn-new" class="btn btn-primary me-2">신규</button>
+                        <button class="btn btn-secondary me-2" onclick="">Excel</button>
+                        <button class="btn btn-secondary me-2" onclick="">PDF</button>
+                    </div>
+
+                    <!-- 메인 목록 테이블 -->
+                    <div id="emp-table"></div>
+                </div>
+        </div>
+    </main>
+</div>
+
+<!-- Tabulator JS -->
+<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+<!-- 기존 JS 파일 연결 -->
+<script th:src="@{/sales2/js/salesList.js}"></script>
+</body>
+</html>

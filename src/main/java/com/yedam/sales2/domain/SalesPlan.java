@@ -3,10 +3,13 @@ package com.yedam.sales2.domain;
 import java.util.Date;
 import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -37,6 +40,7 @@ public class SalesPlan {
 	private String empCode; // 사원번호
 	private String companyCode; // 회사고유코드
 	
-	@Transient
-	private List<DSalesPlan> details;
+	
+	 @OneToMany(mappedBy = "salesPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	    private List<DSalesPlan> details;
 }
