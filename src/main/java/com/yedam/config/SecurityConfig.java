@@ -30,9 +30,16 @@ public class SecurityConfig {
         http
             .addFilterBefore(new CaptchaFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/common/login", "/common/findPassword", "/css/**", "/js/**", "/erp/**", "/hr/**", "/main/**", "/subscription", "/api/**", "/ac/**", "/sales2/**").permitAll()
-                .requestMatchers("/pay/kakao/**").permitAll()
-                .anyRequest().authenticated()
+                    .requestMatchers(
+                        "/", "/common/**", "/css/**", "/js/**",
+                        "/erp/**", "/hr/**", "/main/**", "/subscription",
+                        "/api/**", "/ac/**", "/sales2/**",
+                        "/pay/**",              // <-- pay/** 열기
+                        "/pay/kakao/**",        // <-- 콜백 경로도 명시적으로 허용
+                        "/pay/naver/**",
+                        "/success", "/error"
+                    ).permitAll()
+                    .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/common/login")

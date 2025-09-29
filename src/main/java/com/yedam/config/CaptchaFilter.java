@@ -3,6 +3,7 @@ package com.yedam.config;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -21,15 +22,20 @@ public class CaptchaFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        if ("/doLogin".equals(request.getServletPath()) && "POST".equalsIgnoreCase(request.getMethod())) {
+        String path = request.getServletPath();
+
+        // 로그인 요청일 때만 캡차 검증
+        if ("/doLogin".equals(path) && "POST".equalsIgnoreCase(request.getMethod())) {
             String recaptchaResponse = request.getParameter("g-recaptcha-response");
 
-            if (!verifyRecaptcha(recaptchaResponse)) {
+            // 캡차 응답이 없으면 실패 처리
+            if (recaptchaResponse == null || recaptchaResponse.isBlank() || !verifyRecaptcha(recaptchaResponse)) {
                 response.sendRedirect("/common/login?captchaError=true");
                 return;
             }
         }
 
+        // 나머지 요청은 그냥 통과
         filterChain.doFilter(request, response);
     }
 
@@ -42,7 +48,11 @@ public class CaptchaFilter extends OncePerRequestFilter {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setDoOutput(true);
-            conn.getOutputStream().write(params.getBytes());
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(params.getBytes());
+                os.flush();
+            }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String inputLine;
@@ -60,7 +70,4 @@ public class CaptchaFilter extends OncePerRequestFilter {
             return false;
         }
     }
-
 }
-
-

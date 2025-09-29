@@ -315,6 +315,30 @@
     .pay-btn.active {
 	  outline: 3px solid #333;
 	}
+	.input-with-icon {
+	  position: relative;
+	  display: flex;
+	  align-items: center;
+	}
+	
+	.input-with-icon input {
+	  flex: 1;
+	  padding-right: 35px; /* 오른쪽 버튼 공간 확보 */
+	}
+	
+	.input-with-icon .icon-btn {
+	  position: absolute;
+	  right: 5px;
+	  background: none;
+	  border: none;
+	  cursor: pointer;
+	  font-size: 16px;
+	  color: #666;
+	}
+	
+	.input-with-icon .icon-btn:hover {
+	  color: #4a2fbf; /* hover 시 포인트 컬러 */
+	}
 	
   </style>
 </head>
@@ -356,82 +380,105 @@
           <div class="section user-info">
             <h3>사용자 정보</h3>
             <form>
-              <div class="form-grid">
-                <div class="form-group">
-                  <label>회사명</label>
-                  <input type="text" id="companyName" placeholder="예) OO주식회사" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>대표자명</label>
-                  <input type="text" id="ceoName" placeholder="예) 홍길동" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>사업자 등록번호</label>
-                  <div class="biz-inputs">
-                    <input type="text" id="biz1" maxlength="3" required> -
-                    <input type="text" id="biz2" maxlength="2" required> -
-                    <input type="text" id="biz3" maxlength="5" required>
-                  </div>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>주소</label>
-                  <input type="text" id="address" placeholder="도로명 주소" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>마스터 사용자 ID</label>
-                  <input type="text" id="masterId" placeholder="관리자 계정 ID" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>마스터 PW</label>
-                  <input type="password" id="masterPw" placeholder="초기 비밀번호" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>담당자명</label>
-                  <input type="text" id="managerName" placeholder="예) 김길동" required>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group">
-                  <label>담당자 연락처</label>
-                  <div class="phone-inputs">
-                    <input type="text" id="phone1" maxlength="3" required> -
-                    <input type="text" id="phone2" maxlength="4" required> -
-                    <input type="text" id="phone3" maxlength="4" required>
-                  </div>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group full">
-                  <label>담당자 이메일</label>
-                  <div class="email-input">
-                    <input type="text" id="emailFront" placeholder="example" required>
-                    <span>@</span>
-                    <select id="emailDomain" required>
-                      <option value="">선택</option>
-                      <option value="gmail.com">gmail.com</option>
-                      <option value="naver.com">naver.com</option>
-                      <option value="daum.net">daum.net</option>
-                      <option value="company.com">company.com</option>
-                    </select>
-                  </div>
-                  <span class="error-msg"></span>
-                </div>
-                <div class="form-group full">
-                  <label>구독 기간</label>
-                  <select id="subPeriod" required>
-                    <option value="">선택</option>
-                    <option>1개월</option>
-                    <option>3개월</option>
-                    <option>6개월</option>
-                    <option>12개월</option>
-                  </select>
-                  <span class="error-msg"></span>
-                </div>
-              </div>
+				<div class="form-grid">
+				  <!-- 1줄: 회사명 / 대표자명 -->
+				  <div class="form-group">
+				    <label>회사명</label>
+				    <input type="text" id="companyName" placeholder="예) OO주식회사" required>
+				    <span class="error-msg"></span>
+				  </div>
+				  <div class="form-group">
+				    <label>대표자명</label>
+				    <input type="text" id="ceoName" placeholder="예) 홍길동" required>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 2줄: 사업자등록번호 / 주소(도로명) -->
+				  <div class="form-group">
+				    <label>사업자 등록번호</label>
+				    <div class="biz-inputs">
+				      <input type="text" id="biz1" maxlength="3" required> -
+				      <input type="text" id="biz2" maxlength="2" required> -
+				      <input type="text" id="biz3" maxlength="5" required>
+				    </div>
+				    <span class="error-msg"></span>
+				  </div>
+				  <div class="form-group">
+				    <label>도로명 주소</label>
+				    <div class="input-with-icon">
+				      <input type="text" id="roadAddress" placeholder="도로명 주소" readonly required>
+				      <button type="button" class="icon-btn" onclick="execDaumPostcode()">
+				        <i class="fa fa-search"></i>
+				      </button>
+				    </div>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 3줄: 상세주소 (full) -->
+				  <div class="form-group full">
+				    <label>상세 주소</label>
+				    <input type="text" id="addressDetail" placeholder="상세 주소 입력" required>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 4줄: 마스터ID / 마스터PW -->
+				  <div class="form-group">
+				    <label>마스터 사용자 ID</label>
+				    <input type="text" id="masterId" placeholder="관리자 계정 ID" required>
+				    <span class="error-msg"></span>
+				  </div>
+				  <div class="form-group">
+				    <label>마스터 PW</label>
+				    <input type="password" id="masterPw" placeholder="초기 비밀번호" required>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 5줄: 담당자명 / 연락처 -->
+				  <div class="form-group">
+				    <label>담당자명</label>
+				    <input type="text" id="managerName" placeholder="예) 김길동" required>
+				    <span class="error-msg"></span>
+				  </div>
+				  <div class="form-group">
+				    <label>담당자 연락처</label>
+				    <div class="phone-inputs">
+				      <input type="text" id="phone1" maxlength="3" required> -
+				      <input type="text" id="phone2" maxlength="4" required> -
+				      <input type="text" id="phone3" maxlength="4" required>
+				    </div>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 6줄: 이메일 (full) -->
+				  <div class="form-group full">
+				    <label>담당자 이메일</label>
+				    <div class="email-input">
+				      <input type="text" id="emailFront" placeholder="example" required>
+				      <span>@</span>
+				      <select id="emailDomain" required>
+				        <option value="">선택</option>
+				        <option value="gmail.com">gmail.com</option>
+				        <option value="naver.com">naver.com</option>
+				        <option value="daum.net">daum.net</option>
+				        <option value="company.com">company.com</option>
+				      </select>
+				    </div>
+				    <span class="error-msg"></span>
+				  </div>
+				
+				  <!-- 7줄: 구독 기간 (full) -->
+				  <div class="form-group full">
+				    <label>구독 기간</label>
+				    <select id="subPeriod" required>
+				      <option value="">선택</option>
+				      <option>1개월</option>
+				      <option>3개월</option>
+				      <option>6개월</option>
+				      <option>12개월</option>
+				    </select>
+				    <span class="error-msg"></span>
+				  </div>
+				</div>
             </form>
           </div>
         </div>
@@ -657,7 +704,7 @@
     const biz1 = document.getElementById("biz1");
     const biz2 = document.getElementById("biz2");
     const biz3 = document.getElementById("biz3");
-    const address = document.getElementById("address");
+    const roadAddress = document.getElementById("roadAddress");
     const masterId = document.getElementById("masterId");
     const masterPw = document.getElementById("masterPw");
     const managerName = document.getElementById("managerName");
@@ -671,7 +718,7 @@
     if (!companyName.value.trim()) { showError(companyName, "회사명을 입력해주세요."); return false; }
     if (!ceoName.value.trim()) { showError(ceoName, "대표자명을 입력해주세요."); return false; }
     if (!biz1.value.trim() || !biz2.value.trim() || !biz3.value.trim()) { showError(biz1, "사업자 등록번호를 모두 입력해주세요."); return false; }
-    if (!address.value.trim()) { showError(address, "주소를 입력해주세요."); return false; }
+    if (!roadAddress.value.trim()) { showError(roadAddress, "주소를 입력해주세요."); return false; }
     if (!masterId.value.trim()) { showError(masterId, "마스터 사용자 ID를 입력해주세요."); return false; }
     if (!masterPw.value.trim()) { showError(masterPw, "마스터 PW를 입력해주세요."); return false; }
     if (!managerName.value.trim()) { showError(managerName, "담당자명을 입력해주세요."); return false; }
@@ -891,52 +938,66 @@
   }
 
   function submitPayment() {
-    if (!document.getElementById("agreePayment").checked) {
-      alert("결제 금액에 동의해야 진행 가능합니다.");
-      return;
-    }
-    if (!selectedMethod) {
-      alert("결제 수단을 선택해주세요.");
-      return;
-    }
+	  if (!document.getElementById("agreePayment").checked) {
+	    alert("결제 금액에 동의해야 진행 가능합니다.");
+	    return;
+	  }
+	  if (!selectedMethod) {
+	    alert("결제 수단을 선택해주세요.");
+	    return;
+	  }
 
-    const orderId = "ORDER_" + new Date().getTime();
-    const userId = "admin01";
-    const payRequest = {
-      orderId: orderId,
-      userId: userId,
-      itemName: "ERP 구독",
-      amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, ""))
-    };
+	  const orderId = "ORDER_" + new Date().getTime();
+	  const userId = "admin01"; // 로그인 없을 경우 서버에서 GUEST 처리
+	  const buyerName = document.getElementById("managerName").value;
 
-    if (selectedMethod === "kakao") {
-      // 카카오페이 API
-      fetch("/pay/kakao/ready", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payRequest)
-      })
-      .then(res => res.json())
-      .then(data => {
-        window.location.href = data.next_redirect_pc_url;
-      })
-      .catch(err => console.error(err));
-    } else if (selectedMethod === "naver") {
-      // 네이버페이 API (예시)
-      fetch("/pay/naver/ready", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payRequest)
-      })
-      .then(res => res.json())
-      .then(data => {
-        window.location.href = data.redirectUrl;
-      })
-      .catch(err => console.error(err));
-    }
-  }
+	  // 결제 + 회사 정보 같이 담기
+	  const payRequest = {
+	    orderId: orderId,
+	    userId: userId,
+	    itemName: "ERP 구독",
+	    amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, "")),
+	    payMethod: selectedMethod.toUpperCase(),  // "KAKAO" or "NAVER"
+	    buyerName: buyerName,
 
+	    // 회사 정보
+	    companyName: document.getElementById("companyName").value,
+	    ceoName: document.getElementById("ceoName").value,
+	    bizRegNo: `${document.getElementById("biz1").value}-${document.getElementById("biz2").value}-${document.getElementById("biz3").value}`,
+	    roadAddress: document.getElementById("roadAddress").value,
+	    addressDetail: document.getElementById("addressDetail").value,
+	    tel: `${document.getElementById("phone1").value}-${document.getElementById("phone2").value}-${document.getElementById("phone3").value}`
+	  };
+
+	  // 서버에 결제 준비 요청
+	  fetch("/pay/ready", {
+	    method: "POST",
+	    headers: { "Content-Type": "application/json" },
+	    body: JSON.stringify(payRequest)
+	  })
+	    .then(res => res.json())
+	    .then(data => {
+	      // 서버에서 카카오/네이버 리다이렉트 URL 반환
+	      if (selectedMethod === "kakao") {
+	        window.location.href = data.next_redirect_pc_url;  // 카카오페이
+	      } else if (selectedMethod === "naver") {
+	        window.location.href = data.redirectUrl;           // 네이버페이
+	      }
+	    })
+	    .catch(err => console.error(err));
+	}
+	
+  	function execDaumPostcode() {
+	    new daum.Postcode({
+	      oncomplete: function(data) {
+	        document.getElementById("roadAddress").value = data.address;
+	        resizeWrapper(); // 기존 높이 조정 함수
+	      }
+	    }).open();
+	}
+  
 </script>
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 </body>
 </html>

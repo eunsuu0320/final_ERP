@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>결제 완료</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fa; text-align: center; padding: 50px; }
+    .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; }
+    h2 { color: #4a2fbf; }
+    .detail { margin-top: 20px; font-size: 15px; line-height: 1.6; }
+    .btn-home { margin-top: 30px; display: inline-block; padding: 12px 20px; background: #4a2fbf; color: white; text-decoration: none; border-radius: 6px; }
+    .btn-home:hover { background: #6a4fbf; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>결제가 완료되었습니다 🎉</h2>
+    <div class="detail">
+      <p>주문번호: <strong th:text="${info.partnerOrderId}"></strong></p>
+      <p>구매자: <strong th:text="${info.buyerName}"></strong></p>
+      <p>결제 금액: <strong th:text="${#numbers.formatInteger(info.amount.total, 3, 'COMMA')}"></strong>원</p>
+      <p>부가세: <strong th:text="${#numbers.formatInteger(info.amount.vat, 3, 'COMMA')}"></strong>원</p>
+    </div>
+    <a href="/" class="btn-home">메인으로 돌아가기</a>
+  </div>
+</body>
+</html>

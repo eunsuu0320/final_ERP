@@ -22,10 +22,14 @@ public class KakaoPayService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final Map<String, String> orderTidMap = new ConcurrentHashMap<>();
+    private final Map<String, String> orderBuyerMap = new ConcurrentHashMap<>(); // ⭐ buyerName 저장
 
     private static final String HOST = "https://kapi.kakao.com";
-    private static final String ADMIN_KEY = "3c4d225c4cfafacf87d4c8cce4342a24";
+    private static final String ADMIN_KEY = "3c4d225c4cfafacf87d4c8cce4342a24"; // ✅ 실제 Admin Key 넣기
 
+    /**
+     * 카카오페이 결제 준비
+     */
     public KakaoReadyResponse kakaoPayReady(PayRequest payRequest) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "KakaoAK " + ADMIN_KEY);
@@ -51,12 +55,30 @@ public class KakaoPayService {
                 KakaoReadyResponse.class
         );
 
-        orderTidMap.put(payRequest.getOrderId(), response.getTid()); // tid 저장
+        // ✅ orderId - tid / buyerName 매핑 저장
+        if (response != null && response.getTid() != null) {
+            orderTidMap.put(payRequest.getOrderId(), response.getTid());
+            orderBuyerMap.put(payRequest.getOrderId(), payRequest.getBuyerName()); // ⭐ 담당자명 저장
+            System.out.println("[KakaoPayService] tid 저장: orderId=" + payRequest.getOrderId()
+                    + ", tid=" + response.getTid()
+                    + ", buyerName=" + payRequest.getBuyerName());
+        } else {
+            throw new IllegalStateException("카카오페이 Ready 응답에 tid가 없습니다.");
+        }
+
         return response;
     }
 
+    /**
+     * 카카오페이 결제 승인
+     */
     public KakaoApproveResponse kakaoPayApprove(String orderId, String pgToken, String userId) {
         String tid = orderTidMap.get(orderId);
+        String buyerName = orderBuyerMap.get(orderId); // ⭐ 저장했던 담당자명 꺼내기
+
+        if (tid == null) {
+            throw new IllegalStateException("tid가 존재하지 않습니다. orderId=" + orderId);
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "KakaoAK " + ADMIN_KEY);
@@ -71,11 +93,20 @@ public class KakaoPayService {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        return restTemplate.postForObject(
+        KakaoApproveResponse response = restTemplate.postForObject(
                 HOST + "/v1/payment/approve",
                 request,
                 KakaoApproveResponse.class
         );
+
+        if (response != null) {
+            response.setBuyerName(buyerName); // ⭐ VO에 담당자명 세팅
+        }
+
+        System.out.println("[KakaoPayService] 결제 승인 완료: orderId=" + orderId
+                + ", tid=" + tid
+                + ", buyerName=" + buyerName);
+
+        return response;
     }
 }
-
