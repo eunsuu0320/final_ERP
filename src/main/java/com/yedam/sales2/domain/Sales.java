@@ -34,9 +34,4 @@ public class Sales {
 	private Long profitAmount; // 이익금액
 	private Date salesDate; // 판매일자
 	private String companyCode; // 회사고유코드
-	
-	
-	
-	
-	
 }

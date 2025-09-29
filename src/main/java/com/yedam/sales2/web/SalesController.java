@@ -1,7 +1,6 @@
 package com.yedam.sales2.web;
 
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -10,15 +9,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales2.domain.DSalesPlan;
 import com.yedam.sales2.domain.Sales;
 import com.yedam.sales2.domain.SalesPlan;
-import com.yedam.sales2.repository.DSalesPlanRepository;
-import com.yedam.sales2.repository.SalesPlanRepository;
-import com.yedam.sales2.repository.SalesRepository;
 import com.yedam.sales2.service.salesService;
 
 @Controller
@@ -27,9 +24,14 @@ public class SalesController {
 	@Autowired
 	 private salesService salesService;
 		
-	@Autowired
-	private SalesRepository salesRepository; 
-
+	// Repository는 Service에서 사용하므로 Controller에서는 주입을 제거했습니다.
+	
+    // Contoller의 생성자 주입은 이미 Spring이 @Autowired로 처리하므로 제거했습니다.
+    // @Autowired
+    // public SalesController(salesService salesService) {
+    //     this.salesService = salesService;
+    // }
+    
 	// 영업계획목록 html
 	@GetMapping("salesList")
     public String salesList() {
@@ -64,53 +66,28 @@ public class SalesController {
         return salesService.findLastYearSalesData(); 
     }
     
-    @Autowired
-    public SalesController(salesService salesService) {
-        this.salesService = salesService;
-    }
-    
-    @Autowired
-    private SalesPlanRepository salesPlanRepository;
-
-    @Autowired
-    private DSalesPlanRepository dSalesPlanRepository;
-    
+    // 📌 신규 등록: Repository를 직접 사용하지 않고 Service 레이어로 위임
     @PostMapping("/api/sales/insert")
+    @ResponseBody // 결과를 JSON 문자열로 반환
     public String insertSalesPlan(@RequestBody List<DSalesPlan> detailList) {
         try {
-            if (detailList == null || detailList.isEmpty()) {
-                return "error: 세부 데이터 없음";
-            }
-
-            // 1. 메인 테이블 저장: JPA가 salesPlanCode를 자동으로 채워줍니다.
-            SalesPlan master = new SalesPlan();
-            master.setPlanYear(new Date());
-            master.setRegDate(new Date());
-            master.setEmpCode("EMP001");
-            master.setCompanyCode("COMP001");
-            salesPlanRepository.save(master);
-
-            // 2. 세부 테이블에 외래 키(FK) 연결
-            for (DSalesPlan detail : detailList) {
-                // 부모 객체 자체를 자식 객체의 salesPlan 필드에 연결합니다.
-                detail.setSalesPlan(master);
-            }
-
-            // 3. 모든 세부 테이블 데이터 한 번에 저장
-            dSalesPlanRepository.saveAll(detailList);
-
-            return "sales2/salesList";
+            // Service 계층으로 등록 로직 위임
+            String result = salesService.insertSalesPlan(detailList);
+            return result; // "success" 반환
         } catch (Exception e) {
             e.printStackTrace();
+            // 클라이언트에게 오류 메시지를 명확히 전달
             return "error: " + e.getMessage();
         }
     }
     
+    // 📌 올해 영업계획 존재 여부 확인: Service로 위임
     @GetMapping("/api/sales/check-this-year")
     @ResponseBody
     public Map<String, Boolean> checkThisYear() {
         int currentYear = LocalDate.now().getYear();
-        boolean exists = salesPlanRepository.existsByPlanYear(currentYear); // JPA 메서드 사용
+        // Service 메서드 호출
+        boolean exists = salesService.checkSalesPlanExists(currentYear); 
         return Map.of("exists", exists);
     }
 
@@ -119,5 +96,39 @@ public class SalesController {
     @ResponseBody
     public List<SalesPlan> getPlanByYear(@PathVariable int year) {
         return salesService.getPlanByYear(year);
+    }
+    
+    // 수정 주소 매핑
+    @GetMapping("/api/sales/plan/{year}/details")
+    @ResponseBody
+    public List<DSalesPlan> getSalesPlanDetails(@PathVariable int year) {
+        // Service에서 @Transient 필드에 salesPlanCode를 채워서 반환해줍니다.
+        return salesService.getSalesPlanDetail(year);
+    }
+    
+    // 수정 (PUT)
+    @PutMapping("/api/sales/update")
+    @ResponseBody
+    public String updateSalesPlan(@RequestBody List<DSalesPlan> detailList) {
+        try {
+            if (detailList == null || detailList.isEmpty()) {
+                return "error: 세부 데이터 없음";
+            }
+
+            // 📌 DSalesPlan 객체의 Transient 필드에서 planCode를 가져옵니다.
+            // DSalesPlan 엔티티 수정으로 인해 NullPointerException 위험이 줄어들었습니다.
+            Integer planCode = detailList.get(0).getSalesPlanCode(); 
+            
+            if (planCode == null) {
+                 return "error: Sales Plan Code is missing in the request data.";
+            }
+
+            String result = salesService.updateSalesPlanDetails(planCode, detailList);
+
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "error: " + e.getMessage();
+        }
     }
 }
