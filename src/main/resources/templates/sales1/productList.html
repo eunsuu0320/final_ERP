@@ -51,7 +51,8 @@
 				</div>
 
 				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-secondary me-2" onclick="getHistory('product')">이력조회</button>
+					<button class="btn btn-secondary me-2"
+						onclick="getHistory('product')">이력조회</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
 					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
@@ -111,7 +112,7 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">품목코드</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control"
+											<input type="text" class="form-control display-code-field"
 												id="displayProductCode" readonly placeholder="자동생성">
 											<input type="hidden" name="productCode" id="productCode">
 										</div>
@@ -126,13 +127,8 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">규격*</label>
 										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productSize"
+											<input type="text" class="form-control" name="productSize"
 												required>
-												<option value="" disabled selected>규격을 선택하세요</option>
-												<option value="S">S</option>
-												<option value="M">M</option>
-												<option value="L">L</option>
-											</select>
 										</div>
 									</div>
 									<div class="row mb-3">
@@ -140,8 +136,6 @@
 										<div class="col-sm-9">
 											<select class="form-select comboSelect" name="unit" required>
 												<option value="" disabled selected>단위를 선택하세요</option>
-												<option value="kg">kg</option>
-												<option value="cm">cm</option>
 											</select>
 										</div>
 
@@ -175,8 +169,6 @@
 											<select class="form-select comboSelect" name="warehouseCode"
 												required>
 												<option value="" disabled selected>창고를 선택하세요</option>
-												<option value="본사창고">본사창고</option>
-												<option value="예담창고">예담창고</option>
 											</select>
 										</div>
 									</div>
@@ -211,7 +203,7 @@
 		var columns = /*[[${columns}]]*/[];
 		var rows = /*[[${rows}]]*/[];
 	</script>
-	
+
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<script

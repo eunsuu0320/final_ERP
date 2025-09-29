@@ -103,4 +103,9 @@ public class PriceServiceImpl implements PriceService {
 		return (priceUniqueCode == null) ? 1L : priceUniqueCode + 1;
 	}
 
+	@Override
+	public Price getPriceByPriceGroupCode(String PriceGroupCode) {
+		return priceRepository.findByPriceGroupCode(PriceGroupCode);
+	}
+
 }

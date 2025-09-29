@@ -5,11 +5,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.repository.ProductRepository;
@@ -78,18 +78,61 @@ public class ProductServiceImpl implements ProductService {
 
 	@Override
 	@Transactional
-	public Product saveProduct(Product product) {
-		// 회사코드 받아오기
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		String username = authentication.getName();
-		String companyCode = username != null && username.contains(":") ? username.trim().split(":")[0].trim()
-				: username.trim();
-		product.setCompanyCode(companyCode);
+	public Product saveProduct(Product product, MultipartFile multipartfile) {
+		boolean isNewRegistration = (product.getProductCode() == null || product.getProductCode().isEmpty());
 
-		product.setProductCode(null);
+		Product existingProduct = null;
+		if (!isNewRegistration) {
+			existingProduct = productRepository.findByProductCode(product.getProductCode());
+			if (existingProduct == null) {
+				isNewRegistration = true;
+			}
+		}
 
-		String newProductCode = generateProductCode();
-		product.setProductCode(newProductCode);
+		if (isNewRegistration) {
+			// 회사코드
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			String username = authentication.getName();
+			String companyCode = username != null && username.contains(":") ? username.trim().split(":")[0].trim()
+					: username.trim();
+			product.setCompanyCode(companyCode);
+
+			String newProductCode = generateProductCode();
+			product.setProductCode(newProductCode);
+
+			int min = 100;
+			int max = 500;
+			int randomStock = (int) (Math.floor(Math.random() * (max - min + 1)) + min);
+			product.setStock(randomStock);
+			product.setUsageStatus("Y");
+
+
+		} else {
+			if (existingProduct.getCreateDate() != null) {
+				product.setCreateDate(existingProduct.getCreateDate());
+			}
+
+			product.setCompanyCode(existingProduct.getCompanyCode());
+
+			product.setStock(existingProduct.getStock());
+			product.setUsageStatus(existingProduct.getUsageStatus());
+
+			if (existingProduct.getCreateDate() != null) {
+				product.setCreateDate(existingProduct.getCreateDate());
+			}
+
+		}
+		
+		// 이미지 처리
+		if (multipartfile != null && !multipartfile.isEmpty()) {
+		} else if (!isNewRegistration && (product.getImgPath() == null || product.getImgPath().isEmpty())) {
+		} else if (!isNewRegistration) {
+			if (product.getImgPath() == null && existingProduct != null) {
+				product.setImgPath(existingProduct.getImgPath());
+			}
+		}
+
+		System.out.println("이미지는 : " + product.getImgPath());
 
 		return productRepository.save(product);
 	}

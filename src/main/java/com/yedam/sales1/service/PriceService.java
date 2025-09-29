@@ -11,4 +11,6 @@ public interface PriceService {
 	Map<String, Object> getTableDataFromPrice(List<Price> price);
 	
 	Price savePrice(Price price);
+
+	Price getPriceByPriceGroupCode(String keyword);
 }

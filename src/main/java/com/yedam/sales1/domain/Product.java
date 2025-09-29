@@ -62,6 +62,7 @@ public class Product {
     @PrePersist
     protected void onCreate() {
         this.createDate = new Date();
+        this.updateDate = new Date();
     }
     
     // Jpa의 PreUpdate 이벤트를 사용하여 UPDATE 시 자동으로 수정일자를 설정
