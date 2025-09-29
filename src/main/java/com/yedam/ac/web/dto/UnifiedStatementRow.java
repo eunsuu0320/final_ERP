@@ -1,11 +1,14 @@
+// src/main/java/com/yedam/ac/web/dto/UnifiedStatementRow.java
 package com.yedam.ac.web.dto;
 
-/** 네이티브 쿼리 결과 인터페이스 프로젝션 */
-public interface UnifiedStatementRow {
-    String getVoucherNo();            // Long -> String
-    java.time.LocalDate getVoucherDate();
-    String getType();
-    java.math.BigDecimal getAmountTotal();
-    String getPartnerName();
-    String getRemark();
-}
+import java.time.LocalDate;
+
+public record UnifiedStatementRow(
+        String voucherNo,
+        LocalDate voucherDate,
+        String type,
+        Long amountTotal,
+        String partnerName,
+        String remark,
+        String productName
+) {}

@@ -1,54 +1,28 @@
 // src/main/java/com/yedam/ac/repository/VoucherNoQueryRepository.java
 package com.yedam.ac.repository;
 
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import com.yedam.ac.domain.SalesStatement; // ✅ 관리되는 엔티티를 지정(실제 사용 X)
 
-@Repository
-public class VoucherNoQueryRepository {
+public interface VoucherNoQueryRepository extends Repository<SalesStatement, String> {
 
-    @PersistenceContext
-    private EntityManager em;
-
-    /** 매출: prefix(yyMM-)로 시작하는 가장 큰 전표번호 (예: 2509-0012) */
-    public String maxSalesVoucher(String prefix) {
-        Object r = em.createNativeQuery("""
-            SELECT MAX(voucher_no)
-              FROM SALES_STATEMENT
-             WHERE voucher_no LIKE :prefix || '%'
-        """).setParameter("prefix", prefix)
-          .getSingleResult();
-        return r == null ? null : String.valueOf(r);
-    }
-
-    /** 매입: prefix(yyMM-)로 시작하는 가장 큰 전표번호 */
-    public String maxBuyVoucher(String prefix) {
-        Object r = em.createNativeQuery("""
-            SELECT MAX(voucher_no)
-              FROM BUY_STATEMENT
-             WHERE voucher_no LIKE :prefix || '%'
-        """).setParameter("prefix", prefix)
-          .getSingleResult();
-        return r == null ? null : String.valueOf(r);
-    }
-    
-    public String maxMoneyVoucher(String prefix) {
-        Object r = em.createNativeQuery("""
-            SELECT MAX(voucher_no)
-              FROM MONEY_STATEMENT
-             WHERE voucher_no LIKE :prefix || '%'
-        """).setParameter("prefix", prefix).getSingleResult();
-        return r == null ? null : String.valueOf(r);
-    }
-
-    public String maxPaymentVoucher(String prefix) {
-        Object r = em.createNativeQuery("""
-            SELECT MAX(voucher_no)
-              FROM PAYMENT_STATEMENT
-             WHERE voucher_no LIKE :prefix || '%'
-        """).setParameter("prefix", prefix).getSingleResult();
-        return r == null ? null : String.valueOf(r);
-    }
+    /**
+     * 회사코드 + prefix("2509-") 기준 가장 큰 전표번호(예: "2509-0053") 반환. 없으면 null
+     */
+    @Query(value =
+        "select max(voucher_no) from ( " +
+        "  select voucher_no from sales_statement   where company_code = :cc and voucher_no like :prefix||'%' " +
+        "  union all " +
+        "  select voucher_no from buy_statement     where company_code = :cc and voucher_no like :prefix||'%' " +
+        "  union all " +
+        "  select voucher_no from money_statement   where company_code = :cc and voucher_no like :prefix||'%' " +
+        "  union all " +
+        "  select voucher_no from payment_statement where company_code = :cc and voucher_no like :prefix||'%' " +
+        ")",
+        nativeQuery = true)
+    String findMaxSequence(@Param("cc") String companyCode,
+                           @Param("prefix") String prefix);
 }

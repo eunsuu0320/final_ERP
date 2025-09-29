@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.ac.service.VoucherNoService;
+import com.yedam.ac.util.CompanyContext;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,18 +18,16 @@ import lombok.RequiredArgsConstructor;
 public class VoucherNoController {
 
     private final VoucherNoService voucherNoService;
+    private final CompanyContext companyCtx;
 
-    /**
-     * 예: /api/vouchers/next?type=SALES&date=2025-09-25
-     *     /api/vouchers/next?type=BUY   (date 생략 시 오늘)
-     */
     @GetMapping("/api/vouchers/next")
     public NextVoucherNoRes next(
         @RequestParam("type") String type,
         @RequestParam(value = "date", required = false)
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ){
-        String next = voucherNoService.next(type, date);
+        String cc = companyCtx.getRequiredCompanyCode();
+        String next = voucherNoService.next(type, date, cc);
         return new NextVoucherNoRes(type.toUpperCase(), next);
     }
 

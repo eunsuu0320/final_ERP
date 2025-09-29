@@ -1,3 +1,4 @@
+// src/main/java/com/yedam/ac/domain/BuyStatement.java
 package com.yedam.ac.domain;
 
 import java.time.LocalDate;
@@ -12,39 +13,23 @@ import lombok.Setter;
 @Getter @Setter
 @Entity
 @Table(name = "BUY_STATEMENT")
-public class BuyStatement {
+public class BuyStatement extends BaseCompanyEntity {
 
     @Id
     @Column(name = "VOUCHER_NO", length = 20, nullable = false)
-    private String voucherNo;             // 예: 2509-0001
+    private String voucherNo;
 
-    @Column(name = "VOUCHER_DATE")
-    private LocalDate voucherDate;
-
-    @Column(name = "BUY_CODE")
-    private String buyCode;
-
-    @Column(name = "PARTNER_NAME")
-    private String partnerName;
-
-    @Column(name = "EMPLOYEE")
-    private String employee;
-
-    @Column(name = "TAX_CODE")
-    private String taxCode;
-
-    @Column(name = "AMOUNT_SUPPLY")
-    private Long amountSupply;
-
-    @Column(name = "AMOUNT_VAT")
-    private Long amountVat;
-
-    @Column(name = "AMOUNT_TOTAL")
-    private Long amountTotal;
-
-    @Column(name = "REMARK")
-    private String remark;
-
-    // @Column(name = "VOUCHER_NO_NUM_BAK")
-    // private Long voucherNoNumBak;
+    @Column(name = "VOUCHER_DATE")  private LocalDate voucherDate;
+    @Column(name = "BUY_CODE")      private String buyCode;
+    @Column(name = "BUY_DATE")      private LocalDate buyDate;
+    @Column(name = "PARTNER_CODE")  private String partnerCode;
+    @Column(name = "PARTNER_NAME")  private String partnerName;
+    @Column(name = "EMPLOYEE")      private String employee;
+    @Column(name = "PRODUCT_CODE")  private String productCode;
+    @Column(name = "UNIT_PRICE")    private Long unitPrice;
+    @Column(name = "TAX_CODE")      private String taxCode;
+    @Column(name = "AMOUNT_SUPPLY") private Long amountSupply;
+    @Column(name = "AMOUNT_VAT")    private Long amountVat;
+    @Column(name = "AMOUNT_TOTAL")  private Long amountTotal;
+    @Column(name = "REMARK")        private String remark;
 }

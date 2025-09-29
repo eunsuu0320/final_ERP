@@ -9,8 +9,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import com.yedam.ac.repository.StatementQueryRepository;
+import com.yedam.ac.repository.StatementQueryRepositoryCustom;
 import com.yedam.ac.service.StatementQueryService;
+import com.yedam.ac.util.CompanyContext;
 import com.yedam.ac.web.dto.StatementSearchForm;
 import com.yedam.ac.web.dto.UnifiedStatementRow;
 
@@ -20,14 +21,16 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StatementQueryServiceImpl implements StatementQueryService {
 
-    private final StatementQueryRepository repo;
+    private final StatementQueryRepositoryCustom repo;
+    private final CompanyContext companyContext;
 
     @Override
     public Page<UnifiedStatementRow> search(StatementSearchForm form) {
-        final String type      = (form.getType() == null || form.getType().isBlank()) ? "ALL" : form.getType();
-        final String keyword   = form.getKeyword()   == null ? "" : form.getKeyword().trim();   // ✅ keyword 사용
-        final String voucherNo = form.getVoucherNo() == null ? "" : form.getVoucherNo().trim();
+        final String companyCode = companyContext.getRequiredCompanyCode();
 
+        final String type      = (form.getType() == null || form.getType().isBlank()) ? "ALL" : form.getType();
+        final String keyword   = form.getKeyword()   == null ? "" : form.getKeyword().trim();
+        final String voucherNo = form.getVoucherNo() == null ? "" : form.getVoucherNo().trim();
         final LocalDate fromDate = form.getFromDate();
         final LocalDate toDate   = form.getToDate();
 
@@ -36,10 +39,8 @@ public class StatementQueryServiceImpl implements StatementQueryService {
         final int start = page * size;
         final int end   = start + size;
 
-        List<UnifiedStatementRow> rows = repo.searchUnifiedList(
-                type, keyword, voucherNo, fromDate, toDate, start, end
-        );
-        long total = repo.countUnified(type, keyword, voucherNo, fromDate, toDate);
+        List<UnifiedStatementRow> rows = repo.searchUnifiedList(companyCode, type, keyword, voucherNo, fromDate, toDate, start, end);
+        long total = repo.countUnified(companyCode, type, keyword, voucherNo, fromDate, toDate);
 
         return new PageImpl<>(rows, PageRequest.of(page, size), total);
     }

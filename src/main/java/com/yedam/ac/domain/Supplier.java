@@ -1,3 +1,4 @@
+// src/main/java/com/yedam/ac/domain/Supplier.java
 package com.yedam.ac.domain;
 
 import jakarta.persistence.Column;
@@ -7,11 +8,11 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "SUPPLIERS")
-public class Supplier {
+public class Supplier extends BaseCompanyEntity { // ★ 회사코드 상속
 
     @Id
     @Column(name = "SUPPLIER_ID")
-    private Long supplierId; // 시퀀스+트리거가 넣어줌
+    private Long supplierId;
 
     @Column(name = "SUPPLIER_CODE", nullable = false, unique = true, length = 30)
     private String supplierCode;
@@ -30,7 +31,6 @@ public class Supplier {
 
     protected Supplier() {}
 
-    // --- getters ---
     public Long getSupplierId() { return supplierId; }
     public String getSupplierCode() { return supplierCode; }
     public String getSupplierName() { return supplierName; }
