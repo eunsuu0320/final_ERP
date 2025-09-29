@@ -28,7 +28,7 @@ public class HomeController {
 		return "layout/main";
 	}
 
-	@GetMapping("dashboard")
+	@GetMapping("/dashboard")
 	public String dashboard(Model model) {
 		return "dashboard";
 	}
