@@ -1,4 +1,4 @@
-// com.yedam.ac.web/PartnerController.java
+// src/main/java/com/yedam/ac/web/AcPartnerController.java
 package com.yedam.ac.web;
 
 import java.util.List;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.ac.repository.AcPartnerLookupRepository;
+import com.yedam.ac.util.CompanyContext;
 import com.yedam.ac.web.dto.PartnerLookupDto;
 
 import lombok.RequiredArgsConstructor;
@@ -17,10 +18,12 @@ import lombok.RequiredArgsConstructor;
 public class AcPartnerController {
 
     private final AcPartnerLookupRepository repo;
+    private final CompanyContext companyCtx;
 
     @GetMapping("/api/partners")
     public List<PartnerLookupDto> partners(@RequestParam(value = "q", required = false) String q) {
-        if (q == null || q.isBlank()) return repo.top200();
-        return repo.search(q.trim());
+        String cc = companyCtx.getRequiredCompanyCode();
+        if (q == null || q.isBlank()) return repo.top200(cc);
+        return repo.search(cc, q.trim());
     }
 }

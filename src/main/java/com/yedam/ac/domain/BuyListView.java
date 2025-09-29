@@ -1,3 +1,4 @@
+// src/main/java/com/yedam/ac/domain/BuyListView.java
 package com.yedam.ac.domain;
 
 import java.time.LocalDate;
@@ -11,13 +12,12 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 
 @Entity
-@Table(name = "BUY_LIST_V")  // 오라클 VIEW
-@Immutable                  // 읽기 전용
+@Table(name = "BUY_LIST_V")
+@Immutable
 @Getter
 public class BuyListView {
-
     @Id
-    @Column(name = "BUYCODE")     // 뷰 별칭 buyCode → 오라클 컬럼/별칭 대소문자 무관
+    @Column(name = "BUYCODE")
     private String buyCode;
 
     @Column(name = "PARTNERNAME")
@@ -30,8 +30,11 @@ public class BuyListView {
     private String productName;
 
     @Column(name = "PURCHASEDATE")
-    private LocalDate purchaseDate;  // DATE → LocalDate 권장
+    private LocalDate purchaseDate;
 
     @Column(name = "TAXCODE")
     private String taxCode;
+
+    @Column(name = "COMPANYCODE")   // ★ 추가
+    private String companyCode;
 }
