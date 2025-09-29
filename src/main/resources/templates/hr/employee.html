@@ -24,7 +24,8 @@
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					 <div class="ms-auto d-flex">
 					    <button class="btn btn-secondary me-2">인쇄</button>
-					    <button class="btn btn-dark">이력조회</button>
+					    <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+					    <button class="btn btn-dark" onclick="openHistoryModal(document.getElementById('companyCode').value)">이력조회</button>
 					 </div>
 				</div>
 
@@ -33,6 +34,22 @@
 
 				<!-- 테이블 -->
 				<div id="employee-table"></div>
+
+				<!-- 이력조회 모달 -->
+				<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+				  <div class="modal-dialog modal-xl modal-dialog-centered">
+				    <div class="modal-content shadow-lg">
+				      <div class="modal-header">
+				        <h5 class="modal-title">사원 이력 조회</h5>
+				        <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
+				      </div>
+				      <div class="modal-body">
+				        <!-- Tabulator 테이블 영역 -->
+				        <div id="history-table"></div>
+				      </div>
+				    </div>
+				  </div>
+				</div>
 
 			</div>
 		</main>
@@ -52,6 +69,53 @@
 	      }
 	    }).open();
 	  }
+
+	  const modalEl = document.getElementById("historyModal");
+	  modalEl.addEventListener("shown.bs.modal", () => {
+	    historyTable.redraw(true); // ✅ 강제로 리사이즈/리렌더
+	  });
+
+	  // 이력조회 테이블
+	  let historyTable = new Tabulator("#history-table", {
+		  layout: "fitColumns",
+		  pagination: "local",
+		  paginationSize: 10,
+		  movableColumns: true,
+		  columns: [
+		    { title: "이력", field: "eventType", hozAlign: "center" },
+		    { title: "사원", field: "employee.name", hozAlign: "center" },
+		    { title: "상세내용", field: "eventDetail" },
+		    { title: "담당자", field: "manager", hozAlign: "center" },
+		    {
+		      title: "작업 일시",
+		      field: "createdAt",
+		      hozAlign: "center",
+		      formatter: function(cell) {
+		        const val = cell.getValue();
+		        return val ? new Date(val).toLocaleString() : "";
+		      }
+		    }
+		  ]
+		});
+
+	  function openHistoryModal(companyCode) {
+		  fetch(`/api/history/${companyCode}`)
+		    .then(res => res.json())
+		    .then(data => {
+		      historyTable.setData(data).then(() => {
+		        // ✅ 데이터 로딩 끝난 후 모달 열기
+		        const modal = new bootstrap.Modal(document.getElementById("historyModal"));
+		        modal.show();
+		      });
+		    })
+		    .catch(err => {
+		      console.error("이력 조회 실패:", err);
+		      alert("이력 조회 중 오류가 발생했습니다.");
+		    });
+		}
+
+
+
 	</script>
 
 </body>

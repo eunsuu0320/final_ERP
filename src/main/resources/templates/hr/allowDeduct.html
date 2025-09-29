@@ -11,6 +11,9 @@
 		<main>
 			<div class="container-fluid px-4">
 				<h1 class="mt-4">수당/공제 관리</h1>
+
+				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+
 				<!-- 탭 + 버튼 영역 -->
 				<div class="d-flex justify-content-between mb-3">
 					<!-- 수당/공제 탭 -->
@@ -27,9 +30,9 @@
 
 					<!-- 오른쪽 버튼 -->
 					<div>
-						<button class="btn btn-primary me-2">저장</button>
-						<button class="btn btn-danger me-2">사용중단</button>
-						<button class="btn btn-warning">재사용</button>
+						<button id="allDec-save" class="btn btn-primary me-2">저장</button>
+						<button id="allDec-stop" class="btn btn-danger me-2">사용중단</button>
+						<button id="allDec-reStart" class="btn btn-warning">재사용</button>
 					</div>
 				</div>
 
@@ -37,13 +40,16 @@
 				<div class="tab-content mt-3">
 					<!-- 수당 -->
 					<div class="tab-pane fade show active" id="allow">
-						<div id="allowance-table">
-						내용넣기
+						<div id="allowance-area">
+
+						<!-- 수당 테이블 -->
+						<div id="allowance-table"></div>
+
 						</div>
 					</div>
 					<!-- 공제 -->
 					<div class="tab-pane fade" id="deduct">
-						<div id="deduction-table">
+						<div id="deduction-area">
 						내용넣기
 						</div>
 					</div>
@@ -52,5 +58,6 @@
 			</div>
 		</main>
 	</div>
+	<script src="/hr/js/allowanceDedcut.js"></script>
 </body>
 </html>
