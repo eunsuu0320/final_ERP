@@ -312,7 +312,10 @@
 	  margin-top: 15px;
 	  font-size: 13px;
 	}
-    
+    .pay-btn.active {
+	  outline: 3px solid #333;
+	}
+	
   </style>
 </head>
 <body>
@@ -433,6 +436,9 @@
           </div>
         </div>
         <div class="form-footer">
+			<button class="btn btn-prev" onclick="location.href='/'">
+			  <i class="fa fa-arrow-left"></i> 이전으로
+			</button>
           <button class="btn btn-next" onclick="goToStep(2)">
             다음으로 <i class="fa fa-arrow-right"></i>
           </button>
@@ -488,7 +494,8 @@
                 4) 고객 상담 및 공지사항 전달</p>
 
                 <p><strong>3. 개인정보의 보관 및 이용 기간</strong><br>
-                수집된 개인정보는 서비스 이용 계약이 유지되는 동안 보관하며, 계약 해지 시 즉시 파기합니다. 단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관할 수 있습니다.</p>
+                수집된 개인정보는 서비스 이용 계약이 유지되는 동안 보관하며, 계약 해지 시 즉시 파기합니다.<br>
+                단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관할 수 있습니다.</p>
 
                 <p><strong>4. 동의 거부 권리</strong><br>
                 이용자는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 서비스 이용이 제한될 수 있습니다.</p>
@@ -538,8 +545,8 @@
 
       <h4>간편 결제 수단</h4>
       <div class="pay-methods">
-		<button class="pay-btn kakao">카카오 페이</button>
-        <button class="pay-btn naver">네이버 페이</button>
+		<button type="button" class="pay-btn kakao" onclick="selectPayMethod('kakao')">카카오 페이</button>
+  		<button type="button" class="pay-btn naver" onclick="selectPayMethod('naver')">네이버 페이</button>
       </div>
     </div>
 
@@ -871,6 +878,63 @@
 	  // 아코디언을 열거나 닫을 때 바로 최종 높이 계산
 	  requestAnimationFrame(resizeWrapper);
 	}
+
+  let selectedMethod = null;
+
+  function selectPayMethod(method) {
+    selectedMethod = method;
+
+    // 버튼 선택 효과
+    document.querySelectorAll('.pay-btn').forEach(btn => btn.classList.remove('active'));
+    const selectedBtn = document.querySelector('.pay-btn.' + method);
+    if (selectedBtn) selectedBtn.classList.add('active');
+  }
+
+  function submitPayment() {
+    if (!document.getElementById("agreePayment").checked) {
+      alert("결제 금액에 동의해야 진행 가능합니다.");
+      return;
+    }
+    if (!selectedMethod) {
+      alert("결제 수단을 선택해주세요.");
+      return;
+    }
+
+    const orderId = "ORDER_" + new Date().getTime();
+    const userId = "admin01";
+    const payRequest = {
+      orderId: orderId,
+      userId: userId,
+      itemName: "ERP 구독",
+      amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, ""))
+    };
+
+    if (selectedMethod === "kakao") {
+      // 카카오페이 API
+      fetch("/pay/kakao/ready", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payRequest)
+      })
+      .then(res => res.json())
+      .then(data => {
+        window.location.href = data.next_redirect_pc_url;
+      })
+      .catch(err => console.error(err));
+    } else if (selectedMethod === "naver") {
+      // 네이버페이 API (예시)
+      fetch("/pay/naver/ready", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payRequest)
+      })
+      .then(res => res.json())
+      .then(data => {
+        window.location.href = data.redirectUrl;
+      })
+      .catch(err => console.error(err));
+    }
+  }
 
 </script>
 

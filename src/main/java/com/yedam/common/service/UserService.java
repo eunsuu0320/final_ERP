@@ -41,8 +41,10 @@ public class UserService implements UserDetailsService {
         SystemUser user = userRepository.findByUserIdAndCompanyCode(userId, companyCode)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
 
+        String username = companyCode + ":" + userId + ":" + user.getEmpCode();
+
         return User.builder()
-                .username(combined)  // 그대로 저장
+                .username(username)
                 .password(user.getUserPw())
                 .roles(user.getRoleCode())
                 .build();
