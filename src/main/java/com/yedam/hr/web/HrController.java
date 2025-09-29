@@ -80,16 +80,18 @@ public class HrController {
 	                         : ResponseEntity.notFound().build();
 	}
 
-	  // 단건 수정 (엔티티 그대로)
-    @PutMapping("/api/employees/{empNo}")
-    public ResponseEntity<Employee> update(@PathVariable String empNo,
-                                           @RequestBody Employee req) {
-        // URL의 empNo와 바디의 empNo 일치 검사
-        if (req.getEmpNo() == null || !empNo.equals(req.getEmpNo())) {
-            return ResponseEntity.badRequest().build();
-        }
-        Employee updated = hrService.updateEmployee(req); // ★ 바로 엔티티 전달
-        return (updated == null) ? ResponseEntity.notFound().build()
-                                 : ResponseEntity.ok(updated); // ★ from() 같은 거 필요 없음
-    }
+	// 단건 수정
+	@PostMapping("/updateEmployee")
+	@ResponseBody
+	public String updateEmployee(@ModelAttribute Employee employee,
+	                             @RequestParam(value = "signImg", required = false) MultipartFile signImg,
+	                             @RequestParam(value = "pdfFile", required = false) MultipartFile pdfFile) {
+	    try {
+	        hrService.updateEmployee(employee, signImg, pdfFile);
+	        return "success";  // ✅ JS에서 검사하는 값
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return "fail: " + e.getMessage();
+	    }
+	}
 }

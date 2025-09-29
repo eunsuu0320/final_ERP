@@ -24,5 +24,7 @@ public interface HrService {
     public Employee getEmployee(String empNo);
 
     // 수정
-    public Employee updateEmployee(Employee emp);
+    void updateEmployee(Employee employee,
+            			MultipartFile signImg,
+            			MultipartFile pdfFile);
 }

@@ -1,4 +1,4 @@
-async function loadCodeMaps(groups = ["DEPT", "DUTY", "POSITION"]) {
+async function loadCodeMaps(groups = ["DEPT", "DUTY", "POSITION", "BANK"]) {
 	const maps = {};
 	await Promise.all(groups.map(async (g) => {
 		const res = await fetch(`/api/modal/commonCode?commonGroup=${g}`);
@@ -15,21 +15,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 		return;
 	}
 
-	// ▼ 조회/등록 모드 토글 헬퍼
+	// ▼ 조회/등록/수정 모드 토글 헬퍼
 	function setModalMode(mode) {
 		const modalEl = document.getElementById("empModal");
 		if (!modalEl) return;
 		modalEl.dataset.mode = mode;
 
 		const titleEl = document.getElementById("empModalTitle") || modalEl.querySelector(".modal-title");
-		if (titleEl) titleEl.textContent = (mode === "view" ? "사원 조회" : "사원 등록");
+		if (titleEl) {
+			if (mode === "view") titleEl.textContent = "사원 조회";
+			else if (mode === "create") titleEl.textContent = "사원 등록";
+			else if (mode === "edit") titleEl.textContent = "사원 수정";
+		}
 
 		// 입력 토글 (empForm 전체)
 		const formEls = modalEl.querySelectorAll("#empForm input, #empForm select, #empForm textarea");
 		formEls.forEach(el => {
 			if (mode === "view") {
 				el.setAttribute("readonly", "readonly");
-				// select/checkbox/radio는 disabled
 				if (el.tagName === "SELECT" || el.type === "checkbox" || el.type === "radio" || el.type === "file") {
 					el.disabled = true;
 				}
@@ -41,11 +44,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 			}
 		});
 
-		// 사번은 항상 수정 불가(조회/등록 공통 정책이면 유지, 필요시 조정)
+		// 사번은 공통적으로 수정 불가
 		const empNoInput = document.getElementById("empNo");
 		if (empNoInput) empNoInput.readOnly = true;
 
-		// 계약 섹션 / 저장 버튼 토글
+		// 계약 섹션 / 버튼들
 		const contractSection = document.getElementById("contract-section");
 		const btnPdfPick = document.getElementById("btn-pdf-pick");
 		const pdfFile = document.getElementById("pdfFile");
@@ -61,13 +64,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 			if (btnSave) {
 				btnSave.disabled = true;
 				btnSave.title = "조회 모드에서는 저장할 수 없습니다.";
-
-				if (resetBtn) {
-					resetBtn.disabled = true;
-					resetBtn.title = "조회 모드에서는 초기화할 수 없습니다.";
-				}
 			}
-		} else {
+			if (resetBtn) {
+				resetBtn.disabled = true;
+				resetBtn.title = "조회 모드에서는 초기화할 수 없습니다.";
+			}
+		}
+
+		if (mode === "create") {
 			contractSection?.classList.remove("d-none");
 			if (btnPdfPick) btnPdfPick.disabled = false;
 			if (pdfFile) pdfFile.disabled = false;
@@ -75,19 +79,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 			if (btnSave) {
 				btnSave.disabled = false;
 				btnSave.title = "";
-
-				// ★ 등록 모드에선 다시 활성화
-				if (resetBtn) {
-					resetBtn.disabled = false;
-					resetBtn.title = "";
-				}
 			}
-			// 등록 모드에서는 사번 입력 가능하게 하려면 아래 주석 해제
-			// if (empNoInput) empNoInput.readOnly = false;
+			if (resetBtn) {
+				resetBtn.disabled = false;
+				resetBtn.title = "";
+			}
+			// 필요하면 사번 입력 가능하게 (기본은 readOnly 유지)
+			if (empNoInput) empNoInput.readOnly = false;
+		}
+
+		if (mode === "edit") {
+			contractSection?.classList.remove("d-none");
+			if (btnPdfPick) btnPdfPick.disabled = false;
+			if (pdfFile) pdfFile.disabled = false;
+			if (agreeChk) agreeChk.disabled = false;
+			if (btnSave) {
+				btnSave.disabled = false;
+				btnSave.title = "";
+			}
+			if (resetBtn) {
+				resetBtn.disabled = false;
+				resetBtn.title = "";
+			}
+			// edit 모드에서는 empNo는 수정 불가
+			if (empNoInput) empNoInput.readOnly = true;
 		}
 	}
 
-	const CODE = await loadCodeMaps(["DEPT", "DUTY", "POSITION"]);
+
+	const CODE = await loadCodeMaps(["DEPT", "DUTY", "POSITION", "BANK"]);
 
 	const table = new Tabulator(tableEl, {
 		layout: "fitColumns",
@@ -130,7 +150,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 			const modalEl = document.getElementById("empModal");
 			if (!modalEl) return;
-			setModalMode("view");
+
+			setModalMode("view"); // 조회 모드
 
 			// 필드 채우기
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
@@ -149,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			setVal("depCnt", emp.depCnt);
 			setVal("resignReason", emp.resignReason);
 			setVal("bankCode", emp.bankCode);
+			setVal("bankCodeName", CODE.BANK[emp.bankCode]);
 			setVal("accHolder", emp.accHolder);
 			setVal("accNo", emp.accNo);
 			setVal("postalCode", emp.postalCode);
@@ -160,6 +182,56 @@ document.addEventListener("DOMContentLoaded", async () => {
 			alert("단건 조회에 실패했습니다.");
 		}
 	});
+
+	// 단 건 수정
+	document.getElementById("btn-update")?.addEventListener("click", async () => {
+		const selected = table.getSelectedData();
+		if (selected.length !== 1) {
+			alert("수정할 사원 한 명을 선택하세요.");
+			return;
+		}
+
+		const empNo = selected[0].empNo;
+		try {
+			const res = await fetch(`/api/employees/${encodeURIComponent(empNo)}`);
+			if (!res.ok) throw new Error(await res.text());
+			const emp = await res.json();
+
+			const modalEl = document.getElementById("empModal");
+			if (!modalEl) return;
+
+			setModalMode("edit"); // ← 수정 모드
+
+			// 값 채우기 (조회랑 동일)
+			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
+			setVal("empNo", emp.empNo);
+			setVal("name", emp.name);
+			setVal("phone", emp.phone);
+			setVal("birth", (emp.birth || "").toString().slice(0, 10));
+			setVal("email", emp.email);
+			setVal("dept", emp.dept);
+			setVal("position", emp.position);
+			setVal("grade", emp.grade);
+			setVal("salary", emp.salary);
+			setVal("hireDate", (emp.hireDate || "").toString().slice(0, 10));
+			setVal("resignDate", (emp.resignDate || "").toString().slice(0, 10));
+			setVal("holyDays", emp.holyDays);
+			setVal("depCnt", emp.depCnt);
+			setVal("resignReason", emp.resignReason);
+			setVal("bankCode", emp.bankCode);
+			setVal("bankCodeName", CODE.BANK[emp.bankCode]);
+			setVal("accHolder", emp.accHolder);
+			setVal("accNo", emp.accNo);
+			setVal("postalCode", emp.postalCode);
+			setVal("address", emp.address);
+
+			new bootstrap.Modal(modalEl).show();
+		} catch (err) {
+			console.error(err);
+			alert("수정할 사원 데이터를 불러오지 못했습니다.");
+		}
+	});
+
 
 	// 신규 버튼: 등록 모드로 전환(입력 가능, 저장 가능)
 	document.getElementById("btn-new")?.addEventListener("click", () => {
