@@ -7,11 +7,13 @@
 			<div class="modal-dialog modal-xl">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h5 class="modal-title"  id="empModalTitle">사원 등록</h5>
+						<h5 class="modal-title" id="empModalTitle">사원 등록</h5>
 
 						<div>
-							<button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
-							<button type="button" class="btn btn-outline-dark me-2" id="btn-save-reset">초기화</button>
+							<button type="button" class="btn btn-primary me-2"
+								id="btn-save-emp">저장</button>
+							<button type="button" class="btn btn-outline-dark me-2"
+								id="btn-save-reset">초기화</button>
 							<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 						</div>
 					</div>
@@ -36,84 +38,89 @@
 								<form id="empForm">
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">사원번호</label>
-											<input type="text" name="empNo" id="empNo" class="form-control" required>
+											<label class="form-label required">사원번호</label> <input
+												type="text" name="empNo" id="empNo" class="form-control"
+												required>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">성명</label>
-											<input type="text" name="name" id="name" class="form-control" required>
+											<label class="form-label required">성명</label> <input
+												type="text" name="name" id="name" class="form-control"
+												required>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">전화번호</label>
-											<input type="text" name="phone" id="phone" class="form-control" required>
+											<label class="form-label required">전화번호</label> <input
+												type="text" name="phone" id="phone" class="form-control"
+												required>
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">생년월일</label>
-											<input type="date" name="birth" id="birth" class="form-control">
+											<label class="form-label required">생년월일</label> <input
+												type="date" name="birth" id="birth" class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label required">이메일</label>
-											<input type="email" name="email" id="email" class="form-control">
+											<label class="form-label required">이메일</label> <input
+												type="email" name="email" id="email" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">부서</label>
-											<select id="dept" name="dept" class="form-control" ></select>
+											<label class="form-label required">부서</label> <select
+												id="dept" name="dept" class="form-control"></select>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직급</label>
-											<select id="position" name="position" class="form-control" ></select>
+											<label class="form-label required">직급</label> <select
+												id="position" name="position" class="form-control"></select>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직책</label>
-											<select id="grade" name="grade" class="form-control" ></select>
+											<label class="form-label required">직책</label> <select
+												id="grade" name="grade" class="form-control"></select>
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">기본급</label>
-											<input type="number" name="salary" id="salary" class="form-control">
+											<label class="form-label required">기본급</label> <input
+												type="number" name="salary" id="salary" class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label required">휴가일수</label>
-											<input type="number" name="holyDays" id="holyDays" class="form-control">
-										</div>
-									</div>
-
-									<div class="row mb-3">
-										<div class="col-md-6">
-											<label class="form-label required">입사일자</label>
-											<input type="date" name="hireDate" id="hireDate" class="form-control">
-										</div>
-										<div class="col-md-6">
-											<label class="form-label">퇴사일자</label>
-											<input type="date" name="resignDate" id="resignDate" class="form-control">
+											<label class="form-label required">휴가일수</label> <input
+												type="number" name="holyDays" id="holyDays"
+												class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">부양가족수</label>
-											<input type="number" name="depCnt" id="depCnt" class="form-control">
+											<label class="form-label required">입사일자</label> <input
+												type="date" name="hireDate" id="hireDate"
+												class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label">퇴사사유</label>
-											<input type="text" name="resignReason" id="resignReason" class="form-control">
+											<label class="form-label">퇴사일자</label> <input type="date"
+												name="resignDate" id="resignDate" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">부양가족수</label> <input
+												type="number" name="depCnt" id="depCnt" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label">퇴사사유</label> <input type="text"
+												name="resignReason" id="resignReason" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">은행</label>
-											<input type="hidden" id="bankCode" name="bankCode">
-											<input type="text" id="bankCodeName" class="form-control"
-											onclick="openModal(
+											<label class="form-label required">은행</label> <input
+												type="hidden" id="bankCode" name="bankCode"> <input
+												type="text" id="bankCodeName" class="form-control"
+												onclick="openModal(
 										      'commonCode',
 										      function(selected) {
 										        document.getElementById('bankCodeName').value = selected.codeName;
@@ -121,24 +128,25 @@
 										      }, 'BANK')">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">예금주</label>
-											<input type="text" name="accHolder" id="accHolder" class="form-control">
+											<label class="form-label required">예금주</label> <input
+												type="text" name="accHolder" id="accHolder"
+												class="form-control">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">계좌번호</label>
-											<input type="text" name="accNo" id="accNo" class="form-control">
+											<label class="form-label required">계좌번호</label> <input
+												type="text" name="accNo" id="accNo" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-3">
-											<label class="form-label required">우편번호</label>
-											<input type="number" name="postalCode" id="postalCode" class="form-control" readonly
-											onclick="execDaumPostcode()">
+											<label class="form-label required">우편번호</label> <input
+												type="number" name="postalCode" id="postalCode"
+												class="form-control" readonly onclick="execDaumPostcode()">
 										</div>
 										<div class="col-md-9">
-											<label class="form-label required">주소</label>
-											<input type="text" name="address" id="address" class="form-control">
+											<label class="form-label required">주소</label> <input
+												type="text" name="address" id="address" class="form-control">
 										</div>
 									</div>
 								</form>
@@ -146,55 +154,63 @@
 
 							<!-- 근로계약서 탭 -->
 							<div class="tab-pane fade" id="contractInfo">
-							  <form id="contractForm" method="post" enctype="multipart/form-data">
+								<form id="contractForm" method="post"
+									enctype="multipart/form-data">
 
-							    <!-- PDF 보기 + 불러오기 -->
-							    <div class="d-flex justify-content-between align-items-center mb-2">
-							      <small class="text-muted">
-							        * 뷰어에서 작성 후 “다운로드/저장” → 아래 버튼으로 파일을 불러오세요.
-							      </small>
-							      <div>
-							        <button type="button" id="btn-pdf-pick" class="btn btn-outline-secondary btn-sm">
-							          PDF 불러오기
-							        </button>
-							      </div>
-							    </div>
+									<!-- PDF 보기 + 불러오기 -->
+									<div
+										class="d-flex justify-content-between align-items-center mb-2">
+										<small class="text-muted"> * 뷰어에서 작성 후 “다운로드/저장” → 아래
+											버튼으로 파일을 불러오세요. </small>
+										<div>
+											<button type="button" id="btn-pdf-pick"
+												class="btn btn-outline-secondary btn-sm">PDF 불러오기</button>
+										</div>
+									</div>
 
-							    <div class="mb-3" style="height: 32.55rem;">
-							      <iframe src="/hr/pdf/contract.pdf"
-							              style="width:100%; height:100%; border:1px solid #ddd;"
-							              frameborder="0"></iframe>
-							    </div>
+									<div class="mb-3" style="height: 32.55rem;">
+										<iframe src="/hr/pdf/contract.pdf"
+											style="width: 100%; height: 100%; border: 1px solid #ddd;"
+											frameborder="0"></iframe>
+									</div>
 
-							    <!-- 사용자가 저장한 PDF 업로드 -->
-							    <input type="file" id="pdfFile" name="pdfFile" accept="application/pdf" style="display:none;" />
-							    <div id="pdfFileName" class="small text-success" style="min-height:1.25rem;"></div>
+									<!-- 사용자가 저장한 PDF 업로드 -->
+									<input type="file" id="pdfFile" name="pdfFile"
+										accept="application/pdf" style="display: none;" />
+									<div id="pdfFileName" class="small text-success"
+										style="min-height: 1.25rem;"></div>
 
-							    <!-- 사원 서명 -->
-							    <div class="row mb-3" style="margin-top: 1rem; width: 100%;">
-							      <label class="form-label">사원 서명</label>
-							      <canvas id="signature-pad" style="width:100%; height:10rem; margin-left: 0.8rem; border:1px solid #000;"></canvas>
-							      <input type="hidden" name="cSign" id="cSign">
-							      <div class="mt-2 d-flex justify-content-between align-items-center">
-							        <div>
-							          <button type="button" id="clear-sign" class="btn btn-secondary btn-sm">지우기</button>
-							        </div>
-							        <div class="form-check">
-							          <input class="form-check-input me-2" type="checkbox" id="agreeContract" name="agreeContract">
-							          <label class="form-check-label" for="agreeContract">계약 내용에 동의합니다.</label>
-							        </div>
-							      </div>
-							    </div>
-							  </form>
+									<!-- 사원 서명 -->
+									<div class="row mb-3" style="margin-top: 1rem; width: 100%;">
+										<label class="form-label">사원 서명</label>
+										<canvas id="signature-pad"
+											style="width: 100%; height: 10rem; margin-left: 0.8rem; border: 1px solid #000;"></canvas>
+										<input type="hidden" name="cSign" id="cSign">
+										<div
+											class="mt-2 d-flex justify-content-between align-items-center">
+											<div>
+												<button type="button" id="clear-sign"
+													class="btn btn-secondary btn-sm">지우기</button>
+											</div>
+											<div class="form-check">
+												<input class="form-check-input me-2" type="checkbox"
+													id="agreeContract" name="agreeContract"> <label
+													class="form-check-label" for="agreeContract">계약 내용에
+													동의합니다.</label>
+											</div>
+										</div>
+									</div>
+								</form>
 							</div>
 						</div>
-					</form>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>
-				</div>
-	<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
-	<script type="text/javascript">
+		<script
+			src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
+		<script type="text/javascript">
 	const canvas = document.getElementById("signature-pad");
 	const signaturePad = new SignaturePad(canvas);
 
@@ -242,30 +258,37 @@
 
 	// 저장
 	  document.getElementById("btn-save-emp").addEventListener("click", function () {
+		const modalEl = document.getElementById("empModal");
+	 	const mode = modalEl?.dataset.mode;
+		console.log("현재 모드:", mode); // ← 확인용
+
 	    const empForm = document.getElementById("empForm");
 	    const contractForm = document.getElementById("contractForm");
 	    const pdfInput = document.getElementById("pdfFile");
 
-	    // 1) 체크: PDF 선택 여부 (iframe에서 저장 후 반드시 불러오게)
-	    if (!pdfInput.files || pdfInput.files.length === 0) {
-	      alert("계약서 PDF를 먼저 뷰어에서 저장한 뒤, [PDF 불러오기]로 선택해 주세요.");
-	      return;
-	    }
-
-	    // 2) 체크: 동의 여부
-	    if (!document.getElementById("agreeContract").checked) {
-	      alert("계약 내용 동의에 체크해 주세요.");
-	      return;
+	 // 신규 등록일 때만 PDF/서명 필수
+	    if (mode === "create") {
+	      if (!pdfInput.files || pdfInput.files.length === 0) {
+	        alert("계약서 PDF를 먼저 뷰어에서 저장한 뒤, [PDF 불러오기]로 선택해 주세요.");
+	        return;
+	      }
+	      if (!document.getElementById("agreeContract").checked) {
+	        alert("계약 내용 동의에 체크해 주세요.");
+	        return;
+	      }
 	    }
 
 	    // 3) 사인 이미지 Base64 → Blob
 	    const formData = new FormData(empForm);
 	    new FormData(contractForm).forEach((value, key) => formData.append(key, value));
-	    formData.append("pdfFile", pdfInput.files[0]); // 최종 PDF
+
+	 	// PDF/서명 선택했을 때만 append
+	    if (pdfInput.files && pdfInput.files.length > 0) {
+	      formData.append("pdfFile", pdfInput.files[0]);
+	    }
 
 	    const dataURL = signaturePad.toDataURL("image/png");
 	    document.getElementById("cSign").value = dataURL;
-
 	    if (dataURL) {
 	      const byteString = atob(dataURL.split(',')[1]);
 	      const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
@@ -276,18 +299,24 @@
 	      formData.append("signImg", blob, "signature.png");
 	    }
 
+	    // 엔드포인트 분기 url로 나눠서 저장버튼 분리?
+	    const url = (mode === "edit") ? "/updateEmployee" : "/saveContract";
+
 	    // 4) 전송
-	    fetch("/saveContract", {
+	    fetch(url, {
 	      method: "POST",
 	      headers: {'X-CSRF-Token': token},
 	      body: formData
 	    })
 	      .then(res => res.text())
 	      .then(data => {
+	    	  console.log("서버 응답:", data);
+	    	  data = data.trim();
 	        if (data === "success") {
-	          alert("사원이 등록되었습니다.");
+	          alert(mode === "edit" ? "사원 정보가 수정되었습니다." : "사원이 등록되었습니다.");
 	          const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
 	          modal && modal.hide();
+	          window.tabled.replaceData("/selectAllEmp");
 	        } else {
 	          alert("사원 등록에 실패하였습니다. " + data);
 	        }
@@ -298,6 +327,6 @@
 	      });
 	  });
 	</script>
-		</div>
+	</div>
 </body>
 </html>
