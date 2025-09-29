@@ -1,60 +1,10 @@
 document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["거래처코드", "거래처명", "거래처유형", "전화번호", "이메일", "비고"];
-	
-		const tabButtons = document.querySelectorAll('#partnerTab button');
-	const tabContents = {
-		partner: document.getElementById('tab-partner'),
-		loan: document.getElementById('tab-loan'),
-		payment: document.getElementById('tab-payment')
-	};
+	const defaultVisible = ["견적서코드"];
 
-	tabButtons.forEach(btn => {
-		btn.addEventListener('click', function () {
-			// 1. 모든 콘텐츠 숨기기
-			Object.values(tabContents).forEach(div => div.classList.add('d-none'));
 
-			// 2. 모든 버튼 비활성화
-			tabButtons.forEach(b => b.classList.remove('btn-primary'));
-			tabButtons.forEach(b => b.classList.add('btn-outline-primary'));
 
-			// 3. 선택된 콘텐츠 보여주기
-			const type = this.dataset.type;
-			if (tabContents[type]) {
-				tabContents[type].classList.remove('d-none');
-			}
 
-			// 4. 버튼 활성화 상태 표시
-			this.classList.remove('btn-outline-primary');
-			this.classList.add('btn-primary');
-		});
-	});
-	
-	window.execDaumPostcode = function() {
-		const elementLayer = document.getElementById('postcodeLayer');
-
-		new daum.Postcode({
-			oncomplete: function(data) {
-				document.getElementById("zipcode").value = data.zonecode;
-				document.getElementById("address").value = data.roadAddress || data.jibunAddress;
-				elementLayer.style.display = 'none';
-			},
-			width: '100%',
-			height: '100%'
-		}).embed(elementLayer);
-
-		elementLayer.style.display = 'block';
-
-		// 💡 주소창 내부 iframe 강제 스타일 조정
-		setTimeout(() => {
-			const iframe = elementLayer.querySelector('iframe');
-			if (iframe) {
-				iframe.style.position = 'absolute';
-				iframe.style.bottom = '0';
-				iframe.style.right = '0';
-			}
-		}, 100); // iframe 렌더링까지 약간 대기 필요
-	}
 
 	// 품목상세모달
 	window.showDetailModal = function(modalType) {

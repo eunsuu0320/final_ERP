@@ -17,6 +17,8 @@ public interface PartnerRepository extends
 	
 	@Query("SELECT MAX(p.partnerCode) FROM Partner p")
 	String findMaxPartnerCode();
+
+	Partner findByPartnerCode(String partnerCode);
 	
 //	@Query("SELECT p FROM Partner p " +
 //		       "WHERE (:partnerName IS NULL OR p.partnerName = :partnerName) ")

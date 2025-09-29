@@ -11,6 +11,13 @@
 	rel="stylesheet">
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-quartz.css" />
+
 </head>
 <body layout:fragment="content">
 
@@ -97,94 +104,222 @@
 								</div>
 							</div>
 							<!-- 모달 바디 -->
+							<div>
+								<div class="btn-group btn-type ms-2" role="group"
+									aria-label="type-filter" id="partnerTab">
+									<button type="button" class="btn btn-primary"
+										data-type="PARTNER">거래처</button>
+									<button type="button" class="btn btn-outline-primary"
+										data-type="LOANPRICE">여신/단가</button>
+									<button type="button" class="btn btn-outline-primary"
+										data-type="PAYMENT">결제정보</button>
+								</div>
+							</div>
+							<!-- 모달 바디 -->
 							<div class="modal-body">
-								<form id="itemForm">
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목코드*</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productCode"
-												disabled placeholder="자동생성">
+								<!-- 탭 1: 거래처 -->
+								<div id="tab-partner" class="tab-content">
+									<!-- 기존 partnerForm 내용 전체 여기에 들어감 -->
+									<form id="partnerForm">
+										<!-- 거래처명 + 대표자명 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">거래처명*</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="partnerName"
+													required>
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목명*</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productName"
-												required>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">규격*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productSize"
-												required>
-												<option value="" disabled selected>규격을 선택하세요</option>
-												<option value="S">S</option>
-												<option value="M">M</option>
-												<option value="L">L</option>
-											</select>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">단위*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="unit" required>
-												<option value="" disabled selected>단위를 선택하세요</option>
-												<option value="kg">kg</option>
-												<option value="cm">cm</option>
-											</select>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">대표자명</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+											</div>
 										</div>
 
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목그룹*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productGroup"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="잡화">잡화</option>
-												<option value="공구">공구</option>
-											</select>
+										<!-- 거래처유형 라디오 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">거래처유형*</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<div class="form-check me-3">
+													<input class="form-check-input" type="radio"
+														name="partnerType" value="공급처" id="supplier" required>
+													<label class="form-check-label" for="supplier">공급처</label>
+												</div>
+												<div class="form-check">
+													<input class="form-check-input" type="radio"
+														name="partnerType" value="판매처" id="buyer" required>
+													<label class="form-check-label" for="buyer">판매처</label>
+												</div>
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">입고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="inPrice">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">출고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="outPrice">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">창고</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="warehouseCode"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="본사창고">본사창고</option>
-												<option value="예담창고">예담창고</option>
-											</select>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">비고</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="remarks">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목 이미지</label>
-										<div class="col-sm-9">
-											<input type="file" class="form-control" name="productImage"
-												accept="image/*">
 
+										<!-- 담당자 + 사업자등록번호 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">담당자</label>
+											<div class="col-sm-9 d-flex">
+												<input type="text" class="form-control me-2" name="manager">
+												<button class="btn btn-outline-secondary" type="button">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
 										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">사업자등록번호</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control"
+													name="businessNumber">
+											</div>
+										</div>
+
+										<!-- 연락처 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">연락처*</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="contact"
+													required>
+											</div>
+										</div>
+
+										<!-- 업태 / 업종 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">업태</label>
+											<div class="col-sm-9">
+												<select class="form-select comboSelect" name="businessType">
+													<option value="" disabled selected>업태 선택</option>
+													<option value="제조업">제조업</option>
+													<option value="도매업">도매업</option>
+												</select>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">업종</label>
+											<div class="col-sm-9">
+												<select class="form-select comboSelect" name="industry">
+													<option value="" disabled selected>업종 선택</option>
+													<option value="인형">인형</option>
+													<option value="부품">부품</option>
+												</select>
+											</div>
+										</div>
+
+										<!-- 우편번호 + 주소 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">우편번호</label>
+											<div class="col-sm-9 d-flex">
+												<input type="text" class="form-control me-2" name="zipcode"
+													id="zipcode" readonly>
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="execDaumPostcode()">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">주소</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="address"
+													id="address" readonly placeholder="우편번호 검색 시 자동 입력">
+											</div>
+										</div>
+
+										<div id="postcodeLayer">
+											<div class="close-btn text-end">
+												<button type="button" class="btn-close"
+													onclick="document.getElementById('postcodeLayer').style.display='none'">
+												</button>
+											</div>
+										</div>
+
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">E-mail</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<input type="text"
+													class="form-control email-	input me-1 w-50" name="emailId">
+												<span class="me-1">@</span> <select
+													class="form-select email-select w-50" name="emailDomain">
+													<option value="" disabled selected>도메인 선택</option>
+												</select>
+											</div>
+										</div>
+
+										<!-- 비고 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">비고</label>
+											<div class="col-sm-9">
+												<textarea class="form-control" name="remarks" rows="3"></textarea>
+											</div>
+										</div>
+									</form>
+								</div>
+
+								<!-- 탭 2: 여신/단가 -->
+								<div id="tab-loanprice" class="tab-content d-none">
+									<form id="loanForm">
+										<!-- 수금/지급예정일 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">수금/지급예정일</label>
+											<div class="col-sm-9">
+												매월 <input type="text" class="form-control"
+													name="partnerName" required>일
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">구매단가그룹</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+												<input type="text" class="form-control" name="ceoName">%
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">영업단가그룹</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+												<input type="text" class="form-control" name="ceoName">%
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">여신기간</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">개월
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">여신한도</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="ceoName">
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label">비고</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="remarks">
+											</div>
+										</div>
+
+									</form>
+								</div>
+
+
+								<!-- 결제정보 -->
+								<div id="tab-payment" class="tab-content d-none">
+									<div class="d-flex justify-content-end mb-2">
+										<button class="btn btn-danger me-2"
+											onclick="deleteSelectedPaymentRows()">선택 삭제</button>
+										<button type="button" class="btn btn-primary me-2"
+											onclick="savePayment()">저장</button>
+										<button type="button" class="btn btn-secondary"
+											onclick="resetPaymentGrid()">입력 초기화</button>
 									</div>
-								</form>
+
+									<div id="paymentTabulator" style="height: 300px; width: 100%;"
+										class="ag-theme-quartz"></div>
+								</div>
+
+
+
 							</div>
 
 
@@ -202,7 +337,22 @@
 		var rows = /*[[${rows}]]*/[];
 	</script>
 	<script
+		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script>
+		function execDaumPostcode() {
+			new daum.Postcode({
+				oncomplete : function(data) {
+					document.getElementById("zipcode").value = data.zonecode;
+					document.getElementById("address").value = data.roadAddress
+							|| data.jibunAddress;
+				}
+			}).open();
+		}
+	</script>
+	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
 	<!-- 분리한 JS 파일 -->
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

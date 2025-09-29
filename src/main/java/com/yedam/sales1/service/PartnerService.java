@@ -11,4 +11,6 @@ public interface PartnerService {
 	Map<String, Object> getTableDataFromPartners(List<Partner> partners);
 	
 	Partner savePartner(Partner partner);
+
+	Partner getPartnerByPartnerCode(String keyword);
 }
