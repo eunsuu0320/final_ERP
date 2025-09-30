@@ -1,14 +1,12 @@
 package com.yedam.sales2.service;
 
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 
 import com.yedam.sales2.domain.EspPlan;
 
 @Service
-public interface empService {
+public interface EmpService {
 	
-//	List<EspPlan> findAll(); // 조회
-
+	// 사원별 영업계획 등록
+	EspPlan insertSalePlan(EspPlan espPlan);
 }

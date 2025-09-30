@@ -14,36 +14,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales2.domain.DSalesPlan;
-import com.yedam.sales2.domain.Sales;
+import com.yedam.sales2.domain.EmpPlan;
 import com.yedam.sales2.domain.SalesPlan;
-import com.yedam.sales2.service.salesService;
+import com.yedam.sales2.service.SalesService;
 
+/*
+ * 영업계획 관리
+ */
 @Controller
-public class SalesController {
+public class SalesPlanController {
 	
 	@Autowired
-	 private salesService salesService;
+	 private SalesService salesService;
 		
-	// Repository는 Service에서 사용하므로 Controller에서는 주입을 제거했습니다.
-	
-    // Contoller의 생성자 주입은 이미 Spring이 @Autowired로 처리하므로 제거했습니다.
-    // @Autowired
-    // public SalesController(salesService salesService) {
-    //     this.salesService = salesService;
-    // }
-    
 	// 영업계획목록 html
 	@GetMapping("salesList")
     public String salesList() {
         return "sales2/salesList";
     }
 	
-	// JSON 데이터를 반환하는 API
-    @GetMapping("salesJson")
-    @ResponseBody 
-    public List<Sales> salesJson() {
-        return salesService.findAll();
-    }
     
     @GetMapping("/api/sales/stats")
     @ResponseBody
@@ -131,4 +120,11 @@ public class SalesController {
             return "error: " + e.getMessage();
         }
     }
+    
+ // 사원별 전년 영업매출
+ 	@GetMapping("/api/sales/empPlanList")
+ 	@ResponseBody
+ 	public List<Map<String, Object>> getEmpList() {
+ 		return salesService.getEmpPlanList();
+ 	}
 }

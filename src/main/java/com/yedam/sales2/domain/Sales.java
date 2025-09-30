@@ -2,9 +2,8 @@ package com.yedam.sales2.domain;
 
 import java.util.Date;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,10 +18,12 @@ import lombok.NoArgsConstructor;
 public class Sales {
 
 	@Id
+	@Column(name = "SALES_CODE")
 	private String saleCode;
 	
 	private String correspondent; // 거래처
 	private String productCode; // 품목코드
+	private String empCode; // 사원코드
 	private String productName; // 품목명
 	private Long salesQty; // 판매수량
 	private Long salesPrice; // 판매단가
