@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpSession;
 import com.yedam.ac.util.CompanyContext;
 
 @Controller
-@RequestMapping("/ac")
+//@RequestMapping("/ac")
 public class StatementPageController {
 
     /** 일반전표 등록 페이지 */

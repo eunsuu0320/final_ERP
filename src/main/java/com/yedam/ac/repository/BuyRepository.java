@@ -1,14 +1,18 @@
 package com.yedam.ac.repository;
 
-import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.yedam.ac.domain.Buy;
 
 public interface BuyRepository extends JpaRepository<Buy, String> {
 
-    List<Buy> findTop50ByCompanyCodeAndBuyCodeContainingOrderByBuyCodeDesc(String companyCode, String keyword);
+    Optional<Buy> findByBuyCode(String buyCode);
 
-    List<Buy> findTop50ByCompanyCodeAndPartnerNameContainingOrderByBuyCodeDesc(String companyCode, String partnerName);
+    @Query("select count(b) from Buy b where b.buyCode = :code and b.companyCode = :cc")
+    long countByCodeAndCompany(@Param("code") String buyCode,
+                               @Param("cc") String companyCode);
 }
