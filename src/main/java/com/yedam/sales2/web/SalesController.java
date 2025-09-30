@@ -24,14 +24,6 @@ public class SalesController {
 	@Autowired
 	 private salesService salesService;
 		
-	// Repository는 Service에서 사용하므로 Controller에서는 주입을 제거했습니다.
-	
-    // Contoller의 생성자 주입은 이미 Spring이 @Autowired로 처리하므로 제거했습니다.
-    // @Autowired
-    // public SalesController(salesService salesService) {
-    //     this.salesService = salesService;
-    // }
-    
 	// 영업계획목록 html
 	@GetMapping("salesList")
     public String salesList() {

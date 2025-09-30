@@ -9,6 +9,6 @@ import com.yedam.sales2.domain.EspPlan;
 @Service
 public interface empService {
 	
-//	List<EspPlan> findAll(); // 조회
+	List<EspPlan> findAll(); // 조회
 
 }
