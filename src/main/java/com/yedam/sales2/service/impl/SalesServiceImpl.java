@@ -12,15 +12,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.sales2.domain.DSalesPlan;
+import com.yedam.sales2.domain.EmpPlan;
 import com.yedam.sales2.domain.Sales;
 import com.yedam.sales2.domain.SalesPlan;
 import com.yedam.sales2.repository.DSalesPlanRepository;
 import com.yedam.sales2.repository.SalesPlanRepository;
 import com.yedam.sales2.repository.SalesRepository;
-import com.yedam.sales2.service.salesService;
+import com.yedam.sales2.service.SalesService;
 
 @Service
-public class salesServiceImpl implements salesService {
+public class SalesServiceImpl implements SalesService {
 
 	@Autowired
 	SalesRepository salesRepository;
@@ -166,4 +167,13 @@ public class salesServiceImpl implements salesService {
         dsalesPlanRepository.saveAll(detailList);
         return "success";
     }
+    
+    // 사원별 영업매출 목록
+    @Override
+	public List<Map<String, Object>> getEmpPlanList() {
+    	
+    	List<Map<String, Object>> result = salesRepository.findEmpPlanLastYear();
+
+		return salesRepository.findEmpPlanLastYear();
+	}
 }

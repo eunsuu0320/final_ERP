@@ -1,51 +1,37 @@
 
 document.addEventListener("DOMContentLoaded", function() {
 // ================================
-// 더미 데이터
-// ================================
-const employeeData = [
-  { id: 1, name: "김영수", 거래처수: 25, 작년매출: 20000000, 작년매입: 7000000, 작년영업이익: 13000000 },
-  { id: 2, name: "홍길동", 거래처수: 23, 작년매출: 15000000, 작년매입: 8000000, 작년영업이익: 7500000 },
-  { id: 3, name: "이철수", 거래처수: 20, 작년매출: 18000000, 작년매입: 6000000, 작년영업이익: 12000000 }
-];
-
-// 분기별 초기 데이터
-let planData = [
-  { 분기: "1분기", 매출액: "", 영업이익: "", 신규거래처수: "", 재거래율: "" },
-  { 분기: "2분기", 매출액: "", 영업이익: "", 신규거래처수: "", 재거래율: "" },
-  { 분기: "3분기", 매출액: "", 영업이익: "", 신규거래처수: "", 재거래율: "" },
-  { 분기: "4분기", 매출액: "", 영업이익: "", 신규거래처수: "", 재거래율: "" },
-];
-
-// ================================
 // 왼쪽 사원 목록 테이블
 // ================================
-const employeeTable = new Tabulator("#employee-table", {
-  data: employeeData,
-  layout: "fitColumns",
-  columns: [
-    { title: "사원명", field: "name" },
-    { title: "거래처수", field: "거래처수" },
-    { title: "작년매출", field: "작년매출", formatter: "money" },
-    { title: "작년매입", field: "작년매입", formatter: "money" },
-    { title: "작년영업이익", field: "작년영업이익", formatter: "money" },
-  ],
-  rowClick: function (e, row) {
-    const employee = row.getData();
-    document.getElementById("plan-title").innerText = `${employee.name} 영업계획`;
-    planTable.setData(planData); // 초기화
-  },
+ const tableDiv = document.getElementById("empPlanList-table");
+if(tableDiv){
+        let table = new Tabulator("#empPlanList-table", {
+            height: "600px",
+            layout: "fitColumns",
+            placeholder: "데이터가 없습니다.",
+            ajaxURL: "/api/sales/empPlanList",
+            ajaxResponse: function(url, params, response) {
+                return response; // planData 제거
+            },
+            columns: [
+                {title: "사원명", field: "EMPNAME", width: 150},
+                {title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right"},
+                {title: "작년 총 매출액", field: "LASTYEARSALES", hozAlign: "right", formatter:"money", formatterParams:{thousand:",",precision:0}},
+                {title: "작년 총 매입단가", field: "LASTYEARCOST", hozAlign: "right", formatter:"money", formatterParams:{thousand:",",precision:0}},
+                {title: "작년 총 영업이익", field: "LASTYEARPROFIT", hozAlign: "right", formatter:"money", formatterParams:{thousand:",",precision:0}}
+            ]
+        });
+    }
 });
-
+    
 // ================================
 // 오른쪽 영업계획 입력 테이블
 // ================================
 const planTable = new Tabulator("#plan-table", {
-  data: planData,
   layout: "fitColumns",
   reactiveData: true,
   columns: [
-    { title: "분기", field: "분기", hozAlign: "center" },
+    { title: "분기", field: "분기", hozAlign: "center", editor: false }, // 수정 불가
     { title: "올해 총 매출액", field: "매출액", editor: "input", formatter: "money" },
     { title: "올해 총 영업이익", field: "영업이익", editor: "input", formatter: "money" },
     { title: "신규 거래처수", field: "신규거래처수", editor: "number" },
@@ -56,18 +42,39 @@ const planTable = new Tabulator("#plan-table", {
       editorParams: { values: ["50%", "80%", "100%", "직접입력"] },
     },
   ],
+  data: [
+    { 분기: "1분기" },
+    { 분기: "2분기" },
+    { 분기: "3분기" },
+    { 분기: "4분기" },
+  ],
 });
-
-
-
 
 // ================================
 // 저장 버튼 이벤트
 // ================================
-document.getElementById("save-btn").addEventListener("click", () => {
-  const data = planTable.getData();
-  console.log("저장된 데이터:", data);
-  alert("데이터가 저장되었습니다! (콘솔 확인)");
+document.getElementById("btn-update-sales").addEventListener("click", () => {
+  const data = planTable.getData(); // 테이블의 모든 행 데이터 가져오기
+  console.log("저장할 데이터:", data);
+
+  fetch("/api/sales/insertEmpPlan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      [document.querySelector("meta[name='_csrf_header']").content]:
+        document.querySelector("meta[name='_csrf']").content
+    },
+    body: JSON.stringify(data[0]) // 지금은 첫 번째 행만 저장 예시
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      console.log("등록 성공:", result);
+      alert("데이터가 저장되었습니다!");
+    })
+    .catch((err) => {
+      console.error("등록 실패:", err);
+      alert("등록 중 오류 발생");
+    });
 });
 
 // 돋보기
@@ -79,17 +86,7 @@ document.getElementById("search-icon").addEventListener("click", function() {
 // ================================
 // 수정모달
 // ================================
-var empListTable = new Tabulator("#editYearTable", {
-    layout: "fitColumns",
-    height: "350px",
-    columns: [
-        { title: "분기", field: "qtr", hozAlign: "center" },
-        { title: "올해 총 매출액", field: "", hozAlign: "right", editor: "number", formatter: moneyFormatter },
-        { title: "올해 총 영업이익", field: "", hozAlign: "right", editor: "number", formatter: moneyFormatter },
-        { title: "신규 거래처수", field: "", hozAlign: "center", editor: "number" },
-        { title: "재거래율", field: "", hozAlign: "center", editor: "number" }
-    ]
-});
+
 
 // ================================
 // 📌 행 클릭 시 수정 모달 열기
@@ -120,5 +117,3 @@ function moneyFormatter(cell) {
 	return value ? value.toLocaleString() : "0";
 }
 
-
-})
