@@ -10,5 +10,6 @@ public class PayRequest {
     private int amount;
     private String payMethod; // "KAKAO" or "NAVER" 구분
     private String buyerName;
+    private String subPeriod;
 }
 

@@ -958,7 +958,8 @@
 	    itemName: "ERP 구독",
 	    amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, "")),
 	    payMethod: selectedMethod.toUpperCase(),  // "KAKAO" or "NAVER"
-	    buyerName: buyerName 
+	    buyerName: buyerName,
+	    subPeriod: document.getElementById("subPeriod").value
 	  };
 	  
 	  const companyInfo = {

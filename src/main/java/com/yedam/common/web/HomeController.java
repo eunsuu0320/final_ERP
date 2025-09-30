@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.common.service.UserService;
 
+/*
+ * 메인, 로그인 관리를 위한 컨트롤러 클래스
+ * 박효준
+ */
 @Controller
 public class HomeController {
 	
@@ -46,6 +50,11 @@ public class HomeController {
 	@GetMapping("/subscription")
 	public String subscription(Model model) {
 		return "common/subscription";
+	}
+	
+	@GetMapping("/subscriptionManager")
+	public String subscriptionManager(Model model) {
+		return "common/subscriptionManager";
 	}
 	
 	@PostMapping("/common/findPassword")
