@@ -27,6 +27,12 @@ public class SalaryController {
 		return "hr/salaryMaster";
 	}
 
+	// 급여대장 신규 모달 페이지
+	@GetMapping("/salaryModal")
+	public String getSalaryModal(Model model) {
+		return "hr/salaryModal";
+	}
+
 	// 급여마스터 회사코드별 조회 목록
 	@GetMapping("/salaryMaster")
 	@ResponseBody

@@ -8,11 +8,80 @@
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
-		<div class="container-fluid px-4">
-			<main>
-			근태항목 관리 아라라라라라라라라라라라라라라로로로로ㅗ로로로로로로로로로로로로로로로로로로로로로로로롤
-			</main>
-		</div>
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">근태 관리</h1>
+
+				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+
+				<!-- 탭 -->
+				<ul class="nav nav-tabs" id="payTab" role="tablist">
+					<li class="nav-item">
+						<button class="nav-link active" id="att-tab" data-bs-toggle="tab" data-bs-target="#att" type="button">근태 항목 관리</button>
+					</li>
+					<li class="nav-item">
+						<button class="nav-link" id="empAtt-insert-tab" data-bs-toggle="tab" data-bs-target="#empAttInsert" type="button">사원 근태 등록</button>
+					</li>
+					<li class="nav-item">
+						<button class="nav-link" id="empAtt-select-tab" data-bs-toggle="tab" data-bs-target="#empAttSelect" type="button">사원 근태 조회</button>
+					</li>
+				</ul>
+
+				<!-- 탭 콘텐츠 -->
+				<div class="tab-content mt-3">
+
+					<!-- 근태 항목 관리 -->
+					<div class="tab-pane fade show active" id="att">
+						<div class="d-flex justify-content-between mb-3">
+							<h5>근태 항목 관리</h5>
+							<div>
+								<button id="att-save" class="btn btn-primary me-2">저장</button>
+								<button id="att-stop" class="btn btn-danger me-2">사용중단</button>
+								<button id="att-reStart" class="btn btn-warning me-2">재사용</button>
+							</div>
+						</div>
+						<div id="att-area">
+							<!-- 근태 항목 테이블 -->
+							<div id="att-table"></div>
+						</div>
+					</div>
+
+					<!-- 직원 근태 등록 -->
+					<div class="tab-pane fade" id="empAttInsert">
+						<div class="d-flex justify-content-between mb-3">
+							<h5>사원 근태 등록</h5>
+							<div>
+								<button id="empAtt-insert-save" class="btn btn-primary me-2">등록</button>
+								<button id="empAtt-insert-reset" class="btn btn-outline-dark me-2">초기화</button>
+							</div>
+						</div>
+						<div id="empAttInsert-area">
+							<!-- 직원 근태 등록 테이블 -->
+							<div id="empAttInsert-table"></div>
+						</div>
+					</div>
+
+					<!-- 직원 근태 조회 -->
+					<div class="tab-pane fade" id="empAttSelect">
+						<div class="d-flex justify-content-between mb-3">
+							<h5>사원 근태 조회</h5>
+							<div>
+								<button id="empAtt-search" class="btn btn-secondary me-2">인쇄</button>
+								<button id="empAtt-export" class="btn btn-dark me-2">Excel</button>
+							</div>
+						</div>
+						<div id="empAttSelect-area">
+							<!-- 직원 근태 조회 테이블 -->
+							<div id="empAttSelect-table"></div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</main>
 	</div>
+
+	<script src="/hr/js/attendance.js"></script>
+
 </body>
 </html>
