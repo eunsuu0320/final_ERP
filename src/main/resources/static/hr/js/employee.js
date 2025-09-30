@@ -45,8 +45,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 		});
 
 		// 사번은 공통적으로 수정 불가
-		const empNoInput = document.getElementById("empNo");
-		if (empNoInput) empNoInput.readOnly = true;
+		const empCodeInput = document.getElementById("empCode");
+		if (empCodeInput) empCodeInput.readOnly = true;
 
 		// 계약 섹션 / 버튼들
 		const contractSection = document.getElementById("contract-section");
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				resetBtn.title = "";
 			}
 			// 필요하면 사번 입력 가능하게 (기본은 readOnly 유지)
-			if (empNoInput) empNoInput.readOnly = false;
+			if (empCodeInput) empCodeInput.readOnly = false;
 		}
 
 		if (mode === "edit") {
@@ -101,8 +101,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 				resetBtn.disabled = false;
 				resetBtn.title = "";
 			}
-			// edit 모드에서는 empNo는 수정 불가
-			if (empNoInput) empNoInput.readOnly = true;
+			// edit 모드에서는 empCode는 수정 불가
+			if (empCodeInput) empCodeInput.readOnly = true;
 		}
 	}
 
@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				headerHozAlign: "center",
 				cellClick: (e, cell) => cell.getRow().toggleSelect(),
 			},
-			{ title: "사원번호", field: "empNo" },
+			{ title: "사원번호", field: "empCode" },
 			{ title: "성명", field: "name" },
 			{ title: "부서명", field: "dept", formatter: "lookup", formatterParams: CODE.DEPT },
 			{ title: "직급", field: "grade", formatter: "lookup", formatterParams: CODE.DUTY },
@@ -141,10 +141,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 	// ▼ 더블클릭: 단건 조회 → 조회 모달(읽기 전용)
 	window.tabled?.on("rowDblClick", async (e, row) => {
 		const r = row.getData();
-		if (!r?.empNo) return;
+		if (!r?.empCode) return;
 
 		try {
-			const res = await fetch(`/api/employees/${encodeURIComponent(r.empNo)}`);
+			const res = await fetch(`/api/employees/${encodeURIComponent(r.empCode)}`);
 			if (!res.ok) throw new Error(await res.text());
 			const emp = await res.json();
 
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 			// 필드 채우기
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
-			setVal("empNo", emp.empNo);
+			setVal("empCode", emp.empCode);
 			setVal("name", emp.name);
 			setVal("phone", emp.phone);
 			setVal("birth", (emp.birth || "").toString().slice(0, 10));
@@ -191,9 +191,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 			return;
 		}
 
-		const empNo = selected[0].empNo;
+		const empCode = selected[0].empCode;
 		try {
-			const res = await fetch(`/api/employees/${encodeURIComponent(empNo)}`);
+			const res = await fetch(`/api/employees/${encodeURIComponent(empCode)}`);
 			if (!res.ok) throw new Error(await res.text());
 			const emp = await res.json();
 
@@ -204,7 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 			// 값 채우기 (조회랑 동일)
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
-			setVal("empNo", emp.empNo);
+			setVal("empCode", emp.empCode);
 			setVal("name", emp.name);
 			setVal("phone", emp.phone);
 			setVal("birth", (emp.birth || "").toString().slice(0, 10));
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	// ===== 검색 =====
-	const FIELD_MAP = { emp_no: "empNo", name: "name", dept: "dept" };
+	const FIELD_MAP = { emp_no: "empCode", name: "name", dept: "dept" };
 	function debounce(fn, delay = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
 
 	function applySearch() {
@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
 			const rows = selected.map(emp => `
       <tr>
-        <td>${emp.empNo ?? ""}</td>
+        <td>${emp.empCode ?? ""}</td>
         <td>${emp.name ?? ""}</td>
         <td>${toName("DEPT", emp.dept)}</td>
         <td>${toName("DUTY", emp.grade)}</td>
@@ -348,7 +348,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr { page-break-inside: avoid; }
-    col.empno{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
+    col.empcode{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
     col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
   </style>
 </head>
@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     <div class="meta"><div>총 <strong>${count}</strong>명</div><div>생성일시: ${now}</div></div>
     <table class="print">
       <colgroup>
-        <col class="empno"><col class="name"><col class="dept"><col class="grade">
+        <col class="empcode"><col class="name"><col class="dept"><col class="grade">
         <col class="position"><col class="phone"><col class="email"><col class="hire">
       </colgroup>
       <thead>

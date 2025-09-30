@@ -29,7 +29,7 @@ public class HrHistory {
 	private Long historyId;
 
 	private String companyCode;
-	private String empNo;
+	private String empCode;
 	private String eventType;
 	private String eventDetail;
 	private String manager;
@@ -40,7 +40,7 @@ public class HrHistory {
 	private Date createdAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "empNo", referencedColumnName = "empNo", insertable = false, updatable = false)
+	@JoinColumn(name = "ENP_CODE", insertable = false, updatable = false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	private Employee employee;
 
