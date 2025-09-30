@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -29,6 +30,8 @@ public class HrHistory {
 	private Long historyId;
 
 	private String companyCode;
+
+	@Column(name = "EMP_CODE")
 	private String empCode;
 	private String eventType;
 	private String eventDetail;
@@ -40,7 +43,7 @@ public class HrHistory {
 	private Date createdAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "ENP_CODE", insertable = false, updatable = false)
+	@JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	private Employee employee;
 

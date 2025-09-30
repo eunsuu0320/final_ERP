@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+<head>
+<meta charset="UTF-8">
+<title>급여대장</title>
+</head>
+<body layout:fragment="content">
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">급여대장</h1>
+
+				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+
+				<div class="d-flex align-items-center mb-3">
+					<select id="sel-field" class="form-select w-auto me-2">
+						<option value="empCode">귀속날짜</option>
+						<option value="name">성명</option>
+						<option value="dept">부서명</option>
+					</select> <input id="txt-search" type="text"
+						class="form-control w-auto me-2" placeholder="검색어 입력">
+					<button id="btn-search" class="btn btn-warning me-2">검색</button>
+					 <div class="ms-auto d-flex">
+					 	<button id="btn-new" class="btn btn-primary me-2">신규</button>
+						<button id="btn-dicide" class="btn btn-success me-2">근무기록 확정</button>
+					    <button class="btn btn-secondary me-2">급여 이체 현황</button>
+					    <button class="btn btn-secondary me-2">근무 확정 현황</button>
+					 </div>
+				</div>
+
+				<!-- 테이블 (Tabulator) -->
+				<div id="pay-table"></div>
+			</div>
+	</div>
+	</main>
+	</div>
+
+	<script src="/hr/js/salary.js"></script>
+</body>
+</html>

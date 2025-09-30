@@ -45,8 +45,8 @@ public class HrServiceImpl implements HrService {
 	HrHistoryRepository hrHistoryRepository;
 
 	@Override
-	public List<Employee> getAllEmployees() {
-		return employeeRepository.findAll();
+	public List<Employee> findByCompanyCode(String companyCode) {
+		return employeeRepository.findByCompanyCode(companyCode);
 	}
 
 	@Override
