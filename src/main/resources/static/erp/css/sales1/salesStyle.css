@@ -23,7 +23,7 @@
 
 #imgModal .modal-dialog {
 	top: 20%; /* 화면 상단에서 10% 아래 */
-	max-width: 50%; /* 가로 최대 폭 */
+	max-width: 70%; /* 가로 최대 폭 */
 }
 
 #partnerTab {
@@ -45,10 +45,26 @@
 }
 
 .modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1100; /* 모달보다 위 */
-  display: none;
-  pointer-events: auto;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1100; /* 모달보다 위 */
+	display: none;
+	pointer-events: auto;
+}
+
+.choices__list--dropdown {
+	z-index: 1060 !important;
+}
+
+
+#paymentTable {
+    min-width: 1000px;
+}
+
+.choices__list--dropdown {
+    z-index: 1060 !important; 
 }

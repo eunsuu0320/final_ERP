@@ -6,9 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication; 
+import org.springframework.security.core.context.SecurityContextHolder; 
 import org.springframework.stereotype.Service;
 
+import com.yedam.sales1.domain.Loan;
 import com.yedam.sales1.domain.Partner;
+import com.yedam.sales1.domain.Payment;
+import com.yedam.sales1.dto.PartnerRegistrationDTO;
+import com.yedam.sales1.repository.LoanRepository;
+import com.yedam.sales1.repository.PartnerPaymentRepository;
 import com.yedam.sales1.repository.PartnerRepository;
 import com.yedam.sales1.service.PartnerService;
 
@@ -18,10 +25,15 @@ import jakarta.transaction.Transactional;
 public class PartnerServiceImpl implements PartnerService {
 
 	private final PartnerRepository partnerRepository;
+	private final LoanRepository loanRepository;
+	private final PartnerPaymentRepository partnerPaymentRepository;
 
 	@Autowired
-	public PartnerServiceImpl(PartnerRepository partnerRepository) {
+	public PartnerServiceImpl(PartnerRepository partnerRepository, LoanRepository loanRepository,
+			PartnerPaymentRepository partnerPaymentRepository) {
 		this.partnerRepository = partnerRepository;
+		this.loanRepository = loanRepository;
+		this.partnerPaymentRepository = partnerPaymentRepository;
 	}
 
 	@Override
@@ -35,7 +47,6 @@ public class PartnerServiceImpl implements PartnerService {
 		List<String> columns = new ArrayList<>();
 
 		if (!partners.isEmpty()) {
-			// 컬럼 정의
 			columns.add("거래처코드");
 			columns.add("거래처명");
 			columns.add("거래처유형");
@@ -73,13 +84,145 @@ public class PartnerServiceImpl implements PartnerService {
 	@Override
 	@Transactional
 	public Partner savePartner(Partner partner) {
-		// 거래처코드는 DB에서 자동 생성 또는 서비스에서 생성
-		// 필요 시 partner.setPartnerCode(null);
+		if (partner.getPartnerCode() == null || partner.getPartnerCode().isEmpty()) {
+			String newCode = generateNewPartnerCode();
+			partner.setPartnerCode(newCode);
+		}
+		
 		return partnerRepository.save(partner);
 	}
 
 	@Override
-	public Partner getPartnerByPartnerCode(String PartnerCode) {
-		return partnerRepository.findByPartnerCode(PartnerCode);
+	public Partner getPartnerByPartnerCode(String partnerCode) {
+		return partnerRepository.findByPartnerCode(partnerCode);
+	}
+
+	@Override
+	@Transactional
+	public Partner saveFullPartnerData(PartnerRegistrationDTO partnerData) {
+
+		Partner partner = partnerData.getPartnerData();
+		Loan loan = partnerData.getLoanPriceData();
+		List<Payment> payments = partnerData.getPaymentData();
+
+		boolean isNewRegistration = (partner.getPartnerCode() == null || partner.getPartnerCode().isEmpty());
+		
+		if (isNewRegistration) {
+			String companyCode = getCompanyCodeFromAuthentication();
+			partner.setCompanyCode(companyCode);
+			
+			String newCode = generateNewPartnerCode();
+			partner.setPartnerCode(newCode);
+			
+			if (partner.getUsageStatus() == null) {
+			    partner.setUsageStatus("Y");
+			}
+		} 
+		
+		// 1. Partner 저장 (PK 확보)
+		Partner savedPartner = partnerRepository.save(partner);
+		String partnerCode = savedPartner.getPartnerCode();
+
+		// 2. Loan 정보 저장
+		if (loan != null) {
+			loan.setPartnerCode(partnerCode);
+			
+			// 💡 FIX: Partner의 담당자 정보를 Loan의 MANAGER에 할당
+			// (NULL 제약 조건 오류 해결)
+			if (savedPartner.getManager() != null && !savedPartner.getManager().isEmpty()) {
+				loan.setManager(savedPartner.getManager());
+			} else {
+				// Partner의 manager 필드가 비어있다면, DB 제약 조건을 피하기 위해 기본값 할당
+				loan.setManager("담당자미지정"); 
+			}
+			
+			// LoanCode 생성 및 할당
+			if (loan.getLoanCode() == null || loan.getLoanCode().isEmpty()) {
+				loan.setLoanCode(generateNewLoanCode());
+			}
+
+			loan.setCompanyCode(savedPartner.getCompanyCode());
+			
+			loanRepository.save(loan);
+		}
+
+		// 3. Payment 정보 저장
+		if (payments != null && !payments.isEmpty()) {
+			for (Payment payment : payments) {
+				payment.setPartnerCode(partnerCode);
+
+				if (payment.getPaymentCode() == null || payment.getPaymentCode().isEmpty()) {
+					payment.setPaymentCode(generateNewPaymentCode());
+				}
+				
+				payment.setCompanyCode(savedPartner.getCompanyCode());
+			}
+			partnerPaymentRepository.saveAll(payments);
+		}
+
+		return savedPartner;
+	}
+
+    /**
+     * 현재 로그인된 사용자의 인증 정보에서 회사 코드를 추출합니다.
+     */
+    private String getCompanyCodeFromAuthentication() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return "DEFAULT"; 
+        }
+        
+        String username = authentication.getName();
+        if (username != null && username.contains(":")) {
+            return username.trim().split(":")[0].trim();
+        }
+        return username.trim();
+    }
+
+
+	// PartnerCode
+	private String generateNewPartnerCode() {
+		String maxCode = partnerRepository.findMaxPartnerCode();
+		String prefix = "PART";
+		int newNum = 1;
+
+		if (maxCode != null && maxCode.startsWith(prefix)) {
+			try {
+				newNum = Integer.parseInt(maxCode.substring(prefix.length())) + 1;
+			} catch (NumberFormatException e) {
+			}
+		}
+		return String.format("%s%04d", prefix, newNum);
+	}
+
+	// LoanCode
+	private String generateNewLoanCode() {
+		String maxCode = loanRepository.findMaxLoanCode(); 
+		String prefix = "LOAN";
+		int newNum = 1;
+
+		if (maxCode != null && maxCode.startsWith(prefix)) {
+			try {
+				newNum = Integer.parseInt(maxCode.substring(prefix.length())) + 1;
+			} catch (NumberFormatException e) {
+			}
+		}
+		return String.format("%s%04d", prefix, newNum);
+	}
+	
+
+	// paymentCode
+	private String generateNewPaymentCode() {
+		String maxCode = partnerPaymentRepository.findMaxPaymentCode(); 
+		String prefix = "PMNT";
+		int newNum = 1;
+
+		if (maxCode != null && maxCode.startsWith(prefix)) {
+			try {
+				newNum = Integer.parseInt(maxCode.substring(prefix.length())) + 1;
+			} catch (NumberFormatException e) {
+			}
+		}
+		return String.format("%s%04d", prefix, newNum);
 	}
 }
