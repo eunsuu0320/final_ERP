@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.Data;
@@ -15,7 +16,8 @@ import lombok.Data;
 public class Employee {
 
 	@Id
-	private String empNo; // 사원번호
+	@Column(name = "EMP_CODE")
+	private String empCode; // 사원번호
 
 	private String companyCode; // 회사코드
 	private String name; // 성명

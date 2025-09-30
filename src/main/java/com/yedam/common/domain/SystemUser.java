@@ -4,6 +4,7 @@ import java.util.Date;
 
 import com.yedam.hr.domain.Employee;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -16,20 +17,23 @@ import lombok.Data;
 @Table(name = "SYSTEM_USER")
 @Data
 public class SystemUser {
-	
+
 	@Id
 	private String userCode;
-	
+
 	private String companyCode;
 	private String roleCode;
+
+	@Column(name = "EMP_CODE")
 	private String empCode;
+
 	private String userId;
 	private String userPw;
 	private Date createdDate;
 	private String usageStatus;
 	private String remk;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "empCode", referencedColumnName = "empNo", insertable = false, updatable = false)
+    @JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
     private Employee employee;
 }
