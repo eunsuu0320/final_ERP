@@ -15,7 +15,7 @@ public class HrSignServiceImpl implements HrSignService {
 	@Autowired HrSignRepository hrSignRepository;
 
 	@Override
-	public Optional<HrSign> findByEmpNo(String empNo) {
-		return hrSignRepository.findByEmpNo(empNo);
+	public Optional<HrSign> findByEmpNo(String empCode) {
+		return hrSignRepository.findByEmpCode(empCode);
 	}
 }

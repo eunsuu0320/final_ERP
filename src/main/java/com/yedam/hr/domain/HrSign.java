@@ -17,7 +17,7 @@ public class HrSign {
 	private Long signId;
 
 	private String companyCode;
-	private String empNo;
+	private String empCode;
 	private String empName;
 	private String empDept;
 	private String img;

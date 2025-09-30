@@ -10,5 +10,5 @@ import com.yedam.hr.domain.HrSign;
 @Repository
 public interface HrSignRepository extends JpaRepository<HrSign, Long>{
 
-	Optional<HrSign> findByEmpNo(String empNo);
+	Optional<HrSign> findByEmpCode(String empNo);
 }
