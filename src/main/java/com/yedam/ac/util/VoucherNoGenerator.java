@@ -1,24 +1,27 @@
-// com/yedam/ac/util/VoucherNoGenerator.java
 package com.yedam.ac.util;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
+import org.springframework.stereotype.Component;
+
+import com.yedam.ac.service.VoucherNoService;
+
+import lombok.RequiredArgsConstructor;
+
+@Component
+@RequiredArgsConstructor
 public class VoucherNoGenerator {
 
-    private static final DateTimeFormatter YYMM = DateTimeFormatter.ofPattern("yyMM");
+    private final VoucherNoService voucherNoService;
 
-    public static String monthPrefix(LocalDate date) {
-        return date.format(YYMM) + "-"; // 예: 2509-
+    /** type 기준 프리뷰 번호(yymm-####) 반환 — DB 변경 없음 */
+    public String next(String type, LocalDate voucherDate) {
+        return voucherNoService.previewNext(type, voucherDate);
     }
 
-    public static String nextFromMax(String maxLike) {
-        // maxLike 예: "2509-0007" 또는 null
-        int next = 1;
-        if (maxLike != null && maxLike.contains("-")) {
-            String seq = maxLike.substring(maxLike.indexOf('-') + 1);
-            try { next = Integer.parseInt(seq) + 1; } catch (Exception ignore) { next = 1; }
-        }
-        return String.format("%04d", next);
-    }
+    // 편의 메서드 (기존 호출부와의 호환용)
+    public String nextSales(LocalDate d)   { return next("SALES", d); }
+    public String nextBuy(LocalDate d)     { return next("BUY", d); }
+    public String nextPayment(LocalDate d) { return next("PAYMENT", d); }
+    public String nextMoney(LocalDate d)   { return next("MONEY", d); }
 }

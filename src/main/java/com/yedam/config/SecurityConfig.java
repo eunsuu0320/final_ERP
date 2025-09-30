@@ -39,6 +39,7 @@ public class SecurityConfig {
                         "/pay/naver/**",
                         "/success", "/error"
                     ).permitAll()
+                    .requestMatchers("/statements").authenticated()
                     .anyRequest().authenticated()
             )
             .formLogin(form -> form

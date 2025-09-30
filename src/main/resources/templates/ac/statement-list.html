@@ -58,7 +58,7 @@
         <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
           <button type="button" class="btn btn-outline-primary open-voucher-form" data-type="SALES">매출전표 등록</button>
           <button type="button" class="btn btn-outline-primary open-voucher-form" data-type="BUY">매입전표 등록</button>
-          <a class="btn btn-outline-primary" th:href="@{/ac/register}">일반전표 등록</a>
+          <a class="btn btn-outline-primary" th:href="@{/register}">일반전표 등록</a>
 
           <div class="btn-group btn-type ms-2" role="group" aria-label="type-filter">
             <button type="button" class="btn btn-primary" data-type="ALL">전체</button>
@@ -146,6 +146,7 @@
               <div class="col-md-6">
                 <label class="form-label vf-label">전표번호</label>
                 <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동발번" readonly>
+                <input id="vf-resvId" type="hidden"> <!-- ⬅️ 추가 -->
               </div>
               <div class="col-md-6">
                 <label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
@@ -596,16 +597,27 @@
     const vfModal = (window.bootstrap?.Modal && vfEl) ? new bootstrap.Modal(vfEl) : null;
     const q = (sel) => vfEl ? vfEl.querySelector(sel) : null;
 
+    let _vnoInFlight = false;
+
     async function fetchNextVoucherNo(type, dateStr){
-      const $vno = q('#vf-voucherNo'); if(!$vno) return;
+      const $vno = document.getElementById('vf-voucherNo'); if(!$vno) return;
+      if (_vnoInFlight) return;              // 중복 호출 가드
+      _vnoInFlight = true;
       try{
-        $vno.classList.add('vf-loading'); $vno.value = '발번 조회중...';
+        $vno.classList.add('vf-loading'); $vno.value = '전표번호 확인중...';
         const qs = new URLSearchParams({ type, ...(dateStr?{date:dateStr}:{}) });
-        const res = await fetch(`/api/vouchers/next?${qs.toString()}`, { method:'GET' });
-        const text = await res.text(); if(!res.ok) throw new Error(text||'fetch failed');
-        const j = text ? JSON.parse(text) : {}; $vno.value = j?.voucherNo || '';
-      }catch(e){ console.error(e); $vno.value = ''; toast('전표번호 조회 실패'); }
-      finally{ $vno.classList.remove('vf-loading'); }
+        // ⬇️ 프리뷰 전용 (증분 없음)
+        const res  = await fetch(`/api/vouchers/preview?${qs.toString()}`, { method:'GET' });
+        const text = await res.text(); if(!res.ok) throw new Error(text||'preview failed');
+        const j = text ? JSON.parse(text) : {};
+        $vno.value = j?.voucherNo || '';
+      }catch(e){
+        console.error(e);
+        $vno.value = ''; // 조용히 실패
+      }finally{
+        $vno.classList.remove('vf-loading');
+        _vnoInFlight = false;
+      }
     }
 
     // === 외부 리스너 격리를 위한 헬퍼들 ===
@@ -751,7 +763,10 @@
 
       const today=new Date().toISOString().slice(0,10);
       if($voucherDt) $voucherDt.value=today; if($saleDt) $saleDt.value=today; if($writeDt) $writeDt.value=today;
-      if($voucherNo) $voucherNo.value=''; fetchNextVoucherNo(type, today);
+      if($voucherNo) $voucherNo.value=''; 
+      const $resv = q('#vf-resvId');     // ⬅️ 추가
+      if($resv)     $resv.value='';      // ⬅️ 추가
+      fetchNextVoucherNo(type, today);
 
       if($saleCode) $saleCode.value=''; if($partner) $partner.value=''; if($remark) $remark.value='';
       if($emp) $emp.value=(typeof currentUserName==='string'?currentUserName:'');
@@ -806,6 +821,7 @@
       const isBuy = document.getElementById('vf-title').textContent.includes('매입');
       const body = isBuy
         ? {
+    	  	reservationId: (q('#vf-resvId')?.value || null), // ⬅️ 추가
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             buyCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
@@ -817,6 +833,7 @@
             remark: document.getElementById('vf-remark').value || null,
           }
         : {
+        	reservationId: (q('#vf-resvId')?.value || null), // ⬅️ 추가
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             salesCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
