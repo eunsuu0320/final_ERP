@@ -1,10 +1,20 @@
 package com.yedam.common.web;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.domain.Company;
+import com.yedam.common.domain.PayRequestWrapper;
 import com.yedam.common.domain.payment.KakaoApproveResponse;
 import com.yedam.common.domain.payment.NaverApproveResponse;
 import com.yedam.common.domain.payment.PayRequest;
@@ -13,9 +23,6 @@ import com.yedam.common.service.NaverPayService;
 import com.yedam.common.service.PaymentService;
 
 import lombok.RequiredArgsConstructor;
-
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -26,23 +33,26 @@ public class PayController {
     private final NaverPayService naverPayService;
     private final PaymentService paymentService;
 
-    // orderId -> PayRequest 임시 저장소 (결제 준비 시 저장)
-    private final Map<String, PayRequest> payRequestStore = new ConcurrentHashMap<>();
+    // orderId -> Wrapper 저장 (결제 준비 시 저장)
+    private final Map<String, PayRequestWrapper> payRequestStore = new ConcurrentHashMap<>();
 
-    /** 
-     * 공통 결제 준비 API
+    /**
+     * 결제 준비 API
      */
     @PostMapping("/ready")
     @ResponseBody
     public Object payReady(
-            @RequestBody PayRequest payRequest,
+            @RequestBody PayRequestWrapper wrapper,
             @AuthenticationPrincipal org.springframework.security.core.userdetails.User user
     ) {
+        PayRequest payRequest = wrapper.getPayRequest();
+        Company companyInfo = wrapper.getCompanyInfo();
+
         String userId = (user != null) ? user.getUsername() : "GUEST";
         payRequest.setUserId(userId);
 
-        // ✅ 결제 준비 시 orderId 기준으로 PayRequest 보관
-        payRequestStore.put(payRequest.getOrderId(), payRequest);
+        // 결제 준비 시 orderId 기준으로 PayRequest + Company 보관
+        payRequestStore.put(payRequest.getOrderId(), wrapper);
 
         if ("KAKAO".equalsIgnoreCase(payRequest.getPayMethod())) {
             return kakaoPayService.kakaoPayReady(payRequest);
@@ -53,7 +63,7 @@ public class PayController {
         }
     }
 
-    /** 
+    /**
      * 카카오페이 성공 콜백
      */
     @GetMapping("/kakao/success")
@@ -66,10 +76,10 @@ public class PayController {
         String userId = (user != null) ? user.getUsername() : "GUEST";
         KakaoApproveResponse response = kakaoPayService.kakaoPayApprove(orderId, pgToken, userId);
 
-        // ✅ PayRequest 꺼내서 COMPANY 저장
-        PayRequest request = payRequestStore.remove(orderId);
-        if (request != null) {
-            paymentService.saveCompanyInfo(request);
+        // PayRequest + Company 꺼내서 COMPANY 저장
+        PayRequestWrapper wrapper = payRequestStore.remove(orderId);
+        if (wrapper != null) {
+            paymentService.saveCompanyInfo(wrapper.getCompanyInfo());
         }
 
         model.addAttribute("info", response);
@@ -82,7 +92,7 @@ public class PayController {
     @GetMapping("/kakao/fail")
     public String kakaoFail() { return "payment/fail"; }
 
-    /** 
+    /**
      * 네이버페이 성공 콜백
      */
     @GetMapping("/naver/success")
@@ -92,10 +102,10 @@ public class PayController {
     ) {
         NaverApproveResponse response = naverPayService.naverPayApprove(orderId);
 
-        // PayRequest 꺼내서 COMPANY 저장
-        PayRequest request = payRequestStore.remove(orderId);
-        if (request != null) {
-            paymentService.saveCompanyInfo(request);
+        // PayRequest + Company 꺼내서 COMPANY 저장
+        PayRequestWrapper wrapper = payRequestStore.remove(orderId);
+        if (wrapper != null) {
+            paymentService.saveCompanyInfo(wrapper.getCompanyInfo());
         }
 
         model.addAttribute("info", response);

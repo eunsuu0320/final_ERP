@@ -958,22 +958,26 @@
 	    itemName: "ERP 구독",
 	    amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, "")),
 	    payMethod: selectedMethod.toUpperCase(),  // "KAKAO" or "NAVER"
-	    buyerName: buyerName,
-
-	    // 회사 정보
-	    companyName: document.getElementById("companyName").value,
+	    buyerName: buyerName 
+	  };
+	  
+	  const companyInfo = {
+		companyName: document.getElementById("companyName").value,
 	    ceoName: document.getElementById("ceoName").value,
 	    bizRegNo: `${document.getElementById("biz1").value}-${document.getElementById("biz2").value}-${document.getElementById("biz3").value}`,
 	    roadAddress: document.getElementById("roadAddress").value,
 	    addressDetail: document.getElementById("addressDetail").value,
-	    tel: `${document.getElementById("phone1").value}-${document.getElementById("phone2").value}-${document.getElementById("phone3").value}`
+	    tel: `${document.getElementById("phone1").value}-${document.getElementById("phone2").value}-${document.getElementById("phone3").value}` 
 	  };
-
+	  
 	  // 서버에 결제 준비 요청
 	  fetch("/pay/ready", {
 	    method: "POST",
 	    headers: { "Content-Type": "application/json" },
-	    body: JSON.stringify(payRequest)
+	    body: JSON.stringify({
+	    	payRequest: payRequest,
+	    	companyInfo: companyInfo
+	    })
 	  })
 	    .then(res => res.json())
 	    .then(data => {
