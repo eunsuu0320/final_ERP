@@ -79,7 +79,11 @@ public class PayController {
         // PayRequest + Company 꺼내서 COMPANY 저장
         PayRequestWrapper wrapper = payRequestStore.remove(orderId);
         if (wrapper != null) {
-            paymentService.saveCompanyInfo(wrapper.getCompanyInfo());
+        	// 1. 회사 저장
+            Company savedCompany = paymentService.saveCompanyInfo(wrapper.getCompanyInfo());
+
+            // 2. 구독 저장
+            paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), savedCompany.getCompanyCode());
         }
 
         model.addAttribute("info", response);
