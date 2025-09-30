@@ -1,6 +1,6 @@
 package com.yedam.hr.domain;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -23,22 +23,22 @@ public class Employee {
 	private String name; // 성명
 	private String phone; // 전화번호
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date birth; // 생년월일
+	private LocalDate birth; // 생년월일
 	private String email; // 이메일
 	private String dept; // 부서
 	private String position; // 직급
 	private String grade; // 직책
 	private Integer salary; // 기본급
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date hireDate; // 입사일자
+	private LocalDate hireDate; // 입사일자
 
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date resignDate; // 퇴사일자
+	private LocalDate resignDate; // 퇴사일자
 
 	private Integer holyDays; // 휴가일수
 	private Integer depCnt; // 부양가족수

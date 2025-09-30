@@ -84,7 +84,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 				resetBtn.disabled = false;
 				resetBtn.title = "";
 			}
-			// 필요하면 사번 입력 가능하게 (기본은 readOnly 유지)
 			if (empCodeInput) empCodeInput.readOnly = false;
 		}
 
@@ -101,11 +100,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 				resetBtn.disabled = false;
 				resetBtn.title = "";
 			}
-			// edit 모드에서는 empCode는 수정 불가
 			if (empCodeInput) empCodeInput.readOnly = true;
 		}
 	}
-
 
 	const CODE = await loadCodeMaps(["DEPT", "DUTY", "POSITION", "BANK"]);
 
@@ -138,7 +135,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	window.tabled = table;
 
-	// ▼ 더블클릭: 단건 조회 → 조회 모달(읽기 전용)
+	// ▼ 더블클릭: 단건 조회
 	window.tabled?.on("rowDblClick", async (e, row) => {
 		const r = row.getData();
 		if (!r?.empCode) return;
@@ -151,9 +148,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 			const modalEl = document.getElementById("empModal");
 			if (!modalEl) return;
 
-			setModalMode("view"); // 조회 모드
+			setModalMode("view");
 
-			// 필드 채우기
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
 			setVal("empCode", emp.empCode);
 			setVal("name", emp.name);
@@ -200,9 +196,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 			const modalEl = document.getElementById("empModal");
 			if (!modalEl) return;
 
-			setModalMode("edit"); // ← 수정 모드
+			setModalMode("edit");
 
-			// 값 채우기 (조회랑 동일)
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
 			setVal("empCode", emp.empCode);
 			setVal("name", emp.name);
@@ -232,13 +227,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 	});
 
-
-	// 신규 버튼: 등록 모드로 전환(입력 가능, 저장 가능)
+	// 신규 버튼
 	document.getElementById("btn-new")?.addEventListener("click", () => {
 		const modalEl = document.getElementById("empModal");
 		if (!modalEl) return;
 
-		// 폼 초기화
 		document.getElementById("empForm")?.reset();
 		document.getElementById("contractForm")?.reset();
 		const pdfLabel = document.getElementById("pdfFileName");
@@ -251,10 +244,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 		new bootstrap.Modal(modalEl).show();
 	});
 
-	// 데이터 주입
+	// ✅ 데이터 주입 (회사코드 반영)
 	table.on("tableBuilt", async () => {
 		try {
-			const res = await fetch("/selectAllEmp");
+			const companyCode = document.getElementById("companyCode")?.value;
+			if (!companyCode) {
+				console.error("companyCode를 찾을 수 없습니다.");
+				return;
+			}
+			const res = await fetch(`/selectAllEmp?companyCode=${encodeURIComponent(companyCode)}`);
+			if (!res.ok) throw new Error(await res.text());
+
 			const data = await res.json();
 			table.setData(data);
 		} catch (e) {
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	// ===== 검색 =====
-	const FIELD_MAP = { emp_no: "empCode", name: "name", dept: "dept" };
+	const FIELD_MAP = { empCode: "empCode", name: "name", dept: "dept" };
 	function debounce(fn, delay = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
 
 	function applySearch() {

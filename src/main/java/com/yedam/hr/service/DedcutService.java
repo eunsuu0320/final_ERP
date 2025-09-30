@@ -12,5 +12,5 @@ public interface DedcutService {
 	// 여러 건 및 단 건 저장
 	List<Dedcut> saveAllDedcuts(List<Dedcut> dedcuts, String companyCode);
 
-	void updateStatus(List<Dedcut> codes, String status, String companyCode);
+	void updateStatus(List<Integer> codes, String status, String companyCode);
 }
