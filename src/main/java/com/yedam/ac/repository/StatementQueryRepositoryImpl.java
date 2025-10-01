@@ -27,20 +27,30 @@ public class StatementQueryRepositoryImpl implements StatementQueryRepositoryCus
             "SELECT * FROM ( " +
             "  SELECT U1.*, ROWNUM rn FROM ( " +
             "    SELECT U0.* FROM ( " +
-            "      SELECT TO_CHAR(ss.VOUCHER_NO) AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES'   AS type, " +
-            "             ss.AMOUNT_TOTAL AS amountTotal, ss.PARTNER_NAME AS partnerName, ss.REMARK AS remark " +
-            "        FROM SALES_STATEMENT ss WHERE ss.COMPANY_CODE = ? " +
+            // ===== 매출(조인 및 컬럼 추가)
+            "      SELECT TO_CHAR(ss.VOUCHER_NO) AS voucherNo, ss.VOUCHER_DATE AS voucherDate, 'SALES' AS type, " +
+            "             ss.AMOUNT_TOTAL AS amountTotal, ss.PARTNER_NAME AS partnerName, ss.REMARK AS remark, " +
+            "             s.PRODUCT_NAME  AS productName, s.SALES_QTY AS salesQty, ss.AMOUNT_VAT AS amountVat " +
+            "        FROM SALES_STATEMENT ss " +
+            "   LEFT JOIN SALES s ON s.SALES_CODE = ss.SALES_CODE " +
+            "       WHERE ss.COMPANY_CODE = ? " +
             "      UNION ALL " +
-            "      SELECT TO_CHAR(bs.VOUCHER_NO) AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY'     AS type, " +
-            "             bs.AMOUNT_TOTAL AS amountTotal, bs.PARTNER_NAME AS partnerName, bs.REMARK AS remark " +
+            // ===== 매입
+            "      SELECT TO_CHAR(bs.VOUCHER_NO) AS voucherNo, bs.VOUCHER_DATE AS voucherDate, 'BUY' AS type, " +
+            "             bs.AMOUNT_TOTAL AS amountTotal, bs.PARTNER_NAME AS partnerName, bs.REMARK AS remark, " +
+            "             NULL AS productName, NULL AS salesQty, NULL AS amountVat " +
             "        FROM BUY_STATEMENT bs WHERE bs.COMPANY_CODE = ? " +
             "      UNION ALL " +
-            "      SELECT TO_CHAR(ms.VOUCHER_NO) AS voucherNo, ms.VOUCHER_DATE AS voucherDate, 'MONEY'   AS type, " +
-            "             ms.AMOUNT_TOTAL AS amountTotal, ms.PARTNER_NAME AS partnerName, ms.REMARK AS remark " +
+            // ===== 수금
+            "      SELECT TO_CHAR(ms.VOUCHER_NO) AS voucherNo, ms.VOUCHER_DATE AS voucherDate, 'MONEY' AS type, " +
+            "             ms.AMOUNT_TOTAL AS amountTotal, ms.PARTNER_NAME AS partnerName, ms.REMARK AS remark, " +
+            "             NULL AS productName, NULL AS salesQty, NULL AS amountVat " +
             "        FROM MONEY_STATEMENT ms WHERE ms.COMPANY_CODE = ? " +
             "      UNION ALL " +
+            // ===== 지급
             "      SELECT TO_CHAR(ps.VOUCHER_NO) AS voucherNo, ps.VOUCHER_DATE AS voucherDate, 'PAYMENT' AS type, " +
-            "             ps.AMOUNT_TOTAL AS amountTotal, ps.PARTNER_NAME AS partnerName, ps.REMARK AS remark " +
+            "             ps.AMOUNT_TOTAL AS amountTotal, ps.PARTNER_NAME AS partnerName, ps.REMARK AS remark, " +
+            "             NULL AS productName, NULL AS salesQty, NULL AS amountVat " +
             "        FROM PAYMENT_STATEMENT ps WHERE ps.COMPANY_CODE = ? " +
             "    ) U0 " +
             "    WHERE (? = 'ALL' OR U0.type = ?) " +
@@ -54,12 +64,14 @@ public class StatementQueryRepositoryImpl implements StatementQueryRepositoryCus
 
         return jt.query(sql, (rs, i) -> new UnifiedStatementRow(
                     rs.getString("voucherNo"),
-                    rs.getDate("voucherDate").toLocalDate(),
+                    rs.getDate("voucherDate") != null ? rs.getDate("voucherDate").toLocalDate() : null,
                     rs.getString("type"),
                     rs.getLong("amountTotal"),
                     rs.getString("partnerName"),
                     rs.getString("remark"),
-                    null // productName
+                    rs.getString("productName"),                   // ★
+                    getNullableInt(rs, "salesQty"),                // ★
+                    getNullableLong(rs, "amountVat")               // ★
                 ),
                 cc, cc, cc, cc,
                 type, type,
@@ -108,5 +120,17 @@ public class StatementQueryRepositoryImpl implements StatementQueryRepositoryCus
 
     private static Date toSqlDate(LocalDate d) {
         return (d == null) ? null : Date.valueOf(d);
+    }
+    private static Integer getNullableInt(java.sql.ResultSet rs, String col){
+        try{
+            int v = rs.getInt(col);
+            return rs.wasNull() ? null : v;
+        }catch(Exception e){ return null; }
+    }
+    private static Long getNullableLong(java.sql.ResultSet rs, String col){
+        try{
+            long v = rs.getLong(col);
+            return rs.wasNull() ? null : v;
+        }catch(Exception e){ return null; }
     }
 }
