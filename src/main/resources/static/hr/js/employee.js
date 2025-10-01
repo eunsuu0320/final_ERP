@@ -126,9 +126,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 			},
 			{ title: "사원번호", field: "empCode" },
 			{ title: "성명", field: "name" },
-			{ title: "부서명", field: "dept", formatter: "lookup", formatterParams: CODE.GRP011 },
-			{ title: "직급", field: "grade", formatter: "lookup", formatterParams: CODE.GRP013 },
-			{ title: "직책", field: "position", formatter: "lookup", formatterParams: CODE.GRP010 },
+			{ title: "부서명", field: "deptCode.codeName" },
+			{ title: "직급", field: "gradeCode.codeName" },
+			{ title: "직책", field: "positionCode.codeName" },
 			{ title: "전화번호", field: "phone" },
 			{ title: "Email", field: "email" },
 			{ title: "입사일자", field: "hireDate", sorter: "date", hozAlign: "center" },
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				console.error("companyCode를 찾을 수 없습니다.");
 				return;
 			}
-			const res = await fetch(`/selectAllEmp?companyCode=${encodeURIComponent(companyCode)}`);
+			const res = await fetch(`/api/modal/employee`);
 			if (!res.ok) throw new Error(await res.text());
 
 			const data = await res.json();

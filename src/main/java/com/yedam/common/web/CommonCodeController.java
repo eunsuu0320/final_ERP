@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -19,7 +21,16 @@ public class CommonCodeController {
 	@ResponseBody
 	@GetMapping("/api/modal/commonCode")
 	public List<CommonCode> commonCode(String commonGroup) {
-		String companyCode = "C001";
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	    String companyCode;
+
+	    if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+	        // 로그인 안 된 경우
+	        companyCode = "admin";
+	    } else {
+	        // 로그인 된 경우
+	        companyCode = auth.getName().split(":")[0];
+	    }
 		return commonCodeService.findByGroupIdAndCompanyCode(commonGroup, companyCode);
 	}
 

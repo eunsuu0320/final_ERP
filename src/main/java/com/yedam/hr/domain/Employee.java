@@ -5,10 +5,14 @@ import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.yedam.common.domain.CommonCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
 @Entity
@@ -48,4 +52,20 @@ public class Employee {
 	private String accNo; // 계좌번호
 	private Integer postalCode; // 우편번호
 	private String address; // 주소
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "dept", referencedColumnName = "codeId", insertable = false, updatable = false)
+	private CommonCode deptCode;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "position", referencedColumnName = "codeId", insertable = false, updatable = false)
+	private CommonCode positionCode;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "grade", referencedColumnName = "codeId", insertable = false, updatable = false)
+	private CommonCode gradeCode;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "bankCode", referencedColumnName = "codeId", insertable = false, updatable = false)
+	private CommonCode bankCodeEntity;
 }
