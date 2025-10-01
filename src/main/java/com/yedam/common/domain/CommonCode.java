@@ -13,5 +13,4 @@ public class CommonCode {
 
 	private String groupId;
 	private String codeName;
-	private String companyCode;
 }
