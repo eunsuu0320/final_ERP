@@ -30,6 +30,6 @@ public class SystemUser {
 	private String remk;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "empCode", referencedColumnName = "empNo", insertable = false, updatable = false)
+    @JoinColumn(name = "empCode", referencedColumnName = "empCode", insertable = false, updatable = false)
     private Employee employee;
 }

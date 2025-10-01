@@ -26,7 +26,7 @@ public interface UserRepository extends JpaRepository<SystemUser, String> {
 	 * @Param("email") String email );
 	 */
 	
-	@Query("SELECT u FROM SystemUser u JOIN Employee e ON u.empCode = e.empNo " +
+	@Query("SELECT u FROM SystemUser u JOIN Employee e ON u.empCode = e.empCode " +
 	           "WHERE u.companyCode = :companyCode AND u.userId = :userId AND e.email = :email")
     Optional<SystemUser> findUserWithEmail(@Param("companyCode") String companyCode,
                                            @Param("userId") String userId,
