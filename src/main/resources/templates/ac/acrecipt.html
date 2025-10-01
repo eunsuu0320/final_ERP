@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+  <meta charset="UTF-8" />
+  <title>거래명세서</title>
+
+  <style>
+    /* ===== 페이지 레이아웃 ===== */
+    .wrap{width:100%;max-width:1600px;margin:0 auto;padding:0 8px;}
+    .section{margin:12px 0;}
+    .page-title{margin:18px 0 6px;font-size:28px;font-weight:400;} /* H1 일반 굵기 */
+
+    /* ===== 검색 라인 ===== */
+    .searchline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;}
+    .form-group{display:flex;flex-direction:column;gap:6px;}
+    .form-label{font-size:.95rem;}
+    .input-with-icon{display:flex;align-items:center;gap:6px;}
+    .input-with-icon .form-control{width:220px;}
+
+    /* 버튼 */
+    .btn{height:38px;padding:0 .9rem;}
+    .btn-icon{min-width:38px;}
+    .actions-right{display:flex;justify-content:flex-end;gap:8px;}
+
+    /* 표 박스 */
+    .box{background:#f4f5f7;border:1px solid #ddd;border-radius:10px;padding:12px;min-height:72vh;}
+
+    /* Tabulator */
+    .table-wrap{position:relative;background:#fff;border:1px solid #e1e3e6;border-radius:8px;overflow:hidden;
+      --grid-h: calc(72vh - 80px); /* 필요시 높이 조절: style로 --grid-h만 바꾸면 됨 */
+    }
+    .tabulator{border:0;}
+    .tabulator-header{border-bottom:1px solid #e1e3e6;}
+    .tabulator-col{background:#f7f7f9;font-weight:700;}
+    .tabulator-tableholder{max-height:var(--grid-h);}
+
+    /* 로딩 오버레이 */
+    .loading-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.55);backdrop-filter:blur(1px);z-index:50;}
+    .loading-overlay.show{display:flex;}
+    .loading-box{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid #e4e6eb;box-shadow:0 4px 18px rgba(0,0,0,.08);font-weight:600;color:#333;}
+
+    /* 토스트 */
+    .toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
+  </style>
+</head>
+
+<body layout:fragment="content">
+<div id="layoutSidenav_content">
+  <main>
+    <div class="wrap">
+
+      <!-- ===== 제목 단락 ===== -->
+      <div class="section">
+        <h1 class="mb-0">거래명세서</h1>
+      </div>
+
+	  <!-- ===== 인쇄 버튼 단락(우측 상단) ===== -->
+      <div class="section">
+        <div class="actions-right">
+          <button id="btn-print" class="btn btn-dark">인쇄</button>
+        </div>
+      </div>
+
+      <!-- ===== 검색 단락 ===== -->
+      <div class="section">
+        <div class="searchline">
+          <!-- 거래처명 -->
+          <div class="form-group">
+            <label class="form-label" for="s-partner">거래처명</label>
+            <div class="input-with-icon">
+              <input id="s-partner" type="text" class="form-control" placeholder="거래처명">
+              <button id="btn-find-partner" class="btn btn-outline-secondary btn-icon" type="button" title="거래처 검색" aria-label="거래처 검색">🔍</button>
+            </div>
+          </div>
+
+          <!-- 품목명 -->
+          <div class="form-group">
+            <label class="form-label" for="s-product">품목명</label>
+            <div class="input-with-icon">
+              <input id="s-product" type="text" class="form-control" placeholder="품목명">
+              <button id="btn-find-product" class="btn btn-outline-secondary btn-icon" type="button" title="품목 검색" aria-label="품목 검색">🔍</button>
+            </div>
+          </div>
+
+          <!-- 일자 범위 + 검색/초기화 버튼(노란색 검색 버튼을 날짜 옆에 붙임) -->
+          <div class="form-group">
+            <label class="form-label">일자 범위</label>
+            <div class="input-with-icon" style="gap:6px;">
+              <input id="s-from" type="date" class="form-control">
+              <span style="align-self:center;color:#6b7280;">~</span>
+              <input id="s-to" type="date" class="form-control">
+              <button id="btn-search" class="btn btn-warning">검색</button>
+              <button id="btn-reset" class="btn btn-outline-secondary">초기화</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+
+      <!-- ===== 목록 ===== -->
+      <div class="box">
+        <div class="table-wrap">
+          <!-- 표 높이 바꾸려면 여기에 style="--grid-h:65vh" 식으로 전달 -->
+          <div id="acrecipt-grid"></div>
+
+          <!-- 로딩 오버레이 -->
+          <div id="tbl-loading" class="loading-overlay" aria-hidden="true">
+            <div class="loading-box">
+              <div class="spinner-border" role="status" aria-label="loading"></div>
+              <span>데이터 로딩 중…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  /* ===== 유틸 ===== */
+  const $  = (s, r=document) => r.querySelector(s);
+  const fmt = (n) => Number(n||0).toLocaleString();
+  const toast=(m,ms=1600)=>{const t=document.createElement('div');t.className='toast-min';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);};
+  const todayStr=()=>new Date().toISOString().slice(0,10);
+
+  // 한글 금액(간단)
+  function numberToKorean(num){
+    num = Number(num||0);
+    if (!num) return '영원정';
+    const unit = ["", "만", "억", "조", "경"];
+    let res = [], i = 0;
+    while (num > 0){
+      const part = num % 10000;
+      if (part) res.unshift((part).toLocaleString() + unit[i]);
+      num = Math.floor(num / 10000); i++;
+    }
+    return res.join(' ') + '원정';
+  }
+
+  /* ===== 키 정규화 & 안전 매핑 ===== */
+  const normKey = k => String(k||'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+  function toNormMap(obj){ const m={}; for(const [k,v] of Object.entries(obj||{})){ m[normKey(k)] = v; } return m; }
+  function pickVal(obj, candidates, def=''){
+    const nm = toNormMap(obj);
+    for(const c of candidates){ const key = normKey(c); if (key in nm && nm[key]!=null) return nm[key]; }
+    return def;
+  }
+
+  /* ===== 날짜 기본: 전체 조회 ===== */
+  function initDates(){ $('#s-from').value = ''; $('#s-to').value = ''; }
+
+  /* ===== 로딩 오버레이 ===== */
+  const $overlay = $('#tbl-loading');
+  const showLoading = ()=> $overlay?.classList.add('show');
+  const hideLoading = ()=> $overlay?.classList.remove('show');
+
+  /* ===== Tabulator ===== */
+  let allSelected=false;
+  const grid = new Tabulator("#acrecipt-grid", {
+    height:"100%",
+    layout:"fitColumns",
+    pagination:true,
+    paginationMode:"local",
+    paginationSize:19,
+    selectable:true,
+    selectableRangeMode:"drag",
+    columns:[
+      {
+        titleFormatter:"rowSelection",
+        formatter:"rowSelection",
+        width:55, headerSort:false,
+        hozAlign:"center", headerHozAlign:"center",
+        titleFormatterParams:{ rowRange:"active" },
+        headerClick:()=>{ if(!allSelected){ grid.selectRow("visible"); } else { grid.deselectRow(); } allSelected=!allSelected; }
+      },
+      { title:"거래처명", field:"partnerName", minWidth:180 },
+      { title:"품목명",   field:"productName", minWidth:220 },
+      { title:"수량",     field:"qty",         minWidth:90, hozAlign:"right", formatter:(c)=>fmt(c.getValue()) },
+      { title:"금액",     field:"amountSupply", minWidth:120, hozAlign:"right", formatter:(c)=>fmt(c.getValue()) },
+      { title:"부가세",   field:"amountVat",    minWidth:110, hozAlign:"right", formatter:(c)=>fmt(c.getValue()) },
+      { title:"총 금액",  field:"amountTotal",  minWidth:130, hozAlign:"right", formatter:(c)=>fmt(c.getValue()) },
+      { title:"판매일자", field:"salesDate",    width:120, hozAlign:"center",
+        formatter:(c)=>{ const v=c.getValue(); if(!v) return ""; const d=new Date(v); return isNaN(d)?String(v).slice(0,10):d.toISOString().slice(0,10);} },
+    ],
+    initialSort:[{column:"salesDate", dir:"desc"}],
+  });
+
+  /* ===== 검색 ===== */
+  async function search(){
+    const partner = $('#s-partner').value?.trim() || '';
+    const product = $('#s-product').value?.trim() || '';
+    theFrom    = $('#s-from').value || '';
+    const from    = $('#s-from').value || '';
+    const to      = $('#s-to').value || '';
+
+    const qs = new URLSearchParams({ partnerName: partner, productName: product, from, to });
+    let data=[];
+    showLoading();
+    try{
+      const res  = await fetch(`/api/acrecipt?${qs.toString()}`, { headers:{'Accept':'application/json'} });
+      const text = await res.text();
+      if(!res.ok) throw new Error(text || 'search failed');
+      const j = text ? JSON.parse(text) : [];
+      data = Array.isArray(j) ? j : (j.content||[]);
+    }catch(e){
+      console.error('[ACRECIPT] fetch failed', e);
+      toast('조회 실패: ' + (e.message||'')); data=[];
+    } finally {
+      hideLoading();
+    }
+
+    // 후보 키 목록(정규화해서 조회)
+    const kPartner  = ['partnerName','customerName','clientName','buyerName','supplierName','partner'];
+    const kProduct  = ['productName','product_name','PRODUCT_NAME','itemName','item','goodsName','goods','prodName','PRODUCT'];
+    const kQty      = ['qty','quantity','salesQty','SALES_QTY','orderQty','QTY'];
+    const kSupply   = ['amountSupply','supply','price','AMOUNT_SUPPLY','supplyAmount'];
+    const kVat      = ['amountVat','vat','tax','AMOUNT_VAT'];
+    const kTotal    = ['amountTotal','total','TOTAL','sum','grandTotal'];
+    const kDate     = ['salesDate','date','saleDate','SALES_DATE'];
+
+    const rows = (data||[]).map((r, idx)=>{
+      const supply = Number(pickVal(r,kSupply,0))||0;
+      const vat    = Number(pickVal(r,kVat,0))||0;
+      let total    = Number(pickVal(r,kTotal, supply+vat))||0;
+      if (!total && (supply||vat)) total = supply + vat;
+
+      return {
+        id:           r.id ?? r.ID ?? idx+1,
+        partnerName:  String(pickVal(r,kPartner,'')),
+        productName:  String(pickVal(r,kProduct,'')),
+        qty:          Number(pickVal(r,kQty,0))||0,
+        amountSupply: supply,
+        amountVat:    vat,
+        amountTotal:  total,
+        salesDate:    String(pickVal(r,kDate,'')).slice(0,10),
+      };
+    });
+
+    await grid.setData(rows);
+    grid.setPage(1);
+
+    if (rows.length===0 && Array.isArray(data) && data.length){
+      console.debug('[ACRECIPT] original keys sample:', Object.keys(data[0]||{}));
+    }
+  }
+
+  /* ===== 초기화 ===== */
+  function resetForm(){
+    $('#s-partner').value=''; $('#s-product').value='';
+    initDates();
+    grid.clearData();
+    search();
+  }
+
+  /* ===== 인쇄 ===== */
+  async function fetchCompany(){
+    try{
+      const r = await fetch('/api/company/profile', { headers:{'Accept':'application/json'} });
+      if(!r.ok) throw 0;
+      const j = await r.json();
+      return {
+        name: j?.name || j?.companyName || '(주)아작밤아쓰는ERP',
+        bizNo: j?.bizNo || j?.businessNumber || '220-12-34567',
+        tel:  j?.tel   || j?.phone || '1588-5333',
+        ceo:  j?.ceo   || j?.owner || '김실례',
+        addr: j?.address || '서울특별시 강동구 고덕비즈밸리로6길 84 (고덕동) (주)이카운트'
+      };
+    }catch(_){
+      return { name:'(주)아작밤아쓰는ERP', bizNo:'220-12-34567', tel:'1588-5333', ceo:'김실례',
+               addr:'서울특별시 강동구 고덕비즈밸리로6길 84 (고덕동) (주)이카운트' };
+    }
+  }
+
+  function openPrintWindow(selRows, company){
+    const partners = Array.from(new Set(selRows.map(r=>r.partnerName)));
+    if (partners.length > 1){ toast('서로 다른 거래처가 함께 선택되었습니다. 한 거래처씩 인쇄해주세요.'); return; }
+    const partnerName = partners[0] || '';
+
+    const totalSupply = selRows.reduce((a,b)=>a+b.amountSupply,0);
+    const totalVat    = selRows.reduce((a,b)=>a+b.amountVat,0);
+    const total       = selRows.reduce((a,b)=>a+b.amountTotal,0);
+    const today       = todayStr().replaceAll('-','/');
+    const count       = selRows.length;
+
+    const rowsHtml = selRows.map(r=>{
+      const unit = r.qty ? Math.round(r.amountSupply / r.qty) : 0;
+      const dt = (r.salesDate||'').slice(5).replace('-','/');
+      return (
+        '<tr>'+
+          '<td class="c">'+ dt +'</td>'+
+          '<td class="l">'+ (r.productName||'') +'</td>'+
+          '<td class="c">'+ fmt(r.qty) +'</td>'+
+          '<td class="num">'+ fmt(unit) +'</td>'+
+          '<td class="num">'+ fmt(r.amountSupply) +'</td>'+
+          '<td class="num">'+ fmt(r.amountVat) +'</td>'+
+        '</tr>'
+      );
+    }).join('');
+
+    const fillerCount = Math.max(0, 8 - selRows.length);
+    const filler = Array(fillerCount).fill(
+      '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
+    ).join('');
+
+    const win = window.open('', '_blank', 'width=960,height=1200');
+    win.document.write(
+`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<title>거래명세서</title>
+<style>
+  @page{ size:A4; margin:18mm; }
+  body{ font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; }
+  .sheet{ width:100%; }
+  h2{ margin:0 0 8px; }
+  .top{ display:grid; grid-template-columns:1fr 260px 260px; gap:8px; align-items:start; }
+  .sign{ border:1px solid #000; height:80px; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  table{ width:100%; border-collapse:collapse; }
+  .meta{ border:1px solid #000; }
+  .meta td{ border:1px solid #000; padding:6px; font-size:13px; }
+  .meta .label{ background:#f4f4f4; width:90px; font-weight:700; }
+  .titlebar{ margin:10px 0; border-top:2px solid #000; border-bottom:2px solid #000; padding:8px 6px; display:flex; justify-content:space-between; }
+  .titlebar .amt{ font-weight:700; }
+  .grid{ width:100%; border:1px solid #000; }
+  .grid th,.grid td{ border:1px solid #000; padding:6px; font-size:13px; }
+  .grid th{ background:#f4f4f4; }
+  .l{text-align:left;} .c{text-align:center;} .num{text-align:right;}
+  .sum{ border-left:1px solid #000; border-right:1px solid #000; border-bottom:1px solid #000; }
+  .sum td{ border-top:1px solid #000; padding:8px; font-weight:700; }
+  .foot{ margin-top:8px; font-size:12px; }
+</style>
+</head>
+<body>
+  <div class="sheet">
+    <h2>거래명세서</h2>
+    <div class="top">
+      <div class="sign">(사)거래명세서 용</div>
+      <table class="meta">
+        <tr><td class="label">일련번호</td><td>${today} - 1</td><td class="label">TEL</td><td>${company.tel}</td></tr>
+        <tr><td class="label">사업자등록</td><td>${company.bizNo}</td><td class="label">성명</td><td>${company.ceo}</td></tr>
+        <tr><td class="label">상호</td><td colspan="3">${company.name}</td></tr>
+        <tr><td class="label">주소</td><td colspan="3">${company.addr}</td></tr>
+      </table>
+      <table class="meta">
+        <tr><td class="label">공급받는자</td><td colspan="3">${partnerName||'-'}</td></tr>
+        <tr><td class="label">인수</td><td colspan="3"></td></tr>
+        <tr><td class="label">합계금액</td><td colspan="3" class="amt">${fmt(total)} ( ${numberToKorean(total)} )</td></tr>
+        <tr><td class="label">거래건수</td><td colspan="3">${count} 건</td></tr>
+      </table>
+    </div>
+
+    <div class="titlebar">
+      <div>금액 : <b>${numberToKorean(total)}</b></div>
+      <div>(￦${fmt(total)})</div>
+    </div>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th class="c" style="width:70px;">일자</th>
+          <th class="l">품목명[규격]</th>
+          <th class="c" style="width:80px;">수량(단위)</th>
+          <th class="num" style="width:100px;">단가</th>
+          <th class="num" style="width:120px;">공급가격</th>
+          <th class="num" style="width:100px;">부가세</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}${filler}
+      </tbody>
+    </table>
+
+    <table class="sum">
+      <tr>
+        <td class="c" style="width:80px;">수량</td>
+        <td class="num" style="width:120px;">${fmt(selRows.reduce((a,b)=>a+b.qty,0))}</td>
+        <td class="c" style="width:120px;">공급가액</td>
+        <td class="num" style="width:140px;">${fmt(totalSupply)}</td>
+        <td class="c" style="width:60px;">VAT</td>
+        <td class="num" style="width:120px;">${fmt(totalVat)}</td>
+        <td class="c" style="width:80px;">합계</td>
+        <td class="num">${fmt(total)}</td>
+      </tr>
+    </table>
+
+    <div class="foot">* 상기와 같이 거래하였음을 확인합니다.</div>
+  </div>
+  <script>window.focus();<\/script>
+</body></html>`
+    );
+    win.document.close();
+  }
+
+  async function onPrint(){
+    const selected = grid.getSelectedData();
+    if (!selected || selected.length===0){ toast('인쇄할 행을 선택해주세요.'); return; }
+    const company = await fetchCompany();
+    openPrintWindow(selected, company);
+  }
+
+  /* ===== 모달 연동 ===== */
+  function bindSearchModals(){
+    const $partner = $('#s-partner');
+    const $product = $('#s-product');
+
+    $('#btn-find-partner')?.addEventListener('click', ()=>{
+      if(typeof openModal!=='function'){ toast('검색 모달 스크립트가 없습니다.'); return; }
+      openModal('partner',(row)=>{ $partner.value = row?.partnerName || row?.customerName || row?.clientName || row?.buyerName || row?.supplierName || ''; });
+    });
+    $('#btn-find-product')?.addEventListener('click', ()=>{
+      if(typeof openModal!=='function'){ toast('검색 모달 스크립트가 없습니다.'); return; }
+      openModal('product',(row)=>{ $product.value = row?.productName || row?.itemName || row?.goodsName || row?.prodName || ''; });
+    });
+
+    // 엔터키로도 모달 오픈
+    [$partner,$product].forEach((el,idx)=>{
+      el?.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter'){
+          e.preventDefault();
+          (idx===0?$('#btn-find-partner'):$('#btn-find-product'))?.click();
+        }
+      });
+    });
+  }
+
+  /* ===== 이벤트 바인딩 ===== */
+  $('#btn-search').addEventListener('click', search);
+  $('#btn-reset').addEventListener('click', ()=>{ resetForm(); });
+  $('#btn-print').addEventListener('click', onPrint);
+
+  /* ===== 부트스트랩 ===== */
+  initDates();
+  bindSearchModals();
+  search(); // 페이지 진입 즉시 전체 조회
+})();
+</script>
+</body>
+</html>
