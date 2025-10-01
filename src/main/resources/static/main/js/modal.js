@@ -8,8 +8,8 @@ const modalConfigs = {
       columns: [
          { title: "사원번호", field: "empCode" },
          { title: "성명", field: "name" },
-         { title: "부서", field: "dept" },
-         { title: "직급", field: "grade" }
+         { title: "부서", field: "deptCode.codeName" },
+         { title: "직급", field: "gradeCode.codeName" }
       ]
    },
      // ✅ 거래처
