@@ -18,13 +18,13 @@ public class CommonCodeController {
 
 	@ResponseBody
 	@GetMapping("/api/modal/commonCode")
-	public List<CommonCode> commonCode(String commonGroup) {
-		return commonCodeService.findByCodeGroup(commonGroup);
+	public List<CommonCode> commonCode(String groupId) {
+		return commonCodeService.findByGroupId(groupId);
 	}
 
 	@ResponseBody
 	@GetMapping("/api/modal/commonCodes")
-	public Map<String, List<CommonCode>> commonCodes(String commonGroup) {
-		return commonCodeService.getCodes(commonGroup);
+	public Map<String, List<CommonCode>> commonCodes(String groupId) {
+		return commonCodeService.getCodes(groupId);
 	}
 }

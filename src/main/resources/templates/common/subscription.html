@@ -457,10 +457,6 @@
 				      <span>@</span>
 				      <select id="emailDomain" required>
 				        <option value="">선택</option>
-				        <option value="gmail.com">gmail.com</option>
-				        <option value="naver.com">naver.com</option>
-				        <option value="daum.net">daum.net</option>
-				        <option value="company.com">company.com</option>
 				      </select>
 				    </div>
 				    <span class="error-msg"></span>
@@ -745,7 +741,7 @@
   }
 
   // STEP 이동
-	function goToStep(step) {
+  function goToStep(step) {
 	  if (step === currentStep) return;
 	
 	  // STEP1 → STEP2 이동 시 검증
@@ -1001,6 +997,27 @@
 	    }).open();
 	}
   
+  	function loadEmailDomains() {
+  	  fetch("/api/modal/commonCode?groupId=GRP004")
+  	    .then(res => res.json())
+  	    .then(domains => {
+  	      const select = document.getElementById("emailDomain");
+  	      select.innerHTML = '<option value="">선택</option>'; // 초기화
+
+  	      domains.forEach(d => {
+  	        const opt = document.createElement("option");
+  	        opt.value = d.codeId;     // CODE_ID → 실제 값 (예: gmail.com)
+  	        opt.textContent = d.codeName; // CODE_NAME → 화면 표시용 (예: 구글메일)
+  	        select.appendChild(opt);
+  	      });
+  	    })
+  	    .catch(err => console.error("이메일 도메인 로딩 실패:", err));
+  	}
+
+  	document.addEventListener("DOMContentLoaded", () => {
+  	  loadEmailDomains();
+  	});	
+  	
 </script>
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 

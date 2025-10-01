@@ -7,7 +7,7 @@ import com.yedam.common.domain.CommonCode;
 
 public interface CommonCodeService {
 
-	List<CommonCode> findByCodeGroup(String codeGroup);
+	List<CommonCode> findByGroupId(String codeGroup);
 
 	// 공통코드 그룹으로 가져오기
 	public Map<String, List<CommonCode>> getCodes(String godeStrings);

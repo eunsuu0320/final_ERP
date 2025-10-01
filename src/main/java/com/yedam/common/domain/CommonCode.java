@@ -11,7 +11,7 @@ public class CommonCode {
 	@Id
 	private String codeId;
 
-	private String codeGroup;
+	private String groupId;
 	private String codeName;
 	private String companyCode;
 }
