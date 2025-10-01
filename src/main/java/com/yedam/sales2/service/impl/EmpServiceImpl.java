@@ -6,10 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yedam.sales2.domain.EsdpPlan;
 import com.yedam.sales2.domain.EspPlan;
-import com.yedam.sales2.domain.Sales;
+import com.yedam.sales2.repository.EsdpPlanRepository;
 import com.yedam.sales2.repository.EspPlanRepository;
-import com.yedam.sales2.repository.SalesRepository;
 import com.yedam.sales2.service.EmpService;
 
 @Service
@@ -17,6 +17,9 @@ public class EmpServiceImpl implements EmpService {
 
 	@Autowired
 	EspPlanRepository espPlanRepository;
+	
+	@Autowired
+	EsdpPlanRepository esdpPlanRepository;
 
 	// 사원등록 
 	@Override
@@ -25,4 +28,11 @@ public class EmpServiceImpl implements EmpService {
 		return espPlanRepository.save(espPlan);
 	}
 	
+	// 분기별 사원등록
+	@Override
+    @Transactional
+    public List<EsdpPlan> insertDetailPlans(List<EsdpPlan> plans) {
+        return esdpPlanRepository.saveAll(plans);
+    }
+
 }

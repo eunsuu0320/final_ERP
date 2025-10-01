@@ -65,14 +65,19 @@
 			        <h3 class="mb-0">사원 목록</h3>
 			        
 			        <div class="input-group mb-3" style="width: auto; position: relative; display: flex; align-items: center; gap: 5px; margin-top: 17px;">
-					    <span class="input-group-text" id="basic-addon1">사원 선택</span>
+					    <span class="input-group-text" id="basic-addon1">사원 검색</span>
 					    
-					    <input id="txt-search" type="text" class="form-control" 
+					    <input id="employeeName" type="text" class="form-control" 
 					           placeholder="사원명 입력" 
 					           style="width: 200px; padding-right: 25px; height: 38px;"> <!-- 버튼과 같은 높이 -->
 					
+						<input type="hidden" id="employCode" name="employCode">
+						<input type="hidden" id="espCode" name="espCode">
 					    <i class="fas fa-search" id="search-icon" 
-					       style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"></i>
+					       style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;" 
+					       onclick="openModal('employee', function(selected) {
+			                    document.getElementById('employCode').value = selected.empNo;
+			                    document.getElementById('employeeName').value = selected.name;})"></i>
 					
 					    <button id="btn-search" class="btn btn-warning" type="button" style="height: 38px;">검색</button>
 					</div>
@@ -124,9 +129,11 @@
 			
 		</main>	
 	</div>
+	<div th:replace="common/modal :: commonModal"></div>
 	<!-- Tabulator JS -->
 	<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<!-- 기존 JS 파일 연결 -->
 	<script th:src="@{/sales2/js/empList.js}"></script>
+	<!-- 공통 모달 -->
 </body>
 </html>
