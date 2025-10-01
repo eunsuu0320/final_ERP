@@ -52,7 +52,7 @@ public class Employee {
 	private String accNo; // 계좌번호
 	private Integer postalCode; // 우편번호
 	private String address; // 주소
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "dept", referencedColumnName = "codeId", insertable = false, updatable = false)
 	private CommonCode deptCode;
@@ -68,5 +68,4 @@ public class Employee {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bankCode", referencedColumnName = "codeId", insertable = false, updatable = false)
 	private CommonCode bankCodeEntity;
-
 }

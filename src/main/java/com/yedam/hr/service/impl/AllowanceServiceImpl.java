@@ -26,8 +26,8 @@ public class AllowanceServiceImpl implements AllowanceService {
 	}
 
 	@Override
-	public void updateStatus(List<Integer> codes, String status, String companyCode) {
-		for (Integer code : codes) {
+	public void updateStatus(List<String> codes, String status, String companyCode) {
+		for (String code : codes) {
 			Allowance allowance = allowanceRepository.findByAllIdAndCompanyCode(code, companyCode)
 					.orElseThrow(() -> new RuntimeException("해당 수당 없음: " + code));
 

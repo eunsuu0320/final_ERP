@@ -53,7 +53,7 @@ public class HrServiceImpl implements HrService {
 	public void saveContract(Employee employee, HrSign sign, HrPDF pdf, MultipartFile signImg, MultipartFile pdfFile,
 			MultiValueMap<String, String> params) {
 
-		// 로그인 사용자 아이디 넣기 (지금은 admin, 나중에 로그인 값으로 교체)
+		// 로그인 사용자 아이디 넣기
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String manager = auth.getName().split(":")[2];
 

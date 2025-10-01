@@ -6,8 +6,8 @@
 // This file is intentionally blank
 // Use this file to add JavaScript to your project
 
-function getCode(commonGroup, selector) {
-	fetch(`/api/modal/commonCode?commonGroup=${commonGroup}`)
+function getCode(GroupName, selector) {
+	fetch(`/api/modal/commonCode?commonGroup=${GroupName}`)
 		.then(res => res.json())
 		.then(data => {
 			const position = document.querySelector(`#${selector}`);

@@ -74,7 +74,7 @@ public class AllDecController {
 	@ResponseBody
 	public String allUpdateStatus(@RequestBody Map<String, Object> payload,
 	                           @RequestParam String companyCode) {
-	    List<Integer> codes = (List<Integer>) payload.get("codes");
+	    List<String> codes = (List<String>) payload.get("codes");
 	    String status = (String) payload.get("status");
 
 	    try {
@@ -90,7 +90,7 @@ public class AllDecController {
 	@PostMapping("/dedcut/updateStatus")
 	@ResponseBody
 	public String dedcutUpdateStatus(@RequestBody Map<String, Object> payload, @RequestParam String companyCode) {
-		List<Integer> codes = (List<Integer>) payload.get("codes");
+		List<String> codes = (List<String>) payload.get("codes");
 		String status = (String) payload.get("status");
 
 		try {

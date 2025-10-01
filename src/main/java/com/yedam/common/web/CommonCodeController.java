@@ -23,7 +23,7 @@ public class CommonCodeController {
 	public List<CommonCode> commonCode(String commonGroup) {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 	    String companyCode;
-	    
+
 	    if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
 	        // 로그인 안 된 경우
 	        companyCode = "admin";

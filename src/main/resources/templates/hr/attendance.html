@@ -66,8 +66,8 @@
 						<div class="d-flex justify-content-between mb-3">
 							<h5>사원 근태 조회</h5>
 							<div>
-								<button id="empAtt-search" class="btn btn-secondary me-2">인쇄</button>
-								<button id="empAtt-export" class="btn btn-dark me-2">Excel</button>
+								<button id="empAtt-print" class="btn btn-secondary me-2">인쇄</button>
+								<button id="empAtt-excel" class="btn btn-dark me-2">Excel</button>
 							</div>
 						</div>
 						<div id="empAttSelect-area">
@@ -78,9 +78,19 @@
 				</div>
 
 			</div>
+
+			<!-- 모달 include -->
+			<div th:replace="common/modal :: commonModal"></div>
+
+			<!-- 결과 출력용 (PDF/Excel 만들 때만 사용) -->
+			<div id="empAtt-export" style="display:none;"></div>
+
 		</main>
 	</div>
 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 	<script src="/hr/js/attendance.js"></script>
 
 </body>
