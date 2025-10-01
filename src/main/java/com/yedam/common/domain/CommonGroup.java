@@ -13,4 +13,5 @@ public class CommonGroup {
 
 	private String groupName;
 	private String companyCode;
+	private String remk;
 }

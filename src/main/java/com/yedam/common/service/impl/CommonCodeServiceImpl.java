@@ -17,8 +17,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 	@Autowired CommonCodeRepository commonCodeRepository;
 
 	@Override
-	public List<CommonCode> findByCodeGroup(String codeGroup) {
-		return commonCodeRepository.findByCodeGroup(codeGroup);
+	public List<CommonCode> findByGroupId(String codeGroup) {
+		return commonCodeRepository.findByGroupId(codeGroup);
 	}
 
 	@Override
@@ -28,7 +28,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 		Map<String, List<CommonCode>> map = new HashMap<String, List<CommonCode>>();
 
 		for (String code : godeStrings) {
-			map.put(code, commonCodeRepository.findByCodeGroup(code));
+			map.put(code, commonCodeRepository.findByGroupId(code));
 		}
 		return map;
 	}

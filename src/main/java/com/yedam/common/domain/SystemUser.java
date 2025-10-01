@@ -35,5 +35,6 @@ public class SystemUser {
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
+
     private Employee employee;
 }
