@@ -17,8 +17,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 	@Autowired CommonCodeRepository commonCodeRepository;
 
 	@Override
-	public List<CommonCode> findByGroupId(String codeGroup) {
-		return commonCodeRepository.findByGroupId(codeGroup);
+	public List<CommonCode> findByGroupIdAndCompanyCode(String groupId, String companyCode) {
+		return commonCodeRepository.findByGroupIdAndCompanyCode(groupId, companyCode);
 	}
 
 	@Override
