@@ -45,8 +45,8 @@ public class HrServiceImpl implements HrService {
 	HrHistoryRepository hrHistoryRepository;
 
 	@Override
-	public List<Employee> getAllEmployees() {
-		return employeeRepository.findAll();
+	public List<Employee> findByCompanyCode(String companyCode) {
+		return employeeRepository.findByCompanyCode(companyCode);
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class HrServiceImpl implements HrService {
 		// 1. 사원 등록 (없으면 insert)
 		employee.setCompanyCode("C001"); // 테스트로 회사 코드 고정. 수정필요
 		try {
-			if (!employeeRepository.existsById(employee.getEmpNo())) {
+			if (!employeeRepository.existsById(employee.getEmpCode())) {
 				employeeRepository.save(employee);
 			}
 		} catch (Exception e) {
@@ -83,7 +83,7 @@ public class HrServiceImpl implements HrService {
 
 			String uuid = UUID.randomUUID().toString().substring(0, 4);
 			String safeName = employee.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-			signFileName = uuid + "_" + employee.getEmpNo() + "_" + safeName + ".png";
+			signFileName = uuid + "_" + employee.getEmpCode() + "_" + safeName + ".png";
 
 			File signFile = new File(uploadDir, signFileName);
 			signImg.transferTo(signFile);
@@ -112,7 +112,7 @@ public class HrServiceImpl implements HrService {
 				pdfDirFile.mkdirs();
 
 			String safeName = employee.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-			String pdfFileName = employee.getEmpNo() + "_" + safeName + "_contract.pdf";
+			String pdfFileName = employee.getEmpCode() + "_" + safeName + "_contract.pdf";
 
 			pdfPath = "/hr/pdf/" + pdfFileName; // DB 저장용 경로
 			String outputPath = pdfDir + pdfFileName; // 실제 파일 경로
@@ -148,7 +148,7 @@ public class HrServiceImpl implements HrService {
 
 		// 4. DB 저장
 		sign.setCompanyCode(employee.getCompanyCode());
-		sign.setEmpNo(employee.getEmpNo());
+		sign.setEmpCode(employee.getEmpCode());
 		sign.setEmpName(employee.getName());
 		sign.setEmpDept(employee.getDept());
 		sign.setImg(signPath);
@@ -162,7 +162,7 @@ public class HrServiceImpl implements HrService {
 		try {
 			HrHistory history = new HrHistory();
 			history.setCompanyCode(employee.getCompanyCode());
-			history.setEmpNo(employee.getEmpNo()); // Employee에서 empNo 그대로
+			history.setEmpCode(employee.getEmpCode()); // Employee에서 EmpCode 그대로
 			history.setEventType("등록"); // 등록/수정 구분
 			history.setEventDetail("사원 신규 등록 및 계약서 저장");
 
@@ -178,8 +178,8 @@ public class HrServiceImpl implements HrService {
 	// 단 건 조회
 	@Override
 	@Transactional(readOnly = true)
-	public Employee getEmployee(String empNo) {
-		return employeeRepository.findById(empNo).orElseThrow(() -> new EntityNotFoundException("사원 없음: " + empNo));
+	public Employee getEmployee(String EmpCode) {
+		return employeeRepository.findById(EmpCode).orElseThrow(() -> new EntityNotFoundException("사원 없음: " + EmpCode));
 	}
 
 	// 단 건 수정
@@ -190,7 +190,7 @@ public class HrServiceImpl implements HrService {
 		String manager = auth.getName().split(":")[2];
 
 		// 1. 기존 사원 정보 조회
-		Employee existing = employeeRepository.findById(employee.getEmpNo())
+		Employee existing = employeeRepository.findById(employee.getEmpCode())
 				.orElseThrow(() -> new RuntimeException("해당 사원이 존재하지 않습니다."));
 
 		// 2. 수정할 필드만 덮어쓰기 (null은 무시 → 기존 값 유지)
@@ -236,7 +236,7 @@ public class HrServiceImpl implements HrService {
 		employeeRepository.save(existing);
 
 		// 4. 선택적으로 서명 이미지 저장 (있으면 갱신)
-		HrSign sign = hrSignRepository.findByEmpNo(existing.getEmpNo()).orElse(null);
+		HrSign sign = hrSignRepository.findByEmpCode(existing.getEmpCode()).orElse(null);
 
 		if (signImg != null && !signImg.isEmpty()) {
 			try {
@@ -247,7 +247,7 @@ public class HrServiceImpl implements HrService {
 
 				String uuid = UUID.randomUUID().toString().substring(0, 4);
 				String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-				String signFileName = uuid + "_" + existing.getEmpNo() + "_" + safeName + ".png";
+				String signFileName = uuid + "_" + existing.getEmpCode() + "_" + safeName + ".png";
 
 				File signFile = new File(uploadDir, signFileName);
 				signImg.transferTo(signFile);
@@ -258,7 +258,7 @@ public class HrServiceImpl implements HrService {
 					sign = new HrSign();
 				}
 				sign.setCompanyCode(existing.getCompanyCode());
-				sign.setEmpNo(existing.getEmpNo());
+				sign.setEmpCode(existing.getEmpCode());
 				sign.setEmpName(existing.getName());
 				sign.setEmpDept(existing.getDept());
 				sign.setImg(signPath);
@@ -278,7 +278,7 @@ public class HrServiceImpl implements HrService {
 					dir.mkdirs();
 
 				String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-				String pdfFileName = existing.getEmpNo() + "_" + safeName + "_contract.pdf";
+				String pdfFileName = existing.getEmpCode() + "_" + safeName + "_contract.pdf";
 
 				String pdfPath = "/hr/pdf/" + pdfFileName; // DB 저장용 경로
 				String outputPath = uploadDir + pdfFileName;
@@ -300,7 +300,7 @@ public class HrServiceImpl implements HrService {
 		// Employee 수정 저장 완료 후
 		HrHistory history = new HrHistory();
 		history.setCompanyCode(existing.getCompanyCode());
-		history.setEmpNo(existing.getEmpNo());
+		history.setEmpCode(existing.getEmpCode());
 		history.setEventType("수정");
 		history.setEventDetail("사원 정보 수정");
 		history.setManager(manager);

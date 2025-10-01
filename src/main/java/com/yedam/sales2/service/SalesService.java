@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.yedam.sales2.domain.DSalesPlan;
+import com.yedam.sales2.domain.EmpPlan;
 import com.yedam.sales2.domain.Sales;
 import com.yedam.sales2.domain.SalesPlan;
 
-public interface salesService {
+public interface SalesService {
 	
 	List<Sales> findAll(); // 조회
 	
@@ -32,4 +33,7 @@ public interface salesService {
 	String insertSalesPlan(List<DSalesPlan> detailList);
 
 	boolean checkSalesPlanExists(int year);
+	
+	// 사원별 영업매출
+	List<Map<String, Object>> getEmpPlanList();
 }

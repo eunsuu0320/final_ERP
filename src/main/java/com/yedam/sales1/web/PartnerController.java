@@ -8,12 +8,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.yedam.sales1.domain.Partner;
-import com.yedam.sales1.domain.Product;
+import com.yedam.sales1.dto.PartnerRegistrationDTO;
 import com.yedam.sales1.service.PartnerService;
 
 @Controller
@@ -53,10 +53,12 @@ public class PartnerController {
 	}
 
 	// 품목 등록
-	@PostMapping("api/registPartner")
-	public ResponseEntity<Partner> registPartner(@ModelAttribute Partner partner) {
-		Partner saved = partnerService.savePartner(partner);
-		return ResponseEntity.ok(saved);
+	@PostMapping("api/registFullPartner")
+	public ResponseEntity<Partner> registFullPartner(@RequestBody PartnerRegistrationDTO partnerData) {
+		System.out.println(partnerData);
+		Partner savedPartner = partnerService.saveFullPartnerData(partnerData);
+
+		return ResponseEntity.ok(savedPartner);
 	}
 
 }

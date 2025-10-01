@@ -17,19 +17,22 @@ public class DedcutServiceImpl implements DedcutService {
 
 	@Override
 	public List<Dedcut> findByCompanyCode(String companyCode) {
-		// TODO Auto-generated method stub
-		return null;
+		return dedcutRepository.findByCompanyCode(companyCode);
 	}
 
 	@Override
 	public List<Dedcut> saveAllDedcuts(List<Dedcut> dedcuts, String companyCode) {
-		// TODO Auto-generated method stub
-		return null;
+		dedcuts.forEach(a -> a.setCompanyCode(companyCode)); // 회사코드 강제 세팅
+		return dedcutRepository.saveAll(dedcuts);
 	}
 
 	@Override
-	public void updateStatus(List<Dedcut> codes, String status, String companyCode) {
-		// TODO Auto-generated method stub
-
+	public void updateStatus(List<Integer> codes, String status, String companyCode) {
+		for (Integer code : codes) {
+			Dedcut dedcut = dedcutRepository.findByDedIdAndCompanyCode(code, companyCode)
+					.orElseThrow(() -> new RuntimeException("해당 공제 없음 " + code));
+			dedcut.setAllIs(status);
+			dedcutRepository.save(dedcut);
+		}
 	}
 }

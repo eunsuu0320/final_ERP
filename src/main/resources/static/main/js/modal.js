@@ -6,7 +6,7 @@ const modalConfigs = {
       url: "/api/modal/employee",
       title: "직원 검색",
       columns: [
-         { title: "사원번호", field: "empNo" },
+         { title: "사원번호", field: "empCode" },
          { title: "성명", field: "name" },
          { title: "부서", field: "dept" },
          { title: "직급", field: "grade" }
@@ -46,7 +46,7 @@ const modalConfigs = {
     title: "판매코드 검색",
     columns: [
       { title:"판매코드",   field:"salesCode",   width:140, hozAlign:"center" },
-      { title:"거래처",     field:"correspondent", minWidth:160 },
+      { title:"거래처",     field:"partnerName", minWidth:160 },
       { title:"제품명",     field:"productName", minWidth:180 },
       { title:"판매금액",   field:"salesAmount", width:120, hozAlign:"right",
         formatter:(c)=> Number(c.getValue()||0).toLocaleString() },
@@ -62,7 +62,7 @@ const modalConfigs = {
          { title: "코드명", field: "codeName" },
       ]
    },
-   
+
    // 매입처 모달
       supplier: {
     url: "/api/suppliers",
@@ -93,8 +93,8 @@ const modalConfigs = {
     ],
     selectable: 1,
   },
-   
-   
+
+
 };
 
 

@@ -11,6 +11,6 @@ import com.yedam.common.domain.CommonCode;
 @Repository
 public interface CommonCodeRepository extends JpaRepository<CommonCode, String> {
 
-	@Query("select c from CommonCode c where c.codeGroup = ?1")
-	List<CommonCode> findByCodeGroup(String codeGroup);
+	@Query("select c from CommonCode c where c.groupId = ?1")
+	List<CommonCode> findByGroupId(String groupId);
 }

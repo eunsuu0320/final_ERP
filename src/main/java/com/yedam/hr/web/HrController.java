@@ -36,11 +36,11 @@ public class HrController {
 	    return "hr/employee";
 	}
 
-
-	@ResponseBody
+	// 회사코드별 사원 조회
 	@GetMapping("/selectAllEmp")
-	public List<Employee> employee(Model model) {
-		return hrService.getAllEmployees();
+	@ResponseBody
+	public List<Employee> employee(@RequestParam String companyCode) {
+		return hrService.findByCompanyCode(companyCode);
 	}
 
 	// 사원 등록 모달 html

@@ -1,14 +1,15 @@
 // src/main/java/com/yedam/ac/util/CompanyContextImpl.java
 package com.yedam.ac.util;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -47,12 +48,12 @@ public class CompanyContextImpl implements CompanyContext {
         log.debug("[CCX] param.cc = {}", p);
         if (p != null) { cache(req, p, "PARAM"); return p; }
 
-        // 4) DB fallback
-        String db = trimOrNull(codeProvider.currentCompanyCode());
+        // 4) 현재 로그인 사용자 기준 DB 조회 (Provider)
+        String db = trimOrNull(codeProvider.resolveForCurrentUser());
         log.debug("[CCX] provider(DB) = {}", db);
         if (db != null) { cache(req, db, "PROVIDER"); return db; }
 
-        // 5) 기본값
+        // 5) 기본값 (개발용)
         String def = trimOrNull(defaultCompanyCode);
         log.debug("[CCX] default-code(yml) = {}", def);
         if (def != null) { cache(req, def, "DEFAULT"); return def; }

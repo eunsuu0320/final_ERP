@@ -12,17 +12,20 @@
 		<main>
 			<div class="container-fluid px-4">
 				<h1 class="mt-4">사원 관리</h1>
+
+				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+
 				<div class="d-flex align-items-center mb-3">
-					<button id="btn-new" class="btn btn-primary me-2">신규</button>
-					<button id="btn-update" class="btn btn-success me-2">수정</button>
 					<select id="sel-field" class="form-select w-auto me-2">
-						<option value="emp_no">사원번호</option>
+						<option value="empCode">사원번호</option>
 						<option value="name">성명</option>
 						<option value="dept">부서명</option>
 					</select> <input id="txt-search" type="text"
 						class="form-control w-auto me-2" placeholder="검색어 입력">
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					 <div class="ms-auto d-flex">
+					 	<button id="btn-new" class="btn btn-primary me-2">신규</button>
+						<button id="btn-update" class="btn btn-success me-2">수정</button>
 					    <button class="btn btn-secondary me-2">인쇄</button>
 					    <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
 					    <button class="btn btn-dark" onclick="openHistoryModal(document.getElementById('companyCode').value)">이력조회</button>
@@ -44,9 +47,11 @@
 				        <button type="button" class="btn-close btn-close" data-bs-dismiss="modal"></button>
 				      </div>
 				      <div class="modal-body">
+
 				        <!-- Tabulator 테이블 영역 -->
 				        <div id="history-table"></div>
 				      </div>
+
 				    </div>
 				  </div>
 				</div>

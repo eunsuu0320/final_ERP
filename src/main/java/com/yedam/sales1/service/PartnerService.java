@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.yedam.sales1.domain.Partner;
+import com.yedam.sales1.dto.PartnerRegistrationDTO;
 
 public interface PartnerService {
 	List<Partner> getAllPartner();
@@ -13,4 +14,6 @@ public interface PartnerService {
 	Partner savePartner(Partner partner);
 
 	Partner getPartnerByPartnerCode(String keyword);
+
+	Partner saveFullPartnerData(PartnerRegistrationDTO partnerData);
 }

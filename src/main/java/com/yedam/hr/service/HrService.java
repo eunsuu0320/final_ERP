@@ -10,7 +10,9 @@ import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
 
 public interface HrService {
-	List<Employee> getAllEmployees();
+
+	// 회사코드별 사원 조회
+	List<Employee> findByCompanyCode(String companyCode);
 
 	   // 사원 + 근로계약서 + pdf 등록
     void saveContract(Employee employee,
@@ -21,7 +23,7 @@ public interface HrService {
                       MultiValueMap<String, String> params);
 
     // 단건조회
-    public Employee getEmployee(String empNo);
+    public Employee getEmployee(String empCode);
 
     // 수정
     void updateEmployee(Employee employee,

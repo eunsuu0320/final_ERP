@@ -44,6 +44,7 @@
             <div class="col-md-6">
               <label class="form-label vf-label">전표번호</label>
               <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동발번" readonly>
+              <input id="vf-resvId" type="hidden"> <!-- 예약ID 저장용 -->
             </div>
 
             <div class="col-md-6">
@@ -110,7 +111,7 @@
           </div>
 
           <div class="d-flex justify-content-end gap-2 mt-3">
-            <a class="btn btn-outline-secondary" th:href="@{/ac/list}">목록</a>
+            <a class="btn btn-outline-secondary" th:href="@{/statements}">목록</a>
             <button id="vf-save" type="button" class="btn btn-primary">저장</button>
           </div>
         </div>
@@ -139,7 +140,13 @@
     const lastCalc = { mode:'TOTAL', supply:0, vat:0, total:0, taxType:'TAXABLE' };
 
     let currentUserName='';
-    fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():{}).then(j=>{currentUserName=j?.name||''; const $emp=document.getElementById('vf-empName'); if($emp) $emp.value=currentUserName;}).catch(()=>{});
+    fetch('/api/me',{credentials:'same-origin'})
+      .then(r=>r.ok?r.json():{})
+      .then(j=>{
+        currentUserName=j?.name||'';
+        const $emp=document.getElementById('vf-empName'); 
+        if($emp) $emp.value=currentUserName;
+      }).catch(()=>{});
 
     /* -------- 전표유형: 공통코드 우선, 실패 시 폴백 -------- */
     const $type = document.getElementById('vf-type');
@@ -161,7 +168,6 @@
       }catch(_){
         $type.innerHTML = typeFallback.map(it=>`<option value="${it.code}">${it.name}</option>`).join('');
       }
-      // 기본값
       if(!$type.value) $type.value='SALES';
     }
 
@@ -183,17 +189,42 @@
       if($lblVoucherDate) $lblVoucherDate.textContent= '전표일자';
     }
 
-    /* -------- 전표번호 자동발번 -------- */
-    async function fetchNextVoucherNo(type, dateStr){
-      const $vno = document.getElementById('vf-voucherNo'); if(!$vno) return;
+    /* -------- 전표번호 프리뷰(증분 없음) -------- */
+    let _vnoInFlight = false;
+    async function fetchPreviewVoucherNo(type, dateStr){
+      const $vno = document.getElementById('vf-voucherNo'); 
+      const $resv= document.getElementById('vf-resvId');
+      if(!$vno) return;
+      if (_vnoInFlight) return;
+      _vnoInFlight = true;
       try{
-        $vno.classList.add('vf-loading'); $vno.value = '발번 조회중...';
+        // 프리뷰는 예약을 만들지 않음(증분 없음)
+        $vno.classList.add('vf-loading'); $vno.value = '전표번호 확인중...';
+        if($resv) $resv.value = ''; // 이전 예약ID 초기화
         const qs = new URLSearchParams({ type, ...(dateStr?{date:dateStr}:{}) });
-        const res = await fetch(`/api/vouchers/next?${qs.toString()}`, { method:'GET' });
-        const text = await res.text(); if(!res.ok) throw new Error(text||'fetch failed');
-        const j = text ? JSON.parse(text) : {}; $vno.value = j?.voucherNo || '';
-      }catch(e){ console.error(e); $vno.value = ''; toast('전표번호 조회 실패'); }
-      finally{ $vno.classList.remove('vf-loading'); }
+        const res  = await fetch(`/api/vouchers/preview?${qs.toString()}`, { method:'GET' });
+        const text = await res.text(); 
+        if(!res.ok) throw new Error(text||'preview failed');
+        const j = text ? JSON.parse(text) : {};
+        $vno.value = j?.voucherNo || '';
+      }catch(e){
+        console.error(e);
+        $vno.value = '';
+      }finally{
+        $vno.classList.remove('vf-loading');
+        _vnoInFlight = false;
+      }
+    }
+
+    /* -------- 저장 직전 예약 호출 -------- */
+    async function reserveVoucher(type, dateStr){
+      const qs = new URLSearchParams({ type, ...(dateStr?{date:dateStr}:{}) });
+      const res = await fetch(`/api/vouchers/reserve?${qs.toString()}`, { method:'GET' });
+      const text = await res.text();
+      if(!res.ok) throw new Error(text || 'reserve failed');
+      const j = text ? JSON.parse(text) : {};
+      if(!j.reservationId || !j.voucherNo) throw new Error('예약 실패(필드누락)');
+      return j; // { reservationId, voucherNo }
     }
 
     /* -------- 숫자 필드 결합 -------- */
@@ -246,7 +277,7 @@
     $findPartnerBtn?.addEventListener('click', openPartnerPicker);
     $findSaleBtn?.addEventListener('click', openCodePicker);
 
-    /* -------- 날짜/유형 변경시 전표번호 재발번 & 라벨적용 -------- */
+    /* -------- 날짜/유형 변경시 전표번호 프리뷰 & 라벨적용 -------- */
     const $voucherDt = document.getElementById('vf-voucherDate');
     function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
 
@@ -257,12 +288,37 @@
       document.getElementById('vf-writeDate').value   = t;
     }
 
-    // 저장
-    document.getElementById('vf-save')?.addEventListener('click', async ()=>{
-      const t = $type.value || 'SALES';
+    // ✅ 저장(예약→POST) — B안 규칙
+    document.getElementById('vf-save')?.addEventListener('click', async (e)=>{
+      e?.preventDefault?.();
+
+      const $btn = e.currentTarget;
+      if ($btn.disabled) return; // 이중 클릭 방지
+      const origText = $btn.textContent;
+      $btn.disabled = true; $btn.textContent = '저장 중...';
+
+      const t = ($type.value || 'SALES').toUpperCase();
       const map = labelsByType[t] || labelsByType.SALES;
+      const voucherDate = document.getElementById('vf-voucherDate').value || null;
+
+      // 1) 먼저 예약
+      try{
+        const { reservationId, voucherNo } = await reserveVoucher(t, voucherDate);
+        const $resv = document.getElementById('vf-resvId');
+        const $vno  = document.getElementById('vf-voucherNo');
+        if ($resv) $resv.value = reservationId;
+        if ($vno && voucherNo) $vno.value = voucherNo;
+      } catch (err){
+        console.error(err);
+        toast('예약 실패: ' + (err.message||''));
+        $btn.disabled=false; $btn.textContent=origText;
+        return;
+      }
+
+      // 2) 예약ID 포함하여 저장
       const body = {
-        voucherDate: document.getElementById('vf-voucherDate').value || null,
+        reservationId: (document.getElementById('vf-resvId')?.value || null),
+        voucherDate,
         partnerName: document.getElementById('vf-partnerName').value || null,
         employee:    document.getElementById('vf-empName').value || null,
         taxCode:     document.getElementById('vf-taxType').value || 'TAXABLE',
@@ -271,7 +327,6 @@
         amountTotal:  unfmt(document.getElementById('vf-total').value),
         remark:       document.getElementById('vf-remark').value || null,
       };
-      // 코드 필드명 매핑
       if(t==='BUY' || t==='PAYMENT') body.buyCode   = document.getElementById('vf-saleCode').value || null;
       else                            body.salesCode = document.getElementById('vf-saleCode').value || null;
 
@@ -292,7 +347,12 @@
         const { voucherNo } = text ? JSON.parse(text) : {};
         if (voucherNo) document.getElementById('vf-voucherNo').value = voucherNo;
         toast(`저장되었습니다${voucherNo ? `: ${voucherNo}` : ''}`);
-      }catch(e){ console.error(e); toast('저장 실패: ' + (e.message || '')); }
+      }catch(e){ 
+        console.error(e); 
+        toast('저장 실패: ' + (e.message || '')); 
+      } finally {
+        $btn.disabled=false; $btn.textContent=origText;
+      }
     });
 
     /* ---- 초기화 ---- */
@@ -300,15 +360,15 @@
       await initVoucherTypes();
       initDates();
       applyTypeLabels($type.value);
-      await fetchNextVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
+      await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
 
       bindNumericFields();
 
       $type.addEventListener('change', async ()=>{
         applyTypeLabels($type.value);
-        await fetchNextVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
+        await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
       });
-      $voucherDt.addEventListener('change', ()=> fetchNextVoucherNo($type.value, $voucherDt.value||''));
+      $voucherDt.addEventListener('change', ()=> fetchPreviewVoucherNo($type.value, $voucherDt.value||''));
     })();
   });
   </script>

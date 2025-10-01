@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,7 +44,7 @@ public class PayController {
     @ResponseBody
     public Object payReady(
             @RequestBody PayRequestWrapper wrapper,
-            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user
+            @AuthenticationPrincipal User user
     ) {
         PayRequest payRequest = wrapper.getPayRequest();
         Company companyInfo = wrapper.getCompanyInfo();
@@ -70,7 +71,7 @@ public class PayController {
     public String kakaoPaySuccess(
             @RequestParam("pg_token") String pgToken,
             @RequestParam("orderId") String orderId,
-            @AuthenticationPrincipal org.springframework.security.core.userdetails.User user,
+            @AuthenticationPrincipal User user,
             Model model
     ) {
         String userId = (user != null) ? user.getUsername() : "GUEST";

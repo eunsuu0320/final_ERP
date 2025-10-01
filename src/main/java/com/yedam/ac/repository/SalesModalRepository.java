@@ -1,3 +1,4 @@
+// src/main/java/com/yedam/ac/repository/SalesModalRepository.java
 package com.yedam.ac.repository;
 
 import java.util.List;
@@ -11,21 +12,25 @@ import com.yedam.sales2.domain.Sales;
 
 public interface SalesModalRepository extends JpaRepository<Sales, String> {
 
-    // 키워드가 없으면 최근 100건, 있으면 code/partner/product like 검색
-    @Query(value =
-        "SELECT * FROM (" +
-        "  SELECT s.SALES_CODE AS salesCode," +
-        "         s.CORRESPONDENT AS correspondent," +
-        "         s.PRODUCT_NAME AS productName," +
-        "         s.SALES_AMOUNT AS salesAmount," +
-        "         s.SALES_DATE AS salesDate " +
-        "    FROM SALES s " +
-        "   WHERE (:kw IS NULL " +
-        "          OR s.SALES_CODE LIKE '%'||:kw||'%' " +
-        "          OR s.CORRESPONDENT LIKE '%'||:kw||'%' " +
-        "          OR s.PRODUCT_NAME LIKE '%'||:kw||'%') " +
-        "   ORDER BY s.SALES_DATE DESC, s.SALES_CODE DESC" +
-        ") WHERE ROWNUM <= 100",
-        nativeQuery = true)
-    List<SalesModalRow> lookup(@Param("kw") String keyword);
+    @Query(value = """
+        SELECT *
+        FROM (
+            SELECT
+              s.SALES_CODE    AS salesCode,     -- 🔁 컬럼명 교정
+              s.CORRESPONDENT AS partnerName,
+              s.PRODUCT_NAME  AS productName,
+              s.SALES_AMOUNT  AS salesAmount,
+              s.SALES_DATE    AS salesDate
+            FROM SALES s
+            WHERE s.COMPANY_CODE = :cc
+              AND ( :kw IS NULL OR :kw = ''
+                    OR UPPER(s.SALES_CODE)    LIKE '%'||UPPER(:kw)||'%'   -- 🔁 여기서도 교정
+                    OR UPPER(s.CORRESPONDENT) LIKE '%'||UPPER(:kw)||'%'
+                    OR UPPER(s.PRODUCT_NAME)  LIKE '%'||UPPER(:kw)||'%' )
+            ORDER BY s.SALES_DATE DESC, s.SALES_CODE DESC                  -- 🔁 정렬 컬럼도 교정
+        )
+        WHERE ROWNUM <= 100
+        """, nativeQuery = true)
+    List<SalesModalRow> lookup(@Param("cc") String companyCode,
+                               @Param("kw") String keyword);
 }

@@ -30,7 +30,6 @@
         	<!-- content -->
         	<div layout:fragment="content"></div>
         	<!-- content -->
-
         </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
@@ -54,8 +53,8 @@
 	<script src="https://oss.sheetjs.com/sheetjs/xlsx.full.min.js"></script>
 
 	<!-- modal.js -->
-	<script src="/main/js/modal.js"></script>
-	<script src="/main/js/export.js"></script>
+	<script th:src="@{/main/js/modal.js}"></script>
+	<script th:src="@{/main/js/export.js}"></script>
 
     </body>
 </html>
