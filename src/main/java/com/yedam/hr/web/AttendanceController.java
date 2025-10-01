@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.hr.domain.Attendance;
+import com.yedam.hr.domain.EmpAttendance;
+import com.yedam.hr.repository.EmpAttendanceRepository;
 import com.yedam.hr.service.AttendanceService;
 
 import ch.qos.logback.core.model.Model;
@@ -19,8 +21,8 @@ import ch.qos.logback.core.model.Model;
 @Controller
 public class AttendanceController {
 
-	@Autowired
-	AttendanceService attendanceService;
+	@Autowired AttendanceService attendanceService;
+	@Autowired EmpAttendanceRepository empAttendanceRepository;
 
 	// 근태 관리 페이지
 	@GetMapping("/attendancePage")
@@ -63,6 +65,13 @@ public class AttendanceController {
 			e.printStackTrace();
 			return "fail: " + e.getMessage();
 		}
+	}
+
+	// 회사코드별 사원 근태 조회
+	@GetMapping("empAttendance")
+	@ResponseBody
+	public List<EmpAttendance> getEmpAttendances(@RequestParam String companyCode) {
+		return empAttendanceRepository.findByCompanyCode(companyCode);
 	}
 
 }

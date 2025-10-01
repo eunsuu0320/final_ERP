@@ -24,9 +24,9 @@ public class EmpAttendance implements Prefixable {
     private String empAttId;
 
     private String attId;     // 근태코드
-    private Integer companyCode;     // 회사코드
-    private Integer empCode;     // 사원번호
-    private Integer workTime;   // 근태 시간
+    private String companyCode;     // 회사코드
+    private String empCode;     // 사원번호
+    private Double workTime;   // 근태 시간
     private LocalDate workDate;    // 근태일자
     private String holyIs; // 휴가여부
     private String note;    // 비고

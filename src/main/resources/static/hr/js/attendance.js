@@ -206,7 +206,116 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 	});
 
+	// 사원 근태 조회
+	const empAttSelectTable = new Tabulator(document.getElementById("empAttSelect-table"), {
+		layout: "fitColumns",
+		pagination: "local",
+		paginationSize: 10,
+		placeholder: "조회된 사원의 근태 목록이 없습니다.",
+		selectable: true,
+		columns: [
+			{
+				title: "선택",
+				formatter: "rowSelection",
+				titleFormatter: "rowSelection",
+				headerSort: false,
+				width: 44,
+				hozAlign: "center",
+				headerHozAlign: "center",
+			},
+			{ title: "근태번호", field: "empAttId" },
+			{ title: "사원", field: "empCode" }, // 사원이름으로 교체 해야함
+			{ title: "근태", field: "attId" }, // 사원이름으로 교체 해야함
+			{ title: "휴가여부", field: "holyIs" },
+			{ title: "근태(일/시간)", field: "holyIs" },
+			{ title: "근태일자", field: "workDate" },
+			{ title: "비고", field: "note" }
+		],
+	});
+
+	// 데이터 로드 함수
+	async function loadEmpAttendances() {
+		const res = await fetch(`/empAttendance?companyCode=${manager}`);
+		const data = await res.json();
+		empAttSelectTable.setData([...data]);
+	}
 
 	// 초기 로드
 	loadAttendances();
+	loadEmpAttendances();
+
+	// 선택된 행 가져오기
+  function getSelectedRows() {
+    return empAttSelectTable.getSelectedData();
+  }
+
+  // 선택된 데이터 → HTML 테이블 변환
+  function buildTableHTML(rows) {
+    if (!rows || rows.length === 0) return "<p>선택된 데이터가 없습니다.</p>";
+
+    let html = `
+      <h2 style="text-align:center;">근태전표</h2>
+      <p style="text-align:right;">전표일자 : ${new Date().toISOString().slice(0,10)}</p>
+      <table border="1" cellspacing="0" cellpadding="5"
+             style="width:100%; border-collapse:collapse; text-align:center;">
+        <thead>
+          <tr>
+            <th>사원</th>
+            <th>근태</th>
+            <th>휴가여부</th>
+            <th>근태(일/시간)</th>
+            <th>근태일자</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    rows.forEach(r => {
+      html += `
+        <tr>
+          <td>${r.empCode ?? ""}</td>
+          <td>${r.attId ?? ""}</td>
+          <td>${r.holyIs ?? ""}</td>
+          <td>${r.holyIs ?? ""}</td>
+          <td>${r.workDate ?? ""}</td>
+          <td>${r.note ?? ""}</td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table>";
+    return html;
+  }
+
+  // PDF 다운로드
+  document.getElementById("empAtt-print").addEventListener("click", function () {
+    const rows = getSelectedRows();
+    const exportDiv = document.getElementById("empAtt-export");
+    exportDiv.innerHTML = buildTableHTML(rows);
+
+    const opt = {
+      margin: 10,
+      filename: '근태전표.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(exportDiv).save();
+  });
+
+  // Excel 다운로드
+  document.getElementById("empAtt-excel").addEventListener("click", function () {
+    const rows = getSelectedRows();
+    if (rows.length === 0) {
+      alert("선택된 데이터가 없습니다.");
+      return;
+    }
+
+    // JSON → SheetJS로 변환
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "근태전표");
+    XLSX.writeFile(wb, "근태전표.xlsx");
+  });
 });
