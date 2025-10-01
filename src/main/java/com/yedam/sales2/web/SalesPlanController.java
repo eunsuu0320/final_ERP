@@ -127,4 +127,5 @@ public class SalesPlanController {
  	public List<Map<String, Object>> getEmpList() {
  		return salesService.getEmpPlanList();
  	}
+
 }

@@ -10,7 +10,7 @@ import com.yedam.sales2.domain.EspPlan;
 import com.yedam.sales2.domain.Sales;
 
 @Repository
-public interface EspPlanRepository extends JpaRepository<EspPlan, Integer>{
+public interface EspPlanRepository extends JpaRepository<EspPlan, String>{
 
 	
 	}
