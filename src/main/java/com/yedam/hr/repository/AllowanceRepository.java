@@ -9,12 +9,12 @@ import org.springframework.stereotype.Repository;
 import com.yedam.hr.domain.Allowance;
 
 @Repository
-public interface AllowanceRepository extends JpaRepository<Allowance, Long> {
+public interface AllowanceRepository extends JpaRepository<Allowance, String> {
 
 	// 회사 코드별 수당 전체 조회
 	List<Allowance> findByCompanyCode(String companyCode);
 
 	// 선택 건 사용중단 및 재사용
-	Optional<Allowance> findByAllIdAndCompanyCode(Integer allId, String companyCode);
+	Optional<Allowance> findByAllIdAndCompanyCode(String allId, String companyCode);
 
 }

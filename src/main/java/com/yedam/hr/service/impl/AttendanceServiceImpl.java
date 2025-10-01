@@ -18,4 +18,22 @@ public class AttendanceServiceImpl implements AttendanceService {
 	public List<Attendance> getAttendances(String companyCode) {
 		return attendanceRepository.findByCompanyCode(companyCode);
 	}
+
+	@Override
+	public List<Attendance> saveAllAttendances(List<Attendance> attendances, String companyCode) {
+		attendances.forEach(a -> a.setCompanyCode(companyCode));
+		return attendanceRepository.saveAll(attendances);
+	}
+
+	@Override
+	public void updateStatus(List<String> codes, String status, String companyCode) {
+		for (String code : codes) {
+			Attendance attendance = attendanceRepository.findByAttIdAndCompanyCode(code, companyCode)
+					.orElseThrow(() -> new RuntimeException("해당 근태 없음: " + code));
+
+			attendance.setAttIs(status);
+			attendanceRepository.save(attendance);
+		}
+
+	}
 }

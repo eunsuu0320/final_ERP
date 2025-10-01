@@ -12,5 +12,5 @@ public interface AllowanceService {
     // 여러 건 및 단 건 저장
     List<Allowance> saveAllAllowances(List<Allowance> allowances, String companyCode);
 
-    void updateStatus(List<Integer> codes, String status, String companyCode);
+    void updateStatus(List<String> codes, String status, String companyCode);
 }

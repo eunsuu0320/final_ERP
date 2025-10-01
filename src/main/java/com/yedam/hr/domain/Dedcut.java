@@ -1,5 +1,9 @@
 package com.yedam.hr.domain;
 
+import org.hibernate.annotations.GenericGenerator;
+
+import com.yedam.common.Prefixable;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -9,16 +13,30 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Dedcut {
+public class Dedcut implements Prefixable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "ded_seq")
-    @SequenceGenerator(name = "ded_seq", sequenceName = "DED_ID_SEQ", allocationSize = 1)
-    private Long dedId;   // 공제코드 (PK)
+    @GeneratedValue(generator = "sequence-id-generator")
+    @GenericGenerator(
+            name = "sequence-id-generator",
+            strategy = "com.yedam.common.SequenceIdGenerator"
+    )
+    private String dedId;   // 공제코드 (PK)
 
     private String companyCode;   // 회사고유코드
     private String dedName;   // 공제항목
     private String formula;   // 계산식
     private String calcNote;   // 산출방법
     private String allIs;   // 사용여부
+
+
+    @Override
+    public String getPrefix() {
+    	return "DED";
+    }
+
+    @Override
+    public String getSequenceName() {
+    	return "DED_ID_SEQ";
+    }
 }

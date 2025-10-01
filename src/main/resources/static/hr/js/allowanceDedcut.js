@@ -1,8 +1,8 @@
 const manager = document.getElementById("companyCode").value; // 회사코드 가져오기
 
 // 공통코드 불러오기
-async function loadCommonCode(groupId) {
-	const res = await fetch(`/api/modal/commonCode?commonGroup=${groupId}`);
+async function loadCommonCode(groupName) {
+	const res = await fetch(`/api/modal/commonCode?commonGroup=${groupName}`);
 	const list = await res.json();
 	return Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
 }
