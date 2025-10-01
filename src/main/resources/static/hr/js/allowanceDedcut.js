@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const deductionEl = document.getElementById("deduction-table");
 	if (!allowanceEl || !deductionEl) return;
 
-	const USE_YN = await loadCommonCode("USE_YN");
+	const USE_YN = await loadCommonCode("GRP007");
 
 	// 수당 테이블
 	const allowanceTable = new Tabulator(allowanceEl, {

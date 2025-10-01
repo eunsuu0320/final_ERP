@@ -123,7 +123,7 @@
 										      function(selected) {
 										        document.getElementById('bankCodeName').value = selected.codeName;
 										        document.getElementById('bankCode').value = selected.codeId;
-										      }, 'BANK')">
+										      }, 'GRP015')">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">예금주</label> <input
@@ -223,9 +223,9 @@
 	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
 	  resizeCanvas();
 	  signaturePad.clear();
-	  getCode('POSITION', 'position');
-	  getCode('DUTY', 'grade');
-	  getCode('DEPT', 'dept');
+	  getCode('GRP010', 'position');
+	  getCode('GRP013', 'grade');
+	  getCode('GRP011', 'dept');
 	});
 
 	// 탭 전환될 때 (근로계약서 탭 들어갈 때)

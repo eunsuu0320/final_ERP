@@ -125,6 +125,7 @@ let table; // Tabulator 인스턴스 전역 변수
 
 function openModal(type, onSelect, commonGroup) {
 	const config = modalConfigs[type];
+
 	if (!config) {
 		console.error(`modalConfigs[${type}] 설정이 없습니다.`);
 		return;

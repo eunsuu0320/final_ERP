@@ -18,8 +18,9 @@ public class CommonCodeController {
 
 	@ResponseBody
 	@GetMapping("/api/modal/commonCode")
-	public List<CommonCode> commonCode(String groupId, String companyCode) {
-		return commonCodeService.findByGroupIdAndCompanyCode(groupId, companyCode);
+	public List<CommonCode> commonCode(String commonGroup) {
+		String companyCode = "C001";
+		return commonCodeService.findByGroupIdAndCompanyCode(commonGroup, companyCode);
 	}
 
 	@ResponseBody

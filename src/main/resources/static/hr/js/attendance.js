@@ -7,23 +7,9 @@ async function loadCommonCode(groupName) {
 	return Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
 }
 
-// 사원코드 불러오기
-async function loadEmployees() {
-	const res = await fetch(`/api/modal/employee`);  // 사원 API
-	const list = await res.json();
-	return Object.fromEntries(list.map(it => [it.empCode, it.name]));
-}
-
-// 근태코드 불러오기
-async function loadAttendances() {
-	const res = await fetch(`/api/modal/attendance`); // 근태코드 API
-	const list = await res.json();
-	return Object.fromEntries(list.map(it => [it.attId, it.attName]));
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
 
-	const USE_YN = await loadCommonCode("USE_YN");
+	const USE_YN = await loadCommonCode("GRP007");
 
 	// 근태 항목
 	// tabulator
@@ -47,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			{
 				title: "사용여부",
 				field: "attIs",
-				editor: "select",
+				editor: "list",
 				editorParams: { values: USE_YN },
 				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
 			},
@@ -148,7 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	// 공통코드 휴가
-	const HOLY = await loadCommonCode("HOLY");
+	const HOLY = await loadCommonCode("GRP008");
 
 	// 사원 근태 등록
 	const empAttInsertTable = new Tabulator(document.getElementById("empAttInsert-table"), {
@@ -172,7 +158,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			{
 				title: "휴가",
 				field: "holyIs",
-				editor: "select",
+				editor: "list",
 				editorParams: { values: HOLY },
 				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
 			},
@@ -240,22 +226,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 		empAttSelectTable.setData([...data]);
 	}
 
-	// 초기 로드
-	loadAttendances();
-	loadEmpAttendances();
-
 	// 선택된 행 가져오기
-  function getSelectedRows() {
-    return empAttSelectTable.getSelectedData();
-  }
+	function getSelectedRows() {
+		return empAttSelectTable.getSelectedData();
+	}
 
-  // 선택된 데이터 → HTML 테이블 변환
-  function buildTableHTML(rows) {
-    if (!rows || rows.length === 0) return "<p>선택된 데이터가 없습니다.</p>";
+	// 선택된 데이터 → HTML 테이블 변환
+	function buildTableHTML(rows) {
+		if (!rows || rows.length === 0) return "<p>선택된 데이터가 없습니다.</p>";
 
-    let html = `
+		let html = `
       <h2 style="text-align:center;">근태전표</h2>
-      <p style="text-align:right;">전표일자 : ${new Date().toISOString().slice(0,10)}</p>
+      <p style="text-align:right;">전표일자 : ${new Date().toISOString().slice(0, 10)}</p>
       <table border="1" cellspacing="0" cellpadding="5"
              style="width:100%; border-collapse:collapse; text-align:center;">
         <thead>
@@ -271,8 +253,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         <tbody>
     `;
 
-    rows.forEach(r => {
-      html += `
+		rows.forEach(r => {
+			html += `
         <tr>
           <td>${r.empCode ?? ""}</td>
           <td>${r.attId ?? ""}</td>
@@ -282,40 +264,45 @@ document.addEventListener("DOMContentLoaded", async () => {
           <td>${r.note ?? ""}</td>
         </tr>
       `;
-    });
+		});
 
-    html += "</tbody></table>";
-    return html;
-  }
+		html += "</tbody></table>";
+		return html;
+	}
 
-  // PDF 다운로드
-  document.getElementById("empAtt-print").addEventListener("click", function () {
-    const rows = getSelectedRows();
-    const exportDiv = document.getElementById("empAtt-export");
-    exportDiv.innerHTML = buildTableHTML(rows);
+	// PDF 다운로드
+	document.getElementById("empAtt-print").addEventListener("click", function() {
+		const rows = getSelectedRows();
+		const exportDiv = document.getElementById("empAtt-export");
+		exportDiv.innerHTML = buildTableHTML(rows);
 
-    const opt = {
-      margin: 10,
-      filename: '근태전표.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(exportDiv).save();
-  });
+		const opt = {
+			margin: 10,
+			filename: '근태전표.pdf',
+			image: { type: 'jpeg', quality: 0.98 },
+			html2canvas: { scale: 2 },
+			jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+		};
+		html2pdf().set(opt).from(exportDiv).save();
+	});
 
-  // Excel 다운로드
-  document.getElementById("empAtt-excel").addEventListener("click", function () {
-    const rows = getSelectedRows();
-    if (rows.length === 0) {
-      alert("선택된 데이터가 없습니다.");
-      return;
-    }
+	// Excel 다운로드
+	document.getElementById("empAtt-excel").addEventListener("click", function() {
+		const rows = getSelectedRows();
+		if (rows.length === 0) {
+			alert("선택된 데이터가 없습니다.");
+			return;
+		}
 
-    // JSON → SheetJS로 변환
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "근태전표");
-    XLSX.writeFile(wb, "근태전표.xlsx");
-  });
+		// JSON → SheetJS로 변환
+		const ws = XLSX.utils.json_to_sheet(rows);
+		const wb = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb, ws, "근태전표");
+		XLSX.writeFile(wb, "근태전표.xlsx");
+	});
+
+
+	// 초기 로드
+	loadAttendances();
+	loadEmpAttendances();
 });

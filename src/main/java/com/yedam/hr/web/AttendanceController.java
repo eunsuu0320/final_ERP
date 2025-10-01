@@ -68,9 +68,16 @@ public class AttendanceController {
 	}
 
 	// 회사코드별 사원 근태 조회
-	@GetMapping("empAttendance")
+	@GetMapping("/empAttendance")
 	@ResponseBody
 	public List<EmpAttendance> getEmpAttendances(@RequestParam String companyCode) {
+		return empAttendanceRepository.findByCompanyCode(companyCode);
+	}
+
+	// 모달 회사코드별 사원 근태 조회
+	@GetMapping("/api/modal/attendance")
+	@ResponseBody
+	public List<EmpAttendance> getModalEmpAttendances(@RequestParam String companyCode) {
 		return empAttendanceRepository.findByCompanyCode(companyCode);
 	}
 

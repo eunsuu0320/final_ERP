@@ -1,4 +1,6 @@
-async function loadCodeMaps(groups = ["DEPT", "DUTY", "POSITION", "BANK"]) {
+const manager = document.getElementById("companyCode").value; // 회사코드 가져오기
+
+async function loadCodeMaps(groups = ["GRP011", "GRP013", "GRP010", "GRP015"]) {
 	const maps = {};
 	await Promise.all(groups.map(async (g) => {
 		const res = await fetch(`/api/modal/commonCode?commonGroup=${g}`);
@@ -104,7 +106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 	}
 
-	const CODE = await loadCodeMaps(["DEPT", "DUTY", "POSITION", "BANK"]);
+	const CODE = await loadCodeMaps(["GRP011", "GRP013", "GRP010", "GRP015"]);
 
 	const table = new Tabulator(tableEl, {
 		layout: "fitColumns",
@@ -124,9 +126,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 			},
 			{ title: "사원번호", field: "empCode" },
 			{ title: "성명", field: "name" },
-			{ title: "부서명", field: "dept", formatter: "lookup", formatterParams: CODE.DEPT },
-			{ title: "직급", field: "grade", formatter: "lookup", formatterParams: CODE.DUTY },
-			{ title: "직책", field: "position", formatter: "lookup", formatterParams: CODE.POSITION },
+			{ title: "부서명", field: "dept", formatter: "lookup", formatterParams: CODE.GRP011 },
+			{ title: "직급", field: "grade", formatter: "lookup", formatterParams: CODE.GRP013 },
+			{ title: "직책", field: "position", formatter: "lookup", formatterParams: CODE.GRP010 },
 			{ title: "전화번호", field: "phone" },
 			{ title: "Email", field: "email" },
 			{ title: "입사일자", field: "hireDate", sorter: "date", hozAlign: "center" },
@@ -166,7 +168,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			setVal("depCnt", emp.depCnt);
 			setVal("resignReason", emp.resignReason);
 			setVal("bankCode", emp.bankCode);
-			setVal("bankCodeName", CODE.BANK[emp.bankCode]);
+			setVal("bankCodeName", CODE.GRP015[emp.bankCode]);
 			setVal("accHolder", emp.accHolder);
 			setVal("accNo", emp.accNo);
 			setVal("postalCode", emp.postalCode);
@@ -214,7 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			setVal("depCnt", emp.depCnt);
 			setVal("resignReason", emp.resignReason);
 			setVal("bankCode", emp.bankCode);
-			setVal("bankCodeName", CODE.BANK[emp.bankCode]);
+			setVal("bankCodeName", CODE.GRP015[emp.bankCode]);
 			setVal("accHolder", emp.accHolder);
 			setVal("accNo", emp.accNo);
 			setVal("postalCode", emp.postalCode);
