@@ -998,7 +998,7 @@
 	}
   
   	function loadEmailDomains() {
-  	  fetch("/api/modal/commonCode?groupId=GRP004")
+  	  fetch("/api/modal/commonCode?groupId=GRP004&companyCode=admin")
   	    .then(res => res.json())
   	    .then(domains => {
   	      const select = document.getElementById("emailDomain");
