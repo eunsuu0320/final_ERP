@@ -29,45 +29,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 	};
-	/*
-		// 품목상세/등록 모달의 단위 select 태그 입력+선택
-		const unitSelect = document.getElementById('unitSelect');
-	
-		// Choices.js 적용
-		if (unitSelect) {
-			const choices = new Choices(unitSelect, {
-				removeItemButton: false,   // 선택 해제 버튼 필요 없으면 false
-				duplicateItemsAllowed: false,
-				addItems: true,           // 사용자가 직접 입력 가능
-				searchEnabled: true,
-				shouldSort: false         // 옵션 정렬 비활성화
-			});
-	
-		}
-	*/
 
-	window.applyComboSelect = function(selector) {
-		const selects = document.querySelectorAll(selector);
-
-		selects.forEach(select => {
-			if (select) {
-				if (select.choicesInstance) {
-					select.choicesInstance.destroy();
-				}
-
-				const choices = new Choices(select, {
-					removeItemButton: false,
-					duplicateItemsAllowed: false,
-					addItems: true,
-					searchEnabled: true,
-					shouldSort: false
-				});
-
-				select.choicesInstance = choices;
-			}
-		});
-	}
-	applyComboSelect('.comboSelect');
 
 	// 품목상세모달의 저장버튼 이벤트 -> 신규 등록 / 수정
 	window.saveModal = function() {
@@ -136,7 +98,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			frozen: true
 		},
 		...columns.map(col => {
-			if (col === "상품규격" || col === "단위") return null;
 
 			let columnDef = {
 				title: col,
@@ -144,21 +105,9 @@ document.addEventListener("DOMContentLoaded", function() {
 				visible: defaultVisible.includes(col)
 			};
 
-			if (col === "이미지") {
-				columnDef.formatter = function(cell) {
-					// cell.getValue() : 셀에 들어있는 데이터 값을 반환.
-					// cell.setValue(value) : 셀 데이터 값을 변경
-					// cell.getData() : 행 전체 데이터 객체 반환
-					// cell.getRow() : 셀이 속한 행 반환
-					// cell.getField() : 컬럼의 필드값 반환
-					const url = cell.getValue();
-					return `<img src="${url}" alt="이미지" style="height:30px; cursor:pointer;" onclick="showImageModal('${url}')">`;
-				};
-			}
-			if (col === "품목코드") {
+			if (col === "출하지시서코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
-					// ajax 호출!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;
 				};
 			}
@@ -167,36 +116,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		}).filter(c => c !== null)
 	];
 
-	// Tabulator 테이블 생성
-	const table = new Tabulator("#productTable", {
-		data: rows,
-		layout: "fitColumns",
-		height: "100%",
-		columns: tabulatorColumns,
-		placeholder: "데이터가 없습니다.",
-		movableColumns: true,
-		resizableRows: false,
-		pagination: "local",
-		paginationSize: 10
-	});
-
-	// 컬럼 토글 체크박스
-	const checkboxes = document.querySelectorAll(".colCheckbox");
-	checkboxes.forEach(cb => {
-		cb.addEventListener("change", function() {
-			const colName = cb.value.trim();
-			tabulatorColumns = tabulatorColumns.map(col => {
-				if (col.field === colName) col.visible = cb.checked;
-				return col;
-			});
-			table.setColumns(tabulatorColumns);
-		});
-	});
-
-	// 선택된 행 삭제 버튼
-	const deleteBtn = document.getElementById("deleteSelected");
-	deleteBtn.addEventListener("click", function() {
-		const selectedRows = table.getSelectedRows();
-		selectedRows.forEach(row => row.delete());
-	});
+	const tableInstance = makeTabulator(rows, tabulatorColumns);
+	window.priceTableInstance = tableInstance;
 });

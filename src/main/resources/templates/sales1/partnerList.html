@@ -65,22 +65,8 @@
 
 				<div id="productTable"></div>
 
-				<div class="modal fade" id="paymentModal" tabindex="-1"
-					aria-hidden="true">
-					<div class="modal-dialog modal-xl">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title" id="ModalLabel">결제정보</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-							</div>
-							<div
-								class="modal-body d-flex justify-content-center align-items-center">
-							</div>
-						</div>
-					</div>
-				</div>
 
-				<!-- [수정] newDetailModal의 크기를 modal-xl로 변경 -->
+
 				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-xl modal-dialog-centered">
@@ -336,46 +322,44 @@
 									<div class="d-flex justify-content-end mb-3">
 										<button type="button"
 											class="btn btn-sm btn-outline-success me-2"
-											onclick="addPaymentRow()">+ 행 추가</button>
+											onclick="addItemRow()">+ 행 추가</button>
 										<button class="btn btn-sm btn-outline-danger"
-											onclick="deleteSelectedPaymentRows()">- 선택 삭제</button>
+											onclick="deleteSelectedItemRows()">- 선택 삭제</button>
 									</div>
 
 									<div class="table-responsive">
-										<!-- [수정] min-width를 1000px로 변경 -->
 										<table id="paymentTable" class="table table-bordered table-sm"
 											style="min-width: 1000px;">
 											<thead class="table-light text-center">
 												<tr>
 													<th style="width: 30px;"></th>
-													<th style="width: 25%;">은행 (코드 - 명)</th>
-													<th style="width: 25%;">계좌번호</th>
+													<th style="width: 25%;">은행*</th>
+													<th style="width: 25%;">계좌번호*</th>
 													<th style="width: 20%;">예금주명</th>
 													<th style="width: 10%;">기본여부</th>
 													<th style="width: 10%;">사용구분</th>
 												</tr>
 											</thead>
-											<tbody id="paymentDetailBody">
-												<tr class="new-payment-row bg-light" data-row-id="new">
-													<!-- [수정] 체크박스 입력란 복구 -->
+											<tbody id="itemDetailBody">
+												<tr class="new-item-row bg-light" data-row-id="new">
 													<td class="text-center"><input type="checkbox" class="form-check-input" disabled></td>
 													<td><select
-														class="form-select form-select-sm payment-input"
+														class="form-select form-select-sm item-input"
 														name="bankCombined" required></select></td>
 													<td><input type="text"
-														class="form-control form-control-sm payment-input"
-														name="accountNumber" required></td>
+														class="form-control form-control-sm item-input"
+														name="accountNo" required></td>
 													<td><input type="text"
-														class="form-control form-control-sm payment-input"
-														name="accountHolder" required></td>
+														class="form-control form-control-sm item-input"
+														name="depositorName" required></td>
 													<td class="text-center"><select
-														class="form-select form-select-sm payment-input"
+														class="form-select form-select-sm item-input"
 														name="isDefault">
 															<option value="N">선택</option>
 															<option value="Y">기본</option>
 													</select></td>
 													<td class="text-center"><select
-														class="form-select form-select-sm payment-input"
+														class="form-select form-select-sm item-input"
 														name="usageType">
 															<option value="Y">사용</option>
 															<option value="N">미사용</option>
@@ -405,17 +389,6 @@
 	</script>
 	<script
 		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-	<script>
-		function execDaumPostcode() {
-			new daum.Postcode({
-				oncomplete : function(data) {
-					document.getElementById("zipcode").value = data.zonecode; // HTML ID 'zipcode'는 그대로 사용
-					document.getElementById("address").value = data.roadAddress
-							|| data.jibunAddress;
-				}
-			}).open();
-		}
-	</script>
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<script

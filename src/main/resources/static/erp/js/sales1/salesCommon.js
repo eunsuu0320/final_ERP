@@ -60,6 +60,67 @@ window.checkRequired = function(formElement) {
 }
 
 
+// 테이블의 유효성 검사
+window.checkRowRequired = function(rowElement) {
+	// 1. 테이블 전체를 찾아 헤더를 추출합니다.
+	const table = rowElement.closest("table");
+	if (!table) {
+		console.error("checkRowRequired: 행의 상위 테이블을 찾을 수 없습니다.");
+		return { isValid: false, missingFieldName: null };
+	}
+
+	const headers = table.querySelectorAll("thead th");
+	let missingFieldName = null;
+	let isValid = true;
+
+	// 2. 각 헤더(<th>)를 순회하며 * 필수 항목을 확인합니다.
+	for (let i = 0; i < headers.length; i++) {
+		const headerText = headers[i].textContent.trim();
+
+		// *이 포함된 필수 항목만 검사합니다.
+		if (headerText.includes("*")) {
+			// 해당 열(컬럼)의 입력 필드를 찾습니다.
+			// <td>의 i+1 번째 자식 요소를 찾습니다.
+			// (i=0은 보통 체크박스 <th>이므로, i=1부터 데이터 필드로 가정)
+
+			// rowElement의 (i)번째 <td>를 찾습니다.
+			const inputContainer = rowElement.children[i];
+
+			if (inputContainer) {
+				// 해당 <td> 내의 첫 번째 입력 필드를 가져옵니다.
+				const input = inputContainer.querySelector("input, select, textarea");
+
+				if (input) {
+					let value;
+					if (input.tagName === "SELECT") {
+						// Select는 빈 값이 ''입니다.
+						value = input.value.trim();
+					} else if (input.type === "number") {
+						// 수량, 단가 등 숫자 필드는 0이 아닌지 확인 (0도 유효할 수 있으나 일반적으로 입력 요구)
+						value = input.value.trim();
+						if (value === '0' || value === '') value = null; // 0이거나 빈 값은 미입력으로 간주
+					} else {
+						// Text, Textarea 등
+						value = input.value.trim();
+					}
+
+					if (!value) {
+						isValid = false;
+						missingFieldName = headerText.replace("*", "");
+						// 첫 번째 필수 누락 필드를 찾으면 즉시 중단합니다.
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return { isValid: isValid, missingFieldName: missingFieldName };
+};
+
+
+
+
 // 단위 드롭다운 공통코드에서 가져오기
 async function loadCommonCode(value, selectName, name) {
 	try {
@@ -267,7 +328,7 @@ function bindDataToForm(data, form) {
 			const elements = form.querySelectorAll(`[name="${key}"]`);
 
 			if (elements.length > 0) {
-				const value = data[key] === null ? '' : String(data[key]); 
+				const value = data[key] === null ? '' : String(data[key]);
 
 				if (elements[0].type === 'radio' || elements[0].type === 'checkbox') {
 					elements.forEach(element => {
@@ -333,4 +394,157 @@ function loadDetailData(domain, keyword, form) {
 			console.error("상세 정보 로딩 실패:", err);
 			alert(`상세 정보를 불러오는 데 실패했습니다: ${err.message}`);
 		});
+}
+
+
+// 주소 API
+window.execDaumPostcode = function() {
+	new daum.Postcode({
+		oncomplete: function(data) {
+			document.getElementById("zipcode").value = data.zonecode;
+			document.getElementById("address").value = data.roadAddress || data.jibunAddress;
+		}
+	}).open();
+}
+
+
+window.clearInputRowValues = function(containerElement) {
+	if (!containerElement) return;
+
+	const inputs = containerElement.querySelectorAll('input, textarea, select');
+
+	inputs.forEach(input => {
+		const type = input.type;
+
+		if (type === 'checkbox' || type === 'radio') {
+			// 체크박스와 라디오 버튼은 체크 해제
+			input.checked = false;
+			input.disabled = true; // (특정 로직에 따라)
+		} else if (input.tagName === 'SELECT') {
+			// select 박스는 첫 번째 옵션이나 빈 문자열 값으로 설정
+			input.value = '';
+		} else {
+			// 텍스트, 숫자, textarea 등은 빈 문자열로 설정
+			input.value = '';
+		}
+	});
+
+	console.log("입력 행 값 수동 초기화 완료:", containerElement.id || containerElement.className);
+};
+
+
+// 모달의 테이블 초기화
+window.resetItemGrid = function() {
+	const tbody = document.getElementById('itemDetailBody');
+
+	// 1. 등록된 모든 행 삭제
+	const allRows = tbody.querySelectorAll('tr:not(.new-item-row)');
+	allRows.forEach(row => row.remove());
+
+	// 2. 새 입력 행 템플릿 찾기
+	const newRowTemplate = tbody.querySelector('tr.new-item-row');
+
+	// 3. [공통 함수 호출] 새 입력 행 초기화
+	if (newRowTemplate) {
+		window.clearInputRowValues(newRowTemplate);
+	}
+
+	console.log("결제 정보 테이블 초기화 완료.");
+}
+
+
+
+
+// 행 추가 버튼 이벤트
+// 파일: partnerList.js (결제 정보 테이블 로직)
+
+window.addItemRow = function() {
+	const tbody = document.getElementById('itemDetailBody');
+	const newRowTemplate = tbody.querySelector('tr.new-item-row');
+
+	if (!newRowTemplate) return;
+
+	// 1. [수정] 공통 함수 checkRowRequired를 사용하여 필수 입력 필드 검사
+	//    이 함수는 테이블 헤더(<th>)에 * 표시가 있는지 확인합니다.
+	const validationResult = window.checkRowRequired(newRowTemplate);
+
+	if (validationResult.isValid) {
+		// 필수 필드가 모두 입력되었다면 (행 추가 로직 실행)
+
+		// 입력이 있다면 데이터 행으로 복사하여 추가
+		const dataRow = newRowTemplate.cloneNode(true);
+		dataRow.classList.remove('new-item-row', 'bg-light');
+		dataRow.removeAttribute('data-row-id');
+		dataRow.setAttribute('data-row-id', Date.now()); // 고유 ID 부여
+
+		// 💡 복사된 행의 Select 요소들에 현재 선택된 값을 유지 (기존 로직 유지)
+		const newRowSelects = newRowTemplate.querySelectorAll('select.item-input');
+		const dataRowSelects = dataRow.querySelectorAll('select.item-input');
+
+		newRowSelects.forEach((selectEl, index) => {
+			dataRowSelects[index].value = selectEl.value;
+		});
+
+		// 데이터 행의 체크박스를 활성화하고 클래스 부여
+		const dataRowCheckbox = dataRow.querySelector('td:first-child input[type="checkbox"]');
+		if (dataRowCheckbox) {
+			dataRowCheckbox.classList.add('item-checkbox');
+			dataRowCheckbox.disabled = false;
+			dataRowCheckbox.checked = false;
+		}
+
+		tbody.appendChild(dataRow);
+		window.calculateTotal();
+
+	} else {
+		// 유효성 검사에 실패했을 때 (경고 및 초기화 방지)
+
+		// 현재 등록된 데이터 행이 하나도 없을 때만 경고를 보여주는 로직은 유지
+		if (tbody.querySelectorAll('tr:not(.new-item-row)').length === 0) {
+			const missingField = validationResult.missingFieldName;
+			alert(`${missingField}은(는) 필수 입력 항목입니다.`);
+
+			// 누락된 필드로 포커스 이동 (선택적)
+			const missingInput = newRowTemplate.querySelector(`[name="${missingField}"]`);
+			if (missingInput) missingInput.focus();
+
+			return;
+		}
+	}
+
+	window.clearInputRowValues(newRowTemplate);
+	console.log("새로운 결제 정보 행 추가 완료 및 입력 행 초기화.");
+}
+
+
+
+window.deleteSelectedItemRows = function() {
+	const tbody = document.getElementById('itemDetailBody');
+	const selectedRows = tbody.querySelectorAll('input.item-checkbox:checked');
+
+	if (selectedRows.length === 0) {
+		alert("삭제할 행을 선택해주세요.");
+		return;
+	}
+
+	if (confirm(`${selectedRows.length}개의 항목을 삭제하시겠습니까?`)) {
+		selectedRows.forEach(checkbox => {
+			const row = checkbox.closest('tr');
+			if (row) {
+				row.remove();
+			}
+		});
+
+		// ✨ [수정 위치] 행 삭제 작업이 완료된 후, 이 블록 내부에서 호출해야 합니다.
+		if (window.calculateTotal) {
+			window.calculateTotal();
+			console.log("선택된 행 삭제 완료 및 합계 재계산 완료.");
+		} else {
+			console.error("calculateTotal 함수를 찾을 수 없습니다.");
+			console.log("선택된 행 삭제 완료.");
+		}
+
+	} else {
+		// 사용자가 '취소'를 누르면 아무것도 하지 않습니다.
+	}
 }

@@ -19,6 +19,8 @@ public interface PartnerRepository extends
 
 	Partner findByPartnerCode(String partnerCode);
 	
+	Partner findByPartnerName(String partnerName);
+	
 //	@Query("SELECT p FROM Partner p " +
 //		       "WHERE (:partnerName IS NULL OR p.partnerName = :partnerName) ")
 //		List<Partner> findByFilter(
