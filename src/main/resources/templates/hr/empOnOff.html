@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- templates/hr/empOnOffModal.html -->
+<div th:fragment="OnOffModal">
+  <div class="modal fade" id="OnOffModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+
+        <!-- 바디 -->
+        <div class="modal-body">
+          <!-- 상단 현재 시각(배지 제거) -->
+          <div class="text-center mb-3">
+            <span id="onoff-now" class="fs-4 fw-bold text-primary align-middle">--:--:--</span>
+          </div>
+
+          <form id="onoff-form" class="needs-validation" novalidate>
+            <!-- 사원 -->
+            <div class="row g-3 align-items-center mb-2">
+              <label class="col-12 col-sm-2 col-form-label"> 사원</label>
+              <div class="col-12 col-sm-10">
+                <div class="input-group">
+                  <input id="onoff-emp" type="text" class="form-control" placeholder="사원명/사번" required>
+                  <button class="btn btn-outline-secondary" type="button" id="onoff-emp-search" title="사원 검색">
+                    🔍
+                  </button>
+                </div>
+                <div class="invalid-feedback">사원을 입력하세요.</div>
+              </div>
+            </div>
+
+            <!-- 장소 + 외근 -->
+            <div class="row g-3 align-items-center mb-2">
+              <label class="col-12 col-sm-2 col-form-label"> 장소</label>
+              <div class="col-12 col-sm-7">
+                <input id="onoff-place" type="text" class="form-control" placeholder="근무 장소">
+              </div>
+              <div class="col-12 col-sm-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="onoff-outside">
+                  <label class="form-check-label" for="onoff-outside">외근</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 날짜/시간 (컴팩트 + 오른쪽 ‘오전 반차’ 들어가게) -->
+            <div class="row g-2 align-items-center mb-2">
+              <label class="col-12 col-sm-2 col-form-label">시간</label>
+
+              <div class="col-auto"><input id="onoff-yy" type="text" inputmode="numeric" class="form-control text-center" placeholder="년"  style="width:88px;"></div>
+              <div class="col-auto"><input id="onoff-mm" type="text" inputmode="numeric" class="form-control text-center" placeholder="월"  style="width:60px;"></div>
+              <div class="col-auto"><input id="onoff-dd" type="text" inputmode="numeric" class="form-control text-center" placeholder="일"  style="width:60px;"></div>
+
+              <div class="col-auto">
+				 <button type="button" class="btn btn-outline-secondary" id="btn-onoff-datepick" title="날짜 이동">📅</button>
+				 <input type="text" id="onoff-month-anchor" class="d-none">
+			  </div>
+
+              <div class="col-auto"><input id="onoff-hh" type="text" inputmode="numeric" class="form-control text-center" placeholder="시간" style="width:72px;"></div>
+              <div class="col-auto"><input id="onoff-mi" type="text" inputmode="numeric" class="form-control text-center" placeholder="분"   style="width:60px;"></div>
+
+              <div class="col-auto ms-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="onoff-amhalf">
+                  <label class="form-check-label" for="onoff-amhalf">오전 반차</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 사유 -->
+            <div class="row g-3 align-items-center mb-3">
+              <label class="col-12 col-sm-2 col-form-label">사유</label>
+              <div class="col-12 col-sm-10">
+                <input id="onoff-reason" type="text" class="form-control" placeholder="사유를 입력하세요">
+              </div>
+            </div>
+
+            <!-- 액션 -->
+            <div class="d-grid d-sm-flex justify-content-sm-center">
+              <button type="button" id="btn-onoff-checkin" class="btn btn-primary px-4">출근</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 내부 스크립트 -->
+<script th:inline="javascript">
+(() => {
+  // ---------- helpers ----------
+  const $  = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const modalEl = $('OnOffModal');
+  if (!modalEl) return;   // 모달이 없으면 조용히 종료
+
+  // 입력 요소 캐시
+  const el = {
+    clock: $('onoff-now'),
+    yy: $('onoff-yy'),
+    mm: $('onoff-mm'),
+    dd: $('onoff-dd'),
+    hh: $('onoff-hh'),
+    mi: $('onoff-mi'),
+    form: $('onoff-form'),
+    resetBtn: $('btn-save-reset'),
+    dateBtn: modalEl.querySelector('#btn-onoff-datepick'),
+    anchor:  modalEl.querySelector('#onoff-month-anchor'), // 숨은 input
+  };
+
+  // ---------- 시계 ----------
+  let clockTimer = null;
+  const startClock = () => {
+    if (!el.clock) return;
+    const tick = () => {
+      const d = new Date();
+      let h = d.getHours();
+      const ampm = h < 12 ? '오전' : '오후';
+      h = h % 12 || 12;
+      el.clock.textContent = `${ampm} ${pad(h)}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    tick();
+    clockTimer = setInterval(tick, 1000);
+  };
+  const stopClock = () => clockTimer && clearInterval(clockTimer);
+
+  // ---------- 현재 시각으로 입력 채우기 ----------
+  const fillNow = () => {
+    const d = new Date();
+    if (el.yy) el.yy.value = d.getFullYear();
+    if (el.mm) el.mm.value = pad(d.getMonth() + 1);
+    if (el.dd) el.dd.value = pad(d.getDate());
+    if (el.hh) el.hh.value = pad(d.getHours());
+    if (el.mi) el.mi.value = pad(d.getMinutes());
+  };
+
+  // ---------- 월/일 선택(Flatpickr) ----------
+  let monthPicker = null;
+  const openMonthPicker = () => {
+    if (!el.dateBtn) return;
+
+    // 숨은 앵커 input이 없으면 생성
+    if (!el.anchor) {
+      el.anchor = document.createElement('input');
+      el.anchor.type = 'text';
+      el.anchor.className = 'd-none';
+      modalEl.appendChild(el.anchor);
+    }
+
+    if (!monthPicker) {
+      monthPicker = flatpickr(el.anchor, {
+        locale: 'ko',
+        clickOpens: false,          // 수동 open
+        appendTo: modalEl,          // 모달 내부에 붙여서 z-index/포지션 문제 방지
+        positionElement: el.dateBtn,
+        // monthSelect 플러그인 쓰면 아래 주석 해제 + 플러그인 리소스 로드 필요
+        // plugins: [new monthSelectPlugin({ shorthand:true, dateFormat:'Y-m', altFormat:'Y년 m월' })],
+        onChange([d]) {
+          if (!d) return;
+          const yy = d.getFullYear(), mm = pad(d.getMonth() + 1), dd = '01';
+          if (el.yy) el.yy.value = yy;
+          if (el.mm) el.mm.value = mm;
+          if (el.dd) el.dd.value = dd;
+          monthPicker.close();
+        },
+      });
+    } else {
+      monthPicker.set('positionElement', el.dateBtn);
+    }
+
+    // 현재 값 기준으로 기본 날짜 세팅
+    const base = new Date(
+      Number(el.yy?.value) || new Date().getFullYear(),
+      (Number(el.mm?.value) || new Date().getMonth() + 1) - 1,
+      Number(el.dd?.value) || 1
+    );
+    monthPicker.setDate(base, false);
+    monthPicker.open();
+  };
+
+  // ---------- 이벤트 바인딩 ----------
+  // 모달 열릴 때: 시계 시작 + 현재 시각 채우기
+  modalEl.addEventListener('shown.bs.modal', () => {
+    startClock();
+    fillNow();
+  });
+
+  // 모달 닫힐 때: 시계 정지
+  modalEl.addEventListener('hidden.bs.modal', () => {
+    stopClock();
+  });
+
+  // 날짜 버튼 클릭 → 월/일 선택기 열기
+  modalEl.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-onoff-datepick')) openMonthPicker();
+  });
+
+  // 초기화 버튼 → 폼 리셋 + 현재 시각 다시 채우기
+  if (el.resetBtn) {
+    el.resetBtn.addEventListener('click', () => {
+      el.form?.reset();
+      fillNow();
+    });
+  }
+
+  // 페이지 로드 직후 1회 세팅(모달이 미리 열려있지 않아도 안전)
+  fillNow();
+})();
+</script>
+
+</div>
+
+
+</body>
+</html>

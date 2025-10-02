@@ -55,14 +55,14 @@ public class HrServiceImpl implements HrService {
 
 		// 로그인 사용자 아이디 넣기
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		String manager = auth.getName().split(":")[2];
+		String manager = auth.getName().split(":")[0];
 
 		String signFileName = null;
 
 		// 1. 사원 등록 (없으면 insert)
-		employee.setCompanyCode("C001"); // 테스트로 회사 코드 고정. 수정필요
+		employee.setCompanyCode(manager);
 		try {
-			if (!employeeRepository.existsById(employee.getEmpCode())) {
+			if (employee.getEmpCode() == null || !employeeRepository.existsById(employee.getEmpCode())) {
 				employeeRepository.save(employee);
 			}
 		} catch (Exception e) {

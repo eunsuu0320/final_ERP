@@ -86,7 +86,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 				resetBtn.disabled = false;
 				resetBtn.title = "";
 			}
-			if (empCodeInput) empCodeInput.readOnly = false;
 		}
 
 		if (mode === "edit") {
@@ -112,6 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		layout: "fitColumns",
 		pagination: "local",
 		paginationSize: 22,
+		placeholder: "조회된 사원이 없습니다.",
 		selectable: true,
 		columns: [
 			{
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				console.error("companyCode를 찾을 수 없습니다.");
 				return;
 			}
-			const res = await fetch(`/api/modal/employee`);
+			const res = await fetch(`/employees?companyCode=${manager}`);
 			if (!res.ok) throw new Error(await res.text());
 
 			const data = await res.json();
@@ -315,9 +315,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       <tr>
         <td>${emp.empCode ?? ""}</td>
         <td>${emp.name ?? ""}</td>
-        <td>${toName("DEPT", emp.dept)}</td>
-        <td>${toName("DUTY", emp.grade)}</td>
-        <td>${toName("POSITION", emp.position)}</td>
+        <td>${toName("GRP011", emp.dept)}</td>
+        <td>${toName("GRP013", emp.grade)}</td>
+        <td>${toName("GRP010", emp.position)}</td>
         <td>${emp.phone ?? ""}</td>
         <td>${emp.email ?? ""}</td>
         <td>${emp.hireDate ?? ""}</td>

@@ -36,45 +36,42 @@
 								<form id="empForm">
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">사원번호</label> <input
-												type="text" name="empCode" id="empCode" class="form-control"
-												required>
+											<label class="form-label required">사원번호</label>
+											<!-- <input type="text" name="empCode" id="empCode" class="form-control" required readonly placeholder="자동으로 입력됩니다.">-->
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">성명</label> <input
-												type="text" name="name" id="name" class="form-control"
-												required>
+											<label class="form-label required">성명</label>
+											<input type="text" name="name" id="name" class="form-control" required>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">전화번호</label> <input
-												type="text" name="phone" id="phone" class="form-control"
-												required>
+											<label class="form-label required">전화번호</label>
+											<input type="text" name="phone" id="phone" class="form-control" required>
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">생년월일</label> <input
-												type="date" name="birth" id="birth" class="form-control">
+											<label class="form-label required">생년월일</label>
+											<input type="date" name="birth" id="birth" class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label required">이메일</label> <input
-												type="email" name="email" id="email" class="form-control">
+											<label class="form-label required">이메일</label>
+											<input type="email" name="email" id="email" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">부서</label> <select
-												id="dept" name="dept" class="form-control"></select>
+											<label class="form-label required">부서</label>
+											<select id="dept" name="dept" class="form-control"></select>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직급</label> <select
-												id="position" name="position" class="form-control"></select>
+											<label class="form-label required">직급</label>
+											<select id="position" name="position" class="form-control"></select>
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">직책</label> <select
-												id="grade" name="grade" class="form-control"></select>
+											<label class="form-label required">직책</label>
+											<select id="grade" name="grade" class="form-control"></select>
 										</div>
 									</div>
 
@@ -314,7 +311,7 @@
 	          alert(mode === "edit" ? "사원 정보가 수정되었습니다." : "사원이 등록되었습니다.");
 	          const modal = bootstrap.Modal.getInstance(document.getElementById("empModal"));
 	          modal && modal.hide();
-	          window.tabled.replaceData("/selectAllEmp");
+	          window.tabled.replaceData("/employees");
 	        } else {
 	          alert("사원 등록에 실패하였습니다. " + data);
 	        }

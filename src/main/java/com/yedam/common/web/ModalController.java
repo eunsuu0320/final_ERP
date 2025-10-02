@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yedam.hr.domain.Attendance;
 import com.yedam.hr.domain.Employee;
+import com.yedam.hr.repository.AttendanceRepository;
 import com.yedam.hr.repository.EmployeeRepository;
 
 @RestController
@@ -17,12 +19,23 @@ import com.yedam.hr.repository.EmployeeRepository;
 public class ModalController {
 
 	@Autowired EmployeeRepository employeeRepository;
-	
+	@Autowired AttendanceRepository attendanceRepository;
+
+
 	@GetMapping("/employee")
 	public List<Employee> getEmployees() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String companyCode = auth.getName().split(":")[0];
-		
+
 		return employeeRepository.findByCompanyCode(companyCode);
+	}
+
+	// 모달 회사코드별 사원 근태 조회
+	@GetMapping("/attendance")
+	public List<Attendance> getModalEmpAttendances() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String companyCode = auth.getName().split(":")[0];
+
+		return attendanceRepository.findByCompanyCode(companyCode);
 	}
 }
