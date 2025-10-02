@@ -12,10 +12,10 @@ public class CompanyProfileApi {
     public Map<String, Object> profile() {
         return Map.of(
             "name", "(주)구독핑 이알핑",
-            "bizNo", "220-12-34567",
-            "tel", "1588-5333",
-            "ceo", "김신래",
-            "address", "서울특별시 강동구 고덕비즈밸리로6길 84 (고덕동) (주)이카운트"
+            "bizNo", "111-22-33333",
+            "tel", "1234-5678",
+            "ceo", "김예담",
+            "address", "대구광역시 중구 중앙대로 403 5층 "
         );
     }
 }

@@ -18,6 +18,9 @@ public class MoneyReq {
     private BigDecimal amountTotal;
     private String remark;
 
+    /** (추가) 수금 전표는 청구서 기준이므로 invoiceCode 수신 */
+    private String invoiceCode;
+    
     // 편의
     public LocalDate date() { return LocalDate.parse(voucherDate); }
 }
