@@ -61,6 +61,34 @@ const modalConfigs = {
 			},
 		],
 	},
+	
+	 // ✅ 청구서(INVOICE) 모달 - STATUS=회계반영완료만
+  acinvoice: {
+    // 백엔드 컨트롤러: GET /api/invoices/lookup
+    // CompanyContext로 회사코드 필터링, status 기본값은 서버에서도 '회계반영완료' 처리
+    // 여기서도 명시적으로 status 쿼리를 붙여서 호출
+    url: "/api/invoices/lookup?status=" + encodeURIComponent("회계반영완료"),
+    title: "청구서 검색",
+    columns: [
+      { title: "청구서코드", field: "invoiceCode", width: 140, hozAlign: "center" },
+      { title: "거래처",     field: "partnerName", minWidth: 160 },
+      { title: "청구금액",   field: "dmndAmt",     width: 120, hozAlign: "right",
+        formatter: (c) => Number(c.getValue() || 0).toLocaleString()
+      },
+      { title: "상태",       field: "status",      width: 120, hozAlign: "center" },
+      { title: "작성일",     field: "createDate",  width: 120, hozAlign: "center",
+        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
+      },
+      { title: "청구일",     field: "dmndDate",    width: 120, hozAlign: "center",
+        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
+      },
+      { title: "수금예정",   field: "rcptDate",    width: 120, hozAlign: "center",
+        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
+      },
+    ],
+    selectable: 1
+  },
+  
 	commonCode: {
 		url: "/api/modal/commonCode",
 		title: "공통코드 검색",
@@ -104,6 +132,22 @@ const modalConfigs = {
 		],
 		selectable: 1,
 	},
+	
+// ✅ 품목(제품) 모달 - sales 조회로 대체
+product: {
+  url: "/api/sales/lookup",        // ← 기존 /api/products/lookup 대신 사용
+  title: "품목 검색",
+  columns: [
+    { title:"판매코드",  field:"salesCode",  width:140, hozAlign:"center" },
+    { title:"품목명",    field:"productName", minWidth:200 },
+    { title:"거래처",    field:"partnerName", minWidth:160 },
+    { title:"단가",      field:"unitPrice",   width:110, hozAlign:"right",
+      formatter:(c)=>Number(c.getValue()||0).toLocaleString() },
+    { title:"판매일자",  field:"salesDate",   width:120, hozAlign:"center",
+      formatter:(cell)=>{ const v=cell.getValue(); if(!v) return ""; const d=new Date(v); return isNaN(d)?v:d.toISOString().slice(0,10); } },
+  ],
+  selectable: 1,
+},
 
 	// 근태코드 모달
 	attendance: {
