@@ -162,10 +162,6 @@ table.on("rowClick", function(e, row) {
 			purpSales: row.purpSales || 0,
 			purpProfitAmt: row.purpProfitAmt || 0,
 			newVendCnt: row.newVendCnt || 0,
-			planYear: new Date().getFullYear(),
-			regDate: new Date(),
-			empCode: "EMP001",
-			companyCode: "COMP001"
 		}));
 		const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
 		const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
@@ -185,6 +181,35 @@ table.on("rowClick", function(e, row) {
 			})
 			.catch(err => { console.error(err); alert("저장 실패: " + err.message); });
 	});
+	
+// ================================
+// 📌 초기화 버튼
+// ================================
+document.getElementById("combo-option").addEventListener("change", function () {
+    // 드롭다운에서 선택한 % 추출 (예: "10%" → 0.10)
+    const percent = parseFloat(this.options[this.selectedIndex].text.replace("%", "")) / 100;
+
+    // 작년 매출 데이터 가져오기
+    const lastYearData = lastYearTable.getData();
+
+    // 오른쪽 등록 테이블에 반영할 데이터 생성
+    const newData = lastYearData.map(row => {
+        const lastSales = row.TOTAL_SALES_AMOUNT || 0;
+        const lastProfit = row.TOTAL_PROFIT_AMOUNT || 0;
+
+        return {
+            qtr: row.SALES_QUARTER + "분기",
+            purpSales: Math.floor(lastSales * (1 + percent)),      // 매출액 증가
+            purpProfitAmt: Math.floor(lastProfit * (1 + percent)), // 이익 증가
+            newVendCnt: 0 // 신규 거래처수는 직접 입력
+        };
+    });
+
+    // 오른쪽 테이블 갱신
+    thisYearTable.setData(newData);
+});
+
+	
 
 
 	// ================================

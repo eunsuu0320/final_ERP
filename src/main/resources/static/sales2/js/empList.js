@@ -9,9 +9,10 @@ empTable = new Tabulator("#empPlanList-table", {
     height: "600px",
     layout: "fitColumns",
     placeholder: "데이터가 없습니다.",
-    ajaxURL: "/api/sales/empPlanList",
+    ajaxURL: "/api/sales/empPlanList?planYear=2025",
     columns: [
         { title: "사원명", field: "EMPNAME", width: 150 },
+        { title: "계획번호", field: "ESPCODE", width: 150 },
         { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right" },
         { title: "작년 매출액", field: "LASTYEARSALES", hozAlign: "right", formatter: "money" },
         { title: "작년 매입단가", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" },
@@ -26,10 +27,11 @@ planTable = new Tabulator("#plan-table", {
     layout: "fitColumns",
     reactiveData: true,
     columns: [
-        { title: "분기", field: "QTR", hozAlign: "center", editor: false },
-        { title: "올해 총 매출액", field: "PURPSALES", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
-        { title: "올해 총 영업이익", field: "PURPPROFITAMT", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
-        { title: "신규 거래처수", field: "NEWVENDCNT", editor: "number" },
+        { title: "분기", field: "qtr", hozAlign: "center", editor: false },
+        { title: "상세번호", field: "esdpCode", hozAlign: "center", editor: false },
+        { title: "올해 총 매출액", field: "purpSales", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
+        { title: "올해 총 영업이익", field: "purpProfitAmt", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
+        { title: "신규 거래처수", field: "newVendCnt", editor: "number" },
         { title: "재거래율", field: "재거래율", editor: "number" }
     ],
     data: [
@@ -57,11 +59,12 @@ document.getElementById("btn-update-sales").addEventListener("click", () => {
         empCode: empCode,
         espCode: document.getElementById("espCode").value,
         detailPlans: data.map(row => ({
-            qtr: row.QTR,
-            purpSales: row.PURPSALES || 0,
-            purpProfitAmt: row.PURPPROFITAMT || 0,
-            newVendCnt: row.NEWVENDCNT || 0,
-            vendCnt: row.VENDCNT || 0
+			espCode:row.espCode,
+			esdpCode:row.esdpCode,
+            qtr: row.qtr,
+            purpSales: row.purpSales || 0,
+            purpProfitAmt: row.purpProfitAmt || 0,
+            newVendCnt: row.newVendCnt || 0
         }))
     };
 
@@ -110,34 +113,30 @@ empTable.on("rowClick", function (e, row) {
     // hidden input 값 세팅
     document.getElementById("employCode").value = data.EMP_CODE;
     document.getElementById("employeeName").value = data.EMPNAME;
-
-	document.getElementById("espCode").value = data.ESP_CODE;
+	document.getElementById("espCode").value = data.ESPCODE;
 	
     // 오른쪽 제목 업데이트
     document.getElementById("plan-title").innerText = data.EMPNAME + "님의 영업계획";
 
-    // 📌 작년 매출/영업이익 → 5% 증가 후 분기별 균등 분배
-    const lastYearSales = data.LASTYEARSALES || 0;
-    const lastYearProfit = data.LASTYEARPROFIT || 0;
-
-    const increasedSales = Math.round(lastYearSales * 1.05);
-    const increasedProfit = Math.round(lastYearProfit * 1.05);
-
-    const quarterSales = Math.floor(increasedSales / 4);
-    const quarterProfit = Math.floor(increasedProfit / 4);
-
-    const newData = [
-        { QTR: "1분기", PURPSALES: quarterSales, PURPPROFITAMT: quarterProfit},
-        { QTR: "2분기", PURPSALES: quarterSales, PURPPROFITAMT: quarterProfit},
-        { QTR: "3분기", PURPSALES: quarterSales, PURPPROFITAMT: quarterProfit},
-        { QTR: "4분기", PURPSALES: quarterSales, PURPPROFITAMT: quarterProfit},
-    ];
-
-    planTable.replaceData(newData);
+   //fetch 함수
+	fetch("/api/slaes/empDeatilPlan?espCode="+data.ESPCODE)
+  .then(response => {
+    if (!response.ok) {
+      throw new Error("HTTP error! Status: " + response.status);
+    }
+    return response.json(); // JSON 응답을 JS 객체로 변환
+  })
+  .then(data => {
+	 planTable.replaceData(data);
+    console.log("응답 데이터:", data);
+  })
+  .catch(error => {
+    console.error("에러 발생:", error);
+  });
 });
 
     // ================================
-    // 📌 검색 버튼
+    // 📌 검색 버튼(사원모달)
     // ================================
     document.getElementById("btn-search").addEventListener("click", function () {
         const keyword = document.getElementById("employeeName").value.trim();

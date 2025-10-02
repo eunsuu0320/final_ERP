@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,9 +61,10 @@ public class SalesPlanController {
     @PostMapping("/api/sales/insert")
     @ResponseBody // 결과를 JSON 문자열로 반환
     public String insertSalesPlan(@RequestBody List<DSalesPlan> detailList) {
+    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         try {
             // Service 계층으로 등록 로직 위임
-            String result = salesService.insertSalesPlan(detailList);
+            String result = salesService.insertSalesPlan(auth, detailList);
             return result; // "success" 반환
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,8 +127,12 @@ public class SalesPlanController {
  // 사원별 전년 영업매출
  	@GetMapping("/api/sales/empPlanList")
  	@ResponseBody
- 	public List<Map<String, Object>> getEmpList() {
- 		return salesService.getEmpPlanList();
+ 	public List<Map<String, Object>> getEmpList(String planYear) {
+    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    	String companyCode = "C001";// auth.getName().split(":")[0];
+ 		return salesService.getEmpPlanList(companyCode, planYear);
  	}
+ 	
+
 
 }
