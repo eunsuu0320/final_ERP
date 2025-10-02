@@ -16,7 +16,7 @@ public interface OrdersRepository extends
 
 	List<Orders> findAll();
 	
-	@Query("SELECT MAX(p.uniqueCode) FROM Orders p")
+	@Query("SELECT MAX(p.orderCode) FROM Orders p")
 	String findMaxOrdersCode();
 	
 //	@Query("SELECT p FROM Orders p " +

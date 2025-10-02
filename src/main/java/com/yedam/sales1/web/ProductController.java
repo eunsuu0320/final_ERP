@@ -1,5 +1,6 @@
 package com.yedam.sales1.web;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -83,4 +84,19 @@ public class ProductController {
 		}
 	}
 
+	// 품목 필터링
+	@GetMapping("api/product/search")
+	public ResponseEntity<List<Product>> getProductSearch(@ModelAttribute Product searchVo) {
+
+		System.out.println("조회 조건 Product VO: " + searchVo);
+
+		// searchVo.getProductName() 등으로 바로 접근하여 Service 로직에 사용
+		List<Product> products = productService.getFilterProduct(searchVo);
+
+		if (products != null && !products.isEmpty()) {
+			return ResponseEntity.ok(products);
+		} else {
+			return ResponseEntity.ok(Collections.emptyList());
+		}
+	}
 }

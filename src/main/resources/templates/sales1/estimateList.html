@@ -32,11 +32,51 @@
 				</div>
 
 				<div class="searchTool d-flex align-items-center mb-3">
-					<div class="me-5 d-flex align-items-center">
-						<label for="partnerName" class="me-3">거래처명</label> <input
-							type="text" class="form-control w-auto" placeholder="검색어 입력"
-							id="partnerName">
+
+
+					<div class="me-5">
+						<label for="partnerNameSearch" class="me-3">거래처명</label>
+						<div class="d-flex align-items-center">
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control w-auto"
+									placeholder="검색어 입력" id="partnerNameSearch">
+								<button class="btn btn-outline-secondary" type="button"
+									onclick="openSalesModal()">
+									<i class="bi bi-search"></i>
+								</button>
+							</div>
+						</div>
 					</div>
+
+
+					<div class="me-5">
+						<label for="managerSearch" class="me-3">담당자</label>
+						<div class="d-flex align-items-center">
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control w-auto"
+									placeholder="검색어 입력" id="managerSearch">
+								<button class="btn btn-outline-secondary" type="button"
+									onclick="openSalesModal()">
+									<i class="bi bi-search"></i>
+								</button>
+							</div>
+						</div>
+					</div>
+
+
+					<div class="me-5">
+						<label for="quoteDate" class="col-form-label fw-bold text-nowrap"
+							style="width: 80px;">유효기간</label> <input type="date"
+							class="form-control form-control-sm" id="quoteDate"
+							name="quoteDate" style="flex-grow: 1;">~<input
+							type="date" class="form-control form-control-sm" id="quoteDate"
+							name="quoteDate" style="flex-grow: 1;">
+					</div>
+
+
+
+
+
 				</div>
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
@@ -62,7 +102,7 @@
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '거래처코드' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
+						th:checked="${col == '견적서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '유효기간' or col == '견적금액합계' or col == '담당자' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -111,7 +151,7 @@
 											<div class="input-group input-group-sm" style="flex-grow: 1;">
 												<input type="text" class="form-control form-control-sm"
 													id="quotePartnerName" name="partnerName" placeholder="거래처명">
-												<input type="hidden" name="partnerCode" value=""> 
+												<input type="hidden" name="partnerCode" value="">
 												<button class="btn btn-outline-secondary" type="button"
 													onclick="searchPartner()">
 													<i class="bi bi-search"></i>
@@ -145,7 +185,7 @@
 											</div>
 
 											<div style="width: 35%;">
-												<input type="hidden" name="manager" value="CURRENT_USER"> 
+												<input type="hidden" name="manager" value="CURRENT_USER">
 											</div>
 										</div>
 

@@ -5,21 +5,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
-	window.showDatePicker = function() {
-		const dateInput = document.getElementById('quoteDate');
-		if (dateInput) {
-			dateInput.type = 'date';
-			dateInput.focus();
-		}
-	};
-
-	window.showDeliveryDatePicker = function() {
-		const deliveryInput = document.getElementById('quoteDeliveryDateText');
-		if (deliveryInput) {
-			deliveryInput.type = 'date';
-			deliveryInput.focus();
-		}
-	};
 
 	// 폼 전체 초기화
 	window.resetQuote = function() {
@@ -61,84 +46,84 @@ document.addEventListener("DOMContentLoaded", function() {
 	};
 
 
-// estimateList.js (window.saveModal 함수)
-window.saveModal = function() {
-    const quoteForm = document.getElementById("quoteForm");
-    const modalEl = document.getElementById("newDetailModal");
+	// estimateList.js (window.saveModal 함수)
+	window.saveModal = function() {
+		const quoteForm = document.getElementById("quoteForm");
+		const modalEl = document.getElementById("newDetailModal");
 
-    if (!quoteForm) {
-        alert("저장 오류: 견적 등록 폼을 찾을 수 없습니다.");
-        return;
-    }
+		if (!quoteForm) {
+			alert("저장 오류: 견적 등록 폼을 찾을 수 없습니다.");
+			return;
+		}
 
-    // 1. 견적 기본 정보 수집
-    const quoteData = new FormData(quoteForm);
-    const quoteDataObject = Object.fromEntries(quoteData.entries());
-    
-    // ✨ [핵심 수정] HTML ID 'quotePartnerName'을 사용하여 거래처 이름 가져오기
-    // HTML에 name="partnerName"이 있으므로 quoteDataObject.partnerName으로도 가져올 수 있지만,
-    // 명시적으로 input ID를 사용하는 것이 안전하고 확실합니다.
-    const partnerNameValue = document.getElementById('quotePartnerName').value;
+		// 1. 견적 기본 정보 수집
+		const quoteData = new FormData(quoteForm);
+		const quoteDataObject = Object.fromEntries(quoteData.entries());
 
-    // 2. 견적 상세 정보 (EstimateDetail 엔티티 리스트) 수집
-    const detailList = collectQuoteDetails();
+		// ✨ [핵심 수정] HTML ID 'quotePartnerName'을 사용하여 거래처 이름 가져오기
+		// HTML에 name="partnerName"이 있으므로 quoteDataObject.partnerName으로도 가져올 수 있지만,
+		// 명시적으로 input ID를 사용하는 것이 안전하고 확실합니다.
+		const partnerNameValue = document.getElementById('quotePartnerName').value;
 
-    if (detailList.length === 0) {
-        alert("견적 상세 내용을 1개 이상 입력해주세요.");
-        return;
-    }
+		// 2. 견적 상세 정보 (EstimateDetail 엔티티 리스트) 수집
+		const detailList = collectQuoteDetails();
 
-    // 3. 최종 페이로드 구성: EstimateRegistrationDTO 구조에 맞게 조정
-    const finalPayload = {
-        // DTO의 기본 필드
-        partnerCode: quoteDataObject.partnerCode || '', // Hidden input 필드 name="partnerCode"
-        
-        // ✨ 최종적으로 partnerName 값을 사용
-        partnerName: partnerNameValue, 
-        
-        quoteDate: quoteDataObject.quoteDate,
-        validPeriod: parseInt(quoteDataObject.validPeriod) || 0,
-        remarks: quoteDataObject.remarks || '', 
-        manager: quoteDataObject.manager || '', 
+		if (detailList.length === 0) {
+			alert("견적 상세 내용을 1개 이상 입력해주세요.");
+			return;
+		}
 
-        // DTO의 List<EstimateDetail> 필드
-        detailList: detailList
-    };
+		// 3. 최종 페이로드 구성: EstimateRegistrationDTO 구조에 맞게 조정
+		const finalPayload = {
+			// DTO의 기본 필드
+			partnerCode: quoteDataObject.partnerCode || '', // Hidden input 필드 name="partnerCode"
 
-    console.log("전송할 최종 견적 데이터:", finalPayload);
+			// ✨ 최종적으로 partnerName 값을 사용
+			partnerName: partnerNameValue,
 
-    // 4. 서버에 API 호출 (Controller의 @PostMapping("api/registEstimate") 경로 사용)
-    fetch("/api/registEstimate", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            [document.querySelector('meta[name="_csrf_header"]').content]:
-                document.querySelector('meta[name="_csrf"]').content
-        },
-        body: JSON.stringify(finalPayload),
-    })
-        .then(res => {
-            if (!res.ok) {
-                // 오류 메시지를 포함하여 JSON 응답을 파싱
-                return res.json().then(error => { 
-                    throw new Error(error.message || `서버 오류 발생: ${res.status}`); 
-                });
-            }
-            return res.json();
-        })
-        .then(data => {
-            console.log("서버 응답 데이터:", data);
-            alert("견적서가 성공적으로 등록되었습니다. ID: " + data.id);
+			quoteDate: quoteDataObject.quoteDate,
+			validPeriod: parseInt(quoteDataObject.validPeriod) || 0,
+			remarks: quoteDataObject.remarks || '',
+			manager: quoteDataObject.manager || '',
 
-            const modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) modalInstance.hide();
-            // 성공 후 테이블 데이터 리로드 로직 추가 필요 (예: tableInstance.loadData())
-        })
-        .catch(err => {
-            console.error("견적서 등록 실패:", err);
-            alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`)
-        });
-};
+			// DTO의 List<EstimateDetail> 필드
+			detailList: detailList
+		};
+
+		console.log("전송할 최종 견적 데이터:", finalPayload);
+
+		// 4. 서버에 API 호출 (Controller의 @PostMapping("api/registEstimate") 경로 사용)
+		fetch("/api/registEstimate", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				[document.querySelector('meta[name="_csrf_header"]').content]:
+					document.querySelector('meta[name="_csrf"]').content
+			},
+			body: JSON.stringify(finalPayload),
+		})
+			.then(res => {
+				if (!res.ok) {
+					// 오류 메시지를 포함하여 JSON 응답을 파싱
+					return res.json().then(error => {
+						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+					});
+				}
+				return res.json();
+			})
+			.then(data => {
+				console.log("서버 응답 데이터:", data);
+				alert("견적서가 성공적으로 등록되었습니다. ID: " + data.id);
+
+				const modalInstance = bootstrap.Modal.getInstance(modalEl);
+				if (modalInstance) modalInstance.hide();
+				// 성공 후 테이블 데이터 리로드 로직 추가 필요 (예: tableInstance.loadData())
+			})
+			.catch(err => {
+				console.error("견적서 등록 실패:", err);
+				alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`)
+			});
+	};
 
 
 	// estimateList.js (collectQuoteDetails 함수)

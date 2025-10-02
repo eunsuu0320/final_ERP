@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		let bankCodes = [];
 		try {
 			// window.getCommonCode 함수는 외부에서 제공된다고 가정
-			bankCodes = await window.getCommonCode('BANK');
+			bankCodes = await window.getCommonCode('GRP015');
 		} catch (e) {
 			console.error("은행 코드 로딩 중 오류 발생:", e);
 		}
@@ -93,9 +93,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		});
 
 		const commonCodePromises = [
-			loadCommonCode('BUSINESSTYPE', 'businessType', '업태'),
-			loadCommonCode('INDUSTRY', 'businessSector', '업종'),
-			loadCommonCode('EMAILDOMAIN', 'emailDomain', '이메일도메인')
+			loadCommonCode('GRP006', 'businessType', '업태'),
+			loadCommonCode('GRP005', 'businessSector', '업종'),
+			loadCommonCode('GRP004', 'emailDomain', '이메일 도메인')
 		];
 
 		modal.show();

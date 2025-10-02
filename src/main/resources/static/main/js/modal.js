@@ -2,28 +2,28 @@
 
 // === 공통 설정 ===
 const modalConfigs = {
-   employee: {
-      url: "/api/modal/employee",
-      title: "직원 검색",
-      columns: [
-         { title: "사원번호", field: "empCode" },
-         { title: "성명", field: "name" },
-         { title: "부서", field: "deptCode.codeName" },
-         { title: "직급", field: "gradeCode.codeName" }
-      ]
-   },
-     // ✅ 거래처
-  partner: {
-    url: "/api/partners",
-    title: "거래처 검색",
-    columns: [
-      { title:"거래처코드", field:"partnerCode", width:140, hozAlign:"center" },
-      { title:"거래처명",   field:"partnerName", minWidth:200 },
-      { title:"연락처",     field:"tel", width:140 },
-      { title:"담당자",     field:"picName", width:120 },
-    ],
-    selectable: 1,
-  },
+	employee: {
+		url: "/api/modal/employee",
+		title: "직원 검색",
+		columns: [
+			{ title: "사원번호", field: "empCode" },
+			{ title: "성명", field: "name" },
+			{ title: "부서", field: "deptCode.codeName" },
+			{ title: "직급", field: "gradeCode.codeName" }
+		]
+	},
+	// ✅ 거래처
+	partner: {
+		url: "/api/partners",
+		title: "거래처 검색",
+		columns: [
+			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
+			{ title: "거래처명", field: "partnerName", minWidth: 200 },
+			{ title: "연락처", field: "tel", width: 140 },
+			{ title: "담당자", field: "picName", width: 120 },
+		],
+		selectable: 1,
+	},
 	// ✅ 전표
 	voucher: {
 		url: "/api/statements/lookup",
@@ -116,6 +116,18 @@ const modalConfigs = {
 			{ title: "비고", field: "note" },
 		]
 	},
+
+	product: {
+		url: "/api/modal/warehouse",
+		title: "품목 검색",
+		columns: [
+			{ title: "창고", field: "productCode" },
+			{ title: "품목명", field: "productName" },
+			{ title: "품목그룹", field: "productGroup" },
+			{ title: "직급", field: "gradeCode.codeName" }
+		]
+	},
+
 };
 
 

@@ -134,46 +134,57 @@ async function loadCommonCode(value, selectName, name) {
 
 		let choicesInstance = select.choicesInstance;
 
+		// (Choices.js 인스턴스 파괴 및 재설정 로직 유지) ...
 		if (choicesInstance && typeof choicesInstance.destroy === 'function') {
 			choicesInstance.destroy();
 			select.choicesInstance = undefined;
 		}
-
 		const wrapper = select.closest('.choices');
 		if (wrapper) {
 			wrapper.parentNode.insertBefore(select, wrapper);
 			wrapper.remove();
 		}
-
 		select.removeAttribute('data-choice');
 		select.removeAttribute('data-choice-id');
 		select.style.display = '';
+
 		select.innerHTML = '';
 
 		const defaultPlaceholderText = `${name}을 선택하세요`;
 
+		// 💡 1. 초기화를 위해 Native Select에 빈 옵션을 추가
+		select.innerHTML = `<option value="" selected disabled hidden>${defaultPlaceholderText}</option>`;
+
+
+		// 2. Choices.js 인스턴스 생성 (removeItemButton: false 유지)
 		choicesInstance = new Choices(select, {
-			removeItemButton: true,
+			removeItemButton: false,
 			searchEnabled: true,
 			placeholder: true,
 			placeholderValue: defaultPlaceholderText,
-			allowHTML: true
+			allowHTML: true,
+			shouldSort: false,
 		});
 		select.choicesInstance = choicesInstance;
 
-		const choiceData = codes.map(code => ({
+		// 3. 데이터 로드 및 setChoices 호출
+		const codeChoices = codes.map(code => ({
 			value: code.codeName,
 			label: code.codeName,
 		}));
 
-		const updatedChoices = choiceData;
-
 		choicesInstance.setChoices(
-			updatedChoices,
+			codeChoices,
 			'value',
 			'label',
-			true
+			false // replaceChoices: false (초기 옵션 유지)
 		);
+
+		// 4. 💡 최종 해결: 로드 후 강제로 선택 상태를 초기화하여 진한 표시 제거
+		// '원자재'나 플레이스홀더가 진하게 선택되는 것을 즉시 해제합니다.
+		choicesInstance.removeActiveItems();
+		choicesInstance.setChoiceByValue('');
+
 
 		return;
 
@@ -547,4 +558,122 @@ window.deleteSelectedItemRows = function() {
 	} else {
 		// 사용자가 '취소'를 누르면 아무것도 하지 않습니다.
 	}
+}
+
+
+
+
+
+
+
+
+// 검색 파라미터 설정 함수
+function getSearchParams(containerSelector) {
+	if (!containerSelector) {
+		console.error("Error: containerSelector is required for getSearchParams.");
+		return {};
+	}
+
+	const searchParams = {};
+	const container = document.querySelector(containerSelector);
+
+	if (!container) {
+		console.error(`Error: Search container '${containerSelector}' not found.`);
+		return searchParams;
+	}
+
+	const fields = container.querySelectorAll('input, select, textarea');
+
+	fields.forEach(field => {
+		let key = field.name || field.id;
+
+		// 1. 유효한 키(key)가 없으면 다음 필드로 넘어갑니다.
+		if (!key) {
+			return;
+		}
+
+		let value = field.value;
+
+		// 2. 값 정리 및 빈 값(Empty Value) 검증
+		if (value) {
+			value = value.trim();
+		}
+
+		// 3. 값이 없거나, Select의 기본 플레이스홀더 값이면 객체에 추가하지 않습니다.
+		// 예를 들어, 값이 ""이거나 "도메인 선택" 등의 문자열이면 제외합니다.
+		if (!value || value === "") {
+			return;
+		}
+
+		// 4. 키 이름 변환 (Search 접미사 제거)
+		if (key.endsWith('Search')) {
+			// key에서 'Search' (길이 6) 제거
+			key = key.substring(0, key.length - 6);
+		}
+
+		// 5. 💡 최종적으로 객체에 값을 담습니다. (이 부분이 빠져 있었습니다)
+		searchParams[key] = value;
+	});
+
+	return searchParams;
+}
+
+
+
+
+
+
+// 검색 필터 초기화
+function filterReset(containerSelector) {
+	if (!containerSelector) {
+		console.error("Error: containerSelector is required for resetSearchParams.");
+		return;
+	}
+
+	const container = document.querySelector(containerSelector);
+
+	if (!container) {
+		console.error(`Error: Search container '${containerSelector}' not found.`);
+		return;
+	}
+
+	const fields = container.querySelectorAll('input, select, textarea');
+
+	fields.forEach(field => {
+		const type = field.type;
+
+		if (type === 'checkbox' || type === 'radio') {
+			field.checked = false;
+		} else if (field.tagName === 'SELECT') {
+
+			// 💡 Choices.js 인스턴스 확인 및 강제 초기화
+			if (field.choicesInstance) {
+				const choices = field.choicesInstance;
+
+				// 1. 💡 핵심: 현재 선택된 모든 항목을 UI에서 강제로 제거합니다.
+				// 이 방법은 단일 선택 필드의 경우 선택 상태를 확실히 '선택 안 됨'으로 만듭니다.
+				choices.removeActiveItems();
+
+				// 2. Native Select와 Choices.js 내부 상태를 빈 값으로 동기화
+				// 이 명령이 UI를 플레이스홀더 텍스트로 되돌려 놓습니다.
+				choices.setChoiceByValue('');
+
+				// 3. Native Select도 초기화
+				field.selectedIndex = 0;
+
+				// Note: 만약 1, 2번이 실패할 경우, options의 selected 속성을 조작 후 refresh()가 필요할 수 있으나,
+				// 이 방법을 사용하면 대부분의 Choices.js 문제가 해결됩니다.
+			} else {
+				// 일반 <select> 필드 초기화
+				field.selectedIndex = 0;
+				field.value = "";
+			}
+
+		} else {
+			// input[type=text], textarea 등 초기화
+			field.value = '';
+		}
+	});
+
+	console.log(`Container '${containerSelector}' search fields reset successfully.`);
 }

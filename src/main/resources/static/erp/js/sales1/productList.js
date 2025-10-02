@@ -3,6 +3,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
 	const defaultVisible = ["품목코드", "품목명", "규격/단위", "이미지", "비고"];
 
+	loadCommonCode('GRP001', 'productGroupSearch', '품목그룹');
+	loadCommonCode('GRP003', 'warehouseCodeSearch', '창고');
+
 
 
 
@@ -19,9 +22,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		form.reset();
 
 		const commonCodePromises = [
-			loadCommonCode('UNIT', 'unit', '단위'),
-			loadCommonCode('PRODUCTGROUP', 'productGroup', '품목그룹'),
-			loadCommonCode('WAREHOUSE', 'warehouseCode', '창고')
+			loadCommonCode('GRP014', 'unit', '단위'),
+			loadCommonCode('GRP001', 'productGroup', '품목그룹'),
+			loadCommonCode('GRP003', 'warehouseCode', '창고')
 		];
 
 		modal.show();
@@ -137,5 +140,47 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
 	window.priceTableInstance = tableInstance;
+
+
+
+
+
+
+
+
+
+	window.filterSearch = function() {
+		const searchParams = getSearchParams('.searchTool');
+
+		console.log("서버로 보낼 검색 조건:", searchParams);
+
+
+		const queryString = new URLSearchParams(searchParams).toString();
+		const url = `/api/product/search?${queryString}`;
+
+		// fetch API를 사용한 요청
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('검색 요청 실패');
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log("검색 결과 데이터:", data);
+				// 3. (옵션) Tabulator 테이블 등 화면에 검색 결과를 반영하는 로직
+				// myTable.setData(data);
+			})
+			.catch(error => {
+				console.error('검색 중 오류 발생:', error);
+				alert('데이터를 가져오는 데 실패했습니다.');
+			});
+	}
+
+
+
+
+
+
 
 });

@@ -33,8 +33,8 @@ public class ProductServiceImpl implements ProductService {
 	}
 
 	@Override
-	public List<Product> getFilterProduct(String productName, String productGroup, String warehouseCode) {
-		return productRepository.findByFilter(productName, productGroup, warehouseCode);
+	public List<Product> getFilterProduct(Product searchVo) {
+		return productRepository.findByFilter(searchVo);
 	}
 
 	@Override

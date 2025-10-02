@@ -19,11 +19,11 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 	@Query("SELECT MAX(p.productCode) FROM Product p")
 	String findMaxProductCode();
 
-	@Query("SELECT p FROM Product p " + "WHERE (:productName IS NULL OR p.productName = :productName) "
-			+ "AND (:productGroup IS NULL OR p.productGroup = :productGroup) "
-			+ "AND (:warehouseCode IS NULL OR p.warehouseCode = :warehouseCode)")
-	List<Product> findByFilter(@Param("productName") String productName, @Param("productGroup") String productGroup,
-			@Param("warehouseCode") String warehouseCode);
+    @Query("SELECT p FROM Product p "
+            + "WHERE (:#{#searchVo.productName} IS NULL OR p.productName LIKE %:#{#searchVo.productName}%) "
+            + "AND (:#{#searchVo.productGroup} IS NULL OR p.productGroup = :#{#searchVo.productGroup}) "
+            + "AND (:#{#searchVo.warehouseCode} IS NULL OR p.warehouseCode = :#{#searchVo.warehouseCode})")
+    List<Product> findByFilter(@Param("searchVo") Product searchVo); 
 
 	Product findByProductCode(String productCode);
 	
