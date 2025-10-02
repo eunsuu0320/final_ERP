@@ -633,231 +633,241 @@
 
     </div>
   </div>
-
+<div id="payMask" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;"></div>
 <script>
+  // =========================================
+  // 결제 완료 후 이동 경로 설정
+  // =========================================
+  const REDIRECT_ON_SUCCESS = (orderId) => `/pay/complete?orderId=${encodeURIComponent(orderId||'')}`;
+  
+  // =========================================
+  // 전역 상태
+  // =========================================
   let currentStep = 1;
+  let payWin = null;
+  let payClosePoll = null;
+  let selectedMethod = null;
+  let lastOrderId = null;
 
-  	// 활성 페이지 높이에 맞춰 래퍼 높이 조정 (초기/전환/리사이즈/아코디언/에러 때 호출)
-	function resizeWrapper() {
-	  const wrapper = document.getElementById('pagesWrapper');
-	  const activePage = document.querySelector('.page.active');
-	  if (!wrapper || !activePage) return;
-	  wrapper.style.height = activePage.scrollHeight + 'px'; // 즉시 최종 높이로
-	}
+  // =========================================
+  // 오버레이(모달 효과)
+  // =========================================
+  function ensureMask() {
+    let mask = document.getElementById('payMask');
+    if (!mask) {
+      mask = document.createElement('div');
+      mask.id = 'payMask';
+      mask.style.cssText = [
+        'position:fixed','inset:0','background:rgba(0,0,0,.35)',
+        'z-index:9999','display:none'
+      ].join(';');
+      document.body.appendChild(mask);
+    }
+    return mask;
+  }
+  function showMask() { ensureMask().style.display = 'block'; }
+  function hideMask() { ensureMask().style.display = 'none'; }
 
+  // =========================================
+  // 레이아웃 높이 조정
+  // =========================================
+  function resizeWrapper() {
+    const wrapper = document.getElementById('pagesWrapper');
+    const activePage = document.querySelector('.page.active');
+    if (!wrapper || !activePage) return;
+    wrapper.style.height = activePage.scrollHeight + 'px';
+  }
 
-  // 숫자만 입력
+  // =========================================
+  // 입력 유틸
+  // =========================================
   function onlyNumberInput(selector) {
     document.querySelectorAll(selector).forEach(input => {
-      input.addEventListener("input", () => {
-        input.value = input.value.replace(/\D/g, ""); // 숫자 이외 제거
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/\D/g, '');
       });
     });
   }
-
-  // 자동 포커스 이동
   function autoMoveNext(selector) {
     document.querySelectorAll(selector).forEach(input => {
-      input.addEventListener("input", () => {
-        const maxLength = input.getAttribute("maxlength");
+      input.addEventListener('input', () => {
+        const maxLength = input.getAttribute('maxlength');
         if (maxLength && input.value.length >= maxLength) {
           let next = input.nextElementSibling;
-          while (next && next.tagName !== "INPUT") {
-            next = next.nextElementSibling;
-          }
+          while (next && next.tagName !== 'INPUT') next = next.nextElementSibling;
           if (next) next.focus();
         }
       });
     });
   }
 
-  // 에러 메시지 표시/초기화
+  // =========================================
+  // 에러 표시
+  // =========================================
   function showError(input, message) {
-    const container = input.closest(".form-group");
-    const errorSpan = container.querySelector(".error-msg");
+    const container = input.closest('.form-group');
+    const errorSpan = container?.querySelector('.error-msg');
     if (errorSpan) {
       errorSpan.textContent = message;
-      errorSpan.classList.add("active");
+      errorSpan.classList.add('active');
     }
     input.focus();
-    requestAnimationFrame(resizeWrapper); // 에러로 높이 변했을 때 맞춤
+    requestAnimationFrame(resizeWrapper);
   }
-
   function clearErrors() {
-    document.querySelectorAll(".error-msg").forEach(span => {
-      span.textContent = "";
-      span.classList.remove("active");
+    document.querySelectorAll('.error-msg').forEach(span => {
+      span.textContent = '';
+      span.classList.remove('active');
     });
     requestAnimationFrame(resizeWrapper);
   }
 
+  // =========================================
   // STEP1 검증
+  // =========================================
   function validateStep1() {
     clearErrors();
 
-    const companyName = document.getElementById("companyName");
-    const ceoName = document.getElementById("ceoName");
-    const biz1 = document.getElementById("biz1");
-    const biz2 = document.getElementById("biz2");
-    const biz3 = document.getElementById("biz3");
-    const roadAddress = document.getElementById("roadAddress");
-    const masterId = document.getElementById("masterId");
-    const masterPw = document.getElementById("masterPw");
-    const managerName = document.getElementById("managerName");
-    const phone1 = document.getElementById("phone1");
-    const phone2 = document.getElementById("phone2");
-    const phone3 = document.getElementById("phone3");
-    const emailFront = document.getElementById("emailFront");
-    const emailDomain = document.getElementById("emailDomain");
-    const subPeriod = document.getElementById("subPeriod");
+    const companyName = document.getElementById('companyName');
+    const ceoName = document.getElementById('ceoName');
+    const biz1 = document.getElementById('biz1');
+    const biz2 = document.getElementById('biz2');
+    const biz3 = document.getElementById('biz3');
+    const roadAddress = document.getElementById('roadAddress');
+    const addressDetail = document.getElementById('addressDetail');
+    const masterId = document.getElementById('masterId');
+    const masterPw = document.getElementById('masterPw');
+    const managerName = document.getElementById('managerName');
+    const phone1 = document.getElementById('phone1');
+    const phone2 = document.getElementById('phone2');
+    const phone3 = document.getElementById('phone3');
+    const emailFront = document.getElementById('emailFront');
+    const emailDomain = document.getElementById('emailDomain');
+    const subPeriod = document.getElementById('subPeriod');
 
-    if (!companyName.value.trim()) { showError(companyName, "회사명을 입력해주세요."); return false; }
-    if (!ceoName.value.trim()) { showError(ceoName, "대표자명을 입력해주세요."); return false; }
-    if (!biz1.value.trim() || !biz2.value.trim() || !biz3.value.trim()) { showError(biz1, "사업자 등록번호를 모두 입력해주세요."); return false; }
-    if (!roadAddress.value.trim()) { showError(roadAddress, "주소를 입력해주세요."); return false; }
-    if (!masterId.value.trim()) { showError(masterId, "마스터 사용자 ID를 입력해주세요."); return false; }
-    if (!masterPw.value.trim()) { showError(masterPw, "마스터 PW를 입력해주세요."); return false; }
-    if (!managerName.value.trim()) { showError(managerName, "담당자명을 입력해주세요."); return false; }
-    if (!phone1.value.trim() || !phone2.value.trim() || !phone3.value.trim()) { showError(phone1, "연락처를 모두 입력해주세요."); return false; }
-    if (!emailFront.value.trim()) { showError(emailFront, "이메일 앞부분을 입력해주세요."); return false; }
-    if (!emailDomain.value.trim()) { showError(emailDomain, "이메일 도메인을 선택해주세요."); return false; }
-    if (!subPeriod.value.trim()) { showError(subPeriod, "구독 기간을 선택해주세요."); return false; }
+    if (!companyName.value.trim()) { showError(companyName, '회사명을 입력해주세요.'); return false; }
+    if (!ceoName.value.trim()) { showError(ceoName, '대표자명을 입력해주세요.'); return false; }
+    if (!biz1.value.trim() || !biz2.value.trim() || !biz3.value.trim()) { showError(biz1, '사업자 등록번호를 모두 입력해주세요.'); return false; }
+    if (!roadAddress.value.trim()) { showError(roadAddress, '주소를 입력해주세요.'); return false; }
+    if (!addressDetail.value.trim()) { showError(addressDetail, '상세 주소를 입력해주세요.'); return false; }
+    if (!masterId.value.trim()) { showError(masterId, '마스터 사용자 ID를 입력해주세요.'); return false; }
+    if (!masterPw.value.trim()) { showError(masterPw, '마스터 PW를 입력해주세요.'); return false; }
+    if (!managerName.value.trim()) { showError(managerName, '담당자명을 입력해주세요.'); return false; }
+    if (!phone1.value.trim() || !phone2.value.trim() || !phone3.value.trim()) { showError(phone1, '연락처를 모두 입력해주세요.'); return false; }
+    if (!emailFront.value.trim()) { showError(emailFront, '이메일 앞부분을 입력해주세요.'); return false; }
+    if (!emailDomain.value.trim()) { showError(emailDomain, '이메일 도메인을 선택해주세요.'); return false; }
+    if (!subPeriod.value.trim()) { showError(subPeriod, '구독 기간을 선택해주세요.'); return false; }
 
-    // 사업자 등록번호 형식 검증 (3-2-5)
     const biz = `${biz1.value}-${biz2.value}-${biz3.value}`;
     if (!/^\d{3}-\d{2}-\d{5}$/.test(biz)) {
-      showError(biz1, "사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)");
+      showError(biz1, '사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)');
       return false;
     }
-
-    // 연락처 형식 검증 (2~3 - 3~4 - 4)
     const phone = `${phone1.value}-${phone2.value}-${phone3.value}`;
     if (!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone)) {
-      showError(phone1, "연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)");
+      showError(phone1, '연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)');
       return false;
     }
-
     return true;
   }
 
+  // =========================================
   // STEP 이동
+  // =========================================
   function goToStep(step) {
-	  if (step === currentStep) return;
-	
-	  // STEP1 → STEP2 이동 시 검증
-	  if (currentStep === 1 && step === 2) {
-	    if (!validateStep1()) return;
-	  }
-	
-	  const currentPage = document.getElementById('step' + currentStep);
-	  const nextPage = document.getElementById('step' + step);
-	
-	  if (step > currentStep) {
-	    currentPage.classList.remove('active');
-	    currentPage.classList.add('hidden-left');
-	    nextPage.classList.remove('hidden-left','hidden-right');
-	  } else {
-	    currentPage.classList.remove('active');
-	    currentPage.classList.add('hidden-right');
-	    nextPage.classList.remove('hidden-right','hidden-left');
-	  }
-	  nextPage.classList.add('active');
-	
-	  document.querySelectorAll('.step-circle').forEach(c => {
-	    c.classList.toggle('active', c.dataset.step == step);
-	  });
-	
-	  currentStep = step;
-	
-	  // STEP2 들어갈 때 계약서 내용 채우기
-	  if (step === 2) {
-	    const company = document.getElementById("companyName").value || "__________";
-	    const ceo = document.getElementById("ceoName").value || "__________";
-	    const today = new Date();
-	    const subPeriod = document.getElementById("subPeriod").value;
-	
-	    // 계약 시작일
-	    const startDateStr = today.toISOString().split("T")[0];
-	
-	    // 계약 종료일 계산
-	    let endDate = new Date(today);
-	    if (subPeriod.includes("개월")) {
-	      const months = parseInt(subPeriod.replace("개월", ""));
-	      endDate.setMonth(endDate.getMonth() + months);
-	    }
-	    const endDateStr = endDate.toISOString().split("T")[0];
-	
-	    document.getElementById("contractCompany").textContent = "[ " + company + " ]";
-	    document.getElementById("contractCeo").textContent = "[ " + ceo + " ]";
-	    document.getElementById("contractDate").textContent = "[ " + startDateStr + " ]";
-	    document.getElementById("contractEndDate").textContent = "[ " + endDateStr + " ]";
-	 }
+    if (step === currentStep) return;
 
-  // STEP3 들어갈 때 결제 내역 채우기
-  if (step === 3) {
-    const subPeriod = document.getElementById("subPeriod").value;
-    let months = 0;
-    if (subPeriod.includes("개월")) {
-      months = parseInt(subPeriod.replace("개월", ""));
+    if (currentStep === 1 && step === 2) {
+      if (!validateStep1()) return;
     }
 
-    const unitPrice = 30000;
-    const basePrice = months * unitPrice;
-    const tax = Math.round(basePrice * 0.1);
-    const total = basePrice + tax;
+    const currentPage = document.getElementById('step' + currentStep);
+    const nextPage = document.getElementById('step' + step);
 
-    document.getElementById("summaryPeriod").textContent = subPeriod + " 구독 / 월 ₩" + unitPrice.toLocaleString();
-    document.getElementById("summaryBase").textContent = "₩" + basePrice.toLocaleString();
-    document.getElementById("summaryTax").textContent = "₩" + tax.toLocaleString();
-    document.getElementById("summaryTotal").textContent = "₩" + total.toLocaleString();
+    if (step > currentStep) {
+      currentPage.classList.remove('active');
+      currentPage.classList.add('hidden-left');
+      nextPage.classList.remove('hidden-left','hidden-right');
+    } else {
+      currentPage.classList.remove('active');
+      currentPage.classList.add('hidden-right');
+      nextPage.classList.remove('hidden-right','hidden-left');
+    }
+    nextPage.classList.add('active');
+
+    document.querySelectorAll('.step-circle').forEach(c => {
+      c.classList.toggle('active', c.dataset.step == step);
+    });
+
+    currentStep = step;
+
+    if (step === 2) {
+      const company = document.getElementById('companyName').value || '__________';
+      const ceo = document.getElementById('ceoName').value || '__________';
+      const today = new Date();
+      const startDateStr = today.toISOString().split('T')[0];
+
+      const subPeriod = document.getElementById('subPeriod').value;
+      let endDate = new Date(today);
+      if (subPeriod.includes('개월')) {
+        const months = parseInt(subPeriod.replace('개월', ''));
+        endDate.setMonth(endDate.getMonth() + months);
+      }
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      document.getElementById('contractCompany').textContent = `[ ${company} ]`;
+      document.getElementById('contractCeo').textContent = `[ ${ceo} ]`;
+      document.getElementById('contractDate').textContent = `[ ${startDateStr} ]`;
+      document.getElementById('contractEndDate').textContent = `[ ${endDateStr} ]`;
+    }
+
+    if (step === 3) {
+      const subPeriod = document.getElementById('subPeriod').value;
+      let months = 0;
+      if (subPeriod.includes('개월')) months = parseInt(subPeriod.replace('개월', ''));
+      const unitPrice = 30000;
+      const basePrice = months * unitPrice;
+      const tax = Math.round(basePrice * 0.1);
+      const total = basePrice + tax;
+
+      document.getElementById('summaryPeriod').textContent = `${subPeriod} 구독 / 월 ₩${unitPrice.toLocaleString()}`;
+      document.getElementById('summaryBase').textContent = `₩${basePrice.toLocaleString()}`;
+      document.getElementById('summaryTax').textContent = `₩${tax.toLocaleString()}`;
+      document.getElementById('summaryTotal').textContent = `₩${total.toLocaleString()}`;
+    }
+
+    requestAnimationFrame(resizeWrapper);
+    nextPage.addEventListener('transitionend', resizeWrapper, { once: true });
+  }
+  window.goToStep = goToStep;
+
+  // =========================================
+  // 아코디언
+  // =========================================
+  function initAccordion() {
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        header.classList.toggle('active');
+        content.classList.toggle('open');
+        resizeWrapper();
+        content.addEventListener('transitionend', resizeWrapper, { once: true });
+      });
+    });
   }
 
-  // 높이 재조정
-  requestAnimationFrame(resizeWrapper);
-  nextPage.addEventListener('transitionend', resizeWrapper, { once: true });
-}
-
-
-  function initAccordion() {
-	  document.querySelectorAll('.accordion-header').forEach(header => {
-	    header.addEventListener('click', () => {
-	      const content = header.nextElementSibling;
-	      header.classList.toggle('active');
-	      content.classList.toggle('open');
-
-	      // 클릭 즉시 한 번 조정
-	      resizeWrapper();
-
-	      // transition 끝난 뒤 최종 높이 다시 조정
-	      content.addEventListener('transitionend', resizeWrapper, { once: true });
-	    });
-	  });
-	}
-
-  function resizeWrapper() {
-	  const wrapper = document.getElementById('pagesWrapper');
-	  const activePage = document.querySelector('.page.active');
-	  if (!wrapper || !activePage) return;
-
-	  wrapper.style.height = activePage.scrollHeight + 'px';
-	}
-
-  // 전자서명 (마우스 + 터치 지원, 좌표 보정)
+  // =========================================
+  // 전자서명 패드
+  // =========================================
   let canvas, ctx, drawing = false;
   function getPosition(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
     if (e.touches) {
-      return {
-        x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top) * scaleY
-      };
+      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
     } else {
-      return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-      };
+      return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
     }
   }
   function startDrawing(e) {
@@ -872,9 +882,9 @@
     e.preventDefault();
     const pos = getPosition(e);
     ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = "#000";
+    ctx.strokeStyle = '#000';
     ctx.lineWidth = 2;
-    ctx.lineCap = "round";
+    ctx.lineCap = 'round';
     ctx.stroke();
   }
   function stopDrawing(e) {
@@ -883,142 +893,226 @@
     drawing = false;
   }
 
-  // 초기 세팅
-  document.addEventListener('DOMContentLoaded', () => {
-    initAccordion();
-    resizeWrapper();                // 첫 페이지 높이 맞춤
-    window.addEventListener('resize', resizeWrapper);
-
-    // 서명 패드 초기화
-    canvas = document.getElementById("signaturePad");
-    ctx = canvas.getContext("2d");
-    canvas.addEventListener("mousedown", startDrawing);
-    canvas.addEventListener("mousemove", draw);
-    canvas.addEventListener("mouseup", stopDrawing);
-    canvas.addEventListener("mouseleave", stopDrawing);
-    canvas.addEventListener("touchstart", startDrawing, {passive:false});
-    canvas.addEventListener("touchmove", draw, {passive:false});
-    canvas.addEventListener("touchend", stopDrawing, {passive:false});
-    canvas.addEventListener("touchcancel", stopDrawing, {passive:false});
-
-    document.getElementById("clearSign").addEventListener("click", () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    // 숫자 입력 제한 & 자동 포커스 이동
-    onlyNumberInput("#biz1, #biz2, #biz3, #phone1, #phone2, #phone3");
-    autoMoveNext("#biz1, #biz2, #biz3, #phone1, #phone2, #phone3");
-  });
-
-  // 폰트/아이콘 로드 완료 후 한 번 더 높이 보정 (초기 잘림 방지)
-  window.addEventListener('load', resizeWrapper);
-  
-  function toggleAccordion(header) {
-	  const content = header.nextElementSibling;
-	  header.classList.toggle('active');
-	  content.classList.toggle('open');
-
-	  // 아코디언을 열거나 닫을 때 바로 최종 높이 계산
-	  requestAnimationFrame(resizeWrapper);
-	}
-
-  let selectedMethod = null;
-
+  // =========================================
+  // 결제 수단 선택
+  // =========================================
   function selectPayMethod(method) {
-    selectedMethod = method;
-
-    // 버튼 선택 효과
+    selectedMethod = method; // 'kakao' | 'naver'
     document.querySelectorAll('.pay-btn').forEach(btn => btn.classList.remove('active'));
     const selectedBtn = document.querySelector('.pay-btn.' + method);
     if (selectedBtn) selectedBtn.classList.add('active');
   }
+  window.selectPayMethod = selectPayMethod;
 
-  function submitPayment() {
-	  if (!document.getElementById("agreePayment").checked) {
-	    alert("결제 금액에 동의해야 진행 가능합니다.");
-	    return;
-	  }
-	  if (!selectedMethod) {
-	    alert("결제 수단을 선택해주세요.");
-	    return;
-	  }
+  // =========================================
+  // 팝업 열기 + 닫힘 감지
+  // =========================================
+  function openPayPopup(url) {
+    showMask();
+    const features = 'width=480,height=720,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+    payWin = window.open(url, 'easyPay', features);
 
-	  const orderId = "ORDER_" + new Date().getTime();
-	  const userId = "admin01"; // 로그인 없을 경우 서버에서 GUEST 처리
-	  const buyerName = document.getElementById("managerName").value;
-
-	  // 결제 + 회사 정보 같이 담기
-	  const payRequest = {
-	    orderId: orderId,
-	    userId: userId,
-	    itemName: "ERP 구독",
-	    amount: parseInt(document.getElementById("summaryTotal").textContent.replace(/[₩,]/g, "")),
-	    payMethod: selectedMethod.toUpperCase(),  // "KAKAO" or "NAVER"
-	    buyerName: buyerName,
-	    subPeriod: document.getElementById("subPeriod").value
-	  };
-	  
-	  const companyInfo = {
-		companyName: document.getElementById("companyName").value,
-	    ceoName: document.getElementById("ceoName").value,
-	    bizRegNo: `${document.getElementById("biz1").value}-${document.getElementById("biz2").value}-${document.getElementById("biz3").value}`,
-	    roadAddress: document.getElementById("roadAddress").value,
-	    addressDetail: document.getElementById("addressDetail").value,
-	    tel: `${document.getElementById("phone1").value}-${document.getElementById("phone2").value}-${document.getElementById("phone3").value}` 
-	  };
-	  
-	  // 서버에 결제 준비 요청
-	  fetch("/pay/ready", {
-	    method: "POST",
-	    headers: { "Content-Type": "application/json" },
-	    body: JSON.stringify({
-	    	payRequest: payRequest,
-	    	companyInfo: companyInfo
-	    })
-	  })
-	    .then(res => res.json())
-	    .then(data => {
-	      // 서버에서 카카오/네이버 리다이렉트 URL 반환
-	      if (selectedMethod === "kakao") {
-	        window.location.href = data.next_redirect_pc_url;  // 카카오페이
-	      } else if (selectedMethod === "naver") {
-	        window.location.href = data.redirectUrl;           // 네이버페이
-	      }
-	    })
-	    .catch(err => console.error(err));
-	}
-	
-  	function execDaumPostcode() {
-	    new daum.Postcode({
-	      oncomplete: function(data) {
-	        document.getElementById("roadAddress").value = data.address;
-	        resizeWrapper(); // 기존 높이 조정 함수
-	      }
-	    }).open();
-	}
+    // 팝업 닫힘 감지(폴백)
+    if (payClosePoll) clearInterval(payClosePoll);
+    payClosePoll = setInterval(() => {
+      if (!payWin || payWin.closed) {
+        clearInterval(payClosePoll);
+        hideMask();
+      }
+    }, 700);
+  }
   
-  	function loadEmailDomains() {
-  	  fetch("/api/modal/commonCode?commonGroup=GRP004")
-  	    .then(res => res.json())
-  	    .then(domains => {
-  	      const select = document.getElementById("emailDomain");
-  	      select.innerHTML = '<option value="">선택</option>'; // 초기화
+  function getSignatureDataUrl() {
+	    const c = document.getElementById('signaturePad');
+	    // 비어있으면 빈 문자열 반환 (선택)
+	    try { 
+	      // 캔버스가 비었는지 간단 체크 (픽셀 읽기 등) 생략 가능
+	      return c.toDataURL('image/png'); 
+	    } catch(_) { 
+	      return ''; 
+	    }
+  }
+  
+  // =========================================
+  // 결제 시작
+  // =========================================
+  function submitPayment() {
+    if (!document.getElementById('agreePayment').checked) {
+      alert('결제 금액에 동의해야 진행 가능합니다.');
+      return;
+    }
+    if (!selectedMethod) {
+      alert('결제 수단을 선택해주세요.');
+      return;
+    }
 
-  	      domains.forEach(d => {
-  	        const opt = document.createElement("option");
-  	        opt.value = d.codeId;     // CODE_ID → 실제 값 (예: gmail.com)
-  	        opt.textContent = d.codeName; // CODE_NAME → 화면 표시용 (예: 구글메일)
-  	        select.appendChild(opt);
-  	      });
-  	    })
-  	    .catch(err => console.error("이메일 도메인 로딩 실패:", err));
-  	}
+    lastOrderId = 'ORDER_' + Date.now();
+    const userId = 'admin01'; // 로그인 없으면 서버에서 GUEST 처리
+    const buyerName = document.getElementById('managerName').value;
+    const subPeriodText = document.getElementById('subPeriod').value;
+    const totalAmount = parseInt(document.getElementById('summaryTotal').textContent.replace(/[₩,]/g, '') || '0', 10);
+	
+ 	// 이메일 값 만들기
+    const emailFront  = document.getElementById('emailFront').value.trim();
+    const emailDomain = document.getElementById('emailDomain').value.trim(); // API에서 value에 실제 도메인 들어옴 (예: gmail.com)
+    const contactEmail = `${emailFront}@${emailDomain}`;
+    
+    // 전자서명
+    const signatureDataUrl = getSignatureDataUrl();
+    
+    const payRequest = {
+      orderId: lastOrderId,
+      userId: userId,
+      itemName: 'ERP 구독',
+      amount: totalAmount,
+      payMethod: selectedMethod.toUpperCase(), // KAKAO | NAVER
+      buyerName: buyerName,
+      subPeriod: subPeriodText
+    };
 
-  	document.addEventListener("DOMContentLoaded", () => {
-  	  loadEmailDomains();
-  	});	
-  	
+    const companyInfo = {
+      companyName: document.getElementById('companyName').value,
+      ceoName: document.getElementById('ceoName').value,
+      bizRegNo: `${document.getElementById('biz1').value}-${document.getElementById('biz2').value}-${document.getElementById('biz3').value}`,
+      roadAddress: document.getElementById('roadAddress').value,
+      addressDetail: document.getElementById('addressDetail').value,
+      tel: `${document.getElementById('phone1').value}-${document.getElementById('phone2').value}-${document.getElementById('phone3').value}`
+    };
+	
+    const systemUser = {
+    	userId: document.getElementById('masterId').value.trim(),
+    	userPw: document.getElementById('masterPw').value,
+    	empCode: '',      // 사원코드 없으면 빈 문자열/null
+    	remk: '마스터 관리자'	  // 비고
+    }
+    
+    fetch('/pay/ready', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payRequest, companyInfo, systemUser, contactEmail, signatureDataUrl })
+    })
+    .then(res => res.json())
+    .then(data => {
+      const redirectUrl = selectedMethod === 'kakao' ? data.next_redirect_pc_url : data.redirectUrl;
+      if (!redirectUrl) throw new Error('결제 리다이렉트 URL이 없습니다.');
+      openPayPopup(redirectUrl);
+    })
+    .catch(err => {
+      hideMask();
+      console.error(err);
+      alert('결제 준비 중 오류가 발생했습니다.');
+    });
+  }
+  window.submitPayment = submitPayment;
+
+  // =========================================
+  // 결제 결과 수신 → 팝업 닫고 부모 이동
+  // =========================================
+  // 팝업 postMessage 수신부 (기존 위치 그대로 대체)
+  window.addEventListener('message', (e) => {
+	  const msg = e.data || {};
+	  if (msg.type === 'KAKAOPAY_RESULT' || msg.type === 'NAVERPAY_RESULT') {
+	    try { hideMask && hideMask(); } catch(_) {}
+	    try { if (window.payWin && !payWin.closed) payWin.close(); } catch(_) {}
+	
+	    if (msg.status === 'success') {
+	      const orderId    = msg.orderId || '';
+	      const buyerName  = (document.getElementById('managerName')?.value || '').trim();
+	      const companyCode = msg.companyCode || '';  // ★ 추가
+	      const masterId    = msg.masterId || '';     // ★ 추가
+	
+	      const totalText = document.getElementById('summaryTotal')?.textContent || '₩0';
+	      const vatText   = document.getElementById('summaryTax')?.textContent || '₩0';
+	      const toNumber = (w) => Number(String(w).replace(/[^\d]/g, ''));
+	      const total = toNumber(totalText);
+	      const vat   = toNumber(vatText);
+	
+	      const params = new URLSearchParams({
+	        orderId,
+	        buyerName,
+	        total: String(total),
+	        vat: String(vat),
+	        companyCode,     // ★ 추가
+	        masterId         // ★ 추가
+	      });
+	
+	      window.location.href = `/pay/complete?${params.toString()}`;
+	    } else if (msg.status === 'cancel') {
+	      alert('결제가 취소되었습니다.');
+	    } else {
+	      alert('결제에 실패했습니다.');
+	    }
+	  }
+  });
+
+  // =========================================
+  // 다음 우편번호
+  // =========================================
+  function execDaumPostcode() {
+    new daum.Postcode({
+      oncomplete: function(data) {
+        document.getElementById('roadAddress').value = data.address;
+        resizeWrapper();
+      }
+    }).open();
+  }
+  window.execDaumPostcode = execDaumPostcode;
+
+  // =========================================
+  // 이메일 도메인 로딩
+  // =========================================
+  function loadEmailDomains() {
+    fetch('/api/modal/commonCode?commonGroup=GRP004')
+      .then(res => res.json())
+      .then(domains => {
+        const select = document.getElementById('emailDomain');
+        select.innerHTML = '<option value="">선택</option>';
+        domains.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.codeName;        
+          opt.textContent = d.codeName;
+          select.appendChild(opt);
+        });
+      })
+      .catch(err => console.error('이메일 도메인 로딩 실패:', err));
+  }
+
+  // =========================================
+  // 초기화
+  // =========================================
+  document.addEventListener('DOMContentLoaded', () => {
+    initAccordion();
+    resizeWrapper();
+    window.addEventListener('resize', resizeWrapper);
+
+    // 전자서명 초기화
+    canvas = document.getElementById('signaturePad');
+    if (canvas) {
+      ctx = canvas.getContext('2d');
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+      canvas.addEventListener('touchstart', startDrawing, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      canvas.addEventListener('touchend', stopDrawing, { passive: false });
+      canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+      const clearBtn = document.getElementById('clearSign');
+      clearBtn?.addEventListener('click', () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+    }
+
+    // 숫자 입력 제한 & 자동 포커싱
+    onlyNumberInput('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
+    autoMoveNext('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
+
+    // 이메일 도메인
+    loadEmailDomains();
+  });
+
+  window.addEventListener('load', resizeWrapper);
 </script>
+
+
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 </body>

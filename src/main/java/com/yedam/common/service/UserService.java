@@ -23,10 +23,68 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
-    @Autowired UserRepository userRepository;
+	@Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JavaMailSender mailSender;
 
+    // ... (기존 loadUserByUsername, resetPassword 그대로)
+
+    /**
+     * 결제 완료 후 마스터 계정 생성
+     *  - companyCode: 필수 (결제로 생성된 회사코드)
+     *  - userId: 화면에서 입력한 마스터 ID
+     *  - rawPassword: 화면에서 입력한 마스터 PW(서버에서 해시)
+     *  - roleCode: 기본 "ROLE_ADMIN" 추천 (정책에 맞게)
+     *  - empCode: NOT NULL 제약 대응. FK 없으면 null로 넘기면 userCode로 채움
+     *  - remk: 비고(선택)
+     */
+    @Transactional
+    public SystemUser createMasterUser(
+            String companyCode,
+            String userId,
+            String rawPassword,
+            String roleCode,  // 예: "ADMIN" (roles() 사용 시 ROLE_ 자동 prefix 주의)
+            String empCode,   // 없으면 null → 저장 후 userCode로 세팅
+            String remk
+    ) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("USER_ID가 비어있습니다.");
+        }
+        if (rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("USER_PW가 비어있습니다.");
+        }
+
+        // 회사 내 중복만 체크
+        if (userRepository.findByUserIdAndCompanyCode(userId, companyCode).isPresent()) {
+            throw new IllegalStateException("이미 존재하는 사용자입니다: " + companyCode + ":" + userId);
+        }
+
+        SystemUser u = new SystemUser();
+        // @Id(userCode)는 SequenceIdGenerator가 채움
+        u.setCompanyCode(companyCode);
+        // roles() 사용 중이면 DB에는 "ADMIN"처럼 prefix 없는 값 권장
+        u.setRoleCode((roleCode == null || roleCode.isBlank()) ? "ADMIN" : roleCode);
+
+        // EMP_CODE NOT NULL 대응: 값 없으면 임시 → 저장 후 userCode로 교체
+        u.setEmpCode((empCode == null || empCode.isBlank()) ? "MASTER" : empCode);
+
+        u.setUserId(userId);
+        u.setUserPw(passwordEncoder.encode(rawPassword));
+        u.setCreatedDate(new java.util.Date());
+        u.setUsageStatus("Y");
+        u.setRemk(remk);
+
+        // 1차 저장 (userCode 생성)
+        SystemUser saved = userRepository.save(u);
+
+        // empCode를 넘기지 않았으면 userCode로 정렬
+        if (empCode == null || empCode.isBlank()) {
+            saved.setEmpCode(saved.getUserCode()); // EMP_CODE <- USER_CODE
+            saved = userRepository.save(saved);
+        }
+        return saved;
+    }
+    
     @Override
     public UserDetails loadUserByUsername(String combined) throws UsernameNotFoundException {
         // "COMP01:user01" 형식으로 넘어옴
@@ -89,4 +147,23 @@ public class UserService implements UserDetailsService {
     	mailSender.send(message);
 
     }
+    
+    public void sendWelcomeMail(String toEmail, String companyCode, String userId, String rawPassword) {
+		if (toEmail == null || toEmail.isBlank()) return;
+		
+		SimpleMailMessage message = new SimpleMailMessage();
+		message.setTo(toEmail);
+		message.setFrom("gywns8339@naver.com"); // 사용 중인 SMTP 계정
+		message.setSubject("[ERP 시스템] 마스터 계정 생성 안내");
+		message.setText(
+		"안녕하세요.\n\n" +
+		"아래 정보로 ERP 마스터 계정이 생성되었습니다.\n\n" +
+		"회사코드 : " + companyCode + "\n" +
+		"사용자ID : " + userId + "\n" +
+		"비밀번호 : " + rawPassword + "  (로그인 후 변경 권장)\n\n" +
+		"감사합니다."
+		);
+		
+		mailSender.send(message);
+	}
 }
