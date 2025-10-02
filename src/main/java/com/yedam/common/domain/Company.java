@@ -18,8 +18,6 @@ public class Company implements Prefixable {
             name = "sequence-id-generator",
             strategy = "com.yedam.common.SequenceIdGenerator"
     )
-	private String attId;
-
 	private String companyCode;
 
 	private String companyName;	  // 회사명

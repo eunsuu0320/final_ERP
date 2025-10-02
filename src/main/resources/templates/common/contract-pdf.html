@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <style type="text/css">
+    /* ----- 페이지 / 기본 글꼴 ----- */
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm; /* 위/오/아/왼 */
+    }
+    body {
+      font-family: "NanumGothic", sans-serif;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #111;
+    }
+
+    /* ----- 타이틀 ----- */
+    .doc-title {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 0 14px 0;
+    }
+
+    .muted {
+      color: #666;
+    }
+
+    /* ----- 카드 박스 ----- */
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 12px;
+      background: #fff;
+      margin: 0 0 14px 0;
+    }
+
+    /* ----- 정보 테이블 ----- */
+    table.info {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      word-break: break-word;
+    }
+    table.info th,
+    table.info td {
+      border: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    table.info th {
+      width: 26%;
+      background: #f9fafb;
+      text-align: left;
+      color: #374151;
+      font-weight: 700;
+    }
+    table.info td {
+      color: #111827;
+    }
+
+    /* ----- 구분선/섹션 ----- */
+    .section-title {
+      font-size: 14px;
+      font-weight: 800;
+      margin: 20px 0 8px 0;
+      padding-top: 6px;
+      border-top: 2px solid #111;
+    }
+
+    .list {
+      margin: 6px 0 0 0;
+      padding-left: 16px;
+    }
+    .list li { margin: 4px 0; }
+
+    /* ----- 서명 박스 ----- */
+    .sign-wrap {
+      margin-top: 14px;
+    }
+    .sign-box {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
+    }
+    .sign-label {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .sign-image {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      height: auto;
+      border: 1px solid #e5e7eb;
+    }
+    .sign-name {
+      margin-top: 6px;
+      color: #111827;
+    }
+
+    /* ----- 페이지 나눔 (필요시) ----- */
+    .page-break { page-break-before: always; }
+
+    /* 작은 회색 보조 텍스트 */
+    .help { font-size: 11px; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <!-- 문서 타이틀 -->
+  <h1 class="doc-title">ERP 시스템 이용 계약서</h1>
+
+  <!-- 계약 기본정보 -->
+  <div class="card">
+    <table class="info" aria-label="계약 기본정보">
+      <colgroup>
+        <col style="width:26%"/>
+        <col/>
+      </colgroup>
+      <tbody>
+        <tr>
+          <th>계약일자</th>
+          <td>${contractDate}</td>
+        </tr>
+        <tr>
+          <th>회사명</th>
+          <td>${companyName}</td>
+        </tr>
+        <tr>
+          <th>대표자명</th>
+          <td>${ceoName}</td>
+        </tr>
+        <tr>
+          <th>사업자등록번호</th>
+          <td>${bizRegNo}</td>
+        </tr>
+        <tr>
+          <th>주소</th>
+          <td>${fullAddress}</td>
+        </tr>
+        <tr>
+          <th>연락처</th>
+          <td>${tel}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 과금/주문 정보 -->
+  <div class="card">
+    <table class="info" aria-label="과금 및 주문 정보">
+      <colgroup>
+        <col style="width:26%"/>
+        <col/>
+      </colgroup>
+      <tbody>
+        <tr>
+          <th>구독 기간</th>
+          <td>${subPeriod}</td>
+        </tr>
+        <tr>
+          <th>계약 시작</th>
+          <td>${startDate}</td>
+        </tr>
+        <tr>
+          <th>계약 만료</th>
+          <td>${endDate}</td>
+        </tr>
+        <tr>
+          <th>월 요금</th>
+          <td>₩30,000 (VAT 별도)</td>
+        </tr>
+        <tr>
+          <th>총 결제금액</th>
+          <td>₩${total} (부가세 ₩${vat})</td>
+        </tr>
+        <tr>
+          <th>주문번호</th>
+          <td>${orderId}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 약관 -->
+  <h2 class="section-title">주요 약관</h2>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제1조(목적)</h3>
+  <ul class="list">
+    <li>이 계약서는 ERP 시스템(이하 “서비스”)의 이용에 필요한 조건과 권리·의무를 규정합니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제2조(서비스 범위)</h3>
+  <ul class="list">
+    <li>제공 모듈과 기능은 회사가 제시한 서비스 설명서 및 웹 화면에 따릅니다.</li>
+    <li>합의된 커스터마이징은 별도 작업 범위서(SOW)에 따릅니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제3조(이용계정 및 보안)</h3>
+  <ul class="list">
+    <li>고객은 계정 정보의 관리 책임을 가지며, 무단 사용 발견 시 즉시 통지해야 합니다.</li>
+    <li>비밀번호는 정기적으로 변경하고 유출 방지를 위해 안전하게 보관합니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제4조(요금, 납부 및 환불)</h3>
+  <ul class="list">
+    <li>요금은 계약 시점 공지가격/제안서에 따르며 선불로 납부합니다.</li>
+    <li>환불은 관계 법령 및 별도 환불정책이 정한 바에 따릅니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제5조(서비스 가용성과 장애 대응)</h3>
+  <ul class="list">
+    <li>정기점검 및 긴급점검 시 사전 또는 사후 공지합니다.</li>
+    <li>중대한 장애 발생 시 회사는 신속하게 원인을 파악하고 복구를 위해 상업적으로 합리적인 노력을 기울입니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제6조(데이터 보관 및 백업)</h3>
+  <ul class="list">
+    <li>고객 데이터의 소유권은 고객에게 있으며, 회사는 데이터 보호를 위해 합리적인 기술적·관리적 조치를 합니다.</li>
+    <li>백업·복구 기준은 서비스 정책에 따르며, 보존기간 이후 파기될 수 있습니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제7조(지식재산권)</h3>
+  <ul class="list">
+    <li>서비스 프로그램 및 문서의 권리는 회사에 있으며, 고객은 사용권만을 가집니다.</li>
+    <li>무단 복제·배포·역공학을 금지합니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제8조(비밀유지)</h3>
+  <ul class="list">
+    <li>당사자는 상대방의 영업비밀과 기술정보를 제3자에게 누설하지 않으며, 계약 종료 후에도 유효합니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제9조(계약 기간 및 해지)</h3>
+  <ul class="list">
+    <li>계약기간은 구독 기간으로 하며, 중대한 위반 시 서면통지 후 해지할 수 있습니다.</li>
+    <li>해지 시 데이터 반출·파기 절차는 서비스 정책에 따릅니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제10조(책임 제한)</h3>
+  <ul class="list">
+    <li>천재지변 등 불가항력으로 인한 손해에 대해 회사는 책임을 지지 않습니다.</li>
+    <li>간접·특별·결과적 손해에 대한 책임은 제외됩니다.</li>
+  </ul>
+
+  <h3 class="muted" style="margin:10px 0 4px 0;">제11조(기타)</h3>
+  <ul class="list">
+    <li>분쟁 발생 시 관할은 회사 본점 소재지 관할 법원으로 합니다.</li>
+  </ul>
+
+  <!-- 서명 영역: 필요 시 다음 페이지에서 시작하도록 page-break 옵션 사용 -->
+  <!--<div class="page-break"></div>-->
+
+  <div class="sign-wrap">
+    <div class="sign-box">
+      <div class="sign-label">전자서명</div>
+      <img class="sign-image" src="${signatureDataUrl}" alt="서명 이미지"/>
+      <div class="sign-name">서명자: <strong>${buyerName}</strong></div>
+      <div class="help">서명 이미지는 고객의 입력값을 기반으로 전자서명 데이터로 삽입됩니다.</div>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top: 12px;">
+    본 계약서의 상세 약관은 서비스 이용약관 전체본에 따르며, 본 요약과 상충 시 이용약관이 우선합니다.
+  </p>
+</body>
+</html>
