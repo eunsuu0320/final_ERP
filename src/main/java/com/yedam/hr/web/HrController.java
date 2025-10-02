@@ -3,10 +3,9 @@ package com.yedam.hr.web;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
@@ -19,11 +18,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.yedam.hr.domain.Employee;
-import com.yedam.hr.domain.HrHistory;
 import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
-import com.yedam.hr.service.HrHistorySerivce;
 import com.yedam.hr.service.HrService;
+
+import jakarta.transaction.Transactional;
 
 @Controller
 public class HrController {
@@ -42,7 +41,15 @@ public class HrController {
 		return "hr/employeeModal";
 	}
 
+	// 사원 회사코드별 조회
+	@ResponseBody
+	@GetMapping("/employees")
+	public List<Employee> Employees(@RequestParam String companyCode) {
+	    return hrService.findByCompanyCode(companyCode);
+	}
+
 	// 사원 등록 처리
+	@Transactional
 	@PostMapping(value = "/saveContract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@ResponseBody
 	public String saveContract(
@@ -57,7 +64,10 @@ public class HrController {
 	        hrService.saveContract(employee, sign, pdf, signImg, pdfFile, params);
 	        return "success";
 	    } catch (Exception e) {
-	        return "fail: " + e.getMessage();
+	        System.out.println("saveContract failed" + e);
+	        Throwable root = NestedExceptionUtils.getMostSpecificCause(e);
+	        String msg = (root != null && root.getMessage() != null) ? root.getMessage() : e.getMessage();
+	        return "fail: " + root.getClass().getSimpleName() + ": " + msg;
 	    }
 	}
 

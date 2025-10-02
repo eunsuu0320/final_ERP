@@ -7,6 +7,22 @@ async function loadCommonCode(groupName) {
 	return Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
 }
 
+// 사원 목록 불러오기 (사원 근태 조회 이름 변경 위함)
+async function loadMapEmployees() {
+	const res = await fetch(`/employees?companyCode=${manager}`);
+	const list = await res.json();
+	// { "0001": "홍길동", "0002": "최은수", ... } 형태로 변환
+	return Object.fromEntries(list.map(it => [it.empCode, it.name]));
+}
+
+// 근태 목록 불러오기 (사원 근태 조회 이름 변경 위함)
+async function loadMapAttendances() {
+	const res = await fetch(`/attendance?companyCode=${manager}`);
+	const list = await res.json();
+	// { "ATT0001": "연차", "ATT0002": "병가", ... }
+	return Object.fromEntries(list.map(it => [it.attId, it.attType]));
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
 
 	const USE_YN = await loadCommonCode("GRP007");
@@ -156,11 +172,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 			{ title: "근태", field: "attType" },
 			{ title: "근태코드", field: "attId", visible: false },
 			{
-				title: "휴가",
+				title: "휴가여부",
 				field: "holyIs",
 				editor: "list",
-				editorParams: { values: HOLY },
-				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
+				editorParams: { values: Object.keys(HOLY).map(code => ({ value: code, label: HOLY[code] })) },
+				formatter: (cell) => HOLY[cell.getValue()] ?? cell.getValue(), // 화면엔 라벨 표시
 			},
 			{ title: "근태(일/시간)", field: "workTime", editor: "input" },
 			{ title: "비고", field: "note", editor: "textarea" }
@@ -184,6 +200,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		} else if (field === "attType") {
 			// 근태코드 선택 모달 열기
 			openModal("attendance", (selected) => {
+				console.log("선택된 근태:", selected);
 				row.update({
 					attId: selected.attId,     // DB 코드
 					attType: selected.attType  // 화면 표시
@@ -191,6 +208,58 @@ document.addEventListener("DOMContentLoaded", async () => {
 			});
 		}
 	});
+
+	// 등록 버튼 클릭 이벤트
+	document.getElementById("empAtt-insert-save").addEventListener("click", async () => {
+		try {
+			// 1. 테이블 데이터 가져오기
+			const rows = empAttInsertTable.getData();
+
+			if (!rows || rows.length === 0) {
+				alert("저장할 데이터가 없습니다.");
+				return;
+			}
+
+			// 2. payload 만들기
+			const payload = rows.filter(r => r.empCode && r.attId).map(r => ({
+				...r,
+				companyCode: undefined // ❌ companyCode는 body에 넣을 필요 없음
+			}));
+			console.log("저장 전 payload:", JSON.stringify(payload, null, 2));
+			console.log("저장 데이터:", payload);
+
+			// 3. 서버에 전송
+			const res = await fetch(`/empAttendance/saveAll?companyCode=${manager}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": token
+				},
+				body: JSON.stringify(payload) // 배열 그대로 보냄
+			});
+
+			if (!res.ok) {
+				throw new Error("서버 오류: " + res.status);
+			}
+
+			const result = await res.text();
+			if (result === "success") {
+				alert("사원 근태 등록을 완료하였습니다.");
+				empAttInsertTable.clearData();
+				loadEmpAttendances();
+			} else {
+				alert("사원 근태 등록에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+				console.log(result);
+			}
+
+		} catch (err) {
+			console.error("저장 중 오류:", err);
+			alert("에러 발생: " + err.message);
+		}
+	});
+
+	const EMP_MAP = await loadMapEmployees();
+	const ATT_MAP = await loadMapAttendances();
 
 	// 사원 근태 조회
 	const empAttSelectTable = new Tabulator(document.getElementById("empAttSelect-table"), {
@@ -210,10 +279,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 				headerHozAlign: "center",
 			},
 			{ title: "근태번호", field: "empAttId" },
-			{ title: "사원", field: "empCode" }, // 사원이름으로 교체 해야함
-			{ title: "근태", field: "attId" }, // 사원이름으로 교체 해야함
-			{ title: "휴가여부", field: "holyIs" },
-			{ title: "근태(일/시간)", field: "holyIs" },
+			{
+				title: "사원",
+				field: "empCode",
+				formatter: (cell) => EMP_MAP[cell.getValue()] || cell.getValue()
+			},
+			{
+				title: "근태",
+				field: "attId",
+				formatter: (cell) => ATT_MAP[cell.getValue()] || cell.getValue()
+			},
+			{
+				title: "휴가여부",
+				field: "holyIs",
+				formatter: (cell) => HOLY[cell.getValue()] || cell.getValue()
+			},
+			{ title: "근태(일/시간)", field: "workTime" },
 			{ title: "근태일자", field: "workDate" },
 			{ title: "비고", field: "note" }
 		],
@@ -226,81 +307,165 @@ document.addEventListener("DOMContentLoaded", async () => {
 		empAttSelectTable.setData([...data]);
 	}
 
-	// 선택된 행 가져오기
-	function getSelectedRows() {
-		return empAttSelectTable.getSelectedData();
-	}
+	// 인쇄
+	const printBtn = document.getElementById("empAtt-print");
+	if (printBtn) {
+		printBtn.addEventListener("click", () => {
+			// ✅ 사원 근태 조회 테이블에서 선택 행 가져오기
+			const selected = (typeof empAttSelectTable !== "undefined" && empAttSelectTable.getSelectedData)
+				? empAttSelectTable.getSelectedData()
+				: [];
 
-	// 선택된 데이터 → HTML 테이블 변환
-	function buildTableHTML(rows) {
-		if (!rows || rows.length === 0) return "<p>선택된 데이터가 없습니다.</p>";
+			if (selected.length === 0) { alert("인쇄할 근태 데이터를 선택하세요."); return; }
 
-		let html = `
-      <h2 style="text-align:center;">근태전표</h2>
-      <p style="text-align:right;">전표일자 : ${new Date().toISOString().slice(0, 10)}</p>
-      <table border="1" cellspacing="0" cellpadding="5"
-             style="width:100%; border-collapse:collapse; text-align:center;">
-        <thead>
-          <tr>
-            <th>사원</th>
-            <th>근태</th>
-            <th>휴가여부</th>
-            <th>근태(일/시간)</th>
-            <th>근태일자</th>
-            <th>비고</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+			// (선택) 전표일자 표기를 위해 날짜 포맷
+			const fmtDateYMD = (v) => {
+				if (!v) return "";
+				const d = new Date(v);
+				if (!isNaN(d)) {
+					const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), dd = String(d.getDate()).padStart(2, "0");
+					return `${y}/${m}/${dd}`;
+				}
+				const m = String(v).match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+				return m ? `${m[1]}/${String(m[2]).padStart(2, "0")}/${String(m[3]).padStart(2, "0")}` : v;
+			};
 
-		rows.forEach(r => {
-			html += `
+			// ✅ 행 렌더링(사원명 / 근태명칭 / 근태(일/시간) / 적요)
+			const rows = selected.map(r => {
+				const empName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? "");
+				const attName = (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? "");
+				const timeVal = r.workTime ?? r.time ?? r.days ?? "";
+				const noteVal = r.note ?? r.remark ?? "";
+				return `
         <tr>
-          <td>${r.empCode ?? ""}</td>
-          <td>${r.attId ?? ""}</td>
-          <td>${r.holyIs ?? ""}</td>
-          <td>${r.holyIs ?? ""}</td>
-          <td>${r.workDate ?? ""}</td>
-          <td>${r.note ?? ""}</td>
-        </tr>
-      `;
-		});
+          <td>${empName}</td>
+          <td style="text-align:left; padding-left:10px;">${attName}</td>
+          <td>${timeVal}</td>
+          <td style="text-align:left; padding-left:10px;">${noteVal}</td>
+        </tr>`;
+			}).join("");
 
-		html += "</tbody></table>";
-		return html;
+			// (선택) 상단 표기 값
+			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+			const count = selected.length;
+			const slipDate = fmtDateYMD(selected[0]?.workDate) || fmtDateYMD(new Date());
+
+			const html = `
+			<!doctype html>
+			<html>
+			<head>
+			  <meta charset="utf-8">
+			  <title>근태전표</title>
+			  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+			  <style>
+			    @page { size: A4 portrait; margin: 8mm; }
+			    html, body { height: 100%; }
+			    body { margin: 0; font-size: 12px; }
+			    .print-wrap { width: 100%; padding: 0; }
+			    .print-header { text-align: center; margin: 0 0 8px 0; }
+			    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
+			    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
+			    table.print th, table.print td {
+			      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
+			      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
+			    }
+			    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
+			    tbody tr:nth-child(even) td { background: #fcfcfc; }
+			    thead { display: table-header-group; }
+			    tfoot { display: table-footer-group; }
+			    tr { page-break-inside: avoid; }
+			    col.empcode{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
+			    col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
+			  </style>
+			</head>
+			<body>
+			  <div class="print-wrap">
+			    <div class="print-header"><h3 class="m-0">근태전표</h3></div>
+			    <div class="meta"><div>전표일자 : ${slipDate}</div><div>선택건수: ${count} / 생성일시: ${now}</div></div>
+			    <table class="print">
+			      <colgroup>
+			        <col class="emp"><col class="att"><col class="time"><col class="note">
+			      </colgroup>
+			      <thead>
+			        <tr>
+			          <th>사원명</th>
+			          <th>근태명칭</th>
+			          <th>근태(일/시간)</th>
+			          <th>적요</th>
+			        </tr>
+			      </thead>
+			      <tbody>${rows}</tbody>
+			    </table>
+			  </div>
+			  <script>window.addEventListener('load', () => window.print());</script>
+			</body>
+			</html>`;
+			const w = window.open("", "_blank");
+			if (!w) { alert("팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요."); return; }
+			w.document.open();
+			w.document.write(html);
+			w.document.close();
+		});
 	}
 
-	// PDF 다운로드
-	document.getElementById("empAtt-print").addEventListener("click", function() {
-		const rows = getSelectedRows();
-		const exportDiv = document.getElementById("empAtt-export");
-		exportDiv.innerHTML = buildTableHTML(rows);
+	// EXCEL 버튼 (교체)
+	const excelBtn = document.getElementById("empAtt-excel");
+	if (excelBtn) {
+		excelBtn.addEventListener("click", function() {
+			// 선택 행 안전하게 가져오기: empAttSelectTable 우선
+			const rows = (typeof empAttSelectTable !== "undefined" && empAttSelectTable?.getSelectedData)
+				? empAttSelectTable.getSelectedData()
+				: (typeof table !== "undefined" && table?.getSelectedData ? table.getSelectedData() : []);
 
-		const opt = {
-			margin: 10,
-			filename: '근태전표.pdf',
-			image: { type: 'jpeg', quality: 0.98 },
-			html2canvas: { scale: 2 },
-			jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-		};
-		html2pdf().set(opt).from(exportDiv).save();
-	});
+			if (!rows || rows.length === 0) {
+				alert("선택된 데이터가 없습니다.");
+				return;
+			}
 
-	// Excel 다운로드
-	document.getElementById("empAtt-excel").addEventListener("click", function() {
-		const rows = getSelectedRows();
-		if (rows.length === 0) {
-			alert("선택된 데이터가 없습니다.");
-			return;
-		}
+			if (typeof XLSX === "undefined") {
+				alert("엑셀 라이브러리(XLSX)가 로드되지 않았습니다.");
+				return;
+			}
 
-		// JSON → SheetJS로 변환
-		const ws = XLSX.utils.json_to_sheet(rows);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, "근태전표");
-		XLSX.writeFile(wb, "근태전표.xlsx");
-	});
+			// 사원별 그룹핑
+			const grouped = rows.reduce((acc, r) => {
+				(acc[r.empCode] ??= []).push(r);
+				return acc;
+			}, {});
 
+			const wb = XLSX.utils.book_new();
+
+			Object.keys(grouped).forEach((empCode) => {
+				const list = grouped[empCode];
+
+				const empRows = list.map((r) => ({
+					사원: (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? ""),
+					근태: (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? ""),
+					휴가여부: (typeof HOLY !== "undefined" && HOLY?.[r.holyIs]) ? HOLY[r.holyIs] : (r.holyIs ?? ""),
+					"근태(일/시간)": r.workTime ?? r.time ?? r.days ?? "",
+					근태일자: r.workDate ?? "",
+					적요: r.note ?? r.remark ?? ""
+				}));
+
+				const ws = XLSX.utils.json_to_sheet(empRows);
+
+				// (선택) 기본 열 너비
+				ws["!cols"] = [
+					{ wch: 12 }, // 사원
+					{ wch: 16 }, // 근태
+					{ wch: 10 }, // 휴가여부
+					{ wch: 12 }, // 근태(일/시간)
+					{ wch: 12 }, // 근태일자
+					{ wch: 30 }, // 적요
+				];
+
+				const sheetName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[empCode]) ? EMP_MAP[empCode] : (empCode || "사원");
+				XLSX.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31)); // 시트명 31자 제한
+			});
+
+			XLSX.writeFile(wb, "근태전표.xlsx");
+		});
+	}
 
 	// 초기 로드
 	loadAttendances();

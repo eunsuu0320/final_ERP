@@ -1,18 +1,182 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}">
 <head>
 <meta charset="UTF-8">
 <title>출퇴근 기록부</title>
+
+<!-- FullCalendar -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales/ko.global.min.js"></script>
+
+<!-- Flatpickr (달력 아이콘 눌러서 특정 월 바로 이동) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+ <link href="/hr/css/employee.css" rel="stylesheet" />
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<div class="container-fluid px-4">
-			<main>
-			출퇴근 기록부 아라라라라라라라라라라라라라라로로로로ㅗ로로로로로로로로로로로로로로로로로로로로로로로롤
-			</main>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">출/퇴근 기록부</h1>
+
+        <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+
+    	 <!-- 이동/타이틀 줄 -->
+		<div id="cal-header" class="d-flex align-items-center gap-2 position-relative mb-2">
+		  <!-- 좌측: 이동 버튼 -->
+		  <div class="d-flex gap-2">
+		    <button class="btn btn-outline-secondary" id="btn-prev">이전</button>
+		    <button class="btn btn-warning" id="btn-today">오늘</button>
+		    <button class="btn btn-outline-secondary" id="btn-next">다음</button>
+		    <button class="btn btn-outline-secondary" id="btn-datepick" title="날짜 이동">
+		      <span class="cal-icon">📅</span>
+		    </button>
+		  </div>
+
+		  <!-- 중앙: 타이틀 -->
+		  <div id="titleBar" class="fw-semibold text-muted"></div>
+
+		  <!-- 우측: 신규/조회 버튼 -->
+		  <div class="ms-auto d-flex gap-2">
+		    <button id="btn-empOnOff-new" class="btn btn-primary">신규</button>
+		    <button id="btn-empOnOff-list" class="btn btn-success">출근 기록 조회</button>
+		  </div>
 		</div>
-	</div>
+
+        <!-- ✅ 달력만 cal-wrap로 감싸서 높이 자동맞춤 -->
+        <div class="cal-wrap">
+          <div id="calendar"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 신규 버튼 -> 사원 출퇴근 기록 모달  -->
+<div th:replace="~{hr/empOnOff :: OnOffModal}"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const calendarEl = document.getElementById('calendar');
+
+    // FullCalendar 생성
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      locale: 'ko',
+      initialView: 'dayGridMonth',
+      firstDay: 0,
+      height: '100%',
+
+      dayCellContent(info) {
+    	    return String(info.date.getDate()); // 숫자만
+    	  },
+
+      expandRows: true,
+      dayMaxEventRows: 3,
+      headerToolbar: false,
+      titleFormat: { year: 'numeric', month: '2-digit' },
+      events: loadEvents,
+      dateClick(info) { openCreateModal(info.dateStr); },
+      eventClick(info) { alert(`[상세]\n날짜: ${info.event.startStr}\n제목: ${info.event.title}`); }
+    });
+
+    calendar.render();
+    updateTitleBar();
+
+    // ===== 툴바 동작 =====
+    document.getElementById('btn-prev').onclick = () => { calendar.prev(); updateTitleBar(); fitCalendarHeight(); };
+    document.getElementById('btn-next').onclick = () => { calendar.next(); updateTitleBar(); fitCalendarHeight(); };
+    document.getElementById('btn-today').onclick = () => { calendar.today(); updateTitleBar(); fitCalendarHeight(); };
+
+    // 존재하지 않는 버튼 안전 처리(있을 경우만 바인딩)
+    const btnMonth = document.getElementById('btn-month');
+    const btnList  = document.getElementById('btn-list');
+    if (btnMonth) btnMonth.onclick = () => { calendar.changeView('dayGridMonth'); updateTitleBar(); fitCalendarHeight(); };
+    if (btnList)  btnList.onclick  = () => { calendar.changeView('listMonth');    updateTitleBar(); fitCalendarHeight(); };
+
+ // DOMContentLoaded 내부
+    const OnOffModal = () => new bootstrap.Modal(document.getElementById('OnOffModal'));
+
+    document.getElementById('btn-empOnOff-new').onclick = () => {
+      // 필요한 값 세팅 후
+      OnOffModal().show();
+    };
+
+    function openCreateModal(dateStr){
+      // 필요한 값 세팅 후
+      OnOffModal().show();
+    }
+
+    // 출근 기록 조회 버튼
+    document.getElementById("btn-empOnOff-list").onclick = () => {
+    	 window.location.href = "/onOffListPage";
+    }
+
+    // 📅 아이콘: 월/연도 바로 이동
+    document.getElementById('btn-datepick').onclick = () => {
+      const picker = flatpickr(document.getElementById('btn-datepick'), {
+        locale: 'ko',
+        plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m", altFormat: "Y년 m월" })]
+      });
+      picker.open();
+    };
+
+    // ✅ 화면 높이에 맞춰 cal-wrap 높이를 계산/적용
+    function fitCalendarHeight() {
+      const wrap = document.querySelector('.cal-wrap');
+      if (!wrap) return;
+      const top = wrap.getBoundingClientRect().top; // 래퍼의 화면상 Y
+      const gap = 16;                                // 하단 여백
+      wrap.style.height = (window.innerHeight - top - gap) + 'px';
+      calendar.updateSize();                         // FullCalendar 재계산
+    }
+    window.addEventListener('resize', fitCalendarHeight);
+    // 초기 1회 적용
+    fitCalendarHeight();
+
+    // Flatpickr 월 선택 플러그인(간단 구현)
+    function monthSelectPlugin(cfg) {
+      return function(fp) {
+        return {
+          onReady() {
+            fp.set('dateFormat', cfg?.dateFormat || 'Y-m');
+            fp.set('altFormat',  cfg?.altFormat  || 'Y년 m월');
+          },
+          onChange(selectedDates) {
+            if (!selectedDates?.[0]) return;
+            // 해당 월의 1일로 이동
+            const d = selectedDates[0];
+            calendar.gotoDate(new Date(d.getFullYear(), d.getMonth(), 1));
+            updateTitleBar();
+            fitCalendarHeight();
+            fp.close();
+          }
+        }
+      }
+    }
+
+    function updateTitleBar(){
+      const d = calendar.getDate();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      document.getElementById('titleBar').textContent = `${y}/${m}`;
+    }
+
+    // ===== 예시: 이벤트 로딩 =====
+    async function loadEvents(fetchInfo, success) {
+      const y = fetchInfo.start.getFullYear();
+      const m = String(fetchInfo.start.getMonth()+1).padStart(2,'0');
+      const events = [
+        { start: `${y}-${m}-09`, title: '10(7 + 3)', color: '#e05239' },
+      ];
+      success(events);
+    }
+
+    function openCreateModal(dateStr){
+      alert(`[신규 등록]\n기준일: ${dateStr}`);
+    }
+  });
+</script>
 </body>
 </html>

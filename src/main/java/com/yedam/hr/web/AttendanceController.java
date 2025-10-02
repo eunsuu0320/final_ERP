@@ -15,14 +15,17 @@ import com.yedam.hr.domain.Attendance;
 import com.yedam.hr.domain.EmpAttendance;
 import com.yedam.hr.repository.EmpAttendanceRepository;
 import com.yedam.hr.service.AttendanceService;
+import com.yedam.hr.service.EmpAttendanceService;
 
 import ch.qos.logback.core.model.Model;
 
 @Controller
 public class AttendanceController {
 
-	@Autowired AttendanceService attendanceService;
-	@Autowired EmpAttendanceRepository empAttendanceRepository;
+	@Autowired
+	AttendanceService attendanceService;
+	@Autowired
+	EmpAttendanceService empAttendanceService;
 
 	// 근태 관리 페이지
 	@GetMapping("/attendancePage")
@@ -53,8 +56,7 @@ public class AttendanceController {
 	// 근태 항목 사용 중단 및 재사용
 	@PostMapping("/attendance/updateStatus")
 	@ResponseBody
-	public String postMethodName(@RequestBody Map<String, Object> payload,
-			@RequestParam String companyCode) {
+	public String postMethodName(@RequestBody Map<String, Object> payload, @RequestParam String companyCode) {
 		List<String> codes = (List<String>) payload.get("codes");
 		String status = (String) payload.get("status");
 
@@ -71,14 +73,20 @@ public class AttendanceController {
 	@GetMapping("/empAttendance")
 	@ResponseBody
 	public List<EmpAttendance> getEmpAttendances(@RequestParam String companyCode) {
-		return empAttendanceRepository.findByCompanyCode(companyCode);
+		return empAttendanceService.getEmpAttendances(companyCode);
 	}
 
-	// 모달 회사코드별 사원 근태 조회
-	@GetMapping("/api/modal/attendance")
+	// 사원 근태 저장
+	@PostMapping("empAttendance/saveAll")
 	@ResponseBody
-	public List<EmpAttendance> getModalEmpAttendances(@RequestParam String companyCode) {
-		return empAttendanceRepository.findByCompanyCode(companyCode);
+	public String saveEmpAttendanceAll(@RequestBody List<EmpAttendance> empAttendances, @RequestParam String companyCode) {
+		try {
+			empAttendanceService.saveAllAttendances(empAttendances, companyCode);
+			return "success";
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "fail: " + e.getMessage();
+		}
 	}
 
 }

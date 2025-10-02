@@ -2,10 +2,13 @@
 
 	import java.util.List;
 
-	import com.yedam.hr.domain.EmpAttendance;
+import com.yedam.hr.domain.EmpAttendance;
 
 	public interface EmpAttendanceService {
 
 		// 회사코드별 직원 근태 조회
 		List<EmpAttendance> getEmpAttendances(String companyCode);
+
+		// 사원 근태 등록 여러 건도 등록할 수 있게.
+		List<EmpAttendance> saveAllAttendances(List<EmpAttendance> attendances, String companyCode);
 	}

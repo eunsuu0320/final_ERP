@@ -44,7 +44,6 @@ public class HrHistory {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 	private Employee employee;
 
 }

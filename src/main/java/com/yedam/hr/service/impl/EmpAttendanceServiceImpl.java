@@ -18,4 +18,10 @@ public class EmpAttendanceServiceImpl implements EmpAttendanceService {
 	public List<EmpAttendance> getEmpAttendances(String companyCode) {
 		return empAttendanceRepository.findByCompanyCode(companyCode);
 	}
+
+	@Override
+	public List<EmpAttendance> saveAllAttendances(List<EmpAttendance> empAttendances, String companyCode) {
+		empAttendances.forEach(a -> a.setCompanyCode(companyCode));
+		return empAttendanceRepository.saveAll(empAttendances);
+	}
 }
