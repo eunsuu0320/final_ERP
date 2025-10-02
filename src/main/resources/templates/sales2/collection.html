@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+
+<head>
+<!-- Tabulator CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<link
+	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
+	rel="stylesheet">
+
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+</head>
+
+<body layout:fragment="content">
+<div id="layoutSidenav_content">
+	<main>
+       <div class="container-fluid px-4">
+           <h1 class="mt-4">수금관리</h1>
+
+<div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+
+    <!-- 🔎 검색 영역 -->
+    <div class="input-group" style="width:350px;">
+        <span class="input-group-text">거래처 검색</span>
+        <input id="partner" type="text" class="form-control" placeholder="거래처명 입력">
+        <input type="hidden" id="partnerCode" name="partCode">
+        
+        
+        <input type="hidden" id="partnerCode" name="partnerCode" style="margin-right: 55px;">
+        <i class="fas fa-search"
+           style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+           onclick="openModal('partner', function(selected) {
+               document.getElementById('partnerCode').value = selected.No;
+               document.getElementById('partner').value = selected.name;})"></i>
+        <button id="btn-search" class="btn btn-warning" type="button" >검색</button>
+    </div>
+
+    <!-- 📌 버튼 영역 -->
+    <div class="d-flex gap-2">
+        <button id="btn-new" class="btn btn-primary">신규</button>
+        <button id="btn-excel" class="btn btn-secondary" onclick="ExportHelper.exportExcel(table, '영업계획')">Excel</button>
+        <button id="btn-pdf" class="btn btn-secondary" onclick="ExportHelper.exportPDF(table, '영업계획')">PDF</button>
+    </div>
+
+</div>
+
+
+    <!-- 📋 Tabulator 테이블 자리 -->
+    <div id="sales-table"></div>
+
+    <!-- 📌 총 거래처 -->
+    <div id="total-count" class="mt-2 fw-bold">
+        총 거래처: <span class="text-primary">0건</span>
+    </div>
+
+
+</main>
+	</div>
+	<div th:replace="common/modal :: commonModal"></div>
+	<!-- Tabulator JS -->
+	<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+	<!-- 기존 JS 파일 연결 -->
+	<script th:src="@{/sales2/js/collection.js}"></script>
+	<!-- 공통 모달 -->
+</body>
+</html>

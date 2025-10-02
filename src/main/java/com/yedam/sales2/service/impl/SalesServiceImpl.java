@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -146,7 +147,9 @@ public class SalesServiceImpl implements SalesService {
     // 📌 추가: 신규 영업계획 등록 (Controller 연동을 위해 필요)
     @Override
     @Transactional
-    public String insertSalesPlan(List<DSalesPlan> detailList) {
+    public String insertSalesPlan(Authentication auth, List<DSalesPlan> detailList) {
+    	String companyCode = auth.getName().split(":")[0];
+    	String empCode = auth.getName().split(":")[2];
         if (detailList == null || detailList.isEmpty()) {
             throw new RuntimeException("세부 데이터가 없습니다.");
         }
@@ -156,8 +159,8 @@ public class SalesServiceImpl implements SalesService {
         master.setPlanYear(new Date()); // 현재 연도로 설정됩니다.
         master.setRegDate(new Date());
         // TODO: 실제 사용자 코드 및 회사 코드로 변경해야 합니다.
-        master.setEmpCode("EMP001"); 
-        master.setCompanyCode("COMP001");
+        master.setEmpCode(empCode); 
+        master.setCompanyCode(companyCode);
         SalesPlan savedMaster = salesPlanRepository.save(master);
         
         // 2. 세부 데이터에 마스터 연결 후 저장
@@ -165,15 +168,21 @@ public class SalesServiceImpl implements SalesService {
             detail.setSalesPlan(savedMaster);
         }
         dsalesPlanRepository.saveAll(detailList);
+        dsalesPlanRepository.flush();
+        
+        // 영업사원 세부 등록
+        salesPlanRepository.PR_EMP_PLAN(companyCode, "2025");
         return "success";
     }
     
     // 사원별 영업매출 목록
     @Override
-	public List<Map<String, Object>> getEmpPlanList() {
+	public List<Map<String, Object>> getEmpPlanList(String companyCode, String planYear) {
     	
-    	List<Map<String, Object>> result = salesRepository.findEmpPlanLastYear();
+    	List<Map<String, Object>> result = salesRepository.findEmpPlanLastYear(companyCode, planYear);
 
-		return salesRepository.findEmpPlanLastYear();
+		return result;
 	}
+    
+    
 }

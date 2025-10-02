@@ -28,11 +28,17 @@ public class EmpServiceImpl implements EmpService {
 		return espPlanRepository.save(espPlan);
 	}
 	
-	// 분기별 사원등록
+	// 분기별 사원등록/수정
 	@Override
     @Transactional
     public List<EsdpPlan> insertDetailPlans(List<EsdpPlan> plans) {
         return esdpPlanRepository.saveAll(plans);
     }
+
+	// 사원별 조회
+	@Override
+	public List<EsdpPlan> findByEspCode(String espCode) {
+		return esdpPlanRepository.findByEspCode(espCode);
+	}
 
 }

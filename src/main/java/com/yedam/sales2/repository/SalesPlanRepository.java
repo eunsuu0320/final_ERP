@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -59,4 +60,11 @@ public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> {
 	@Query(value = "SELECT * FROM sales_plan WHERE EXTRACT(YEAR FROM plan_year) = :year", nativeQuery = true)
 	List<SalesPlan> findByPlanYear(@Param("year") Integer year);
 	
+	
+	// 영업등록 후 사원배분
+	@Procedure(name = "PR_EMP_PLAN")
+	void PR_EMP_PLAN(
+	        @Param("P_COMPANY_CODE") String companyCode,
+	        @Param("P_PLAN_YEAR") String planYear
+			);
 }

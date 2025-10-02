@@ -15,5 +15,9 @@ public interface EmpService {
 	
 	// 사원별 계획 + 세부계획 동시 등록
 	 List<EsdpPlan> insertDetailPlans(List<EsdpPlan> plans);
+	 
+	 //사원별 조회
+	 List<EsdpPlan> findByEspCode(String espCode);
 
+	 
 }
