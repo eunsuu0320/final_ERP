@@ -4,15 +4,27 @@
 	layout:decorate="~{layout/main}">
 
 <head>
-<!-- Tabulator CSS -->
+<!-- ✅ FontAwesome & Tabulator -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-<link
-	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
-	rel="stylesheet">
+<link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
 
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<style>
+.custom-modal {
+  max-width: 1200px;
+}
+
+.modal-body {
+  padding: 30px 40px;
+}
+
+.custom-modal .modal-content {
+  height: 85vh;
+}
+</style>
+
 </head>
 
 <body layout:fragment="content">
@@ -21,50 +33,130 @@
        <div class="container-fluid px-4">
            <h1 class="mt-4">수금관리</h1>
 
-<div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+           <!-- 🔍 검색 + 버튼 영역 -->
+           <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
 
-    <!-- 🔎 검색 영역 -->
-    <div class="input-group" style="width:350px;">
-        <span class="input-group-text">거래처 검색</span>
-        <input id="partner" type="text" class="form-control" placeholder="거래처명 입력">
-        <input type="hidden" id="partnerCode" name="partCode">
-        
-        
-        <input type="hidden" id="partnerCode" name="partnerCode" style="margin-right: 55px;">
-        <i class="fas fa-search"
-           style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;"
-           onclick="openModal('partner', function(selected) {
-               document.getElementById('partnerCode').value = selected.No;
-               document.getElementById('partner').value = selected.name;})"></i>
-        <button id="btn-search" class="btn btn-warning" type="button" >검색</button>
-    </div>
+                <!-- 🔎 거래처 검색 -->
+                <div class="input-group" style="width:350px;">
+                    <span class="input-group-text">거래처 검색</span>
+                    <input id="partner" type="text" class="form-control" placeholder="거래처명 입력">
+                    <input type="hidden" id="partnerCode" name="partnerCode">
 
-    <!-- 📌 버튼 영역 -->
-    <div class="d-flex gap-2">
-        <button id="btn-new" class="btn btn-primary">신규</button>
-        <button id="btn-excel" class="btn btn-secondary" onclick="ExportHelper.exportExcel(table, '영업계획')">Excel</button>
-        <button id="btn-pdf" class="btn btn-secondary" onclick="ExportHelper.exportPDF(table, '영업계획')">PDF</button>
-    </div>
+                    <i class="fas fa-search"
+                       style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+                       onclick="openModal('partner', function(selected) {
+                           document.getElementById('partnerCode').value = selected.No;
+                           document.getElementById('partnerName').value = selected.name;
+                       })"></i>
+                    <button id="btn-search" class="btn btn-warning" type="button">검색</button>
+                </div>
 
+                <!-- 📌 버튼 그룹 -->
+                <div class="d-flex gap-2">
+                    <button id="btn-new" class="btn btn-primary">신규</button>
+                    <button id="btn-excel" class="btn btn-secondary">Excel</button>
+                    <button id="btn-pdf" class="btn btn-secondary">PDF</button>
+                </div>
+           </div>
+
+           <!-- 📋 메인 Tabulator 테이블 -->
+           <div id="sales-table"></div>
+
+           <!-- 총 거래처 수 -->
+           <div id="total-count" class="mt-2 fw-bold">
+               총 거래처: <span class="text-primary">0건</span>
+           </div>
+
+           <!-- 💰 수금 등록 모달 -->
+           <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
+             <div class="modal-dialog modal-xxl custom-modal">
+                <div class="modal-content">
+
+
+
+                  <!-- Header -->
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="insertCollectionModalLabel">수금 등록</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+
+                  <!-- Body -->
+                  <div class="modal-body">
+                    <form id="collectionForm">
+                      <div class="container-fluid">
+
+                        <!-- 상단 버튼 -->
+                        <div class="d-flex justify-content-end mb-3">
+                          <button type="button" id="btn-searchInvoice" class="btn btn-outline-secondary me-2">청구서 조회</button>
+                          <button type="button" id="btn-saveCollection" class="btn btn-primary">저장</button>
+                        </div>
+
+                        <!-- 기본정보 영역 -->
+                        <div class="row mb-3">
+                          <div class="col-md-3">
+                            <label class="form-label">수금일자</label>
+                            <div class="d-flex align-items-center">
+                              <select id="year" class="form-select me-1">
+                                <option>2025</option><option>2024</option>
+                              </select>
+                              <select id="month" class="form-select me-1">
+                                <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
+                              </select>
+                              <select id="day" class="form-select me-1">
+                                <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
+                              </select>
+                              <i class="fa-regular fa-calendar ms-2"></i>
+                            </div>
+                          </div>
+
+                          <div class="col-md-3">
+                            <label class="form-label">거래처</label>
+                            <input type="text" id="partnerName" class="form-control" placeholder="거래처명 입력">
+                          </div>
+
+                          <div class="col-md-3">
+                            <label class="form-label">담당자</label>
+                            <input type="text" id="manager" class="form-control" placeholder="담당자명 입력">
+                          </div>
+
+                          <div class="col-md-3">
+                            <label class="form-label">결제정보</label>
+                            <div class="input-group">
+                              <input type="text" id="paymentInfo" class="form-control" placeholder="결제 방식 입력">
+                              <button class="btn btn-outline-secondary" type="button" id="btn-searchPayment">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- 청구내역 테이블 -->
+                        <h6 class="mt-4">청구내역</h6>
+                        <div id="invoiceTable"></div>
+
+                      </div>
+                    </form>
+                  </div>
+                  
+                </div>
+              </div>
+           </div>
+       </div>
+    </main>
 </div>
 
+<!-- ✅ 공통 모달 -->
+<div th:replace="common/modal :: commonModal"></div>
 
-    <!-- 📋 Tabulator 테이블 자리 -->
-    <div id="sales-table"></div>
+<!-- ✅ Tabulator JS -->
+<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-    <!-- 📌 총 거래처 -->
-    <div id="total-count" class="mt-2 fw-bold">
-        총 거래처: <span class="text-primary">0건</span>
-    </div>
+<!-- ✅ Bootstrap (모달 필수) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-
-</main>
-	</div>
-	<div th:replace="common/modal :: commonModal"></div>
-	<!-- Tabulator JS -->
-	<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-	<!-- 기존 JS 파일 연결 -->
-	<script th:src="@{/sales2/js/collection.js}"></script>
-	<!-- 공통 모달 -->
+<!-- ✅ 기존 JS -->
+<script th:src="@{/sales2/js/collection.js}"></script>
 </body>
 </html>
+
+

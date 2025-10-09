@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+
+<style>
+.container-fluid { padding: 20px 40px; }
+
+/* ✅ 보기 버튼 */
+.view-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.view-btn {
+  border: 1px solid #ccc;
+  background-color: #f8f9fa;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.view-btn.active {
+  background-color: #198754;
+  color: white;
+  border-color: #198754;
+}
+
+/* ✅ 필터 영역 */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.filter-bar select,
+.filter-bar input {
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.filter-bar button {
+  background-color: #ff914d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+}
+
+.section-title {
+  background-color: #dc3545;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: inline-block;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+.summary-box {
+  border: 2px solid #dee2e6;
+  border-radius: 10px;
+  padding: 20px 10px;
+  background-color: #fafafa;
+  margin-bottom: 30px;
+}
+.summary-item {
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+</style>
+</head>
+
+<body layout:fragment="content">
+<div id="layoutSidenav_content">
+	<main>
+       <div class="container-fluid px-4">
+           <h1 class="mt-4 mb-4">영업이익관리</h1>
+
+           <!-- ✅ 보기 탭 버튼 -->
+           <div class="view-buttons">
+               <button class="view-btn active" id="btnProductView">품목별</button>
+               <button class="view-btn" id="btnEmployeeView">사원별</button>
+           </div>
+
+           <!-- ✅ 필터 영역 -->
+           <div class="filter-bar">
+               <label>년도 :</label>
+               <select id="yearSelect"></select>
+
+               <label>분기 :</label>
+               <select id="quarterSelect">
+                   <option value="">전체</option>
+                   <option value="1">1분기</option>
+                   <option value="2">2분기</option>
+                   <option value="3">3분기</option>
+                   <option value="4">4분기</option>
+               </select>
+
+ 
+                    <label>검색(품목명):</label>
+		          <div style="position: relative; display: inline-block;">
+		          <input id="searchInput" type="text" placeholder="사원명 입력" style="width:180px; padding-right:30px;">
+		          <i class="fas fa-search"
+		             style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"
+		             id="searchIcon"></i>
+		        </div>
+		
+		        <button id="btn-search" type="button">검색</button>
+		      </div>
+           
+
+		<h3 class="mt-4 mb-4">요약</h3>
+           <div class="summary-box">
+               <div class="row text-center">
+                   <div class="col summary-item">
+                       총 판매수량<br>
+                       <span id="totalSalesCount" class="text-primary fs-5 fw-bold">0</span>
+                   </div>
+                   <div class="col summary-item">
+                       총 공급가액<br>
+                       <span id="totalSupply" class="text-primary fs-5 fw-bold">0</span>
+                   </div>
+                   <div class="col summary-item">
+                       총 부가세<br>
+                       <span id="totalTax" class="text-primary fs-5 fw-bold">0</span>
+                   </div>
+                   <div class="col summary-item">
+                       총 합계금액<br>
+                       <span id="totalAmount" class="text-primary fs-5 fw-bold">0</span>
+                   </div>
+               </div>
+           </div>
+           
+		<h3 class="mt-4 mb-4">품목별 영업이익조회</h3>
+           <div id="sales-table"></div>
+       </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/sales2/js/businessProfits.js}"></script>
+</body>
+</html>
