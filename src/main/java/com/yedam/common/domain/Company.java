@@ -26,6 +26,8 @@ public class Company implements Prefixable {
     private String roadAddress;   // 주소
     private String addressDetail; // 상세 주소
     private String tel;           // 담당자 연락처
+    private String managerName;
+    private String managerEmail;
 
 	@Override
 	public String getPrefix() {

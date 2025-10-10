@@ -969,14 +969,16 @@
       buyerName: buyerName,
       subPeriod: subPeriodText
     };
-
+	
     const companyInfo = {
       companyName: document.getElementById('companyName').value,
       ceoName: document.getElementById('ceoName').value,
       bizRegNo: `${document.getElementById('biz1').value}-${document.getElementById('biz2').value}-${document.getElementById('biz3').value}`,
       roadAddress: document.getElementById('roadAddress').value,
       addressDetail: document.getElementById('addressDetail').value,
-      tel: `${document.getElementById('phone1').value}-${document.getElementById('phone2').value}-${document.getElementById('phone3').value}`
+      tel: `${document.getElementById('phone1').value}-${document.getElementById('phone2').value}-${document.getElementById('phone3').value}`,
+      managerName: document.getElementById('managerName').value,
+      managerEmail: contactEmail,
     };
 	
     const systemUser = {
@@ -1062,7 +1064,7 @@
   // 이메일 도메인 로딩
   // =========================================
   function loadEmailDomains() {
-    fetch('/api/modal/commonCode?commonGroup=GRP004')
+    fetch('/api/modal/commonCodeAdmin?commonGroup=GRP004')
       .then(res => res.json())
       .then(domains => {
         const select = document.getElementById('emailDomain');

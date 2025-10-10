@@ -33,7 +33,14 @@ public class CommonCodeController {
 	    }
 		return commonCodeService.findByGroupIdAndCompanyCode(commonGroup, companyCode);
 	}
-
+	
+	@ResponseBody
+	@GetMapping("/api/modal/commonCodeAdmin")
+	public List<CommonCode> commonCodeAdmin(String commonGroup) {
+	    String companyCode = "admin";
+		return commonCodeService.findByGroupIdAndCompanyCode(commonGroup, companyCode);
+	}
+	
 	@ResponseBody
 	@GetMapping("/api/modal/commonCodes")
 	public Map<String, List<CommonCode>> commonCodes(String groupId) {
