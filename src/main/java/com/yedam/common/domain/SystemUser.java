@@ -4,6 +4,7 @@ import java.util.Date;
 
 import org.hibernate.annotations.GenericGenerator;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.yedam.common.Prefixable;
 import com.yedam.hr.domain.Employee;
 
@@ -17,6 +18,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "SYSTEM_USER")
 @Data
