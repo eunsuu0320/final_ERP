@@ -1,5 +1,6 @@
 package com.yedam.common.service;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.common.domain.SystemUser;
 import com.yedam.common.repository.UserRepository;
+import com.yedam.hr.domain.Employee;
+import com.yedam.hr.repository.EmployeeRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,9 +29,83 @@ public class UserService implements UserDetailsService {
 	@Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JavaMailSender mailSender;
+    @Autowired EmployeeRepository employeeRepository;
+ 
+    // 임시 비밀번호 생성 로직
+    private static final String PW_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^*";
+    private static final SecureRandom RND = new SecureRandom();
 
-    // ... (기존 loadUserByUsername, resetPassword 그대로)
+    private String generateTempPassword(int len) {
+        if (len < 6) len = 6;
+        StringBuilder sb = new StringBuilder(len);
+        for (int i = 0; i < len; i++) {
+            sb.append(PW_CHARS.charAt(RND.nextInt(PW_CHARS.length())));
+        }
+        return sb.toString();
+    }
+    
+    @Transactional
+    public SystemUser createUserWithTempPassword(SystemUser req, String companyCode) {
+        if (req.getEmpCode() == null || req.getEmpCode().isBlank()) {
+            throw new IllegalArgumentException("사원번호는 필수입니다.");
+        }
+        if (req.getUserId() == null || req.getUserId().isBlank()) {
+            throw new IllegalArgumentException("아이디는 필수입니다.");
+        }
 
+        // 사원 조회 및 회사코드 일치 검증
+        Employee emp = employeeRepository.findById(req.getEmpCode())
+                .orElseThrow(() -> new IllegalArgumentException("사원 정보가 없습니다: " + req.getEmpCode()));
+
+        if (!companyCode.equals(emp.getCompanyCode())) {
+            throw new IllegalArgumentException("해당 회사의 사원이 아닙니다.");
+        }
+        if (emp.getEmail() == null || emp.getEmail().isBlank()) {
+            throw new IllegalStateException("사원 이메일이 없습니다. 먼저 사원 이메일을 등록하세요.");
+        }
+
+        // 임시 비번 생성 & 저장(암호화)
+        String tempPassword = generateTempPassword(10);
+
+        SystemUser user = new SystemUser();
+        user.setCompanyCode(companyCode);
+        user.setEmpCode(req.getEmpCode());
+        user.setUserId(req.getUserId());
+        user.setRoleCode(req.getRoleCode());
+        user.setUsageStatus(req.getUsageStatus() == null ? "Y" : req.getUsageStatus());
+        user.setCreatedDate(new java.util.Date());
+        user.setRemk(req.getRemk());
+        user.setUserPw(passwordEncoder.encode(tempPassword));
+
+        SystemUser saved = userRepository.save(user);
+
+        // 메일 발송(트랜잭션 영향 X)
+        try {
+            sendTempPasswordMail(emp.getEmail(), saved.getUserId(), tempPassword);
+        } catch (Exception mailEx) {
+            // 메일 실패해도 생성은 유지
+            mailEx.printStackTrace();
+        }
+        return saved;
+    }
+    
+    @Transactional
+    public SystemUser updateUser(SystemUser req, String userCode, String companyCode) {
+        SystemUser user = userRepository.findById(userCode)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음: " + userCode));
+        if (!companyCode.equals(user.getCompanyCode())) {
+            throw new IllegalArgumentException("해당 회사 사용자가 아닙니다.");
+        }
+
+        // 수정 가능 항목만 반영 (사번/사원명/부서 수정 금지 → empCode/Employee는 그대로)
+        if (req.getUserId() != null)       user.setUserId(req.getUserId());
+        if (req.getRoleCode() != null)     user.setRoleCode(req.getRoleCode());
+        if (req.getUsageStatus() != null)  user.setUsageStatus(req.getUsageStatus());
+        if (req.getRemk() != null)         user.setRemk(req.getRemk());
+
+        return userRepository.save(user);
+    }
+    
     /**
      * 결제 완료 후 마스터 계정 생성
      *  - companyCode: 필수 (결제로 생성된 회사코드)
@@ -166,4 +243,21 @@ public class UserService implements UserDetailsService {
 		
 		mailSender.send(message);
 	}
+    
+    private void sendTempPasswordMail(String toEmail, String userId, String tempPw) {
+        if (toEmail == null || toEmail.isBlank()) return;
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setFrom("gywns8339@naver.com"); // SMTP 계정과 동일
+        message.setSubject("[ERP 시스템] 임시 계정 안내");
+        message.setText(
+                "안녕하세요.\n\n" +
+                "다음 정보로 사용자가 생성되었습니다.\n" +
+                "아이디 : " + userId + "\n" +
+                "임시 비밀번호 : " + tempPw + "\n\n" +
+                "로그인 후 반드시 비밀번호를 변경해주세요."
+        );
+        mailSender.send(message);
+    }
 }

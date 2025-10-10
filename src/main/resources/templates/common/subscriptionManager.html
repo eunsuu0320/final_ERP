@@ -50,8 +50,18 @@
     .panel--subs .tabulator { width: fit-content !important; }
     /* 구독 정보 살짝 키우기 */
     .panel--info .subs-form{ min-height: 360px; }
-      .toolbar .actions { display:flex; gap:8px; align-items:center; }
-  .panel--info .subs-form{ min-height: 320px !important; }
+    .toolbar .actions { display:flex; gap:8px; align-items:center; }
+  	.panel--info .subs-form{ min-height: 320px !important; }
+  
+	.umodal{position:fixed;inset:0;display:none;z-index:1080;}
+	.umodal.show{display:block;}
+	.umodal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.35);}
+	.umodal__panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+	  width:520px;background:#fff;border:1px solid #cfcfd4;border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.15);}
+	.umodal__head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #e5e5e5;}
+	.umodal__body{padding:12px;}
+	.umodal__actions{display:flex;gap:6px;}
+	
   </style>
 </head>
 
@@ -110,39 +120,39 @@
           <div class="subs-form">
             <div class="fg">
               <label>회사코드</label>
-              <input type="text" id="compCode" value="123-001" readonly>
+              <input type="text" id="compCode" value="" readonly>
             </div>
 
             <div class="grid-2">
               <div class="fg">
                 <label>사업자 등록번호</label>
-                <input type="text" id="bizNo" value="123-45-67890">
+                <input type="text" id="bizNo" value="" readonly>
               </div>
               <div class="fg">
                 <label>회사명</label>
-                <input type="text" id="compName" value="OO주식회사">
+                <input type="text" id="compName" value="" readonly>
               </div>
             </div>
 
             <div class="grid-2">
               <div class="fg">
                 <label>주소</label>
-                <input type="text" id="addr" value="대구광역시 북구">
+                <input type="text" id="addr" value="" readonly>
               </div>
               <div class="fg">
                 <label>담당자명</label>
-                <input type="text" id="picName" value="박효준">
+                <input type="text" id="picName" value="" readonly>
               </div>
             </div>
 
             <div class="grid-2">
               <div class="fg">
                 <label>담당자 연락처</label>
-                <input type="text" id="picTel" value="010-1234-5678">
+                <input type="text" id="picTel" value="" readonly>
               </div>
               <div class="fg">
                 <label>담당자 이메일</label>
-                <input type="text" id="picEmail" value="example@company.com">
+                <input type="text" id="picEmail" value="" readonly>
               </div>
             </div>
           </div>
@@ -153,8 +163,7 @@
           <div class="panel-title">
             <span class="title">구독 내역</span>
             <div class="actions">
-              <button type="button" id="btnSubsPrint" class="btn btn-secondary">인쇄</button>
-              <button type="button" id="btnSubsExcel" class="btn btn-outline-secondary">엑셀</button>
+              <button type="button" id="btnSubsExcel" class="btn btn-secondary">Excel</button>
             </div>
           </div>
           <div id="subsTable" class="table-wrap table-wrap--subs"></div>
@@ -164,12 +173,95 @@
   </main>
 </div>
 
+<!-- 사용자 신규/상세 모달 -->
+<div id="userModal" class="umodal" aria-hidden="true">
+  <div class="umodal__backdrop" data-close="1"></div>
+  <div class="umodal__panel">
+    <div class="umodal__head">
+      <h3 id="userModalTitle">사용자 상세</h3>
+      <div class="umodal__actions">
+        <button id="userSaveBtn" class="btn btn-primary">저장</button>
+        <button id="userResetBtn" class="btn btn-light">초기화</button>
+        <button id="userCloseBtn" class="btn btn-outline-secondary">닫기</button>
+      </div>
+    </div>
+
+    <div class="umodal__body">
+      <form id="userForm" onsubmit="return false;">
+        <!-- 숨김키 -->
+        <input type="hidden" id="um_userCode">
+        <input type="hidden" id="um_companyCode">
+
+        <div class="row g-2 align-items-center mb-2">
+          <label class="col-3 col-form-label">사원번호</label>
+          <div class="col-9 d-flex gap-2">
+            <input type="text" id="um_empCode" class="form-control" placeholder="사원번호" readonly>
+            <button type="button" id="um_findEmp" class="btn btn-outline-secondary">
+              <i class="fa fa-search"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-center mb-2">
+          <label class="col-3 col-form-label">사원명</label>
+          <div class="col-9">
+            <input type="text" id="um_name" class="form-control" placeholder="사원명" readonly>
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-center mb-2">
+          <label class="col-3 col-form-label">부서</label>
+          <div class="col-9">
+            <input type="text" id="um_deptName" class="form-control" placeholder="부서" readonly>
+            <input type="hidden" id="um_dept"> <!-- 코드값 -->
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-center mb-2">
+          <label class="col-3 col-form-label">아이디</label>
+          <div class="col-9">
+            <input type="text" id="um_userId" class="form-control" placeholder="아이디">
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-center mb-2">
+          <label class="col-3 col-form-label">권한</label>
+          <div class="col-9">
+            <select id="um_roleCode" class="form-select">
+              <option value="">권한</option>
+              <option value="MASTER">마스터 관리자</option>
+              <option value="ADMIN">일반 관리자</option>
+              <option value="USER">일반 사용자</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-2 align-items-center">
+          <label class="col-3 col-form-label">사용여부</label>
+          <div class="col-9">
+            <select id="um_usageStatus" class="form-select">
+              <option value="Y">Y</option>
+              <option value="N">N</option>
+            </select>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <!-- 공통 모달 -->
 <div th:replace="common/modal :: commonModal"></div>
 
 <!-- Tabulator JS -->
 <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
 <script>
+  // 권한 코드 → 라벨 매핑
+  function roleLabelOf(code){
+    const map = { MASTER: "마스터 관리자", ADMIN: "일반 관리자", USER: "일반 사용자" };
+    return map[code] || code || "";
+  }
+
   // ===== 사용자 목록 Tabulator =====
   const userTable = new Tabulator("#userTable", {
     layout: "fitColumns",
@@ -186,34 +278,37 @@
       { title: "성명", field: "name", minWidth: 180, widthGrow: 1 },
       { title: "아이디", field: "loginId", minWidth: 180, widthGrow: 1 },
       { title: "부서명", field: "dept", width: 180 },
-      { title: "권한", field: "role", minWidth: 180, widthGrow: 1 },
+      { title: "권한", field: "roleLabel", minWidth: 180, widthGrow: 1 },
       { title: "사용", field: "useYn", width: 120, hozAlign: "center" },
     ],
     ajaxURL: "/api/common/users",
     ajaxResponse: function (url, params, response) {
       const list = Array.isArray(response) ? response : [];
       return list.map(r => ({
-        empNo:   r.empCode,                            // SystemUser.empCode
-        name:    r.employee?.name ?? "",               // Employee.name
-        loginId: r.userId,                             // SystemUser.userId
-        dept:    r.employee?.deptCode?.codeName        // CommonCode.codeName
-                 ?? r.employee?.dept ?? "",            // fallback: 코드값
-        role:    r.remk ?? "",                         // 적당히 비고/권한명 대체
-        useYn:   r.usageStatus                         // 'Y'/'N'
+        userCode: r.userCode,
+        companyCode: r.companyCode,
+        roleCode: r.roleCode,
+        remk: r.remk,
+        usageStatus: r.usageStatus,
+
+        empNo:   r.empCode,
+        empCode: r.empCode,
+        name:    r.employee?.name ?? "",
+        loginId: r.userId,
+        dept:    r.employee?.deptCode?.codeName ?? r.employee?.dept ?? "",
+        roleLabel: roleLabelOf(r.roleCode),
+        useYn:   r.usageStatus
       }));
     }
   });
 
   function applyUserFilters() {
-    const kw    = document.getElementById('employeeId').value; // 사번/이름/아이디 통합
+    const kw    = document.getElementById('employeeId').value;
     const dept  = document.getElementById('selDept').value;
     const useYn = document.getElementById('selUseYn').value;
-
-    // 서버에 파라미터 전달해서 다시 로드
     userTable.setData("/api/common/users", { kw, dept, useYn });
   }
 
-  // 초기화 버튼: 입력 초기화 후 전체 목록 재조회
   document.getElementById('btnReset').addEventListener('click', () => {
     document.getElementById('employeeName').value = '';
     document.getElementById('selDept').value = '';
@@ -221,28 +316,25 @@
     userTable.setData("/api/common/users");
   });
 
-  // 검색 버튼 클릭
   document.getElementById('btnSearch').addEventListener('click', applyUserFilters);
-
-  // 엔터키로 검색
   document.getElementById('employeeName').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') applyUserFilters();
   });
-	
+
   function toDateStr(v){
-	    if (!v) return '';
-	    const d = typeof v === 'number' ? new Date(v) : new Date(v);
-	    if (Number.isNaN(d.getTime())) return '';
-	    const y = d.getFullYear();
-	    const m = String(d.getMonth()+1).padStart(2,'0');
-	    const day = String(d.getDate()).padStart(2,'0');
-	    return `${y}-${m}-${day}`;
+    if (!v) return '';
+    const d = typeof v === 'number' ? new Date(v) : new Date(v);
+    if (Number.isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
   }
-  
+
   // ===== 구독 내역 Tabulator =====
   const subsTable = new Tabulator("#subsTable", {
-    layout: "fitData", // 컬럼 너비만큼만 테이블 가로 생성
-    height: 320,   // 고정 높이(좌측과 동일)
+    layout: "fitData",
+    height: 320,
     selectable: true,
     pagination: true,
     paginationMode: "local",
@@ -269,30 +361,189 @@
     },
   });
 
-  // 인쇄/엑셀 버튼
-  document.getElementById('btnSubsPrint').addEventListener('click', () => {
-    subsTable.print(false, {
-      columnHeaders: true,
-      rowGroups: false,
-      columnCalcs: true,
-    });
-  });
   document.getElementById('btnSubsExcel').addEventListener('click', () => {
     subsTable.download("xlsx", "구독내역.xlsx", { sheetName: "Subscriptions" });
   });
 
-  // ===== AJAX 연동 예시 (필요 시 주석 해제해서 사용) =====
-  userTable.setData("/api/common/users");
-  // subsTable.setData("/api/subscriptions", { companyCode: document.getElementById('compCode').value });
+  // ===== 회사 정보 로딩 =====
+  function formatAddress(road, detail){
+    const r = (road ?? "").trim();
+    const d = (detail ?? "").trim();
+    if (!r && !d) return "";
+    if (!r) return `(${d})`;
+    return d ? `${r} (${d})` : r;
+  }
 
-  // 모달(사원 검색) 버튼 예시 훅
-  document.getElementById('btnFindEmp').addEventListener('click', () => {
-    // TODO: 공통 모달 띄우고 선택 결과를 Tabulator 필터나 폼에 반영
+  async function loadCompanyInfo() {
+    try {
+      const res = await fetch("/api/common/company", { headers: { "Accept": "application/json" }});
+      if (!res.ok) throw new Error("회사 정보를 불러오지 못했습니다.");
+      const c = await res.json();
+
+      document.getElementById('compCode').value = c.companyCode ?? "";
+      document.getElementById('bizNo').value    = c.bizRegNo    ?? "";
+      document.getElementById('compName').value = c.companyName ?? "";
+      document.getElementById('addr').value     = formatAddress(c.roadAddress, c.addressDetail);
+      document.getElementById('picName').value  = c.managerName  ?? "";
+      document.getElementById('picTel').value   = c.tel ?? "";
+      document.getElementById('picEmail').value = c.managerEmail ?? "";
+    } catch (e) { console.error(e); }
+  }
+  loadCompanyInfo();
+
+  // ===== 사용자 모달 상태 =====
+  let userModalMode = 'edit'; // 'new' | 'edit'
+
+  // 모달 모드에 따른 UI 제어 (★ 수정 모드에서 사원명/부서도 잠금)
+  function setFormMode(mode){
+    const findBtn  = document.getElementById('um_findEmp');
+    const empCode  = document.getElementById('um_empCode');   // html에 readonly 이미 있음
+    const nameEl   = document.getElementById('um_name');
+    const deptName = document.getElementById('um_deptName');
+
+    if (mode === 'new') {
+      findBtn.disabled = false;         // 신규는 사원검색 가능
+      document.getElementById('um_usageStatus').value = 'Y';
+    } else {
+      findBtn.disabled = true;          // 수정은 사원 변경 금지
+      nameEl.readOnly = true;           // 수정은 사원명 변경 금지
+      deptName.readOnly = true;         // 수정은 부서 변경 금지
+    }
+  }
+
+  // 공통: 모달 열고/닫기
+  function openUserModal(mode='edit', data=null){
+    userModalMode = mode;
+    document.getElementById('userModalTitle').innerText = (mode === 'new') ? '사용자 등록' : '사용자 상세';
+    clearUserForm();
+    setFormMode(mode);
+
+    document.getElementById('um_companyCode').value = document.getElementById('compCode')?.value ?? '';
+
+    if(data){ fillUserFormFromRow(data); }
+    document.getElementById('userModal').classList.add('show');
+  }
+  function closeUserModal(){ document.getElementById('userModal').classList.remove('show'); }
+
+  document.getElementById('userCloseBtn').addEventListener('click', closeUserModal);
+  document.querySelector('#userModal .umodal__backdrop').addEventListener('click', (e)=>{
+    if(e.target.dataset.close) closeUserModal();
   });
 
-  // 신규 버튼 예시
-  document.getElementById('btnNew').addEventListener('click', () => {
-    // TODO: 신규 사용자 추가/모달/화면 이동 등
+  function clearUserForm(){
+    const ids = ['um_userCode','um_companyCode','um_empCode','um_name','um_dept','um_deptName','um_userId','um_roleCode','um_usageStatus'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.tagName === 'SELECT') el.value = '';
+      else el.value = '';
+    });
+  }
+
+  document.getElementById('userResetBtn').addEventListener('click', ()=>{
+    if(userModalMode === 'new') {
+      clearUserForm();
+      setFormMode('new');
+    } else {
+      const row = userTable.getSelectedRows()[0];
+      if(row) fillUserFormFromRow(row.getData());
+      setFormMode('edit');
+    }
+  });
+
+  // 행데이터 -> 폼 채우기 (권한 select 자동 세팅)
+  function fillUserFormFromRow(r){
+    document.getElementById('um_userCode').value    = r.userCode ?? '';
+    document.getElementById('um_empCode').value     = r.empNo ?? r.empCode ?? '';
+    document.getElementById('um_name').value        = r.name ?? '';
+    document.getElementById('um_deptName').value    = r.dept ?? '';
+    document.getElementById('um_userId').value      = r.loginId ?? r.userId ?? '';
+    document.getElementById('um_roleCode').value    = r.roleCode ?? '';
+    document.getElementById('um_usageStatus').value = r.useYn ?? r.usageStatus ?? 'Y';
+  }
+
+  // ==== 다중 모달 최상단 유지 ====
+  function ensureOnBody(el) {
+    if (!el) return null;
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    return el;
+  }
+  function bringCommonModalToFront() {
+    const modalEl = document.getElementById('commonModal');
+    if (!modalEl) return;
+    ensureOnBody(modalEl);
+    const openCount = document.querySelectorAll('.modal.show, .umodal.show, .umodal.is-open').length;
+    const base = 1050;
+    const z = base + openCount * 30;
+    modalEl.style.zIndex = z;
+    setTimeout(() => {
+      const backs = document.querySelectorAll('.modal-backdrop');
+      if (backs.length) backs[backs.length - 1].style.zIndex = z - 5;
+    }, 0);
+  }
+  document.addEventListener('shown.bs.modal', (e) => {
+    if (e.target && e.target.id === 'commonModal') bringCommonModalToFront();
+  });
+
+  // 사원검색 버튼 → 공통모달 호출
+  document.getElementById('um_findEmp').addEventListener('click', ()=>{
+    if (typeof openModal === 'function') {
+      openModal('employee', function(selected){
+        document.getElementById('um_empCode').value  = selected.empCode ?? '';
+        document.getElementById('um_name').value     = selected.name ?? '';
+        document.getElementById('um_dept').value     = selected.dept ?? '';
+        document.getElementById('um_deptName').value = selected.deptCode?.codeName ?? selected.deptName ?? selected.dept ?? '';
+      });
+      setTimeout(bringCommonModalToFront, 0);
+    }
+  });
+
+  // 저장
+  document.getElementById('userSaveBtn').addEventListener('click', saveUser);
+
+  async function saveUser(){
+    const payload = {
+      userCode:     document.getElementById('um_userCode').value || null,
+      companyCode:  document.getElementById('um_companyCode').value || undefined,
+      empCode:      document.getElementById('um_empCode').value?.trim(),
+      userId:       document.getElementById('um_userId').value?.trim(),
+      roleCode:     document.getElementById('um_roleCode').value || null,
+      usageStatus:  document.getElementById('um_usageStatus').value || 'Y'
+    };
+
+    if(!payload.empCode){ alert('사원번호를 선택하세요.'); return; }
+    if(!payload.userId){ alert('아이디를 입력하세요.'); return; }
+
+    const isNew = (userModalMode === 'new' || !payload.userCode);
+    const url   = isNew ? '/api/common/users' : `/api/common/users/${encodeURIComponent(payload.userCode)}`;
+    const method= isNew ? 'POST' : 'PUT';
+
+    try{
+      const res = await fetch(url, {
+        method,
+        headers: {'Content-Type':'application/json', 'Accept':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if(!res.ok){
+        const msg = await res.text();
+        throw new Error(msg || '저장에 실패했습니다.');
+      }
+      await userTable.setData("/api/common/users");
+      closeUserModal();
+    }catch(err){
+      console.error(err);
+      alert(err.message || '저장 중 오류가 발생했습니다.');
+    }
+  }
+
+  // ===== 연결: 테이블 → 상세 모달 =====
+  userTable.on('rowClick', (e, row) => {
+    openUserModal('edit', row.getData());
+  });
+
+  // 신규 버튼 → 신규 모달
+  document.getElementById('btnNew').addEventListener('click', ()=>{
+    openUserModal('new');
   });
 </script>
 </body>
