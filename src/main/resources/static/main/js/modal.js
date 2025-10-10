@@ -163,7 +163,44 @@ product: {
 			{ title: "비고", field: "note" },
 		]
 	},
+	
+// ✅ 출하지시서 모달
+shipment: {
+  url: "/api/shipments/lookup",  // 백엔드에서 출하지시 목록 조회용 API
+  title: "출하지시서 검색",
+  columns: [
+    { 
+      title: "출하지시코드", 
+      field: "shipmentCode", 
+      width: 160, 
+      hozAlign: "center" 
+    },
+    { 
+      title: "출하예정일자", 
+      field: "shipmentDate", 
+      width: 150, 
+      hozAlign: "center",
+      formatter: (cell) => {
+        const v = cell.getValue();
+        if (!v) return "";
+        const d = new Date(v);
+        return isNaN(d) ? v : d.toISOString().slice(0,10);
+      }
+    },
+    { 
+      title: "거래처코드", 
+      field: "partnerCode", 
+      width: 160, 
+      hozAlign: "center"
+    },
+  ],
+  selectable: 1,  // 한 건만 선택
+},
+
+	
 };
+
+
 
 
 let table; // Tabulator 인스턴스 전역 변수
