@@ -1,13 +1,28 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
+  // ===== Sanity 체크 (콘솔에서 확인용) =====
+  const modalRoot = document.getElementById("insertCollectionModal");
+  console.log("[CHECK] modalEl exists:", !!modalRoot, " bootstrap.Modal:", !!(window.bootstrap && bootstrap.Modal));
 
-  // ================================
-  // 📌 메인 목록 테이블
-  // ================================
+  // 모달 열기 전용 함수 (안 뜨면 이유 콘솔에 표시)
+  function showModalOnly() {
+    if (!modalRoot) {
+      console.error("[ERROR] #insertCollectionModal 요소를 찾지 못했습니다.");
+      return;
+    }
+    try {
+      const modal = new bootstrap.Modal(modalRoot);
+      modal.show();
+    } catch (e) {
+      console.error("[ERROR] bootstrap.Modal 생성/표시 중 오류:", e);
+    }
+  }
+
+  // ===== 메인 테이블 =====
   let table = new Tabulator("#sales-table", {
     layout: "fitColumns",
     height: "500px",
     placeholder: "데이터가 없습니다.",
-    ajaxURL: "/api/receivable/list",  // 👉 백엔드 API 엔드포인트 맞게 수정
+    ajaxURL: "/api/receivable/list",
     columns: [
       { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false },
       { title: "거래처명", field: "CUSTOMERNAME", hozAlign: "center" },
@@ -17,117 +32,56 @@ document.addEventListener("DOMContentLoaded", function() {
       { title: "미수건수", field: "ARREARSCOUNT", hozAlign: "center" }
     ],
     ajaxResponse: function (url, params, response) {
-      document.querySelector("#total-count span").textContent = response.length + "건";
+      const el = document.querySelector("#total-count span");
+      if (el) el.textContent = (Array.isArray(response) ? response.length : 0) + "건";
       return response;
+    },
+
+    // 1) 기본: Tabulator의 rowClick (되면 이걸로 열림)
+    rowClick: function () {
+      console.log("[rowClick] fired -> modal open");
+      showModalOnly();
     }
   });
 
-
-  // ================================
-  // 📌 신규 버튼 → 모달 열기
-  // ================================
-  const btnNew = document.getElementById("btn-new");
-  const modalEl = document.getElementById("insertCollectionModal");
-
-  if (btnNew && modalEl) {
-    btnNew.addEventListener("click", function() {
-      const modal = new bootstrap.Modal(modalEl);
-      modal.show();
+  // 2) 보강: Tabulator 이벤트가 무력화될 경우를 대비한 **이벤트 위임 fallback**
+  //    테이블 컨테이너에서 .tabulator-row 클릭을 가로채 모달을 연다.
+  const tableHost = document.getElementById("sales-table");
+  if (tableHost) {
+    tableHost.addEventListener("click", function (e) {
+      const rowEl = e.target.closest(".tabulator-row");
+      if (rowEl) {
+        console.log("[delegate] .tabulator-row clicked -> modal open");
+        showModalOnly();
+      }
     });
   } else {
-    console.error("❌ 신규 버튼 또는 모달 요소를 찾을 수 없습니다.");
+    console.error("[ERROR] #sales-table 요소를 찾지 못했습니다.");
   }
 
-  // ================================
-  // 📌 모달이 열릴 때 Tabulator 리렌더링
-  // ================================
-  modalEl.addEventListener("shown.bs.modal", function() {
-    if (window.invoiceTable) {
-      invoiceTable.redraw();
-    }
-  });
-
-
-  // ================================
-  // 📌 청구내역 Tabulator
-  // ================================
-  window.invoiceTable = new Tabulator("#invoiceTable", {
-    height: "300px",
-    layout: "fitColumns",
-    placeholder: "청구내역이 없습니다.",
-    columns: [
-      {formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", width: 60, headerSort: false},
-      {title: "출하번호", field: "shipmentNo", width: 120},
-      {title: "출하일", field: "shipmentDate", hozAlign: "center"},
-      {title: "품목명", field: "productName", width: 180},
-      {title: "전체수량", field: "quantity", hozAlign: "right"},
-      {title: "단가", field: "unitPrice", hozAlign: "right", formatter: "money", formatterParams: {precision: 0}},
-      {title: "공급가액", field: "supplyAmt", hozAlign: "right", formatter: "money", formatterParams: {precision: 0}},
-      {title: "부가세", field: "taxAmt", hozAlign: "right", formatter: "money", formatterParams: {precision: 0}},
-      {title: "최종금액", field: "totalAmt", hozAlign: "right", formatter: "money", formatterParams: {precision: 0}},
-      {title: "비고", field: "remark"}
-    ],
-    data: [
-      {shipmentNo: "SHP0001", shipmentDate: "2025-05-05", productName: "크로와상 생지 20개입", quantity: 10, unitPrice: 30000, supplyAmt: 300000, taxAmt: 30000, totalAmt: 330000, remark: ""},
-      {shipmentNo: "SHP0002", shipmentDate: "2025-05-05", productName: "치즈롤 생지 10개입", quantity: 5, unitPrice: 25000, supplyAmt: 125000, taxAmt: 12500, totalAmt: 137500, remark: ""}
-    ]
-  });
-
-
-  // ================================
-  // 📌 저장 버튼 → 수금 등록
-  // ================================
-  document.getElementById("btn-saveCollection").addEventListener("click", async function() {
-    const formData = {
-      moneyDate: `${document.getElementById("year").value}-${document.getElementById("month").value}-${document.getElementById("day").value}`,
-      partnerName: document.getElementById("partnerName").value,
-      manager: document.getElementById("manager").value,
-      paymentInfo: document.getElementById("paymentInfo").value
-    };
-
-    try {
-      const response = await fetch("/api/collection/insert", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(formData)
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert("✅ 수금 등록이 완료되었습니다!");
-        bootstrap.Modal.getInstance(modalEl).hide();
-        location.reload();
-      } else {
-        alert("등록 실패: " + result.message);
+  // ===== 기존 검색/엑셀(그대로 유지) =====
+  const btnSearch = document.getElementById("btn-search");
+  if (btnSearch) {
+    btnSearch.addEventListener("click", function () {
+      const keyword = (document.getElementById("partnerName")?.value || "").trim();
+      if (table) {
+        if (keyword) table.setFilter("CUSTOMERNAME", "like", keyword);
+        else table.clearFilter();
       }
-    } catch (error) {
-      console.error(error);
-      alert("오류 발생: " + error.message);
-    }
-  });
+    });
+  }
 
+  const partnerNameInput = document.getElementById("partnerName");
+  if (partnerNameInput) {
+    partnerNameInput.addEventListener("keyup", function (e) {
+      if (e.key === "Enter") btnSearch?.click();
+    });
+  }
 
-  // ================================
-  // 📌 청구서 조회 버튼
-  // ================================
-  document.getElementById("btn-searchInvoice").addEventListener("click", function() {
-    alert("청구서 조회 모달 연결 예정");
-  });
-
-  // ================================
-  // 📌 결제정보 조회 버튼
-  // ================================
-  document.getElementById("btn-searchPayment").addEventListener("click", function() {
-    alert("결제정보 검색 기능 예정");
-  });
-
-
-  // ================================
-  // 📌 Excel 내보내기
-  // ================================
-  document.getElementById("btn-excel").addEventListener("click", function () {
-    table.download("xlsx", "수금관리.xlsx", { sheetName: "수금관리" });
-  });
-
+  const btnExcel = document.getElementById("btn-excel");
+  if (btnExcel) {
+    btnExcel.addEventListener("click", function () {
+      table.download("xlsx", "수금관리.xlsx", { sheetName: "수금관리" });
+    });
+  }
 });
