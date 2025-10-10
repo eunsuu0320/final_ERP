@@ -38,8 +38,13 @@ public interface UserRepository extends JpaRepository<SystemUser, String> {
 	           )
 	         order by e.dept, e.name
 	    """)
-	    List<SystemUser> findUserByCompanyCode(@Param("companyCode") String companyCode,
-	                                           @Param("kw") String kw,
-	                                           @Param("dept") String dept,
-	                                           @Param("useYn") String useYn);
+    List<SystemUser> findUserByCompanyCode(@Param("companyCode") String companyCode,
+                                           @Param("kw") String kw,
+                                           @Param("dept") String dept,
+                                           @Param("useYn") String useYn);
+	
+	
+	@EntityGraph(attributePaths = {"employee", "employee.deptCode"})
+	Optional<SystemUser> findByUserCode(String userCode);
+
 }
