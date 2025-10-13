@@ -30,11 +30,6 @@ public class EstimateDetailServiceImpl implements EstimateDetailService {
 		return estimateDetailRepository.save(estimateDetail);
 	}
 
-	@Override
-	public EstimateDetail getLoanByEstimateUniqueCode(String keyword) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 
 }

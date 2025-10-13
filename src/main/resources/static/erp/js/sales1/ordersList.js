@@ -1,93 +1,201 @@
 document.addEventListener("DOMContentLoaded", function() {
+	// --------------------------------------------------------------------------------
+	// 1. 전역 헬퍼 및 초기 설정
+	// --------------------------------------------------------------------------------
+
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["주문서코드", "등록일자", "거래처명", "담당자", "품목명", "납기일자", "주문금액합계", "견적서코드", "진행상태"];
+	const defaultVisible = ["주문서코드", "등록일자", "거래처명", "담당자", "품목명", "납기일자", "주문금액합계", "진행상태"];
 
-	// 이미지모달
-	window.showImageModal = function(url) {
-		// 이미지모달에 이미지 경로를 지정.
-		const modalImg = document.getElementById("modalImg");
-		modalImg.src = url;
+	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
+	// salesCommon.js에 정의된 것으로 가정하지만, 안전을 위해 다시 정의
+	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
-		// 모달 열기
-		const modal = new bootstrap.Modal(document.getElementById('imgModal'));
-		modal.show();
+
+	// 폼 전체 초기화
+	window.resetOrder = function() {
+		const form = document.getElementById("orderForm");
+		if (form) {
+			form.reset();
+		}
+
+		// 상세 테이블 초기화 (salesCommon.js에 addItemRow 등이 정의되어 있다고 가정)
+		if (window.resetItemGrid) {
+			window.resetItemGrid();
+		} else {
+			// 상세 테이블 내용만 수동 초기화 (예시)
+			const tbody = document.getElementById('itemDetailBody');
+			if (tbody) tbody.innerHTML = '';
+			window.addItemRow(); // 기본 행 1개 추가 (salesCommon.js에 정의되어야 함)
+			window.calculateTotal(); // 합계 초기화
+		}
+		
+		// 납기일자 초기화
+		const deliveryDateInput = document.getElementById('quoteDeliveryDateText');
+		if(deliveryDateInput) deliveryDateInput.value = '';
+		
+		// 견적서코드 초기화 (추가)
+		const estimateUniqueCodeInput = document.getElementById('estimateUniqueCode');
+		if(estimateUniqueCodeInput) estimateUniqueCodeInput.value = '';
+
+
+		console.log("주문 모달 전체 초기화 완료.");
 	}
 
-	// 품목상세모달
+	// 주문서 상세모달 열기
 	window.showDetailModal = function(modalType) {
 		let modalName = '';
+		
 		// 모달 열기
 		if (modalType === 'detail') {
-			modalName = '품목상세정보'
+			modalName = '주문상세정보'
 
 		} else if (modalType === 'regist') {
-			modalName = '품목등록'
+			modalName = '주문등록'
+			resetOrder(); // 신규 등록 시 폼 초기화
 		}
 		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
 		modal.show();
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
-
-
 	};
 
 
+	// --------------------------------------------------------------------------------
+	// 2. 주문 등록/수정 (저장) 로직
+	// --------------------------------------------------------------------------------
 
-	// 품목상세모달의 저장버튼 이벤트 -> 신규 등록 / 수정
 	window.saveModal = function() {
-		const form = document.getElementById("itemForm");
-		const formData = new FormData(form);
-		let modalName = document.querySelector('#newDetailModal .modal-title').innerHTML;
+		const orderForm = document.getElementById("orderForm");
+		const modalEl = document.getElementById("newDetailModal");
 
-		if (!formData.get("productName") || !formData.get("unit") || !formData.get("productSize") || !formData.get("productGroup")) {
-			alert("필수항목을 입력하세요!");
+		if (!orderForm) {
+			alert("저장 오류: 주문서 등록 폼을 찾을 수 없습니다.");
 			return;
 		}
 
+		// 1. 주문 기본 정보 수집
+		const orderData = new FormData(orderForm);
+		const orderDataObject = Object.fromEntries(orderData.entries());
 
-		if (modalName === '품목상세정보') {
-			fetch("/api/modifyProduct", {
-				method: "POST",
-				body: formData,
-				headers: {
-					[document.querySelector('meta[name="_csrf_header"]').content]:
-						document.querySelector('meta[name="_csrf"]').content
-				}
-			})
-				.then(res => res.json())
-				.then(data => {
-					console.log("품목수정 데이터 : ", data);
-					alert("저장되었습니다.");
-					bootstrap.Modal.getInstance(document.getElementById("newDetailModal")).hide();
-				})
-				.catch(err => {
-					console.error("품목수정실패 : ", err);
-					alert("저장에 실패했습니다.")
-				});
+		// HTML ID 'quotePartnerName'을 사용하여 거래처 이름 가져오기 (HTML ID: quotePartnerName)
+		const partnerNameValue = document.getElementById('quotePartnerName').value;
+		
+		// 납기일자 (HTML name: deliveryDateText)
+		const deliveryDateValue = orderDataObject.deliveryDateText;
+		
+		// 견적서코드 (HTML name: estimateUniqueCode)
+		const estimateUniqueCodeValue = orderDataObject.estimateUniqueCode; // 문자열로 가져옴
 
-		} else if (modalName === '품목등록') {
-			fetch("/api/registProduct", {
-				method: "POST",
-				body: formData,
-				headers: {
-					[document.querySelector('meta[name="_csrf_header"]').content]:
-						document.querySelector('meta[name="_csrf"]').content
-				}
-			})
-				.then(res => res.json())
-				.then(data => {
-					console.log("품목등록 데이터 : ", data);
-					alert("저장되었습니다.");
-					bootstrap.Modal.getInstance(document.getElementById("newDetailModal")).hide();
-				})
-				.catch(err => {
-					console.error("품목등록실패 : ", err);
-					alert("저장에 실패했습니다.")
-				});
+		// 2. 주문 상세 정보 (OrderDetail 엔티티 리스트) 수집
+		const detailList = collectOrderDetails();
+
+		if (detailList.length === 0) {
+			alert("주문 상세 내용을 1개 이상 입력해주세요.");
+			return;
 		}
+		
+		// ********** DTO 구조에 맞게 최종 페이로드 구성 **********
+		const finalPayload = {
+			// OrdersRegistrationDTO의 기본 필드
+			partnerCode: orderDataObject.partnerCode || '', // Hidden input 필드 name="partnerCode"
+			partnerName: partnerNameValue,
+			
+			// DTO의 필드명과 일치하도록 매핑: HTML name을 DTO 필드명으로 변경
+			orderDate: orderDataObject.quoteDate,           // DTO: orderDate, HTML name: quoteDate
+			deliveryDate: deliveryDateValue,                // DTO: deliveryDate, HTML name: deliveryDateText
+			
+			// ⭐⭐⭐ [수정 사항] estimateUniqueCode를 숫자로 변환하여 전송
+			estimateUniqueCode: parseInt(estimateUniqueCodeValue) || null, 
+			
+			manager: orderDataObject.manager || '',
+			remarks: orderDataObject.remarks || '',
+			
+			// DTO의 List<OrderDetail> 필드
+			detailList: detailList
+		};
+
+		console.log("전송할 최종 주문 데이터:", finalPayload);
+
+		// 4. 서버에 API 호출 (Controller의 @PostMapping("api/registOrders") 경로 사용)
+		fetch("/api/registOrders", { // <- 수정된 주문 API 경로
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				[document.querySelector('meta[name="_csrf_header"]').content]:
+					document.querySelector('meta[name="_csrf"]').content
+			},
+			body: JSON.stringify(finalPayload),
+		})
+			.then(res => {
+				if (!res.ok) {
+					// 오류 메시지를 포함하여 JSON 응답을 파싱
+					return res.json().then(error => {
+						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+					});
+				}
+				return res.json();
+			})
+			.then(data => {
+				console.log("서버 응답 데이터:", data);
+				alert("주문서가 성공적으로 등록되었습니다. ID: " + data.id);
+
+				const modalInstance = bootstrap.Modal.getInstance(modalEl);
+				if (modalInstance) modalInstance.hide();
+				// 등록 성공 후 테이블 데이터 리로드 로직 (필요 시)
+				if (window.orderTableInstance && window.orderTableInstance.loadData) { // ⭐⭐ 변수명 변경 반영
+					window.orderTableInstance.loadData("/api/orders"); 
+				} else {
+					window.location.reload();
+				}
+			})
+			.catch(err => {
+				console.error("주문서 등록 실패:", err);
+				alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`)
+			});
+	};
+
+
+	/**
+	 * 주문 상세 테이블의 데이터 행들을 순회하며 OrderDetail 엔티티 구조에 맞춰 수집합니다.
+	 */
+	function collectOrderDetails() {
+		const detailList = [];
+		const tbody = document.getElementById('itemDetailBody');
+		if (!tbody) return detailList;
+
+		// 템플릿 행(data-row-id="new")을 제외한 모든 데이터 행 순회
+		tbody.querySelectorAll('tr').forEach(row => {
+			if (row.getAttribute('data-row-id') === 'new') {
+				return;
+			}
+			
+			const supplyAmount = window.cleanValue(row.querySelector('input[name="supplyAmount"]').value);
+            const taxAmount = window.cleanValue(row.querySelector('input[name="taxAmount"]').value);
+            
+            // 공급가액이 0보다 큰 경우에만 VAT 비율을 계산
+            const pctVat = (supplyAmount > 0) ? (taxAmount / supplyAmount) * 100 : 0;
+            
+			// OrderDetail DTO 구조에 맞춰 데이터 구성 (price, quantity, amountSupply, pctVat)
+			detailList.push({
+				productCode: row.querySelector('input[name="productCode"]').value || '',
+				quantity: window.cleanValue(row.querySelector('input[name="quantity"]').value),
+				price: window.cleanValue(row.querySelector('input[name="price"]').value),
+                
+                amountSupply: supplyAmount, 
+                pctVat: Math.round(pctVat * 100) / 100, // 소수점 2자리로 반올림하여 전송
+                
+				remarks: row.querySelector('input[name="remarks"]').value || '',
+			});
+		});
+
+		return detailList;
 	}
 
 
-	// 품목리스트 테이블 컬럼에 대한 정의
+	// --------------------------------------------------------------------------------
+	// 3. Tabulator 테이블 설정
+	// --------------------------------------------------------------------------------
+
+	// 주문서리스트 테이블 컬럼에 대한 정의
 	let tabulatorColumns = [
 		{
 			formatter: "rowSelection",
@@ -107,29 +215,112 @@ document.addEventListener("DOMContentLoaded", function() {
 				visible: defaultVisible.includes(col)
 			};
 
-			if (col === "이미지") {
-				columnDef.formatter = function(cell) {
-					// cell.getValue() : 셀에 들어있는 데이터 값을 반환.
-					// cell.setValue(value) : 셀 데이터 값을 변경
-					// cell.getData() : 행 전체 데이터 객체 반환
-					// cell.getRow() : 셀이 속한 행 반환
-					// cell.getField() : 컬럼의 필드값 반환
-					const url = cell.getValue();
-					return `<img src="${url}" alt="이미지" style="height:30px; cursor:pointer;" onclick="showImageModal('${url}')">`;
-				};
-			}
-			if (col === "품목코드") {
+			if (col === "주문서코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
-					// ajax 호출!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;
 				};
 			}
 
+			// 견적서 코드 필드도 클릭 가능하게 할 수 있으나, 현재는 주문서 코드만 설정
+			
 			return columnDef;
 		}).filter(c => c !== null)
 	];
-
+	
+	// makeTabulator는 salesCommon.js에 정의된 것으로 가정
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.priceTableInstance = tableInstance;
+	window.orderTableInstance = tableInstance; // 전역 변수명 변경 (priceTableInstance -> orderTableInstance)
 });
+
+// ====================================================================
+// 전역 함수 (HTML oninput 등에서 호출됨)
+// ====================================================================
+
+/**
+ * 행의 수량 또는 단가가 변경될 때 공급가액, 부가세, 최종금액을 계산하고 포맷팅합니다.
+ */
+window.calculateRow = function(inputElement) {
+	const row = inputElement.closest('tr');
+	if (!row) return;
+
+	// cleanValue 헬퍼 함수 사용
+	const cleanValue = window.cleanValue;
+
+	// 1. 현재 변경된 필드에 콤마 포맷팅을 적용하여 표시
+	const currentValue = cleanValue(inputElement.value);
+	inputElement.value = currentValue.toLocaleString('ko-KR');
+
+	// 2. 모든 Input 요소 쿼리
+	const quantityInput = row.querySelector('input[name="quantity"]');
+	const unitPriceInput = row.querySelector('input[name="price"]');
+	const supplyAmountInput = row.querySelector('input[name="supplyAmount"]');
+	const taxAmountInput = row.querySelector('input[name="taxAmount"]');
+	const finalAmountInput = row.querySelector('input[name="finalAmount"]');
+
+	// 3. 계산을 위해 콤마가 제거된 순수한 숫자값 사용
+	const quantity = cleanValue(quantityInput.value);
+	const unitPrice = cleanValue(unitPriceInput.value);
+
+	// 4. 공급가액 및 부가세 계산
+	const supplyAmount = quantity * unitPrice;
+	const taxAmount = Math.floor(supplyAmount * 0.1);
+	const finalAmount = supplyAmount + taxAmount;
+
+	// 5. 계산된 값에 콤마 포맷팅 적용 후 출력
+	supplyAmountInput.value = supplyAmount.toLocaleString('ko-KR');
+	taxAmountInput.value = taxAmount.toLocaleString('ko-KR');
+	finalAmountInput.value = finalAmount.toLocaleString('ko-KR');
+
+	// 6. 전체 합계 재계산
+	calculateTotal();
+}
+
+/**
+ * 주문 상세 테이블 전체의 합계를 계산하고 footer에 표시합니다.
+ */
+window.calculateTotal = function() {
+	let totalQuantity = 0;
+	let totalSupplyAmount = 0;
+	let totalTaxAmount = 0;
+	let totalFinalAmount = 0;
+
+	const tbody = document.getElementById('itemDetailBody');
+	if (!tbody) return;
+
+	// 모든 행을 순회하며 합계 계산 (템플릿 행 제외)
+	tbody.querySelectorAll('tr').forEach(row => {
+		if (row.getAttribute('data-row-id') === 'new') {
+			return;
+		}
+
+		// Input 요소들을 찾습니다.
+		const quantityInput = row.querySelector('input[name="quantity"]');
+		const supplyAmountInput = row.querySelector('input[name="supplyAmount"]');
+		const taxAmountInput = row.querySelector('input[name="taxAmount"]');
+		// finalAmountInput은 합계 계산에 사용하지 않고, 출력용으로만 사용합니다.
+
+		if (!quantityInput || !supplyAmountInput || !taxAmountInput) return;
+
+		// cleanValue 헬퍼 함수 사용
+		const cleanValue = window.cleanValue;
+
+		const quantity = cleanValue(quantityInput.value);
+		const supplyAmount = cleanValue(supplyAmountInput.value);
+		const taxAmount = cleanValue(taxAmountInput.value);
+		
+		totalQuantity += quantity;
+		totalSupplyAmount += supplyAmount;
+		totalTaxAmount += taxAmount;
+		// ⭐ [수정 사항] 최종금액은 공급가액과 부가세의 합으로 정확히 계산합니다.
+		totalFinalAmount += (supplyAmount + taxAmount); 
+	});
+
+	// 1. 합계 필드 업데이트 (HTML ID 사용)
+	document.getElementById('totalQuantity').textContent = totalQuantity.toLocaleString('ko-KR') + ' 개';
+	document.getElementById('totalSupplyAmount').textContent = totalSupplyAmount.toLocaleString('ko-KR') + ' 원';
+	document.getElementById('totalTaxAmount').textContent = totalTaxAmount.toLocaleString('ko-KR') + ' 원';
+
+	// 2. 최종 총 금액 업데이트
+	document.getElementById('totalFinalAmount').textContent = totalFinalAmount.toLocaleString('ko-KR') + ' 원';
+}

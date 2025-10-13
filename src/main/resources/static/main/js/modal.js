@@ -61,34 +61,38 @@ const modalConfigs = {
 			},
 		],
 	},
-	
-	 // ✅ 청구서(INVOICE) 모달 - STATUS=회계반영완료만
-  acinvoice: {
-    // 백엔드 컨트롤러: GET /api/invoices/lookup
-    // CompanyContext로 회사코드 필터링, status 기본값은 서버에서도 '회계반영완료' 처리
-    // 여기서도 명시적으로 status 쿼리를 붙여서 호출
-    url: "/api/invoices/lookup?status=" + encodeURIComponent("회계반영완료"),
-    title: "청구서 검색",
-    columns: [
-      { title: "청구서코드", field: "invoiceCode", width: 140, hozAlign: "center" },
-      { title: "거래처",     field: "partnerName", minWidth: 160 },
-      { title: "청구금액",   field: "dmndAmt",     width: 120, hozAlign: "right",
-        formatter: (c) => Number(c.getValue() || 0).toLocaleString()
-      },
-      { title: "상태",       field: "status",      width: 120, hozAlign: "center" },
-      { title: "작성일",     field: "createDate",  width: 120, hozAlign: "center",
-        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
-      },
-      { title: "청구일",     field: "dmndDate",    width: 120, hozAlign: "center",
-        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
-      },
-      { title: "수금예정",   field: "rcptDate",    width: 120, hozAlign: "center",
-        formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0,10) : d.toISOString().slice(0,10); }
-      },
-    ],
-    selectable: 1
-  },
-  
+
+	// ✅ 청구서(INVOICE) 모달 - STATUS=회계반영완료만
+	acinvoice: {
+		// 백엔드 컨트롤러: GET /api/invoices/lookup
+		// CompanyContext로 회사코드 필터링, status 기본값은 서버에서도 '회계반영완료' 처리
+		// 여기서도 명시적으로 status 쿼리를 붙여서 호출
+		url: "/api/invoices/lookup?status=" + encodeURIComponent("회계반영완료"),
+		title: "청구서 검색",
+		columns: [
+			{ title: "청구서코드", field: "invoiceCode", width: 140, hozAlign: "center" },
+			{ title: "거래처", field: "partnerName", minWidth: 160 },
+			{
+				title: "청구금액", field: "dmndAmt", width: 120, hozAlign: "right",
+				formatter: (c) => Number(c.getValue() || 0).toLocaleString()
+			},
+			{ title: "상태", field: "status", width: 120, hozAlign: "center" },
+			{
+				title: "작성일", field: "createDate", width: 120, hozAlign: "center",
+				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0, 10) : d.toISOString().slice(0, 10); }
+			},
+			{
+				title: "청구일", field: "dmndDate", width: 120, hozAlign: "center",
+				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0, 10) : d.toISOString().slice(0, 10); }
+			},
+			{
+				title: "수금예정", field: "rcptDate", width: 120, hozAlign: "center",
+				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? String(v).slice(0, 10) : d.toISOString().slice(0, 10); }
+			},
+		],
+		selectable: 1
+	},
+
 	commonCode: {
 		url: "/api/modal/commonCode",
 		title: "공통코드 검색",
@@ -132,22 +136,26 @@ const modalConfigs = {
 		],
 		selectable: 1,
 	},
-	
-// ✅ 품목(제품) 모달 - sales 조회로 대체
-product: {
-  url: "/api/sales/lookup",        // ← 기존 /api/products/lookup 대신 사용
-  title: "품목 검색",
-  columns: [
-    { title:"판매코드",  field:"salesCode",  width:140, hozAlign:"center" },
-    { title:"품목명",    field:"productName", minWidth:200 },
-    { title:"거래처",    field:"partnerName", minWidth:160 },
-    { title:"단가",      field:"unitPrice",   width:110, hozAlign:"right",
-      formatter:(c)=>Number(c.getValue()||0).toLocaleString() },
-    { title:"판매일자",  field:"salesDate",   width:120, hozAlign:"center",
-      formatter:(cell)=>{ const v=cell.getValue(); if(!v) return ""; const d=new Date(v); return isNaN(d)?v:d.toISOString().slice(0,10); } },
-  ],
-  selectable: 1,
-},
+
+	// ✅ 품목(제품) 모달 - sales 조회로 대체
+	product: {
+		url: "/api/sales/lookup",        // ← 기존 /api/products/lookup 대신 사용
+		title: "품목 검색",
+		columns: [
+			{ title: "판매코드", field: "salesCode", width: 140, hozAlign: "center" },
+			{ title: "품목명", field: "productName", minWidth: 200 },
+			{ title: "거래처", field: "partnerName", minWidth: 160 },
+			{
+				title: "단가", field: "unitPrice", width: 110, hozAlign: "right",
+				formatter: (c) => Number(c.getValue() || 0).toLocaleString()
+			},
+			{
+				title: "판매일자", field: "salesDate", width: 120, hozAlign: "center",
+				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? v : d.toISOString().slice(0, 10); }
+			},
+		],
+		selectable: 1,
+	},
 
 	// 근태코드 모달
 	attendance: {
@@ -163,41 +171,79 @@ product: {
 			{ title: "비고", field: "note" },
 		]
 	},
-	
-// ✅ 출하지시서 모달
-shipment: {
-  url: "/api/shipments/lookup",  // 백엔드에서 출하지시 목록 조회용 API
-  title: "출하지시서 검색",
-  columns: [
-    { 
-      title: "출하지시코드", 
-      field: "shipmentCode", 
-      width: 160, 
-      hozAlign: "center" 
-    },
-    { 
-      title: "출하예정일자", 
-      field: "shipmentDate", 
-      width: 150, 
-      hozAlign: "center",
-      formatter: (cell) => {
-        const v = cell.getValue();
-        if (!v) return "";
-        const d = new Date(v);
-        return isNaN(d) ? v : d.toISOString().slice(0,10);
-      }
-    },
-    { 
-      title: "거래처코드", 
-      field: "partnerCode", 
-      width: 160, 
-      hozAlign: "center"
-    },
-  ],
-  selectable: 1,  // 한 건만 선택
-},
 
-	
+
+	warehouse: {
+		url: "/api/modal/warehouse",
+		title: "품목 검색",
+		columns: [
+			{ title: "창고", field: "productCode" },
+			{ title: "품목명", field: "productName" },
+			{ title: "품목그룹", field: "productGroup" },
+			{ title: "직급", field: "gradeCode.codeName" }
+		]
+	},
+
+
+
+	// ✅ 출하지시서 모달
+	shipment: {
+		url: "/api/shipments/lookup",  // 백엔드에서 출하지시 목록 조회용 API
+		title: "출하지시서 검색",
+		columns: [
+			{
+				title: "출하지시코드",
+				field: "shipmentCode",
+				width: 160,
+				hozAlign: "center"
+			},
+			{
+				title: "출하예정일자",
+				field: "shipmentDate",
+				width: 150,
+				hozAlign: "center",
+				formatter: (cell) => {
+					const v = cell.getValue();
+					if (!v) return "";
+					const d = new Date(v);
+					return isNaN(d) ? v : d.toISOString().slice(0, 10);
+				}
+			},
+			{
+				title: "거래처코드",
+				field: "partnerCode",
+				width: 160,
+				hozAlign: "center"
+			},
+		],
+		selectable: 1,  // 한 건만 선택
+	},
+
+	// ✅ 견적서
+	estimate: {
+		url: "/api/modal/estimate",
+		title: "견적서 검색",
+		columns: [
+			{ title: "견적서코드", field: "estimateUniqueCode", width: 140, hozAlign: "center" },
+		],
+		selectable: 1,
+	},
+
+	// ✅ 품목
+	productCode: {
+		url: "/api/modal/productCode",
+		title: "품목 검색",
+		columns: [
+			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
+			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
+			{ title: "규격", field: "specification", width: 200, hozAlign: "center" },
+			{ title: "단위", field: "unit", width: 200, hozAlign: "center" },
+		],
+		selectable: 1,
+	},
+
+
+
 };
 
 

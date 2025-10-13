@@ -14,4 +14,6 @@ public interface EstimateService {
 	Estimate saveEstimate(Estimate estimate);
 	
 	Long registerNewEstimate(EstimateRegistrationDTO dto);
+	
+	boolean updateEstimateStatus(String estimateCode, String status);
 }
