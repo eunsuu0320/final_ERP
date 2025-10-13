@@ -2,10 +2,10 @@ package com.yedam.hr.service;
 
 import java.util.List;
 
-import com.yedam.hr.domain.HrHistory;
+import com.yedam.hr.dto.HrHistoryDTO;
 
 public interface HrHistorySerivce {
 	// 이력 조회
-	List<HrHistory> findByCompanyCode(String companyCode);
+	List<HrHistoryDTO> findByCompanyCode(String companyCode);
 
 }

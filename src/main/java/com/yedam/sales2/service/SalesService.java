@@ -3,6 +3,8 @@ package com.yedam.sales2.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.security.core.Authentication;
+
 import com.yedam.sales2.domain.DSalesPlan;
 import com.yedam.sales2.domain.EmpPlan;
 import com.yedam.sales2.domain.Sales;
@@ -30,10 +32,10 @@ public interface SalesService {
 	//수정
 	public String updateSalesPlanDetails(int planCode, List<DSalesPlan> updatedDetails);
 
-	String insertSalesPlan(List<DSalesPlan> detailList);
+	String insertSalesPlan(Authentication auth, List<DSalesPlan> detailList);
 
 	boolean checkSalesPlanExists(int year);
 	
 	// 사원별 영업매출
-	List<Map<String, Object>> getEmpPlanList();
+	List<Map<String, Object>> getEmpPlanList(String companyCode, String planYear);
 }

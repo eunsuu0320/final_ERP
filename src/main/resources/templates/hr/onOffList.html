@@ -8,11 +8,33 @@
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
-		<div class="container-fluid px-4">
-			<main>
-			출퇴근 현황 아라라라라라라라라라라라라라라로로로로ㅗ로로로로로로로로로로로로로로로로로로로로로로로롤
-			</main>
-		</div>
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">출퇴근 현황</h1>
+
+				<input type="hidden" id="companyCode"
+					th:value="${#authentication.name.split(':')[0]}">
+
+				<div class="d-flex align-items-center mb-3">
+					<select id="sel-field" class="form-select w-auto me-2">
+						<option value="name">성명</option>
+						<option value="date">근태일자</option>
+					</select>
+					<input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
+					<button id="btn-search" class="btn btn-warning me-2">검색</button>
+					<div class="ms-auto d-flex">
+						<button id="onoff-print" class="btn btn-secondary me-2">인쇄</button>
+						<button id="onoff-excel" class="btn btn-dark me-2">Excel</button>
+						<a class="btn btn-outline-primary me-2" href="onOffPage">돌아가기</a>
+					</div>
+				</div>
+
+				<!-- 출퇴근 테이블 -->
+				<div id="commute-table"></div>
+
+		</main>
 	</div>
+	</div>
+	<script src="/hr/js/onoffList.js"></script>
 </body>
 </html>

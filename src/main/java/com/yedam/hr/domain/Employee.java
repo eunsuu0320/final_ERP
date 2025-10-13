@@ -2,25 +2,35 @@ package com.yedam.hr.domain;
 
 import java.time.LocalDate;
 
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.yedam.common.Prefixable;
 import com.yedam.common.domain.CommonCode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
 @Entity
 @Data
-public class Employee {
+public class Employee implements Prefixable {
 
 	@Id
 	@Column(name = "EMP_CODE")
+	@GeneratedValue(generator = "sequence-id-generator")
+    @GenericGenerator(
+            name = "sequence-id-generator",
+            strategy = "com.yedam.common.SequenceIdGenerator"
+    )
 	private String empCode; // 사원번호
 
 	private String companyCode; // 회사코드
@@ -68,4 +78,15 @@ public class Employee {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "bankCode", referencedColumnName = "codeId", insertable = false, updatable = false)
 	private CommonCode bankCodeEntity;
+
+
+	@Override
+	public String getPrefix() {
+		return "";
+	}
+
+	@Override
+	public String getSequenceName() {
+		return "EMPLOYEE_SEQ";
+	}
 }

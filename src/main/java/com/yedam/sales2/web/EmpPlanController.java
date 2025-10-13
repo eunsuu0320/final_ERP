@@ -1,5 +1,8 @@
 package com.yedam.sales2.web;
 
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,18 +48,25 @@ public class EmpPlanController {
     @ResponseBody
     public String insertPlanWithDetails(@RequestBody PlanRequestDTO request) {
         // 1. 상위 계획 저장
-        EspPlan esp = new EspPlan();
-        esp.setEmpCode(request.getEmpCode());
-        esp.setCompanyCode(request.getCompanyCode());
-        EspPlan saved = empService.insertSalePlan(esp);
+        //EspPlan esp = new EspPlan();
+//        esp.setEmpCode(request.getEmpCode());
+//        esp.setCompanyCode(request.getCompanyCode());
+//        EspPlan saved = empService.insertSalePlan(esp);
 
         // 2. 하위 세부 계획들에 부모 코드 세팅 후 저장
-        for (EsdpPlan detail : request.getDetailPlans()) {
-            detail.setEspCode(saved.getEspCode()); // FK 세팅
-        }
+//        for (EsdpPlan detail : request.getDetailPlans()) {
+//            detail.setEspCode(saved.getEspCode()); // FK 세팅
+//        }
         empService.insertDetailPlans(request.getDetailPlans());
 
         return "OK";
     }
 
+ 	// 사원영업계획조회
+ 	@GetMapping("/api/slaes/empDeatilPlan")
+ 	@ResponseBody
+ 	public List<EsdpPlan> getDetailList(String espCode) {
+ 		return empService.findByEspCode(espCode);
+ 	}
+    
 }	

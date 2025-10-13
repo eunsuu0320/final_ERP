@@ -2,23 +2,34 @@ package com.yedam.common.domain;
 
 import java.util.Date;
 
+import org.hibernate.annotations.GenericGenerator;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.yedam.common.Prefixable;
 import com.yedam.hr.domain.Employee;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "SYSTEM_USER")
 @Data
-public class SystemUser {
+public class SystemUser implements Prefixable {
 
 	@Id
+	@GeneratedValue(generator = "sequence-id-generator")
+    @GenericGenerator(
+            name = "sequence-id-generator",
+            strategy = "com.yedam.common.SequenceIdGenerator"
+    )
 	private String userCode;
 
 	private String companyCode;
@@ -35,6 +46,15 @@ public class SystemUser {
 
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
-
     private Employee employee;
+
+	@Override
+	public String getPrefix() {
+		return "U";
+	}
+
+	@Override
+	public String getSequenceName() {
+		return "SYSTEM_USER_SEQ";
+	}
 }

@@ -5,3 +5,110 @@
   height: 100%;
   border: 1px solid #ddd;
 }
+
+  /* FullCalendar 자체 툴바 숨김(부트스트랩/커스텀 툴바 사용) */
+  .fc .fc-toolbar { display:none; }
+
+  /* 화면 높이에 맞춰 JS로 동적 픽셀 높이를 넣을 래퍼 */
+  .cal-wrap { height: 100%; }  /* 실제 높이는 JS에서 지정 */
+
+  /* 1) 요일 헤더(월~일) 공통 스타일 */
+.fc .fc-col-header-cell-cushion{
+  font-size: 0.95rem;     /* 글자 크기 */
+  font-weight: 700;       /* 굵기 */
+  color: #333;            /* 색상 */
+  padding: .6rem .25rem;  /* 여백 */
+}
+
+/* (옵션) 주말 헤더 색상 - 월요일 시작(firstDay:1 기준)
+   토요일: 6번째, 일요일: 7번째 컬럼 */
+.fc .fc-col-header th:nth-child(7) .fc-col-header-cell-cushion{ color:#0d6efd; } /* 토 */
+.fc .fc-col-header th:nth-child(1) .fc-col-header-cell-cushion{ color:#e03131; } /* 일 */
+
+/* 2) 날짜 숫자(1일, 2일 …) 공통 스타일 */
+.fc .fc-daygrid-day-number{
+  font-size: 0.95rem;
+  font-weight: 600;
+  color:#111;
+  text-decoration: none;      /* 밑줄 제거 */
+  padding: .35rem .45rem;     /* 클릭 영역 조금 키우기 */
+  border-radius: .375rem;     /* 살짝 둥글게 */
+  display: inline-block;      /* 배경 적용을 위해 inline-block */
+}
+
+/* (옵션) 오늘 날짜 하이라이트 */
+.fc .fc-daygrid-day.fc-day-today{
+  background: #fff8e6;        /* 셀 배경 */
+}
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{
+  background: #ffe8b3;        /* 숫자 배경 */
+}
+
+/* (옵션) 주말 날짜 색상 */
+.fc .fc-daygrid-day.fc-day-sat .fc-daygrid-day-number{ color:#0d6efd; } /* 토 */
+.fc .fc-daygrid-day.fc-day-sun .fc-daygrid-day-number{ color:#e03131; } /* 일 */
+
+/* (옵션) 이전/다음 달 날짜 옅게 */
+.fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number{
+  color:#b5b5b5;
+  font-weight: 500;
+}
+
+/* (옵션) 날짜 숫자 hover 효과 */
+.fc .fc-daygrid-day-number:hover{
+  background: #f1f3f5;
+}
+
+/* 날짜 숫자 기본 스타일 */
+#calendar .fc-daygrid-day-number{
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* 달력(#calendar) 안의 요일 헤더/날짜 숫자 링크 밑줄 제거 */
+#calendar .fc-col-header-cell-cushion,
+#calendar .fc-daygrid-day-number {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* hover/focus 때도 밑줄 생기지 않도록 */
+#calendar .fc-col-header-cell-cushion:hover,
+#calendar .fc-col-header-cell-cushion:focus,
+#calendar .fc-daygrid-day-number:hover,
+#calendar .fc-daygrid-day-number:focus,
+#calendar .fc-daygrid-day-number:visited {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+/* 헤더를 기준 컨테이너로 */
+#cal-header { position: relative; }
+
+/* 타이틀을 헤더 가로폭의 정확한 중앙에 고정 */
+#titleBar{
+  position: absolute;
+  left: 50%;
+  top: 50%;                          /* 세로도 중앙 정렬 */
+  transform: translate(-50%, -50%);  /* 정확한 중앙 보정 */
+  font-size: 1.6rem;                 /* 크게 (원하면 1.8rem/2rem) */
+  font-weight: 700;
+  color: #6c757d;
+  line-height: 1;
+  pointer-events: none;              /* 버튼 클릭 방해 X */
+  white-space: nowrap;               /* 줄바꿈 방지 */
+}
+
+/* 좁은 화면에서 너무 크면 살짝 줄이기 (선택) */
+@media (max-width: 768px){
+  #titleBar{ font-size: 1.3rem; }
+}
+
+/* 모달 라벨을 라벨 칸 중앙 정렬 */
+#OnOffModal .col-form-label{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin-bottom:0; /* flex 쓸 때 밑간격 제거 */
+}
+

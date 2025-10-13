@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.yedam.hr.domain.HrHistory;
+import com.yedam.hr.dto.HrHistoryDTO;
 import com.yedam.hr.service.HrHistorySerivce;
 
 @Controller
@@ -18,7 +18,7 @@ public class HrHistoryController {
 
 	@ResponseBody
 	@GetMapping("/api/history/{companyCode}")
-	public List<HrHistory> getHistoryByEmpNo(@PathVariable String companyCode) {
+	public List<HrHistoryDTO> getHistoryByEmpNo(@PathVariable String companyCode) {
 		return hrHistorySerivce.findByCompanyCode(companyCode);
 	}
 }
