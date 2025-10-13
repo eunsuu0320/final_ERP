@@ -24,6 +24,7 @@ public class AcInvoiceModalRow {
         d.invoiceUniqueCode = e.getInvoiceUniqueCode();
         d.invoiceCode = e.getInvoiceCode();
         d.partnerCode = e.getPartnerCode();
+        d.partnerName = e.getPartnerName();
         d.createDate = e.getCreateDate();
         d.dmndDate = e.getDmndDate();
         d.rcptDate = e.getRecptDate();

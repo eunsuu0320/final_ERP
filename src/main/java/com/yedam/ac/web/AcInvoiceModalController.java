@@ -16,6 +16,8 @@ import com.yedam.ac.web.dto.AcInvoiceModalRow;
 
 import lombok.extern.slf4j.Slf4j;
 
+// 수금전표 조회 컨트롤러
+
 @Slf4j
 @RestController
 @RequestMapping("/api/invoices")
@@ -32,6 +34,11 @@ public class AcInvoiceModalController {
     /**
      * 청구서(INVOICE) 조회 - 수금 전표용
      * 예) GET /api/invoices/lookup?status=회계반영완료&q=ABC&limit=20
+  
+     * @param status 
+     * @param q
+     * @param limit
+     * @return
      */
     @GetMapping(value = "/lookup", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<AcInvoiceModalRow>> lookup(
@@ -45,6 +52,7 @@ public class AcInvoiceModalController {
         	companyCode = companyCodeProvider.resolveForCurrentUser(); // 없으면 null 반환하도록 구현돼 있음
         } catch (Throwable ignore) {
             // 회사코드 미설정도 허용(전사 조회) – 리포지토리에서 null 허용 처리
+        	System.out.println(ignore.getMessage());
         }
 
         try {

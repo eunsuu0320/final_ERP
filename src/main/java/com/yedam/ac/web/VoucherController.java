@@ -60,11 +60,13 @@ public class VoucherController {
     }
 
     private static String normalize(String type) {
-        return switch (String.valueOf(type).toUpperCase()) {
-            case "SALES"   -> "SALES";
-            case "BUY"     -> "BUY";
-            case "MONEY"   -> "MONEY";
-            case "PAYMENT" -> "PAYMENT";
+        String t = String.valueOf(type).toUpperCase();
+        // 프론트(short)와 백엔드(long) 모두 허용
+        return switch (t) {
+            case "SALES", "SAL" -> "SALES";
+            case "BUY"          -> "BUY";
+            case "MONEY", "MNY", "RCV", "RCPT", "RECEIPT" -> "MONEY";
+            case "PAYMENT", "PAY", "PMT"                  -> "PAYMENT";
             default -> throw new IllegalArgumentException("unknown type: " + type);
         };
     }

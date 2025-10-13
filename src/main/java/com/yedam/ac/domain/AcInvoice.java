@@ -21,6 +21,9 @@ public class AcInvoice {
 
     @Column(name = "PARTNER_CODE", length = 20, nullable = false)
     private String partnerCode;
+    
+    @Column(name = "PARTNER_NAME", length = 20, nullable = false)
+    private String partnerName;
 
     @Column(name = "MANAGER", length = 20, nullable = false)
     private String manager;
@@ -58,6 +61,9 @@ public class AcInvoice {
 
     public String getPartnerCode() { return partnerCode; }
     public void setPartnerCode(String v) { this.partnerCode = v; }
+    
+    public String getPartnerName() { return partnerName; }
+    public void setPartnerName(String v) { this.partnerName = v; }
 
     public String getManager() { return manager; }
     public void setManager(String v) { this.manager = v; }
