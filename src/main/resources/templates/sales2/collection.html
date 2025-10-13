@@ -73,34 +73,41 @@
         <div class="modal-dialog modal-lg modal-dialog-centered custom-modal">
           <div class="modal-content">
 
-            <div class="modal-header">
-              <h5 class="modal-title fw-bold" id="insertCollectionModalLabel">💰 수금 등록</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+            <div class="modal-header d-flex justify-content-between align-items-center">
+			  <h5 class="modal-title fw-bold" id="insertCollectionModalLabel">수금 등록</h5>
+			  
+			  <div class="d-flex align-items-center gap-2">
+			    <button id="btnSave" class="btn btn-primary">수금등록</button>
+			    <button id="btnView" class="btn btn-secondary">미수내역 조회</button>
+			    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			  </div>
+			</div>
 
+            
             <div class="modal-body">
+            <input type="hidden" id="outstandingAmt">
               <div class="row mb-3">
                 <div class="col-md-4">
-                  <label class="form-label">수금일자</label>
+                  <label class="form-label">*수금일자</label>
                   <input type="date" id="moneyDate" class="form-control" value="2025-10-10">
-                </div>
+                </div>                
                 <div class="col-md-4">
-                  <label class="form-label">거래처</label>
+                  <label class="form-label">*거래처</label>
                   <input type="text" id="modalPartnerName" class="form-control" placeholder="거래처명 입력">
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">담당자</label>
+                  <label class="form-label">*담당자</label>
                   <input type="text" id="managerName" class="form-control" placeholder="담당자명 입력">
                 </div>
               </div>
 
               <div class="row mb-3">
                 <div class="col-md-4">
-                  <label class="form-label">수금금액</label>
-                  <input type="number" id="collectAmt" class="form-control" placeholder="금액 입력">
+                  <label class="form-label">*수금금액</label>
+                  <input type="text" id="collectAmt" class="form-control" placeholder="금액 입력">
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">결제방식</label>
+                  <label class="form-label">*결제방식</label>
                   <select id="paymentType" class="form-select">
                     <option value="">선택</option>
                     <option value="현금">현금</option>
@@ -111,16 +118,12 @@
                 <div class="col-md-4">
                   <label class="form-label">비고</label>
                   <input type="text" id="remarks" class="form-control" placeholder="비고 입력">
+                  <input type="hidden" id="partnerCode" name="partnerCode">
                 </div>
               </div>
 
-              <div class="text-end mb-3">
-                <button id="btnSave" class="btn btn-primary me-2">💾 수금등록</button>
-                <button id="btnView" class="btn btn-secondary">🔍 미수내역 조회</button>
-              </div>
-
               <!-- 📊 수금 처리 결과 Tabulator -->
-              <h6 class="fw-bold mb-2">📊 수금 처리 결과</h6>
+              <h6 class="fw-bold mb-2">수금 처리 결과</h6>
               <div id="resultTable"></div>
 
             </div>
@@ -146,3 +149,4 @@
 
 </body>
 </html>
+
