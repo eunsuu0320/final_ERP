@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -18,26 +19,29 @@ public interface CollectionRepository extends JpaRepository<CollectionEntity, St
 
     // 거래처별 미수금 현황 조회
     @Query(value = """
-    	    SELECT 
-    	        p.PARTNER_NAME AS  "CUSTOMERNAME",
-    	        NVL(SUM(i.DMND_AMT), 0) AS "TOTALSALES",
-    	        NVL(SUM(c.RECPT), 0) AS "TOTALCOLLECTED",
-    	        NVL(SUM(i.UNRCT_BALN), 0) AS "OUTSTANDING",  -- ✅ 잔액 직접 반영
-    	        COUNT(DISTINCT CASE 
-    	            WHEN NVL(i.UNRCT_BALN, 0) > 0 THEN i.INVOICE_CODE
-    	        END) AS "ARREARSCOUNT"
-    	    FROM PARTNER p
-    	    LEFT JOIN INVOICE i 
-    	           ON p.PARTNER_CODE = i.PARTNER_CODE
-    	          AND i.IS_CURRENT_VERSION = 'Y'
-    	          AND i.COMPANY_CODE = :companyCode
-    	    LEFT JOIN COLLECTION c 
-    	           ON p.PARTNER_CODE = c.PARTNER_CODE
-    	          AND c.COMPANY_CODE = :companyCode
-    	    WHERE p.COMPANY_CODE = :companyCode
-    	    GROUP BY p.PARTNER_NAME
-    	    ORDER BY p.PARTNER_NAME
-    	    """, nativeQuery = true)
-    	List<Map<String, Object>> findReceivableSummary(@Param("companyCode") String companyCode);
+           SELECT
+			    PARTNER_CODE,
+			    MAX(PARTNER_NAME) AS CUSTOMERNAME,
+			    NVL(SUM(DMND_AMT), 0) AS TOTALSALES,
+			    NVL(SUM(UNRCT_BALN), 0) AS OUTSTANDING,
+			    NVL(SUM(DMND_AMT), 0) - NVL(SUM(UNRCT_BALN), 0) AS TOTALCOLLECTED,
+			    COUNT(*) AS INVOICE_COUNT,
+			    COUNT(CASE WHEN COLLECTION_ST IN ('진행중') THEN 1 END) AS ARREARSCOUNT
+			FROM INVOICE
+			WHERE COMPANY_CODE = :companyCode
+			  AND IS_CURRENT_VERSION = 'Y'
+			GROUP BY PARTNER_CODE
+			ORDER BY MAX(PARTNER_NAME)
+        """, nativeQuery = true)
+        List<Map<String, Object>> findReceivableSummary(@Param("companyCode") String companyCode);
 
+    // 등록 프로시저
+    @Procedure(procedureName = "PROC_COLLECTION_FIFO")
+    void callCollectionFifoProc(
+        @Param("p_partner_code") String partnerCode,
+        @Param("p_payment_amt") Double paymentAmt,
+        @Param("p_payment_methods") String paymentMethods,
+        @Param("p_remk") String remk,
+        @Param("p_company_code") String companyCode
+    );
 }

@@ -48,7 +48,7 @@ planTable = new Tabulator("#plan-table", {
 document.getElementById("btn-update-sales").addEventListener("click", () => {
     const empCode = document.getElementById("employCode").value;
     if (!empCode) {
-        alert("사원을 먼저 선택해주세요!");
+        alert("사원을 먼저 선택해주세요");
         return;
     }
 
