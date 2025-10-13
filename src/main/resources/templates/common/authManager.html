@@ -1,0 +1,398 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>권한 관리</title>
+<style>
+* {
+	box-sizing: border-box
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+}
+
+.wrap {
+	max-width: 1100px;
+	margin: 24px auto;
+	padding: 0 16px
+}
+
+.toolbar {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 12px
+}
+
+.toolbar .spacer {
+	flex: 1
+}
+
+.input, select {
+	height: 36px;
+	padding: 0 10px;
+	border:1px solid #c8c8c8;
+	border-radius:4px;
+	background: #fff
+}
+
+.card {
+	background: var(--card);
+	border: 1px solid var(--line);
+	border-radius: 14px;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, .04)
+}
+
+table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0
+}
+
+thead th {
+	position: sticky;
+	top: 0;
+	background: #fafbff;
+	border-bottom: 1px solid var(--line);
+	font-weight: 700
+}
+
+th, td {
+	padding: 14px 10px;
+	text-align: center;
+	border-bottom: 1px solid var(--line)
+}
+
+th:first-child, td:first-child {
+	text-align: center;
+	width: 44px
+}
+
+th:nth-child(2), td:nth-child(2) {
+	text-align: left
+}
+
+th:nth-child(3), td:nth-child(3) {
+	text-align: left
+}
+
+.table-wrap {
+	overflow: auto;
+	border-radius: 14px
+}
+
+.role {
+	font-weight: 600
+}
+
+.menu {
+	color: #333
+}
+
+.muted {
+	color: var(--muted)
+}
+
+.checkbox {
+	width: 18px;
+	height: 18px;
+	cursor: pointer
+}
+
+.pagination {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	justify-content: center;
+	padding: 12px
+}
+
+.pagination button {
+	min-width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	border: 1px solid var(--line);
+	background: #fff;
+	cursor: pointer
+}
+
+.pagination button[disabled] {
+	opacity: .4;
+	cursor: not-allowed
+}
+
+.pagination .active {
+	background: #eef4ff;
+	border-color: #bcd1ff
+}
+
+.empty {
+	padding: 40px;
+	color: var(--muted);
+	text-align: center
+}
+</style>
+</head>
+<body layout:fragment="content">
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">권한 관리</h1>
+				<div class="wrap">
+					<div class="toolbar">
+						<input id="qMenu" class="input" placeholder="메뉴"
+							style="min-width: 220px" /> <select id="qRole" class="input"
+							style="min-width: 140px">
+							<option value="">권한</option>
+						</select>
+						<button id="btnSearch" class="btn btn-warning">검색</button>
+						<div class="spacer"></div>
+						<button id="btnSave" class="btn btn-primary">저장</button>
+					</div>
+
+					<div class="card table-wrap">
+						<table id="permTable" aria-label="권한별 메뉴 권한 테이블">
+							<thead>
+								<tr>
+									<th><input type="checkbox" id="chkAllRows"
+										aria-label="전체 행 선택" /></th>
+									<th>Role</th>
+									<th>메뉴</th>
+									<th><input type="checkbox" id="colRead" class="checkbox"
+										title="조회 전체선택" /> 조회</th>
+									<th><input type="checkbox" id="colCreate" class="checkbox"
+										title="등록 전체선택" /> 등록</th>
+									<th><input type="checkbox" id="colUpdate" class="checkbox"
+										title="수정 전체선택" /> 수정</th>
+									<th><input type="checkbox" id="colDelete" class="checkbox"
+										title="삭제 전체선택" /> 삭제</th>
+								</tr>
+							</thead>
+							<tbody id="tbody"></tbody>
+						</table>
+						<div id="empty" class="empty" style="display: none">데이터가
+							없습니다.</div>
+					</div>
+
+					<div id="pager" class="pagination" aria-label="페이지네이션"></div>
+				</div>
+			</div>
+		</main>
+	</div>
+	<script>
+/**
+ * 데모용 가짜 데이터
+ * 실제 연동 시 getList(), saveChanges() 부분의 fetch 경로/페이로드만 바꿔주면 됩니다.
+ */
+const ROLES = [
+  { roleId: 'ROLE_MANAGER', roleName: '일반 관리자' },
+  { roleId: 'ROLE_USER',    roleName: '일반 사용자' },
+];
+const MENUS = [
+  { menuId: 'MENU_SALES', menuName: '매출관리' },
+  { menuId: 'MENU_PUR',   menuName: '구매관리' },
+  { menuId: 'MENU_STK',   menuName: '재고관리' },
+  { menuId: 'MENU_HR',    menuName: '인사관리' },
+  { menuId: 'MENU_FIN',   menuName: '회계관리' },
+];
+
+// state
+let state = {
+  page: 1,
+  size: 8,
+  total: 0,
+  rows: [],  // {id, roleId, roleName, menuId, menuName, r,c,u,d, _dirty}
+  selectedRowIds: new Set(),
+};
+
+function initFilters(){
+  const sel = document.getElementById('qRole');
+  ROLES.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.roleId; opt.textContent = r.roleName;
+    sel.appendChild(opt);
+  });
+}
+
+function buildDummyRows(){
+  // 조합으로 권한 매트릭스 만들어보기 (실제는 서버에서 조회)
+  const out = [];
+  ROLES.forEach(r => {
+    MENUS.forEach(m => {
+      out.push({
+        id: r.roleId + '_' + m.menuId,
+        roleId: r.roleId, roleName: r.roleName,
+        menuId: m.menuId, menuName: m.menuName,
+        r: Math.random() > .4, c: Math.random() > .7, u: Math.random() > .6, d: Math.random() > .75,
+      });
+    });
+  });
+  return out;
+}
+
+async function getList(){
+  // 여기를 실제 API로 바꾸세요.
+  // const res = await fetch(`/api/admin/role-perms?menu=${encodeURIComponent(qMenu.value)}&role=${encodeURIComponent(qRole.value)}&page=${state.page}&size=${state.size}`);
+  // const data = await res.json();
+  // state.rows = data.content; state.total = data.total; render();
+  const kw = document.getElementById('qMenu').value.trim().toLowerCase();
+  const role = document.getElementById('qRole').value;
+  const all = buildDummyRows();
+  const filtered = all.filter(x => (!kw || x.menuName.toLowerCase().includes(kw)) && (!role || x.roleId === role));
+  state.total = filtered.length;
+  const start = (state.page-1)*state.size;
+  state.rows = filtered.slice(start, start+state.size);
+  render();
+}
+
+function render(){
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  state.selectedRowIds.clear();
+
+  if(state.rows.length === 0){
+    document.getElementById('empty').style.display = 'block';
+  }else{
+    document.getElementById('empty').style.display = 'none';
+  }
+
+  state.rows.forEach(row => {
+    const tr = document.createElement('tr');
+
+    // sel
+    const tdSel = document.createElement('td');
+    const cbSel = document.createElement('input');
+    cbSel.type = 'checkbox';
+    cbSel.addEventListener('change', e => {
+      if(e.target.checked) state.selectedRowIds.add(row.id); else state.selectedRowIds.delete(row.id);
+    });
+    tdSel.appendChild(cbSel);
+
+    // role
+    const tdRole = document.createElement('td');
+    tdRole.className = 'role';
+    tdRole.textContent = row.roleName;
+
+    // menu
+    const tdMenu = document.createElement('td');
+    tdMenu.className = 'menu';
+    tdMenu.textContent = row.menuName;
+
+    // permissions
+    const tdRead = permCell(row, 'r');
+    const tdCreate = permCell(row, 'c');
+    const tdUpdate = permCell(row, 'u');
+    const tdDelete = permCell(row, 'd');
+
+    tr.append(tdSel, tdRole, tdMenu, tdRead, tdCreate, tdUpdate, tdDelete);
+    tbody.appendChild(tr);
+  });
+
+  renderPager();
+  wireHeaderToggles();
+}
+
+function permCell(row, key){
+  const td = document.createElement('td');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox';
+  cb.className = 'checkbox perm-' + key;
+  cb.checked = !!row[key];
+  cb.dataset.rowId = row.id;
+  cb.addEventListener('change', (e) => {
+    row[key] = e.target.checked;
+    row._dirty = true;
+  });
+  td.appendChild(cb);
+  return td;
+}
+
+function renderPager(){
+  const el = document.getElementById('pager');
+  el.innerHTML = '';
+  const totalPages = Math.max(1, Math.ceil(state.total / state.size));
+  const mk = (label, page, disabled=false, active=false) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    if(disabled) b.disabled = true;
+    if(active) b.classList.add('active');
+    b.addEventListener('click', ()=>{ state.page = page; getList(); });
+    return b;
+  };
+  el.appendChild(mk('◀', Math.max(1, state.page-1), state.page===1));
+  for(let p=1;p<=totalPages && p<=7;p++){
+    el.appendChild(mk(String(p), p, false, p===state.page));
+  }
+  if(totalPages>7){
+    const dot = document.createElement('span'); dot.textContent = '…'; dot.className='muted'; dot.style.padding='0 6px';
+    el.appendChild(dot);
+    el.appendChild(mk(String(totalPages), totalPages));
+  }
+  el.appendChild(mk('▶', Math.min(totalPages, state.page+1), state.page===totalPages));
+}
+
+function wireHeaderToggles(){
+  const head = document.querySelector('thead');
+  const toggleCol = (key, checked) => {
+    document.querySelectorAll('.perm-'+key).forEach(cb => { cb.checked = checked; const id = cb.dataset.rowId; const row = state.rows.find(r=>r.id===id); if(row){row[key]=checked; row._dirty=true;} });
+  };
+  head.querySelector('#colRead').onchange = (e)=> toggleCol('r', e.target.checked);
+  head.querySelector('#colCreate').onchange = (e)=> toggleCol('c', e.target.checked);
+  head.querySelector('#colUpdate').onchange = (e)=> toggleCol('u', e.target.checked);
+  head.querySelector('#colDelete').onchange = (e)=> toggleCol('d', e.target.checked);
+
+  // 전체 행 선택
+  document.getElementById('chkAllRows').onchange = (e)=>{
+    const checked = e.target.checked;
+    document.querySelectorAll('#tbody input[type="checkbox"]').forEach(cb=>{
+      if(cb.dataset.rowId){ // 권한 체크박스는 그대로
+        // noop for row select boxes only
+      }
+    });
+    // select boxes in first column
+    document.querySelectorAll('#tbody tr input[type="checkbox"]:not([data-row-id])').forEach(cb=>{ cb.checked = checked; const tr = cb.closest('tr'); const id = tr?.querySelector('.perm-r')?.dataset.rowId; if(!id) return; if(checked) state.selectedRowIds.add(id); else state.selectedRowIds.delete(id); });
+  };
+}
+
+async function saveChanges(){
+  const dirty = state.rows.filter(r => r._dirty);
+  if(dirty.length === 0){ alert('변경된 내용이 없습니다.'); return; }
+  const payload = dirty.map(r => ({
+    roleId: r.roleId,
+    menuId: r.menuId,
+    canRead: !!r.r,
+    canCreate: !!r.c,
+    canUpdate: !!r.u,
+    canDelete: !!r.d,
+  }));
+  // 실제 저장 API 예시
+  // const res = await fetch('/api/admin/role-perms', {
+  //   method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  // });
+  // if(!res.ok){ const t=await res.text(); throw new Error(t); }
+  console.log('저장 payload', payload);
+  alert('가상 저장 완료 (콘솔 확인)');
+  state.rows.forEach(r=>r._dirty=false);
+}
+
+// events
+initFilters();
+getList();
+
+document.getElementById('btnSearch').addEventListener('click', ()=>{ state.page=1; getList(); });
+
+document.getElementById('btnSave').addEventListener('click', saveChanges);
+
+// Enter 검색
+['qMenu','qRole'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.page=1; getList(); } });
+});
+</script>
+</body>
+</html>

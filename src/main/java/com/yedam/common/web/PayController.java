@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.Role;
 import com.yedam.common.domain.Company;
 import com.yedam.common.domain.PayRequestWrapper;
 import com.yedam.common.domain.SystemUser;
 import com.yedam.common.domain.payment.PayRequest;
+import com.yedam.common.repository.RoleRepository;
 import com.yedam.common.service.ContractPdfService;
 import com.yedam.common.service.KakaoPayService;
 import com.yedam.common.service.NaverPayService;
@@ -39,6 +41,7 @@ public class PayController {
     private final PaymentService paymentService;
     private final UserService userService;
     private final ContractPdfService contractPdfService;
+    private final RoleRepository roleRepository;
     
     // 결제 준비 때 저장했다가 성공 콜백에서 사용
     private final Map<String, PayRequestWrapper> payRequestStore = new ConcurrentHashMap<>();
@@ -109,8 +112,10 @@ public class PayController {
             try {
                 SystemUser su = wrapper.getSystemUser();
                 if (su != null && su.getUserId() != null && su.getUserPw() != null) {
-                    String roleCode = (su.getRoleCode() == null || su.getRoleCode().isBlank())
-                                      ? "ADMIN" : su.getRoleCode();
+                	String roleCode = roleRepository
+                            .findFirstByCompanyCodeAndRoleName(companyCode, "MASTER")
+                            .map(Role::getRoleCode)
+                            .orElse("ADMIN"); // 없으면 기본값
                     String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank())
                                       ? null : su.getEmpCode();
 

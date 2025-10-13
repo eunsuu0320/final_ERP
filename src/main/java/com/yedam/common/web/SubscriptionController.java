@@ -65,7 +65,7 @@ public class SubscriptionController {
                 .orElseThrow(() -> new IllegalStateException("회사 정보를 찾을 수 없습니다."));
     }
 
-    // ===== 사용자 등록(임시 비밀번호 생성 + 이메일 발송) =====
+    // ===== 사용자 등록(임시 비밀번호 생성 + 이메일 발송)
     @PostMapping("/api/common/users")
     @Transactional
     public SystemUser createUser(@RequestBody SystemUser req) {
@@ -89,7 +89,7 @@ public class SubscriptionController {
         return saved;
     }
 
-    // ===== 사용자 수정(사번/사원명/부서 제외) - PUT 권장 =====
+    // ===== 사용자 수정(사번/사원명/부서 제외)
     @PutMapping("/api/common/users/{userCode}")
     @Transactional
     public SystemUser updateUser(@PathVariable String userCode, @RequestBody SystemUser req) {
@@ -97,7 +97,7 @@ public class SubscriptionController {
         return userService.updateUser(req, userCode, companyCode);
     }
 
-    // ===== (옵션) 비밀번호 초기화(임시 비번 생성 + 메일 발송) =====
+    // ===== 비밀번호 초기화(임시 비번 생성 + 메일 발송)
     @PostMapping("/api/common/users/{userId}/reset-password")
     public String resetPassword(@PathVariable String userId,
                                 @RequestParam String email) {
