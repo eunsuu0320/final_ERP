@@ -57,6 +57,11 @@ public class HomeController {
 		return "common/subscriptionManager";
 	}
 	
+	@GetMapping("/authManager")
+	public String authManager(Model model) {
+		return "common/authManager";
+	}
+	
 	@PostMapping("/common/findPassword")
 	@ResponseBody
 	public Map<String, Object> findPassword(@RequestBody Map<String, String> payload) {
