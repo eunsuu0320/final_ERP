@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -45,6 +47,18 @@ public class SalaryController {
 	@ResponseBody
 	public List<SalaryDetail> getSalaryDetails(@RequestParam String companyCode) {
 		return salaryDetailService.getSalaryDetails(companyCode);
+	}
+
+	// 급여마스터 저장
+	@PostMapping("/salaryMaster/save")
+	@ResponseBody
+	public String saveSalaryMaster(@RequestBody SalaryMaster salaryMaster) {
+		try {
+			salaryMasterService.insertSalaryMaster(salaryMaster);
+			return "success";
+		} catch (Exception e) {
+			return "fail: " + e.getMessage();
+		}
 	}
 
 }

@@ -56,6 +56,7 @@ public class HrServiceImpl implements HrService {
 		// 로그인 사용자 아이디 넣기
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String manager = auth.getName().split(":")[0];
+		String managerCode = auth.getName().split(":")[2];
 
 		String signFileName = null;
 
@@ -166,7 +167,7 @@ public class HrServiceImpl implements HrService {
 			history.setEventType("등록"); // 등록/수정 구분
 			history.setEventDetail("사원 신규 등록 및 계약서 저장");
 
-			history.setManager(manager);
+			history.setManager(managerCode);
 
 			hrHistoryRepository.save(history);
 

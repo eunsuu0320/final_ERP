@@ -12,12 +12,11 @@ import com.yedam.hr.service.DedcutService;
 @Service
 public class DedcutServiceImpl implements DedcutService {
 
-	@Autowired
-	DedcutRepository dedcutRepository;
+	@Autowired DedcutRepository dedcutRepository;
 
 	@Override
 	public List<Dedcut> findByCompanyCode(String companyCode) {
-		return dedcutRepository.findByCompanyCode(companyCode);
+		return dedcutRepository.findByCompanyCodeOrderByDedId(companyCode);
 	}
 
 	@Override

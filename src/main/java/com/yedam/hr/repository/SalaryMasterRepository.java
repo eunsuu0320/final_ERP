@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository;
 import com.yedam.hr.domain.SalaryMaster;
 
 @Repository
-public interface SalaryMasterRepository extends JpaRepository<SalaryMaster, Long> {
+public interface SalaryMasterRepository extends JpaRepository<SalaryMaster, String> {
 
 	// 회사코드별 조회
-	List<SalaryMaster> findByCompanyCode(String companyCode);
+	List<SalaryMaster> findByCompanyCodeOrderBySalaryIdDesc(String companyCode);
 
 }

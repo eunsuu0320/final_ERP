@@ -19,6 +19,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
         left join fetch e.gradeCode
         left join fetch e.bankCodeEntity
         where e.companyCode = :companyCode
+        order by e.empCode asc
     """)
 	List<Employee> findByCompanyCode(String companyCode);
 
