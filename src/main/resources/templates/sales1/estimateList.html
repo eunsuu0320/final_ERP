@@ -38,10 +38,15 @@
 						<label for="partnerNameSearch" class="me-3">거래처명</label>
 						<div class="d-flex align-items-center">
 							<div class="input-group input-group-sm">
+								<input type="hidden" id="partnerCodeSearch" name="partnerCode">
 								<input type="text" class="form-control w-auto"
 									placeholder="검색어 입력" id="partnerNameSearch">
 								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
+									onclick="openModal('partner', function(selected) {
+
+					                    document.getElementById('partnerNameSearch').value = selected.partnerName;
+					                    document.getElementById('partnerCodeSearch').value = selected.partnerCode;
+					                })">
 									<i class="bi bi-search"></i>
 								</button>
 							</div>
@@ -80,16 +85,16 @@
 				</div>
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
-						aria-label="type-filter">
+						aria-label="type-filter" id="estimateTab">
 						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SALES">미확인</button>
+							data-type="UNCONFIRMED">미확인</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="BUY">진행중</button>
+							data-type="IN_PROGRESS">진행중</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="MONEY">미체결</button>
+							data-type="UNSETTLED">미체결</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SUCCESS">체결</button>
+							data-type="SETTLED">체결</button>
 					</div>
 
 					<div class="d-flex align-items-center">
@@ -149,11 +154,15 @@
 												style="width: 80px;">거래처</label>
 
 											<div class="input-group input-group-sm" style="flex-grow: 1;">
-												<input type="text" class="form-control form-control-sm"
-													id="quotePartnerName" name="partnerName" placeholder="거래처명">
-												<input type="hidden" name="partnerCode" value="">
+												<input type="hidden" id="partnerCode" name="partnerCode">
+												<input type="text" class="form-control w-auto"
+													placeholder="검색어 입력" id="partnerName">
 												<button class="btn btn-outline-secondary" type="button"
-													onclick="searchPartner()">
+													onclick="openModal('partner', function(selected) {
+
+					                    document.getElementById('partnerName').value = selected.partnerName;
+					                    document.getElementById('partnerCode').value = selected.partnerCode;
+					                })">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
@@ -265,10 +274,18 @@
 											<tr class="new-item-row bg-light" data-row-id="new">
 												<td class="text-center"><input type="checkbox"
 													class="form-check-input"></td>
-												<td><input type="text"
-													class="form-select form-select-sm item-input"
-													name="productCode" placeholder="코드"
-													onblur="loadItemDetails(this)"></td>
+												<td><input type="hidden" id="productName"
+													name=productName> <input type="text"
+													class="form-control w-auto" placeholder="검색어 입력"
+													id="productCode">
+													<button class="btn btn-outline-secondary" type="button"
+														onclick="openModal('productCode', function(selected) {
+
+					                    document.getElementById('productName').value = selected.productName;
+					                    document.getElementById('productCode').value = selected.productCode;
+					                })">
+														<i class="bi bi-search"></i>
+													</button></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
 													name="itemName" readonly></td>
@@ -333,6 +350,7 @@
 			</button>
 		</div>
 	</div>
+	<div th:replace="common/modal :: commonModal"></div>
 
 
 	<script th:inline="javascript">

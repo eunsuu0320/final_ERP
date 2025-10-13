@@ -14,6 +14,8 @@ public interface ProductService {
 
 	Map<String, Object> getTableDataFromProducts(List<Product> products);
 
+	
+	
 	Product saveProduct(Product product, MultipartFile multipartfile);
 
 	Product getProductByProductCode(String productCode);

@@ -79,7 +79,7 @@
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '출하지시서코드' or col == '출하예정일자' or col == '거래처명' or col == '품목명' or col == '수량합계' or col == '진행상태'}" />
+						th:checked="${col == '청구서코드' or col == '등록일자' or col == '청구일자' or col == '청구금액' or col == '수금일자' or col == '거래처명' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -292,6 +292,11 @@
 			</button>
 		</div>
 	</div>
+	
+	
+	<div th:replace="common/modal :: commonModal"></div>
+
+
 	<script th:inline="javascript">
 		var columns = /*[[${columns}]]*/[];
 		var rows = /*[[${rows}]]*/[];

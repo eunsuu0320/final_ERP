@@ -44,10 +44,13 @@
 						<label for="partnerNameSearch" class="me-3">거래처명</label>
 						<div class="d-flex align-items-center">
 							<div class="input-group input-group-sm">
+								<input type="hidden" id="partnerCode" name="partnerCode">
 								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="partnerNameSearch">
+									placeholder="검색어 입력" id="partnerName">
 								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
+									onclick="openModal('partner', function(selected) {
+					                    document.getElementById('partnerName').value=selected.partnerName;
+									document.getElementById('partnerCode').value=selected.partnerCode;})">
 									<i class="bi bi-search"></i>
 								</button>
 							</div>
@@ -88,14 +91,12 @@
 
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
-						aria-label="type-filter">
+						aria-label="type-filter" id="priceTab">
 						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SALES">기준단가</button>
+							data-type="PRODUCT">품목단가</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SALES">특별단가</button>
-						<button type="button" class="btn btn-outline-primary"
-							data-type="BUY">거래처단가</button>
+							data-type="PARTNER">거래처단가</button>
 					</div>
 
 					<div class="d-flex align-items-center">
@@ -215,6 +216,7 @@
 			</div>
 		</main>
 	</div>
+	<div th:replace="common/modal :: commonModal"></div>
 
 	<script th:inline="javascript">
 		var columns = /*[[${columns}]]*/[];

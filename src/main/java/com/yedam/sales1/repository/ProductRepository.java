@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yedam.hr.domain.Employee;
 import com.yedam.sales1.domain.Product;
 
 @Repository
@@ -16,15 +17,22 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 
 	List<Product> findAll();
 
+	// 회사코드별 사원 조회
+	@Query("""
+			    select p from Product p
+			    where p.companyCode = :companyCode
+			""")
+	List<Product> findByCompanyCode(String companyCode);
+
 	@Query("SELECT MAX(p.productCode) FROM Product p")
 	String findMaxProductCode();
 
-    @Query("SELECT p FROM Product p "
-            + "WHERE (:#{#searchVo.productName} IS NULL OR p.productName LIKE %:#{#searchVo.productName}%) "
-            + "AND (:#{#searchVo.productGroup} IS NULL OR p.productGroup = :#{#searchVo.productGroup}) "
-            + "AND (:#{#searchVo.warehouseCode} IS NULL OR p.warehouseCode = :#{#searchVo.warehouseCode})")
-    List<Product> findByFilter(@Param("searchVo") Product searchVo); 
+	@Query("SELECT p FROM Product p "
+			+ "WHERE (:#{#searchVo.productName} IS NULL OR p.productName LIKE %:#{#searchVo.productName}%) "
+			+ "AND (:#{#searchVo.productGroup} IS NULL OR p.productGroup = :#{#searchVo.productGroup}) "
+			+ "AND (:#{#searchVo.warehouseCode} IS NULL OR p.warehouseCode = :#{#searchVo.warehouseCode})")
+	List<Product> findByFilter(@Param("searchVo") Product searchVo);
 
 	Product findByProductCode(String productCode);
-	
+
 }

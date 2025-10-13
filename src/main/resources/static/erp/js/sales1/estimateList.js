@@ -2,8 +2,154 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
 	const defaultVisible = ["견적서코드", "등록일자", "거래처명", "품목명", "유효기간", "견적금액합계", "담당자", "진행상태"];
 
+	// 진행 상태에 따른 스타일을 정의하는 맵
+	const STATUS_MAP = {
+		"미확인": { label: "미확인", cls: "bg-secondary" }, // 회색 (기본)
+		"진행중": { label: "진행중", cls: "bg-info" },      // 하늘색 (진행 중)
+		"미체결": { label: "미체결", cls: "bg-danger" },    // 빨간색 (미체결/위험)
+		"체결": { label: "체결", cls: "bg-success" }       // 초록색 (체결/성공)
+	};
+
 	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
+
+
+	function initTabFiltering() {
+
+		const tabButtons = document.querySelectorAll('#estimateTab button');
+
+		tabButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const type = this.dataset.type;
+
+				// 1. 버튼 스타일 변경 (전환)
+				tabButtons.forEach(b => {
+					b.classList.remove('btn-primary');
+					b.classList.add('btn-outline-primary');
+				});
+				this.classList.remove('btn-outline-primary');
+				this.classList.add('btn-primary');
+
+				// 2. Tabulator 필터링 적용
+				applyFilter(type);
+			});
+		});
+	}
+
+
+	function applyFilter(type) {
+		// 전역으로 저장된 Tabulator 인스턴스를 가져옵니다.
+		const table = window.estimateTableInstance;
+		if (!table) {
+			console.error("Tabulator instance is not initialized.");
+			return;
+		}
+
+		// '진행상태'에 해당하는 필드 이름은 '진행상태' 문자열 자체를 사용합니다.
+		const filterField = "진행상태";
+		let filterValue = null;
+
+		// HTML 탭 타입(data-type)과 서버 데이터 값(DB/VO 값)을 매핑
+		switch (type) {
+			case 'ALL':
+				// 'ALL' 탭은 모든 필터를 지웁니다.
+				table.clearFilter();
+				return;
+			case 'UNCONFIRMED':
+				filterValue = "미확인";
+				break;
+			case 'IN_PROGRESS':
+				filterValue = "진행중";
+				break;
+			case 'UNSETTLED':
+				filterValue = "미체결";
+				break;
+			case 'SETTLED':
+				filterValue = "체결";
+				break;
+			default:
+				return;
+		}
+
+		// 필터 적용: setFilter(필드 이름, 비교 연산자, 값)
+		if (filterValue) {
+			table.setFilter(filterField, "=", filterValue);
+		}
+	}
+
+
+
+
+
+
+	window.updateStatusAPI = function(code, status, selectElement) {
+		const row = window.estimateTableInstance.getRows().find(r => r.getData().견적서코드 === code);
+		// API 호출 전 현재 상태를 저장합니다.
+		const currentStatus = row?.getData()?.진행상태;
+
+		if (currentStatus === status) {
+			console.log(`[견적서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
+			// 현재 상태와 같더라도 Tabulator가 자동으로 리렌더링하지 않으므로 select 값을 되돌립니다.
+			if (selectElement) {
+				selectElement.value = currentStatus;
+			}
+			return;
+		}
+
+		// 로딩 상태 등으로 임시 UI 변경을 원할 경우 여기에 로직을 추가할 수 있습니다.
+
+		const url = "/api/updateEstimate";
+		const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+		const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+
+		const data = {
+			estimateCode: code, // 서버에 보낼 견적서 코드
+			status: status
+		};
+
+		fetch(url, {
+			method: "POST",
+			headers: {
+				'Content-Type': 'application/json',
+				[csrfHeader]: csrfToken
+			},
+			body: JSON.stringify(data)
+		})
+			.then(res => {
+				if (!res.ok) {
+					// HTTP 상태 코드가 200번대가 아니면 오류 처리
+					return res.json().then(error => {
+						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+					});
+				}
+				return res.json();
+			})
+			.then(response => {
+				if (response.success) { // 서버 응답에 'success: true'가 있다고 가정
+					// Tabulator 행 데이터 업데이트 (화면 새로고침 없이)
+					if (window.estimateTableInstance) {
+						// 고유 견적서 코드를 기반으로 행을 찾아 '진행상태' 필드를 업데이트합니다.
+						// 이 업데이트는 자동으로 Tabulator 셀의 formatter를 다시 호출합니다.
+						window.estimateTableInstance.getRows().find(r => r.getData().견적서코드 === code)?.update({ '진행상태': status });
+					}
+				} else {
+					alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
+					// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
+					if (selectElement) {
+						selectElement.value = currentStatus;
+					}
+				}
+			})
+			.catch(err => {
+				console.error("상태 변경 API 호출 실패:", err);
+				alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
+				// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
+				if (selectElement) {
+					selectElement.value = currentStatus;
+				}
+			});
+	}
+	// -------------------------------------------------------------
 
 
 	// 폼 전체 초기화
@@ -32,6 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	window.showDetailModal = function(modalType) {
 		let modalName = '';
 
+
 		// 모달 열기
 		if (modalType === 'detail') {
 			modalName = '견적서 상세정보'
@@ -44,6 +191,9 @@ document.addEventListener("DOMContentLoaded", function() {
 		modal.show();
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 	};
+
+
+
 
 
 	// estimateList.js (window.saveModal 함수)
@@ -60,9 +210,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const quoteData = new FormData(quoteForm);
 		const quoteDataObject = Object.fromEntries(quoteData.entries());
 
-		// ✨ [핵심 수정] HTML ID 'quotePartnerName'을 사용하여 거래처 이름 가져오기
-		// HTML에 name="partnerName"이 있으므로 quoteDataObject.partnerName으로도 가져올 수 있지만,
-		// 명시적으로 input ID를 사용하는 것이 안전하고 확실합니다.
+
 		const partnerNameValue = document.getElementById('quotePartnerName').value;
 
 		// 2. 견적 상세 정보 (EstimateDetail 엔티티 리스트) 수집
@@ -117,7 +265,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
 				if (modalInstance) modalInstance.hide();
-				// 성공 후 테이블 데이터 리로드 로직 추가 필요 (예: tableInstance.loadData())
+
+				// 성공 후 테이블 데이터 리로드 (전체 새로고침)
+				if (window.estimateTableInstance) {
+					location.reload();
+				}
 			})
 			.catch(err => {
 				console.error("견적서 등록 실패:", err);
@@ -177,7 +329,38 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (col === "견적서코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
-					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;
+					// 견적서 코드 클릭 시 상세 모달을 열 때, 견적서 코드를 인수로 전달합니다.
+					const rowData = cell.getData();
+					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${rowData.견적서코드}')">${value}</div>`;
+				};
+			}
+
+			// "진행상태" 컬럼에 HTML Select 요소 적용 (직접 변경 방식)
+			if (col === "진행상태") {
+				// 데이터 필드 이름은 컬럼 제목과 동일하게 '진행상태'를 사용합니다.
+				columnDef.field = "진행상태";
+				columnDef.formatter = function(cell) {
+					const value = cell.getValue(); // 현재 상태 값 (예: "체결")
+					const rowData = cell.getData();
+					const code = rowData.견적서코드;
+
+					// 옵션 HTML 생성
+					const options = Object.keys(STATUS_MAP).map(key => {
+						const itemInfo = STATUS_MAP[key];
+						// 현재 상태를 'selected' 속성으로 설정
+						const isSelected = key === value ? 'selected' : '';
+						return `<option value="${key}" ${isSelected}>${itemInfo.label}</option>`;
+					}).join('');
+
+					// Select 요소 반환: 변경 시 updateStatusAPI 호출
+					// 'this'는 HTML Select 요소를 가리키며, 이를 세 번째 인수로 전달하여 실패 시 복구합니다.
+					return `
+                        <select class="form-select form-select-sm" 
+                                onchange="updateStatusAPI('${code}', this.value, this)"
+                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
+                            ${options}
+                        </select>
+                    `;
 				};
 			}
 
@@ -186,7 +369,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	];
 
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.priceTableInstance = tableInstance;
+	window.estimateTableInstance = tableInstance;
+
+	initTabFiltering();
 });
 
 // ====================================================================

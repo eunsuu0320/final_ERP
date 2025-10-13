@@ -125,13 +125,20 @@
 													name="quoteDate" style="flex-grow: 1;">
 											</div>
 										</div>
-										<div class="col-12 row g-3">
-											<div class="col-6 d-flex align-items-center">
-												<label for="estimateUniqueCode"
-													class="col-form-label fw-bold text-nowrap"
-													style="width: 80px;">견적서코드</label> <input type="number"
-													class="form-control form-control-sm" id="estimateUniqueCode"
-													name="estimateUniqueCode" style="flex-grow: 1;">
+										<div class="col-12 d-flex align-items-center">
+											<label for="estimateUniqueCode"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 80px;">견적서코드</label>
+											<div class="input-group input-group-sm" style="flex-grow: 1;">
+												<input type="text" class="form-control w-auto"
+													placeholder="견적서코드" id="estimateUniqueCode">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('estimate', function(selected) {
+
+					                    document.getElementById('estimateCode').value = selected.estimateCode;
+					                })">
+													<i class="bi bi-search"></i>
+												</button>
 											</div>
 										</div>
 
@@ -141,11 +148,15 @@
 												style="width: 80px;">거래처</label>
 
 											<div class="input-group input-group-sm" style="flex-grow: 1;">
-												<input type="text" class="form-control form-control-sm"
-													id="quotePartnerName" name="partnerName" placeholder="거래처명">
-												<input type="hidden" name="partnerCode" value="">
+												<input type="hidden" id="partnerCode" name="partnerCode">
+												<input type="text" class="form-control w-auto"
+													placeholder="검색어 입력" id="partnerName">
 												<button class="btn btn-outline-secondary" type="button"
-													onclick="searchPartner()">
+													onclick="openModal('partner', function(selected) {
+
+					                    document.getElementById('partnerName').value = selected.partnerName;
+					                    document.getElementById('partnerCode').value = selected.partnerCode;
+					                })">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
@@ -215,7 +226,6 @@
 												id="quoteRemarks" name="remarks" rows="2"
 												style="flex-grow: 1;"></textarea>
 										</div>
-
 									</div>
 								</form>
 
@@ -302,8 +312,6 @@
 						</div>
 					</div>
 				</div>
-
-
 			</div>
 		</main>
 	</div>
@@ -316,6 +324,11 @@
 			</button>
 		</div>
 	</div>
+
+
+	<div th:replace="common/modal :: commonModal"></div>
+
+
 	<script th:inline="javascript">
 		var columns = /*[[${columns}]]*/[];
 		var rows = /*[[${rows}]]*/[];

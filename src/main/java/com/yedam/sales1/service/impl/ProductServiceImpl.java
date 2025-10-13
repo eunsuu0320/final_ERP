@@ -1,6 +1,8 @@
 package com.yedam.sales1.service.impl;
 
+import java.text.SimpleDateFormat; // SimpleDateFormat 클래스 임포트
 import java.util.ArrayList;
+import java.util.Date; // java.util.Date 클래스 임포트
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,9 @@ import jakarta.transaction.Transactional;
 public class ProductServiceImpl implements ProductService {
 
 	private final ProductRepository productRepository;
+    
+    // ★★★ 날짜 포맷 패턴 정의 ★★★
+    private static final String DATE_FORMAT_PATTERN = "yyyy/MM/dd";
 
 	@Autowired
 	public ProductServiceImpl(ProductRepository productRepository) {
@@ -41,6 +46,10 @@ public class ProductServiceImpl implements ProductService {
 	public Map<String, Object> getTableDataFromProducts(List<Product> products) {
 		List<Map<String, Object>> rows = new ArrayList<>();
 		List<String> columns = new ArrayList<>();
+
+        // SimpleDateFormat은 스레드에 안전하지 않으므로, 메서드 호출 시마다 생성하거나 
+        // ThreadLocal을 사용해야 합니다. 여기서는 메서드 내에서 새로 생성합니다.
+        SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_PATTERN);
 
 		if (!products.isEmpty()) {
 			// Define column names to be displayed on the screen
@@ -63,8 +72,23 @@ public class ProductServiceImpl implements ProductService {
 				row.put("품목그룹", product.getProductGroup());
 				row.put("규격/단위", product.getProductSize() + " " + product.getUnit());
 				row.put("이미지", product.getImgPath());
-				row.put("생성일자", product.getCreateDate());
-				row.put("수정일자", product.getUpdateDate());
+                
+                // ★★★ 날짜 포맷팅 로직 추가 (생성일자) ★★★
+                Date createDate = product.getCreateDate();
+                if (createDate != null) {
+                    row.put("생성일자", formatter.format(createDate));
+                } else {
+                    row.put("생성일자", null);
+                }
+                
+                // ★★★ 날짜 포맷팅 로직 추가 (수정일자) ★★★
+                Date updateDate = product.getUpdateDate();
+                if (updateDate != null) {
+                    row.put("수정일자", formatter.format(updateDate));
+                } else {
+                    row.put("수정일자", null);
+                }
+                
 				row.put("비고", product.getRemarks());
 				row.put("사용여부", product.getUsageStatus());
 				row.put("창고코드", product.getWarehouseCode());
@@ -153,5 +177,7 @@ public class ProductServiceImpl implements ProductService {
 	public Product getProductByProductCode(String productCode) {
 		return productRepository.findByProductCode(productCode);
 	}
+	
+	
 
 }
