@@ -42,22 +42,22 @@
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">성명</label>
-											<input type="text" name="name" id="name" class="form-control" required>
+											<input required type="text" name="name" id="name" class="form-control">
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">전화번호</label>
-											<input type="text" name="phone" id="phone" class="form-control" required>
+											<input required type="text" name="phone" id="phone" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
 											<label class="form-label required">생년월일</label>
-											<input type="date" name="birth" id="birth" class="form-control">
+											<input required type="date" name="birth" id="birth" class="form-control">
 										</div>
 										<div class="col-md-6">
 											<label class="form-label required">이메일</label>
-											<input type="email" name="email" id="email" class="form-control">
+											<input required type="email" name="email" id="email" class="form-control">
 										</div>
 									</div>
 
@@ -78,45 +78,42 @@
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">기본급</label> <input
-												type="number" name="salary" id="salary" class="form-control">
+											<label class="form-label required">기본급</label>
+											<input required type="number" name="salary" id="salary" class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label required">휴가일수</label> <input
-												type="number" name="holyDays" id="holyDays"
-												class="form-control">
-										</div>
-									</div>
-
-									<div class="row mb-3">
-										<div class="col-md-6">
-											<label class="form-label required">입사일자</label> <input
-												type="date" name="hireDate" id="hireDate"
-												class="form-control">
-										</div>
-										<div class="col-md-6">
-											<label class="form-label">퇴사일자</label> <input type="date"
-												name="resignDate" id="resignDate" class="form-control">
+											<label class="form-label required">휴가일수</label>
+											<input required type="number" name="holyDays" id="holyDays" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-6">
-											<label class="form-label required">부양가족수</label> <input
-												type="number" name="depCnt" id="depCnt" class="form-control">
+											<label class="form-label required">입사일자</label>
+											<input required type="date" name="hireDate" id="hireDate" class="form-control">
 										</div>
 										<div class="col-md-6">
-											<label class="form-label">퇴사사유</label> <input type="text"
-												name="resignReason" id="resignReason" class="form-control">
+											<label class="form-label">퇴사일자</label>
+											<input type="date" name="resignDate" id="resignDate" class="form-control">
+										</div>
+									</div>
+
+									<div class="row mb-3">
+										<div class="col-md-6">
+											<label class="form-label required">부양가족수</label>
+											<input required type="number" name="depCnt" id="depCnt" class="form-control">
+										</div>
+										<div class="col-md-6">
+											<label class="form-label">퇴사사유</label>
+											<input type="text" name="resignReason" id="resignReason" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-4">
-											<label class="form-label required">은행</label> <input
-												type="hidden" id="bankCode" name="bankCode"> <input
-												type="text" id="bankCodeName" class="form-control"
-												onclick="openModal(
+											<label class="form-label required">은행</label>
+											<input type="hidden" id="bankCode" name="bankCode">
+											<input type="text" id="bankCodeName" class="form-control" onclick="openModal(
 										      'commonCode',
 										      function(selected) {
 										        document.getElementById('bankCodeName').value = selected.codeName;
@@ -124,25 +121,23 @@
 										      }, 'GRP015')">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">예금주</label> <input
-												type="text" name="accHolder" id="accHolder"
-												class="form-control">
+											<label class="form-label required">예금주</label>
+											<input required type="text" name="accHolder" id="accHolder" class="form-control">
 										</div>
 										<div class="col-md-4">
-											<label class="form-label required">계좌번호</label> <input
-												type="text" name="accNo" id="accNo" class="form-control">
+											<label class="form-label required">계좌번호</label>
+											<input required type="text" name="accNo" id="accNo" class="form-control">
 										</div>
 									</div>
 
 									<div class="row mb-3">
 										<div class="col-md-3">
-											<label class="form-label required">우편번호</label> <input
-												type="number" name="postalCode" id="postalCode"
-												class="form-control" readonly onclick="execDaumPostcode()">
+											<label class="form-label required">우편번호</label>
+											<input required type="number" name="postalCode" id="postalCode" class="form-control" readonly onclick="execDaumPostcode()">
 										</div>
 										<div class="col-md-9">
-											<label class="form-label required">주소</label> <input
-												type="text" name="address" id="address" class="form-control">
+											<label class="form-label required">주소</label>
+											<input required type="text" name="address" id="address" class="form-control">
 										</div>
 									</div>
 								</form>

@@ -1,5 +1,5 @@
 const manager = document.getElementById("companyCode").value; // 회사코드
-const token = document.querySelector('meta[name="_csrf"]')?.content || ""; // 토큰(미사용)
+const token = document.querySelector('meta[name="_csrf"]')?.content || ""; // 토큰
 
 let EMP_MAP = {}; // 전역 사원 맵
 
@@ -53,7 +53,7 @@ function initTable() {
 	commuteTable = new Tabulator(document.getElementById("commute-table"), {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 22,
 		placeholder: "조회된 출퇴근 목록이 없습니다.",
 		selectable: true,
 		columns: [
@@ -110,7 +110,6 @@ function initTable() {
 async function loadCommutes() {
 	const res = await fetch(`/onoff?companyCode=${encodeURIComponent(manager)}`);
 	const data = await res.json();
-
 	// 파생값(workTime) 계산을 미리 넣어도 되고, 위에서 mutator로 계산하게 해도 됨.
 	// 아래는 안정적으로 한번 더 계산해서 주입.
 	const rows = (data || []).map(r => ({

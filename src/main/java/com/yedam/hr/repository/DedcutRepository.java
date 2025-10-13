@@ -11,6 +11,8 @@ import com.yedam.hr.domain.Dedcut;
 @Repository
 public interface DedcutRepository extends JpaRepository<Dedcut, String> {
 
+	List<Dedcut> findByCompanyCodeOrderByDedId(String companyCode);
+
 	// 회사 코드별 공제 전체 조회
 	List<Dedcut> findByCompanyCode(String companyCode);
 

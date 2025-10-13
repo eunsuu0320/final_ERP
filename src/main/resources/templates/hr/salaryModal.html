@@ -7,10 +7,10 @@
 			aria-hidden="true">
 			<div class="modal-dialog modal-lg">
 				<div class="modal-content">
+
 					<!-- 헤더 -->
 					<div class="modal-header ">
 						<h5 class="modal-title">급여정보입력</h5>
-
 						<div class="ms-auto d-flex align-items-center">
 							<button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
 							<button type="button" class="btn btn-outline-dark me-2" id="btn-save-reset">초기화</button>
@@ -22,35 +22,27 @@
 					<div class="modal-body">
 						<form id="salaryForm" class="row g-3">
 
+							<!-- 급여대장명칭 -->
+							<div class="col-12">
+								<label class="form-label">명칭</label>
+								<input type="text" class="form-control" name="payName" id="payName" placeholder="급여대장명">
+							</div>
+
 							<!-- 귀속연월 -->
 							<div class="col-md-4">
 								<label class="form-label">귀속연월</label>
 								<div class="d-flex gap-1">
-									<select class="form-select" name="payYear">
-										<option>2025</option>
-									</select> <select class="form-select" name="payMonth">
-										<option>01</option>
-										<option>02</option>
-										<option>03</option>
-										<option>04</option>
-										<option>05</option>
-										<option>06</option>
-										<option>07</option>
-										<option>08</option>
-										<option>09</option>
-										<option>10</option>
-										<option>11</option>
-										<option>12</option>
-									</select>
+									<select class="form-select" name="payYear" id="payYear"></select>
+									<select class="form-select" name="payMonth" id="payMonth"></select>
 								</div>
 							</div>
 
 							<!-- 지급구분 -->
 							<div class="col-md-4">
-								<label class="form-label">지급구분</label>
-								 <select class="form-select" name="payType">
-									<option value>1차수</option>
-									<option>2차수</option>
+								<label class="form-label">지급구분</label> <select
+									class="form-select" name="payType" id="payType">
+									<option value="1차수">1차수</option>
+									<option value="2차수">2차수</option>
 								</select>
 							</div>
 
@@ -58,120 +50,47 @@
 							<div class="col-12">
 								<label class="form-label">정산기간</label>
 								<div class="d-flex gap-2">
-									<select class="form-select" name="startYear">
-										<option>2025</option>
-									</select>
-									<select class="form-select" name="startMonth">
-										<option>09</option>
-										</select>
-									<select class="form-select" name="startDay">
-										<option>01</option>
-									</select>
+									<select class="form-select" name="startYear" id="startYear"></select>
+									<select class="form-select" name="startMonth" id="startMonth"></select>
+									<select class="form-select" name="startDay" id="startDay"></select>
 									<span class="align-self-center">~</span>
-									<select class="form-select" name="endYear">
-										<option>2025</option>
-										</select>
-									<select class="form-select" name="endMonth">
-										<option>09</option>
-									</select>
-									<select class="form-select" name="endDay">
-										<option>30</option>
-									</select>
+									<select class="form-select" name="endYear" id="endYear"></select>
+									<select class="form-select" name="endMonth" id="endMonth"></select>
+									<select class="form-select" name="endDay" id="endDay"></select>
 								</div>
 							</div>
 
 							<!-- 대상기간 -->
 							<div class="col-12">
 								<label class="form-label">대상기간</label>
-								<div class="d-flex gap-3">
-									<div class="form-check">
-										<label class="form-check-label" for="daily">일괄설정</label>
-										<input class="form-check-input" type="radio" name="targetPeriod" id="daily" checked>
-									</div>
-									<div class="form-check">
-										<label class="form-check-label" for="custom">항목별설정</label>
-										<input class="form-check-input" type="radio" name="targetPeriod" id="custom">
-									</div>
-								</div>
 								<div class="d-flex gap-2 mt-2">
-									<select class="form-select" name="targetStartYear">
-									 <option>2025</option>
-									 </select>
-									<select class="form-select" name="targetStartMonth">
-									 <option>09</option>
-									 </select>
-									<select class="form-select" name="targetStartDay">
-									 <option>01</option>
-									 </select>
+									<select class="form-select" name="targetStartYear" id="targetStartYear"></select>
+									<select class="form-select" name="targetStartMonth" id="targetStartMonth"></select>
+									<select class="form-select" name="targetStartDay" id="targetStartDay"></select>
 									<span class="align-self-center">~</span>
-									<select class="form-select" name="targetEndYear">
-									 <option>2025</option>
-									</select>
-									<select class="form-select" name="targetEndMonth">
-									 <option>09</option>
-									</select>
-									<select class="form-select" name="targetEndDay">
-									 <option>30</option>
-									</select>
+									<select class="form-select" name="targetEndYear" id="targetEndYear"></select>
+									<select class="form-select" name="targetEndMonth" id="targetEndMonth"></select>
+									<select class="form-select" name="targetEndDay" id="targetEndDay"></select>
 								</div>
 							</div>
 
 							<!-- 지급일 -->
 							<div class="col-md-6">
 								<label class="form-label">지급일</label>
-								<input type="date" class="form-control" name="payDate">
+								<input type="date" class="form-control" name="payDate" id="payDate">
 							</div>
 
 							<!-- 지급연월 -->
 							<div class="col-md-6">
 								<label class="form-label">지급연월</label>
 								<div class="d-flex gap-1">
-									<select class="form-select" name="payYear2"><option>2025</option></select>
-									<select class="form-select" name="payMonth2"><option>09</option></select>
-								</div>
-							</div>
-
-							<!-- 급여대장명칭 -->
-							<div class="col-12">
-								<label class="form-label">급여대장명칭</label>
-								<input type="text" class="form-control" name="payLedgerName" placeholder="급여대장명">
-							</div>
-
-							<!-- 대상항목 -->
-							<div class="col-12">
-								<label class="form-label">대상항목</label>
-								<div class="d-flex gap-3">
-									<div class="form-check">
-										<label class="form-check-label" for="allItem">전체</label>
-										<input class="form-check-input" type="radio" name="targetItem" id="allItem" checked>
-									</div>
-									<div class="form-check">
-										<label class="form-check-label" for="selectItem">선택</label>
-										<input class="form-check-input" type="radio" name="targetItem" id="selectItem">
-									</div>
-									<div class="form-check">
-										<label class="form-check-label" for="customItem">정산항목설정</label>
-										<input class="form-check-input" type="radio" name="targetItem" id="customItem">
-									</div>
-								</div>
-							</div>
-
-							<!-- 대상사원 -->
-							<div class="col-12">
-								<label class="form-label">대상사원</label>
-								<div class="d-flex gap-3">
-									<div class="form-check">
-											<label class="form-check-label" for="allEmp">전체</label>
-										<input class="form-check-input" type="radio" name="targetEmp" id="allEmp" checked>
-									</div>
-									<div class="form-check">
-											<label class="form-check-label" for="selectEmp">선택</label>
-										<input class="form-check-input" type="radio" name="targetEmp" id="selectEmp">
-									</div>
+									<select class="form-select" name="payYear2" id="payYear2"></select>
+									<select class="form-select" name="payMonth2" id="payMonth2"></select>
 								</div>
 							</div>
 						</form>
 					</div>
+					<script src="/hr/js/salaryModal.js"></script>
 				</div>
 			</div>
 		</div>
