@@ -4,17 +4,35 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.yedam.common.Role;
+import com.yedam.common.domain.Role;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, String> {
 
-	boolean existsByCompanyCodeAndRoleName(String companyCode, String roleName);
+    @Query(value = """
+        SELECT COUNT(1)
+          FROM ROLE
+         WHERE COMPANY_CODE = :companyCode
+           AND UPPER(ROLE_NAME) = UPPER(:roleName)
+        """, nativeQuery = true)
+    long countByCompanyCodeAndRoleNameCI(@Param("companyCode") String companyCode,
+                                         @Param("roleName") String roleName);
 
-    Optional<Role> findFirstByCompanyCodeAndRoleName(String companyCode, String roleName);
+    // 1건 조회: ROWNUM = 1
+    @Query(value = """
+        SELECT *
+          FROM ROLE
+         WHERE COMPANY_CODE = :companyCode
+           AND UPPER(ROLE_NAME) = UPPER(:roleName)
+           AND ROWNUM = 1
+        """, nativeQuery = true)
+    Optional<Role> findAnyByCompanyCodeAndRoleNameCI(@Param("companyCode") String companyCode,
+                                                     @Param("roleName") String roleName);
 
-    List<Role> findByCompanyCode(String companyCode);
+    // 목록 조회
+    List<Role> findByCompanyCodeOrderByRoleNameAsc(String companyCode);
 }
-

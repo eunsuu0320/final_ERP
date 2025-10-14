@@ -4,395 +4,506 @@
 	layout:decorate="~{layout/main}">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>권한 관리</title>
+<!-- 이 페이지에서만 쓰이도록 .rp 네임스페이스로 CSS 스코프 -->
 <style>
-* {
-	box-sizing: border-box
+:root {
+	--line: #e5e7eb;
+	--muted: #8a8f98;
+	--bg: #f5f7fb;
+	--card: #fff;
+	--text: #111827;
+	--accent: #eef4ff;
+	--accent-line: #bfd3ff;
+	--thead: #fafbff;
 }
 
 body {
 	margin: 0;
 	background: var(--bg);
 	color: var(--text);
+	font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+		Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
 }
 
-.wrap {
-	max-width: 1100px;
-	margin: 24px auto;
-	padding: 0 16px
+/* ===== rp scope ===== */
+.rp .layout {
+	display: flex;
+	gap: 16px;
+	min-width: 0;
+	padding: 16px;
+	/* 페이지 헤더(상단 공통바/브레드크럼) 높이에 맞춰 수치 조정 */
+	height: calc(100vh - 160px);
 }
 
-.toolbar {
+.rp .left {
+	flex: 0 0 260px;
+	min-width: 260px;
+	background: #fff;
+	border: 1px solid var(--line);
+	border-radius: 12px;
+	overflow: auto;
+	max-height: 100%;
+}
+
+.rp .left-head {
+	padding: 12px 14px;
+	border-bottom: 1px solid #eee;
+	font-weight: 700;
+}
+
+.rp .role-list {
+	padding: 6px;
+}
+
+.rp .role-item {
+	padding: 10px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+.rp .role-item:hover {
+	background: #f7f9ff;
+}
+
+.rp .role-item.active {
+	background: var(--accent);
+	border: 1px solid var(--accent-line);
+}
+
+.rp .right {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.rp .toolbar {
 	display: flex;
 	gap: 8px;
 	align-items: center;
-	margin-bottom: 12px
+	margin: 0 0 10px;
+	flex: 0 0 auto;
 }
 
-.toolbar .spacer {
-	flex: 1
+.rp .toolbar .spacer {
+	flex: 1;
 }
 
-.input, select {
+.rp .input {
 	height: 36px;
 	padding: 0 10px;
-	border:1px solid #c8c8c8;
-	border-radius:4px;
-	background: #fff
+	border: 1px solid #c8c8c8;
+	border-radius: 6px;
+	background: #fff;
 }
 
-.card {
-	background: var(--card);
+.rp .btn {
+	height: 36px;
+	padding: 0 14px;
+	border: 1px solid #d0d5dd;
+	border-radius: 8px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.rp .btn-primary {
+	background: #4f46e5;
+	border-color: #4f46e5;
+	color: #fff;
+}
+
+.rp .btn-primary:hover {
+	opacity: .95;
+}
+
+.rp .card {
 	border: 1px solid var(--line);
-	border-radius: 14px;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, .04)
+	border-radius: 12px;
+	background: #fff;
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
 }
 
-table {
+.rp .table-wrap {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	max-width: 100%;
+}
+
+.rp table {
 	width: 100%;
 	border-collapse: separate;
-	border-spacing: 0
+	border-spacing: 0;
 }
 
-thead th {
+.rp thead th {
 	position: sticky;
 	top: 0;
-	background: #fafbff;
+	z-index: 1;
+	background: var(--thead);
 	border-bottom: 1px solid var(--line);
-	font-weight: 700
+	font-weight: 700;
 }
 
-th, td {
-	padding: 14px 10px;
+.rp th, .rp td {
+	padding: 10px 8px;
 	text-align: center;
-	border-bottom: 1px solid var(--line)
+	border-bottom: 1px solid #f0f0f0;
+	white-space: nowrap;
 }
 
-th:first-child, td:first-child {
+.rp td:first-child, .rp th:first-child {
 	text-align: center;
-	width: 44px
 }
 
-th:nth-child(2), td:nth-child(2) {
-	text-align: left
-}
-
-th:nth-child(3), td:nth-child(3) {
-	text-align: left
-}
-
-.table-wrap {
-	overflow: auto;
-	border-radius: 14px
-}
-
-.role {
-	font-weight: 600
-}
-
-.menu {
-	color: #333
-}
-
-.muted {
-	color: var(--muted)
-}
-
-.checkbox {
-	width: 18px;
-	height: 18px;
-	cursor: pointer
-}
-
-.pagination {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	justify-content: center;
-	padding: 12px
-}
-
-.pagination button {
-	min-width: 32px;
-	height: 32px;
-	border-radius: 8px;
-	border: 1px solid var(--line);
-	background: #fff;
-	cursor: pointer
-}
-
-.pagination button[disabled] {
-	opacity: .4;
-	cursor: not-allowed
-}
-
-.pagination .active {
-	background: #eef4ff;
-	border-color: #bcd1ff
-}
-
-.empty {
-	padding: 40px;
+.rp .empty {
+	padding: 28px;
 	color: var(--muted);
-	text-align: center
+	text-align: center;
 }
+
+/* 모듈 그룹 헤더 행 */
+.rp .mod-row td {
+	background: #f8fafc;
+	font-weight: 700;
+	text-align: left;
+	border-top: 2px solid var(--line);
+}
+
+/* 모바일 */
+@media ( max-width :960px) {
+	.rp .layout {
+		flex-direction: column;
+		height: auto;
+	}
+	.rp .left {
+		max-height: none;
+	}
+}
+/* ===== /rp scope ===== */
 </style>
+
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="container-fluid px-4">
 				<h1 class="mt-4">권한 관리</h1>
-				<div class="wrap">
-					<div class="toolbar">
-						<input id="qMenu" class="input" placeholder="메뉴"
-							style="min-width: 220px" /> <select id="qRole" class="input"
-							style="min-width: 140px">
-							<option value="">권한</option>
-						</select>
-						<button id="btnSearch" class="btn btn-warning">검색</button>
-						<div class="spacer"></div>
-						<button id="btnSave" class="btn btn-primary">저장</button>
-					</div>
+				<div id="rolePermApp" class="rp">
+					<div class="layout">
+						<!-- 왼쪽: 역할 리스트 -->
+						<aside class="left" aria-label="역할 목록">
+							<div class="left-head">권한(ROLE)</div>
+							<div id="roleList" class="role-list"></div>
+						</aside>
 
-					<div class="card table-wrap">
-						<table id="permTable" aria-label="권한별 메뉴 권한 테이블">
-							<thead>
-								<tr>
-									<th><input type="checkbox" id="chkAllRows"
-										aria-label="전체 행 선택" /></th>
-									<th>Role</th>
-									<th>메뉴</th>
-									<th><input type="checkbox" id="colRead" class="checkbox"
-										title="조회 전체선택" /> 조회</th>
-									<th><input type="checkbox" id="colCreate" class="checkbox"
-										title="등록 전체선택" /> 등록</th>
-									<th><input type="checkbox" id="colUpdate" class="checkbox"
-										title="수정 전체선택" /> 수정</th>
-									<th><input type="checkbox" id="colDelete" class="checkbox"
-										title="삭제 전체선택" /> 삭제</th>
-								</tr>
-							</thead>
-							<tbody id="tbody"></tbody>
-						</table>
-						<div id="empty" class="empty" style="display: none">데이터가
-							없습니다.</div>
-					</div>
+						<!-- 오른쪽: 필터 + 표 -->
+						<section class="right" aria-label="권한 편집">
+							<div class="toolbar">
+								<label for="selModule" class="sr-only"
+									style="position: absolute; left: -10000px;">모듈</label> <select
+									id="selModule" class="input">
+									<option value="">모듈 전체</option>
+								</select> <label for="qScreen" class="sr-only"
+									style="position: absolute; left: -10000px;">화면 검색</label> <input
+									id="qScreen" class="input" placeholder="화면명 검색" />
 
-					<div id="pager" class="pagination" aria-label="페이지네이션"></div>
+								<div class="spacer"></div>
+
+								<button id="btnSave" class="btn btn-primary" type="button">변경
+									저장</button>
+							</div>
+
+							<div class="card table-wrap">
+								<table id="permTable" aria-label="권한 테이블">
+									<thead>
+										<tr>
+											<th style="width: 44px"></th>
+											<th style="text-align: left">화면</th>
+											<th><input type="checkbox" id="colRead" title="조회 전체선택">
+												조회</th>
+											<th><input type="checkbox" id="colCreate"
+												title="등록 전체선택"> 등록</th>
+											<th><input type="checkbox" id="colUpdate"
+												title="수정 전체선택"> 수정</th>
+											<th><input type="checkbox" id="colDelete"
+												title="삭제 전체선택"> 삭제</th>
+										</tr>
+									</thead>
+									<tbody id="tbody"></tbody>
+								</table>
+								<div id="empty" class="empty" style="display: none">데이터가
+									없습니다.</div>
+							</div>
+						</section>
+					</div>
 				</div>
 			</div>
 		</main>
 	</div>
 	<script>
-/**
- * 데모용 가짜 데이터
- * 실제 연동 시 getList(), saveChanges() 부분의 fetch 경로/페이로드만 바꿔주면 됩니다.
- */
-const ROLES = [
-  { roleId: 'ROLE_MANAGER', roleName: '일반 관리자' },
-  { roleId: 'ROLE_USER',    roleName: '일반 사용자' },
-];
-const MENUS = [
-  { menuId: 'MENU_SALES', menuName: '매출관리' },
-  { menuId: 'MENU_PUR',   menuName: '구매관리' },
-  { menuId: 'MENU_STK',   menuName: '재고관리' },
-  { menuId: 'MENU_HR',    menuName: '인사관리' },
-  { menuId: 'MENU_FIN',   menuName: '회계관리' },
-];
-
-// state
+/* ------------------------------
+   상태
+--------------------------------*/
 let state = {
-  page: 1,
-  size: 8,
-  total: 0,
-  rows: [],  // {id, roleId, roleName, menuId, menuName, r,c,u,d, _dirty}
-  selectedRowIds: new Set(),
+  roles: [],               // [{roleCode, roleName}]
+  currentRoleCode: null,   // 선택된 역할코드
+  modules: [],             // [{code,name}]
+  rows: [],                // [{screenCode,screenName,moduleCode,moduleName,r,c,u,d}]
+  dirty: new Map(),        // key=screenCode, val={r,c,u,d}
+  onlyY: true,             // 사용여부 Y 화면만
 };
 
-function initFilters(){
-  const sel = document.getElementById('qRole');
-  ROLES.forEach(r => {
+/* ------------------------------
+   초기화
+--------------------------------*/
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+});
+
+async function init(){
+  try {
+    await Promise.all([loadRoles(), loadModules()]);
+    bindEvents();
+  } catch (e) {
+    console.error(e);
+    alert('초기화 중 오류가 발생했습니다.');
+  }
+}
+
+/* ------------------------------
+   공통 Fetch 유틸
+--------------------------------*/
+async function jget(url){
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' }});
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+async function jput(url, body){
+  const res = await fetch(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  if(!res.ok) throw new Error(await res.text());
+  return res.text().catch(()=> '');
+}
+
+/* ------------------------------
+   데이터 로딩
+--------------------------------*/
+async function loadRoles(){
+  // 백엔드: /api/roles → [{roleCode, roleName}] 형태라고 가정
+  const roles = await jget('/api/role-perms');
+  state.roles = roles ?? [];
+
+  const wrap = document.getElementById('roleList');
+  wrap.innerHTML = '';
+  state.roles.forEach(r=>{
+    const li = document.createElement('div');
+    li.className = 'role-item';
+    li.textContent = r.roleName || r.roleCode;
+    li.onclick = ()=> selectRole(r.roleCode, li);
+    wrap.appendChild(li);
+  });
+}
+
+async function loadModules(){
+  // 백엔드: /api/screens/modules?onlyY=true → [{code, name}]
+  state.modules = await jget(`/api/screens/modules?onlyY=${state.onlyY}`);
+  const sel = document.getElementById('selModule');
+  sel.innerHTML = '<option value="">모듈 전체</option>';
+  (state.modules || []).forEach(m=>{
     const opt = document.createElement('option');
-    opt.value = r.roleId; opt.textContent = r.roleName;
+    opt.value = m.code; opt.textContent = m.name || m.code;
     sel.appendChild(opt);
   });
 }
 
-function buildDummyRows(){
-  // 조합으로 권한 매트릭스 만들어보기 (실제는 서버에서 조회)
-  const out = [];
-  ROLES.forEach(r => {
-    MENUS.forEach(m => {
-      out.push({
-        id: r.roleId + '_' + m.menuId,
-        roleId: r.roleId, roleName: r.roleName,
-        menuId: m.menuId, menuName: m.menuName,
-        r: Math.random() > .4, c: Math.random() > .7, u: Math.random() > .6, d: Math.random() > .75,
-      });
-    });
+async function selectRole(roleCode, el){
+  state.currentRoleCode = roleCode;
+  document.querySelectorAll('.role-item').forEach(x=>x.classList.remove('active'));
+  el?.classList.add('active');
+  await loadPerms(roleCode);       // 역할별 권한 + 화면 병합
+  renderTable();
+}
+
+/**
+ * 역할별 권한 + 화면 목록 병합
+ * - /api/screens?module=&kw=&onlyY= 에서 화면 목록
+ * - /api/role-perms?roleCode= 에서 권한 목록
+ */
+async function loadPerms(roleCode){
+  const kw = document.getElementById('qScreen').value.trim();
+  const module = document.getElementById('selModule').value;
+
+  // 화면 목록 로드
+  const screens = await jget(`/api/screens?onlyY=${state.onlyY}${module ? `&module=${encodeURIComponent(module)}`:''}${kw ? `&kw=${encodeURIComponent(kw)}`:''}`);
+
+  // 권한 목록 로드(역할별)
+  const perms = await jget(`/api/role-perms?roleCode=${encodeURIComponent(roleCode)}`); 
+  // 예상 응답: [{screenCode, canRead, canCreate, canUpdate, canDelete}]
+
+  const permMap = new Map(perms.map(p => [p.screenCode, p]));
+
+  state.rows = (screens || []).map(s => {
+    const p = permMap.get(s.screenCode) || {};
+    return {
+      screenCode : s.screenCode,
+      screenName : s.screenName,
+      moduleCode : s.moduleCode,
+      moduleName : s.moduleName,
+      r: !!p.canRead,
+      c: !!p.canCreate,
+      u: !!p.canUpdate,
+      d: !!p.canDelete,
+    };
   });
-  return out;
+
+  state.dirty.clear();
 }
 
-async function getList(){
-  // 여기를 실제 API로 바꾸세요.
-  // const res = await fetch(`/api/admin/role-perms?menu=${encodeURIComponent(qMenu.value)}&role=${encodeURIComponent(qRole.value)}&page=${state.page}&size=${state.size}`);
-  // const data = await res.json();
-  // state.rows = data.content; state.total = data.total; render();
-  const kw = document.getElementById('qMenu').value.trim().toLowerCase();
-  const role = document.getElementById('qRole').value;
-  const all = buildDummyRows();
-  const filtered = all.filter(x => (!kw || x.menuName.toLowerCase().includes(kw)) && (!role || x.roleId === role));
-  state.total = filtered.length;
-  const start = (state.page-1)*state.size;
-  state.rows = filtered.slice(start, start+state.size);
-  render();
+/* ------------------------------
+   렌더링
+--------------------------------*/
+function bindEvents(){
+  document.getElementById('selModule').addEventListener('change', async () => {
+    if(!state.currentRoleCode){ renderTable(); return; }
+    await loadPerms(state.currentRoleCode);
+    renderTable();
+  });
+  document.getElementById('qScreen').addEventListener('input', debounce(async () => {
+    if(!state.currentRoleCode){ renderTable(); return; }
+    await loadPerms(state.currentRoleCode);
+    renderTable();
+  }, 250));
+
+  const head = document.querySelector('#permTable thead');
+  head.querySelector('#colRead').onchange   = e => toggleAll('r', e.target.checked);
+  head.querySelector('#colCreate').onchange = e => toggleAll('c', e.target.checked);
+  head.querySelector('#colUpdate').onchange = e => toggleAll('u', e.target.checked);
+  head.querySelector('#colDelete').onchange = e => toggleAll('d', e.target.checked);
+
+  document.getElementById('btnSave').addEventListener('click', saveChanges);
 }
 
-function render(){
+function renderTable(){
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
-  state.selectedRowIds.clear();
 
-  if(state.rows.length === 0){
+  const list = state.rows.slice().sort((a,b)=>
+    (a.moduleName||'').localeCompare(b.moduleName||'') ||
+    a.screenName.localeCompare(b.screenName)
+  );
+
+  if(list.length === 0){
     document.getElementById('empty').style.display = 'block';
-  }else{
-    document.getElementById('empty').style.display = 'none';
+    return;
   }
+  document.getElementById('empty').style.display = 'none';
 
-  state.rows.forEach(row => {
-    const tr = document.createElement('tr');
+  let curModule = null;
+  list.forEach(row=>{
+    if(row.moduleName !== curModule){
+      curModule = row.moduleName;
+      const trM = document.createElement('tr'); trM.className='mod-row';
+      const td  = document.createElement('td'); td.colSpan=6; td.textContent = curModule || '(모듈 미정)';
+      trM.appendChild(td);
+      tbody.appendChild(trM);
+    }
+    tbody.appendChild(buildRow(row));
+  });
+}
 
-    // sel
-    const tdSel = document.createElement('td');
-    const cbSel = document.createElement('input');
-    cbSel.type = 'checkbox';
-    cbSel.addEventListener('change', e => {
-      if(e.target.checked) state.selectedRowIds.add(row.id); else state.selectedRowIds.delete(row.id);
-    });
-    tdSel.appendChild(cbSel);
+function buildRow(row){
+  const tr = document.createElement('tr');
 
-    // role
-    const tdRole = document.createElement('td');
-    tdRole.className = 'role';
-    tdRole.textContent = row.roleName;
+  const tdSel = document.createElement('td'); tdSel.textContent = '';
 
-    // menu
-    const tdMenu = document.createElement('td');
-    tdMenu.className = 'menu';
-    tdMenu.textContent = row.menuName;
+  const tdName = document.createElement('td');
+  tdName.textContent = row.screenName;
+  tdName.style.textAlign = 'left';
 
-    // permissions
-    const tdRead = permCell(row, 'r');
-    const tdCreate = permCell(row, 'c');
-    const tdUpdate = permCell(row, 'u');
-    const tdDelete = permCell(row, 'd');
+  const mk = (key) => {
+    const td = document.createElement('td');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!(state.dirty.get(row.screenCode)?.[key] ?? row[key]);
+    cb.onchange = (e)=>{
+      const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
+      cur[key] = e.target.checked;
+      state.dirty.set(row.screenCode, cur);
+    };
+    td.appendChild(cb);
+    return td;
+  };
 
-    tr.append(tdSel, tdRole, tdMenu, tdRead, tdCreate, tdUpdate, tdDelete);
-    tbody.appendChild(tr);
+  tr.append(tdSel, tdName, mk('r'), mk('c'), mk('u'), mk('d'));
+  return tr;
+}
+
+function toggleAll(key, checked){
+  // 현재 렌더링된 행만 적용
+  const tbody = document.getElementById('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'))
+    .filter(tr => !tr.classList.contains('mod-row'));
+
+  rows.forEach(tr=>{
+    const nameTd = tr.children[1];
+    if(!nameTd) return;
+    const screenName = nameTd.textContent.trim();
+
+    // state.rows에서 해당 스크린 찾기
+    const row = state.rows.find(r => r.screenName === screenName);
+    if(!row) return;
+    const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
+    cur[key] = checked;
+    state.dirty.set(row.screenCode, cur);
   });
 
-  renderPager();
-  wireHeaderToggles();
+  renderTable();
 }
 
-function permCell(row, key){
-  const td = document.createElement('td');
-  const cb = document.createElement('input');
-  cb.type = 'checkbox';
-  cb.className = 'checkbox perm-' + key;
-  cb.checked = !!row[key];
-  cb.dataset.rowId = row.id;
-  cb.addEventListener('change', (e) => {
-    row[key] = e.target.checked;
-    row._dirty = true;
-  });
-  td.appendChild(cb);
-  return td;
-}
-
-function renderPager(){
-  const el = document.getElementById('pager');
-  el.innerHTML = '';
-  const totalPages = Math.max(1, Math.ceil(state.total / state.size));
-  const mk = (label, page, disabled=false, active=false) => {
-    const b = document.createElement('button');
-    b.textContent = label;
-    if(disabled) b.disabled = true;
-    if(active) b.classList.add('active');
-    b.addEventListener('click', ()=>{ state.page = page; getList(); });
-    return b;
-  };
-  el.appendChild(mk('◀', Math.max(1, state.page-1), state.page===1));
-  for(let p=1;p<=totalPages && p<=7;p++){
-    el.appendChild(mk(String(p), p, false, p===state.page));
-  }
-  if(totalPages>7){
-    const dot = document.createElement('span'); dot.textContent = '…'; dot.className='muted'; dot.style.padding='0 6px';
-    el.appendChild(dot);
-    el.appendChild(mk(String(totalPages), totalPages));
-  }
-  el.appendChild(mk('▶', Math.min(totalPages, state.page+1), state.page===totalPages));
-}
-
-function wireHeaderToggles(){
-  const head = document.querySelector('thead');
-  const toggleCol = (key, checked) => {
-    document.querySelectorAll('.perm-'+key).forEach(cb => { cb.checked = checked; const id = cb.dataset.rowId; const row = state.rows.find(r=>r.id===id); if(row){row[key]=checked; row._dirty=true;} });
-  };
-  head.querySelector('#colRead').onchange = (e)=> toggleCol('r', e.target.checked);
-  head.querySelector('#colCreate').onchange = (e)=> toggleCol('c', e.target.checked);
-  head.querySelector('#colUpdate').onchange = (e)=> toggleCol('u', e.target.checked);
-  head.querySelector('#colDelete').onchange = (e)=> toggleCol('d', e.target.checked);
-
-  // 전체 행 선택
-  document.getElementById('chkAllRows').onchange = (e)=>{
-    const checked = e.target.checked;
-    document.querySelectorAll('#tbody input[type="checkbox"]').forEach(cb=>{
-      if(cb.dataset.rowId){ // 권한 체크박스는 그대로
-        // noop for row select boxes only
-      }
-    });
-    // select boxes in first column
-    document.querySelectorAll('#tbody tr input[type="checkbox"]:not([data-row-id])').forEach(cb=>{ cb.checked = checked; const tr = cb.closest('tr'); const id = tr?.querySelector('.perm-r')?.dataset.rowId; if(!id) return; if(checked) state.selectedRowIds.add(id); else state.selectedRowIds.delete(id); });
-  };
-}
-
+/* ------------------------------
+   저장
+--------------------------------*/
 async function saveChanges(){
-  const dirty = state.rows.filter(r => r._dirty);
-  if(dirty.length === 0){ alert('변경된 내용이 없습니다.'); return; }
-  const payload = dirty.map(r => ({
-    roleId: r.roleId,
-    menuId: r.menuId,
-    canRead: !!r.r,
-    canCreate: !!r.c,
-    canUpdate: !!r.u,
-    canDelete: !!r.d,
+  if(!state.currentRoleCode){ alert('역할을 먼저 선택하세요.'); return; }
+  const payload = Array.from(state.dirty.entries()).map(([screenCode, v])=>({
+    roleCode: state.currentRoleCode,
+    screenCode,
+    canRead:  !!v.r,
+    canCreate:!!v.c,
+    canUpdate:!!v.u,
+    canDelete:!!v.d,
   }));
-  // 실제 저장 API 예시
-  // const res = await fetch('/api/admin/role-perms', {
-  //   method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
-  // });
-  // if(!res.ok){ const t=await res.text(); throw new Error(t); }
-  console.log('저장 payload', payload);
-  alert('가상 저장 완료 (콘솔 확인)');
-  state.rows.forEach(r=>r._dirty=false);
+  if(payload.length===0){ alert('변경된 내용이 없습니다.'); return; }
+
+  try{
+    // 백엔드: PUT /api/role-perms (배열)
+    await jput('/api/role-perms', payload);
+
+    // 성공 시 rows 반영 & dirty 초기화
+    payload.forEach(ch=>{
+      const row = state.rows.find(r=>r.screenCode===ch.screenCode);
+      if(row){ row.r=ch.canRead; row.c=ch.canCreate; row.u=ch.canUpdate; row.d=ch.canDelete; }
+    });
+    state.dirty.clear();
+    alert('저장되었습니다.');
+  }catch(err){
+    console.error(err);
+    alert('저장 중 오류가 발생했습니다.');
+  }
 }
 
-// events
-initFilters();
-getList();
-
-document.getElementById('btnSearch').addEventListener('click', ()=>{ state.page=1; getList(); });
-
-document.getElementById('btnSave').addEventListener('click', saveChanges);
-
-// Enter 검색
-['qMenu','qRole'].forEach(id=>{
-  document.getElementById(id).addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.page=1; getList(); } });
-});
+/* ------------------------------
+   작은 유틸
+--------------------------------*/
+function debounce(fn, ms){
+  let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
+}
 </script>
+
 </body>
 </html>

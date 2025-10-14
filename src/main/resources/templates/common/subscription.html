@@ -636,18 +636,12 @@
 <div id="payMask" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;"></div>
 <script>
   // =========================================
-  // 결제 완료 후 이동 경로 설정
-  // =========================================
-  const REDIRECT_ON_SUCCESS = (orderId) => `/pay/complete?orderId=${encodeURIComponent(orderId||'')}`;
-  
-  // =========================================
   // 전역 상태
   // =========================================
   let currentStep = 1;
   let payWin = null;
   let payClosePoll = null;
   let selectedMethod = null;
-  let lastOrderId = null;
 
   // =========================================
   // 오버레이(모달 효과)
@@ -946,7 +940,6 @@
       return;
     }
 
-    lastOrderId = 'ORDER_' + Date.now();
     const userId = 'admin01'; // 로그인 없으면 서버에서 GUEST 처리
     const buyerName = document.getElementById('managerName').value;
     const subPeriodText = document.getElementById('subPeriod').value;
@@ -961,7 +954,7 @@
     const signatureDataUrl = getSignatureDataUrl();
     
     const payRequest = {
-      orderId: lastOrderId,
+      orderId: 'ORDER_' + Date.now(),
       userId: userId,
       itemName: 'ERP 구독',
       amount: totalAmount,
@@ -1018,7 +1011,7 @@
 	    try { if (window.payWin && !payWin.closed) payWin.close(); } catch(_) {}
 	
 	    if (msg.status === 'success') {
-	      const orderId    = msg.orderId || '';
+	      const subscriptionCode = msg.subscriptionCode || '';
 	      const buyerName  = (document.getElementById('managerName')?.value || '').trim();
 	      const companyCode = msg.companyCode || '';  // ★ 추가
 	      const masterId    = msg.masterId || '';     // ★ 추가
@@ -1030,7 +1023,7 @@
 	      const vat   = toNumber(vatText);
 	
 	      const params = new URLSearchParams({
-	        orderId,
+	    	subscriptionCode,
 	        buyerName,
 	        total: String(total),
 	        vat: String(vat),
