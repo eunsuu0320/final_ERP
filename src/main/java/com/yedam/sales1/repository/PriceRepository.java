@@ -24,13 +24,10 @@ public interface PriceRepository extends
 
 	Price findByPriceGroupCode(String priceGroupCode);
 	
-//	@Query("SELECT p FROM Price p " +
-//		       "WHERE (:productName IS NULL OR p.productName = :productName) " +
-//		       "AND (:productGroup IS NULL OR p.productGroup = :productGroup) " +
-//		       "AND (:warehouseCode IS NULL OR p.warehouseCode = :warehouseCode)")
-//		List<Partner> findByFilter(
-//		        @Param("productName") String productName,
-//		        @Param("productGroup") String productGroup,
-//		        @Param("warehouseCode") String warehouseCode);
+	@Query("SELECT DISTINCT p FROM Price p " +
+			   "LEFT JOIN FETCH p.priceDetails pd " +
+			   "LEFT JOIN FETCH pd.product " +
+			   "LEFT JOIN FETCH pd.partner")
+		List<Price> findAllWithAllRelations();
 
 }

@@ -5,12 +5,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Shipment;
 import com.yedam.sales1.domain.ShipmentDetail;
@@ -89,6 +91,34 @@ public class ShipmentServiceImpl implements ShipmentService {
     public Shipment saveShipment(Shipment shipment) {
         return shipmentRepository.save(shipment);
     }
+    
+	@Override
+	@Transactional
+	public boolean updateShipmentStatus(String shipmentCode, String status) {
+		log.info("Updating status for shipmentCode Code: {} to Status: {}", shipmentCode, status);
+		
+		// 1. EstimateCode로 견적서 엔티티를 조회합니다.
+		Optional<Shipment> optionalShipment = shipmentRepository.findByShipmentCode(shipmentCode);
+		
+		if (optionalShipment.isEmpty()) {
+			log.warn("Update failed: Shipment not found for code {}", shipmentCode);
+			return false; // 견적서가 없으면 실패
+		}
+		
+		Shipment shipment = optionalShipment.get();
+		
+		// 2. 상태를 업데이트합니다.
+		shipment.setStatus(status);
+		
+		// 3. 변경 사항을 저장합니다. (Transactional 어노테이션 덕분에 save 호출 없이도 플러시될 수 있지만, 명시적으로 호출하는 것이 안전합니다.)
+		shipmentRepository.save(shipment);
+		
+		log.info("Shipment {} status successfully updated to {}", shipmentCode, status);
+		return true;
+	}
+    
+    
+    
     
     // =============================================================
     // ⭐ Shipment 신규 등록 로직

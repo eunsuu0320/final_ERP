@@ -1,13 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
-	// --------------------------------------------------------------------------------
-	// 1. 전역 헬퍼 및 초기 설정
-	// --------------------------------------------------------------------------------
 
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
 	const defaultVisible = ["주문서코드", "등록일자", "거래처명", "담당자", "품목명", "납기일자", "주문금액합계", "진행상태"];
 
-	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
-	// salesCommon.js에 정의된 것으로 가정하지만, 안전을 위해 다시 정의
+	const STATUS_MAP = {
+		"미확인": { label: "미확인" },
+		"진행중": { label: "진행중" },
+		"출하지시완료": { label: "출하지시완료" },
+		"완료": { label: "완료" }
+	};
+
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
 
@@ -28,14 +30,14 @@ document.addEventListener("DOMContentLoaded", function() {
 			window.addItemRow(); // 기본 행 1개 추가 (salesCommon.js에 정의되어야 함)
 			window.calculateTotal(); // 합계 초기화
 		}
-		
+
 		// 납기일자 초기화
 		const deliveryDateInput = document.getElementById('quoteDeliveryDateText');
-		if(deliveryDateInput) deliveryDateInput.value = '';
-		
+		if (deliveryDateInput) deliveryDateInput.value = '';
+
 		// 견적서코드 초기화 (추가)
 		const estimateUniqueCodeInput = document.getElementById('estimateUniqueCode');
-		if(estimateUniqueCodeInput) estimateUniqueCodeInput.value = '';
+		if (estimateUniqueCodeInput) estimateUniqueCodeInput.value = '';
 
 
 		console.log("주문 모달 전체 초기화 완료.");
@@ -44,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 주문서 상세모달 열기
 	window.showDetailModal = function(modalType) {
 		let modalName = '';
-		
+
 		// 모달 열기
 		if (modalType === 'detail') {
 			modalName = '주문상세정보'
@@ -78,10 +80,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		// HTML ID 'quotePartnerName'을 사용하여 거래처 이름 가져오기 (HTML ID: quotePartnerName)
 		const partnerNameValue = document.getElementById('quotePartnerName').value;
-		
+
 		// 납기일자 (HTML name: deliveryDateText)
 		const deliveryDateValue = orderDataObject.deliveryDateText;
-		
+
 		// 견적서코드 (HTML name: estimateUniqueCode)
 		const estimateUniqueCodeValue = orderDataObject.estimateUniqueCode; // 문자열로 가져옴
 
@@ -92,23 +94,23 @@ document.addEventListener("DOMContentLoaded", function() {
 			alert("주문 상세 내용을 1개 이상 입력해주세요.");
 			return;
 		}
-		
+
 		// ********** DTO 구조에 맞게 최종 페이로드 구성 **********
 		const finalPayload = {
 			// OrdersRegistrationDTO의 기본 필드
 			partnerCode: orderDataObject.partnerCode || '', // Hidden input 필드 name="partnerCode"
 			partnerName: partnerNameValue,
-			
+
 			// DTO의 필드명과 일치하도록 매핑: HTML name을 DTO 필드명으로 변경
 			orderDate: orderDataObject.quoteDate,           // DTO: orderDate, HTML name: quoteDate
 			deliveryDate: deliveryDateValue,                // DTO: deliveryDate, HTML name: deliveryDateText
-			
+
 			// ⭐⭐⭐ [수정 사항] estimateUniqueCode를 숫자로 변환하여 전송
-			estimateUniqueCode: parseInt(estimateUniqueCodeValue) || null, 
-			
+			estimateUniqueCode: parseInt(estimateUniqueCodeValue) || null,
+
 			manager: orderDataObject.manager || '',
 			remarks: orderDataObject.remarks || '',
-			
+
 			// DTO의 List<OrderDetail> 필드
 			detailList: detailList
 		};
@@ -142,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				if (modalInstance) modalInstance.hide();
 				// 등록 성공 후 테이블 데이터 리로드 로직 (필요 시)
 				if (window.orderTableInstance && window.orderTableInstance.loadData) { // ⭐⭐ 변수명 변경 반영
-					window.orderTableInstance.loadData("/api/orders"); 
+					window.orderTableInstance.loadData("/api/orders");
 				} else {
 					window.location.reload();
 				}
@@ -167,22 +169,22 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (row.getAttribute('data-row-id') === 'new') {
 				return;
 			}
-			
+
 			const supplyAmount = window.cleanValue(row.querySelector('input[name="supplyAmount"]').value);
-            const taxAmount = window.cleanValue(row.querySelector('input[name="taxAmount"]').value);
-            
-            // 공급가액이 0보다 큰 경우에만 VAT 비율을 계산
-            const pctVat = (supplyAmount > 0) ? (taxAmount / supplyAmount) * 100 : 0;
-            
+			const taxAmount = window.cleanValue(row.querySelector('input[name="taxAmount"]').value);
+
+			// 공급가액이 0보다 큰 경우에만 VAT 비율을 계산
+			const pctVat = (supplyAmount > 0) ? (taxAmount / supplyAmount) * 100 : 0;
+
 			// OrderDetail DTO 구조에 맞춰 데이터 구성 (price, quantity, amountSupply, pctVat)
 			detailList.push({
 				productCode: row.querySelector('input[name="productCode"]').value || '',
 				quantity: window.cleanValue(row.querySelector('input[name="quantity"]').value),
 				price: window.cleanValue(row.querySelector('input[name="price"]').value),
-                
-                amountSupply: supplyAmount, 
-                pctVat: Math.round(pctVat * 100) / 100, // 소수점 2자리로 반올림하여 전송
-                
+
+				amountSupply: supplyAmount,
+				pctVat: Math.round(pctVat * 100) / 100, // 소수점 2자리로 반올림하여 전송
+
 				remarks: row.querySelector('input[name="remarks"]').value || '',
 			});
 		});
@@ -221,24 +223,115 @@ document.addEventListener("DOMContentLoaded", function() {
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;
 				};
 			}
+			if (col === "진행상태") {
+				// 데이터 필드 이름은 컬럼 제목과 동일하게 '진행상태'를 사용합니다.
+				columnDef.field = "진행상태";
+				columnDef.formatter = function(cell) {
+					const value = cell.getValue(); // 현재 상태 값 (예: "체결")
+					const rowData = cell.getData();
+					const code = rowData.주문서코드;
+
+					// 옵션 HTML 생성
+					const options = Object.keys(STATUS_MAP).map(key => {
+						const itemInfo = STATUS_MAP[key];
+						// 현재 상태를 'selected' 속성으로 설정
+						const isSelected = key === value ? 'selected' : '';
+						return `<option value="${key}" ${isSelected}>${itemInfo.label}</option>`;
+					}).join('');
+
+					// Select 요소 반환: 변경 시 updateStatusAPI 호출
+					// 'this'는 HTML Select 요소를 가리키며, 이를 세 번째 인수로 전달하여 실패 시 복구합니다.
+					return `
+                        <select class="form-select form-select-sm" 
+                                onchange="updateStatusAPI('${code}', this.value, this)"
+                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
+                            ${options}
+                        </select>
+                    `;
+				};
+			}
 
 			// 견적서 코드 필드도 클릭 가능하게 할 수 있으나, 현재는 주문서 코드만 설정
-			
+
 			return columnDef;
 		}).filter(c => c !== null)
 	];
-	
+
 	// makeTabulator는 salesCommon.js에 정의된 것으로 가정
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.orderTableInstance = tableInstance; // 전역 변수명 변경 (priceTableInstance -> orderTableInstance)
+	window.orderTableInstance = tableInstance; 
 });
 
-// ====================================================================
-// 전역 함수 (HTML oninput 등에서 호출됨)
-// ====================================================================
+
+window.updateStatusAPI = function(code, status, selectElement) {
+	const row = window.orderTableInstance.getRows().find(r => r.getData().견적서코드 === code);
+	// API 호출 전 현재 상태를 저장합니다.
+	const currentStatus = row?.getData()?.진행상태;
+
+	if (currentStatus === status) {
+		console.log(`[주문서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
+		// 현재 상태와 같더라도 Tabulator가 자동으로 리렌더링하지 않으므로 select 값을 되돌립니다.
+		if (selectElement) {
+			selectElement.value = currentStatus;
+		}
+		return;
+	}
+
+	// 로딩 상태 등으로 임시 UI 변경을 원할 경우 여기에 로직을 추가할 수 있습니다.
+
+	const url = "/api/updateOrders";
+	const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+	const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+
+	const data = {
+		orderCode: code, // 서버에 보낼 견적서 코드
+		status: status
+	};
+
+	fetch(url, {
+		method: "POST",
+		headers: {
+			'Content-Type': 'application/json',
+			[csrfHeader]: csrfToken
+		},
+		body: JSON.stringify(data)
+	})
+		.then(res => {
+			if (!res.ok) {
+				// HTTP 상태 코드가 200번대가 아니면 오류 처리
+				return res.json().then(error => {
+					throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+				});
+			}
+			return res.json();
+		})
+		.then(response => {
+			if (response.success) { 
+				if (window.orderTableInstance) {
+					window.orderTableInstance.getRows().find(r => r.getData().주문서코드 === code)?.update({ '진행상태': status });
+				}
+			} else {
+				alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
+				
+				if (selectElement) {
+					selectElement.value = currentStatus;
+				}
+			}
+		})
+		.catch(err => {
+			console.error("상태 변경 API 호출 실패:", err);
+			alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
+			
+			if (selectElement) {
+				selectElement.value = currentStatus;
+			}
+		});
+}
+
+
 
 /**
- * 행의 수량 또는 단가가 변경될 때 공급가액, 부가세, 최종금액을 계산하고 포맷팅합니다.
+ * 행의 수량 또는 단가가 변경될 때 공급가액, 부가세, 최종금액을 계산
  */
 window.calculateRow = function(inputElement) {
 	const row = inputElement.closest('tr');
@@ -277,7 +370,7 @@ window.calculateRow = function(inputElement) {
 }
 
 /**
- * 주문 상세 테이블 전체의 합계를 계산하고 footer에 표시합니다.
+ * 주문 상세 테이블 전체의 합계를 계산
  */
 window.calculateTotal = function() {
 	let totalQuantity = 0;
@@ -308,12 +401,12 @@ window.calculateTotal = function() {
 		const quantity = cleanValue(quantityInput.value);
 		const supplyAmount = cleanValue(supplyAmountInput.value);
 		const taxAmount = cleanValue(taxAmountInput.value);
-		
+
 		totalQuantity += quantity;
 		totalSupplyAmount += supplyAmount;
 		totalTaxAmount += taxAmount;
 		// ⭐ [수정 사항] 최종금액은 공급가액과 부가세의 합으로 정확히 계산합니다.
-		totalFinalAmount += (supplyAmount + taxAmount); 
+		totalFinalAmount += (supplyAmount + taxAmount);
 	});
 
 	// 1. 합계 필드 업데이트 (HTML ID 사용)

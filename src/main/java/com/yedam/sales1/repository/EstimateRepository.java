@@ -8,19 +8,22 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.yedam.sales1.domain.Estimate;
+import com.yedam.sales1.domain.Product;
 
 @Repository
-public interface EstimateRepository extends
-		JpaRepository<Estimate, Long>{
+public interface EstimateRepository extends JpaRepository<Estimate, Long> {
 
 	List<Estimate> findAll();
-	
-	/**
-     * 견적서 코드를 기반으로 Estimate 엔티티를 조회합니다.
-     * ServiceImpl의 updateEstimateStatus 메서드에서 사용됩니다.
-     */
-	Optional<Estimate> findByEstimateCode(String estimateCode); // 이 메서드가 추가되었습니다.
-	
+
+	@Query("""
+			    select e from Estimate e
+			    where e.companyCode = :companyCode
+			    and e.status != '체결'
+			""")
+	List<Estimate> findByCompanyCode(String companyCode);
+
+	Optional<Estimate> findByEstimateCode(String estimateCode);
+
 	@Query("SELECT MAX(e.estimateCode) FROM Estimate e")
 	String findMaxEstimateCode();
 }
