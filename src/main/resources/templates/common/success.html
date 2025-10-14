@@ -15,16 +15,19 @@
 <body>
   <div class="box">
     <h2>결제가 완료되었습니다 🎉</h2>
-    <div class="detail">      
-      <p>주문번호: <strong th:text="${info.partnerOrderId}"></strong></p>
+    <div class="detail">
+      <p>구독번호: <strong th:text="${info.subscriptionCode}"></strong></p>
   	  <p>회사코드: <strong th:text="${info.companyCode}"></strong></p>
-  	  <p>마스터 ID: <strong th:text="${info.masterId}"></strong></p>
       <p>구매자: <strong th:text="${info.buyerName}"></strong></p>
       <p>결제 금액: <strong th:text="${#numbers.formatInteger(info.amount.total, 3, 'COMMA')}"></strong>원</p>
       <p>부가세: <strong th:text="${#numbers.formatInteger(info.amount.vat, 3, 'COMMA')}"></strong>원</p>
     </div>
     <a href="/" class="btn-home">메인으로 돌아가기</a>
-    <a th:href="@{|/pay/contract/download?orderId=${info.partnerOrderId}|}" class="btn-home" style="margin-left:10px;">계약서 내려받기(PDF)</a>
+    <a th:if="${info.subscriptionCode}"
+       th:href="@{|/pay/contract/download?subscriptionCode=${info.subscriptionCode}|}"
+       class="btn-home" style="margin-left:10px;">
+       계약서 내려받기(PDF)
+    </a>
   </div>
 </body>
 </html>

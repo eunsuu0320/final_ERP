@@ -1,6 +1,8 @@
-package com.yedam.common;
+package com.yedam.common.domain;
 
 import org.hibernate.annotations.GenericGenerator;
+
+import com.yedam.common.Prefixable;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
