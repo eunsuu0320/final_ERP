@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -69,7 +70,7 @@ public class EstimateServiceImpl implements EstimateService {
 				Map<String, Object> row = new HashMap<>();
 				row.put("견적서코드", estimate.getEstimateCode());
 				// 날짜 포맷팅은 필요에 따라 프론트엔드 또는 DTO에서 처리해야 합니다. 여기서는 Date 객체 그대로 전달합니다.
-				row.put("등록일자", estimate.getCreateDate()); 
+				row.put("등록일자", estimate.getCreateDate());
 				row.put("거래처명", estimate.getPartnerCode()); // 실제 거래처 이름을 조회해야 할 수 있습니다. (현재는 코드)
 				row.put("품목명", estimate.getPartnerCode()); // 대표 품목명 조회 로직이 필요할 수 있습니다. (현재는 임시 값)
 				row.put("유효기간", estimate.getExpiryDate());
@@ -88,38 +89,38 @@ public class EstimateServiceImpl implements EstimateService {
 	public Estimate saveEstimate(Estimate estimate) {
 		return estimateRepository.save(estimate);
 	}
-	
+
 	// =============================================================
 	// 2. 상태 업데이트 로직 추가
 	// =============================================================
 	/**
-     * 견적서 코드를 기반으로 진행 상태(status)를 업데이트합니다.
-     */
+	 * 견적서 코드를 기반으로 진행 상태(status)를 업데이트합니다.
+	 */
 	@Override
 	@Transactional
 	public boolean updateEstimateStatus(String estimateCode, String status) {
 		log.info("Updating status for Estimate Code: {} to Status: {}", estimateCode, status);
-		
+
 		// 1. EstimateCode로 견적서 엔티티를 조회합니다.
 		Optional<Estimate> optionalEstimate = estimateRepository.findByEstimateCode(estimateCode);
-		
+
 		if (optionalEstimate.isEmpty()) {
 			log.warn("Update failed: Estimate not found for code {}", estimateCode);
 			return false; // 견적서가 없으면 실패
 		}
-		
+
 		Estimate estimate = optionalEstimate.get();
-		
+
 		// 2. 상태를 업데이트합니다.
 		estimate.setStatus(status);
-		
-		// 3. 변경 사항을 저장합니다. (Transactional 어노테이션 덕분에 save 호출 없이도 플러시될 수 있지만, 명시적으로 호출하는 것이 안전합니다.)
+
+		// 3. 변경 사항을 저장합니다. (Transactional 어노테이션 덕분에 save 호출 없이도 플러시될 수 있지만, 명시적으로 호출하는
+		// 것이 안전합니다.)
 		estimateRepository.save(estimate);
-		
+
 		log.info("Estimate {} status successfully updated to {}", estimateCode, status);
 		return true;
 	}
-
 
 	// =============================================================
 	// 3. 신규 복합 등록 트랜잭션 로직 (최종 정리)
@@ -128,33 +129,30 @@ public class EstimateServiceImpl implements EstimateService {
 	@Transactional
 	public Long registerNewEstimate(EstimateRegistrationDTO dto) {
 
-		// 1. 거래처 코드 조회 (PARTNER_CODE NULL 오류 해결)
-		String partnerCode = getPartnerCodeByPartnerName(dto.getPartnerName());
-		if (partnerCode == null) {
-			throw new RuntimeException("유효하지 않거나 찾을 수 없는 거래처 이름입니다: " + dto.getPartnerName());
-		}
-		dto.setPartnerCode(partnerCode); // DTO에 코드 설정
-
 		// 2. 상세 항목 유효성 검사
 		if (dto.getDetailList() == null || dto.getDetailList().isEmpty()) {
 			throw new RuntimeException("견적 상세 항목이 누락되었습니다.");
 		}
-
+		System.out.println("=============================================================");
+		System.out.println(dto);
 		// 3. 총 금액 서버에서 재계산 및 엔티티 생성 준비
 		Double totalAmount = calculateTotalAmount(dto.getDetailList());
 		Estimate estimate = createEstimateEntity(dto, totalAmount);
 		String companyCode = getCompanyCodeFromAuthentication();
+		String manager = getManagerFromAuthentication();
 
 		// 4. 헤더 코드 부여 및 저장 (PK 확보)
 		String newCode = generateNewEstimateCode(); // ESTxxxx
 		estimate.setEstimateCode(newCode);
 		estimate.setCompanyCode(companyCode);
+		estimate.setManager(manager);
+
 		estimateRepository.save(estimate);
 		Long generatedEstimateId = estimate.getEstimateUniqueCode();
 
 		// 5. 상세 항목 리스트 순회 및 저장 준비
 		List<EstimateDetail> newDetailsToSave = new ArrayList<>();
-		
+
 		// 상세 코드 생성을 위해 MaxCode 조회
 		String maxDetailCode = estimateDetailRepository.findMaxEstimateDetailCode();
 		int detailNum = (maxDetailCode != null && maxDetailCode.startsWith("ESD"))
@@ -163,10 +161,8 @@ public class EstimateServiceImpl implements EstimateService {
 
 		for (EstimateDetail detail : dto.getDetailList()) {
 			// 새로운 엔티티 객체로 복사 (트랜잭션 충돌 방지 핵심)
-			EstimateDetail newDetail = EstimateDetail.builder()
-					.productCode(detail.getProductCode()).quantity(detail.getQuantity()).price(detail.getPrice())
-					.remarks(detail.getRemarks())
-					.build();
+			EstimateDetail newDetail = EstimateDetail.builder().productCode(detail.getProductCode())
+					.quantity(detail.getQuantity()).price(detail.getPrice()).remarks(detail.getRemarks()).build();
 
 			// 외래 키(FK) 및 공통 필드 설정
 			newDetail.setEstimateUniqueCode(generatedEstimateId);
@@ -194,9 +190,14 @@ public class EstimateServiceImpl implements EstimateService {
 	private Estimate createEstimateEntity(EstimateRegistrationDTO dto, Double totalAmount) {
 
 		return Estimate.builder().partnerCode(dto.getPartnerCode())
-				.createDate(Date.from(dto.getQuoteDate().atStartOfDay(ZoneId.systemDefault()).toInstant()))
-				.expiryDate(dto.getQuoteDate().plusDays(dto.getValidPeriod()).toString()).totalAmount(totalAmount)
-				.manager(dto.getManager()).status("미확인").remarks(dto.getRemarks()).build();
+				.deliveryDate(dto.getDeliveryDate())
+				.expiryDate(java.time.LocalDate.now().plusDays(dto.getValidPeriod()).toString())
+				.totalAmount(totalAmount)
+				.status("미확인")
+				.postCode(dto.getPostCode())
+				.address(dto.getAddress())
+				.payCondition(dto.getPayCondition())
+				.remarks(dto.getRemarks()).build();
 	}
 
 	/** 헬퍼: 총 금액 계산 로직 (보안 및 신뢰성 확보) */
@@ -222,7 +223,7 @@ public class EstimateServiceImpl implements EstimateService {
 		}
 		return String.format("%s%04d", prefix, newNum);
 	}
-	
+
 	/** 헬퍼: Partner Name으로 Partner Code를 조회합니다. */
 	private String getPartnerCodeByPartnerName(String partnerName) {
 		if (partnerName == null || partnerName.trim().isEmpty()) {
@@ -252,4 +253,21 @@ public class EstimateServiceImpl implements EstimateService {
 
 		return "DEFAULT";
 	}
+
+	/** 헬퍼: Security 인증 정보에서 사원코드를 추출 */
+	private String getManagerFromAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getName().equals("anonymousUser")) {
+			return "DEFAULT";
+		}
+
+		String username = authentication.getName();
+
+		if (username != null && username.contains(":")) {
+			return username.trim().split(":")[2].trim();
+		}
+
+		return "DEFAULT";
+	}
+
 }

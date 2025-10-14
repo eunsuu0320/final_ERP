@@ -13,18 +13,23 @@ import com.yedam.hr.domain.Attendance;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.repository.AttendanceRepository;
 import com.yedam.hr.repository.EmployeeRepository;
+import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.Product;
+import com.yedam.sales1.repository.EstimateRepository;
 import com.yedam.sales1.repository.ProductRepository;
 
 @RestController
 @RequestMapping("/api/modal")
 public class ModalController {
 
-	@Autowired EmployeeRepository employeeRepository;
-	@Autowired AttendanceRepository attendanceRepository;
-	@Autowired ProductRepository productRepository;
-
-
+	@Autowired
+	EmployeeRepository employeeRepository;
+	@Autowired
+	AttendanceRepository attendanceRepository;
+	@Autowired
+	ProductRepository productRepository;
+	@Autowired
+	EstimateRepository estimateRepository;
 
 	@GetMapping("/employee")
 	public List<Employee> getEmployees() {
@@ -42,13 +47,19 @@ public class ModalController {
 
 		return attendanceRepository.findByCompanyCode(companyCode);
 	}
-	
-	
+
 	@GetMapping("/productCode")
 	public List<Product> getProducts() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String companyCode = auth.getName().split(":")[0];
 
 		return productRepository.findByCompanyCode(companyCode);
+	}
+
+	@GetMapping("/estimate")
+	public List<Estimate> getEstimates() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String companyCode = auth.getName().split(":")[0];
+		return estimateRepository.findByCompanyCode(companyCode);
 	}
 }

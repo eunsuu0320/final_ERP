@@ -3,8 +3,8 @@
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/main}">
 <head>
-<meta name="_csrf" content="${_csrf.token}" />
-<meta name="_csrf_header" content="${_csrf.headerName}" />
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <link rel="stylesheet" th:href="@{/erp/css/sales1/salesStyle.css}" />
 <link
 	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
@@ -21,23 +21,15 @@
 			<div class="containerBox">
 				<div class="container-fluid px-4">
 					<h1 class="mt-4">단가관리</h1>
-					<ol class="breadcrumb mb-4">
-						<li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
-						<li class="breadcrumb-item active">단가관리</li>
-					</ol>
 				</div>
 
-				<!-- 버튼 영역 -->
-				<!-- ㅣㅣ -->
 				<div class="d-flex align-items-center mb-3 justify-content-end">
 					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
 					<button class="btn btn-primary me-2"
 						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-dark me-2">초기화</button>
 				</div>
 
-				<!-- 검색 바 -->
 				<div class="searchTool d-flex align-items-center mb-3">
 
 					<div class="me-5">
@@ -92,35 +84,38 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
 						aria-label="type-filter" id="priceTab">
-						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
+						<button type="button" class="btn btn-primary" data-type="ALL" onclick="changeTabData('ALL', this)">전체</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="PRODUCT">품목단가</button>
+							data-type="PRODUCT" onclick="changeTabData('PRODUCT', this)">품목단가</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="PARTNER">거래처단가</button>
+							data-type="PARTNER" onclick="changeTabData('PARTNER', this)">거래처단가</button>
 					</div>
 
 					<div class="d-flex align-items-center">
-						<button class="btn btn-secondary me-2" onclick="insertAc()">회계일괄반영</button>
 						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getPrint()">인쇄</button>
 						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
 				</div>
 
-				<!-- 컬럼 선택 체크박스 -->
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '단가그룹코드' or col == '단가그룹명' or col == '단가' or col == '거래처설정' or col == '품목설정' or col == '사용구분'}" />
+						th:checked="${col == '단가그룹코드' or col == '단가그룹명' or col == '단가유형' or col == '비고 'or col == '단가적용시작일' or col == '단가적용종료일' or col == '할인율' or col == '거래처설정' or col == '품목설정' or col == '사용구분'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
 
 
-				<!-- Tabulator 테이블 -->
-				<div id="productTable"></div>
+				<div id="priceTableContainer" style="position: relative;">
+				    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+				        <div class="spinner-border text-primary" role="status">
+				            <span class="visually-hidden">Loading...</span>
+				        </div>
+				    </div>
+				    <div id="productTable"></div>
+				</div>
 
-				<!-- 결제정보 모달 -->
+
 				<div class="modal fade" id="paymentModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-xl">
@@ -136,12 +131,10 @@
 					</div>
 				</div>
 
-				<!-- 신규/상세 모달 -->
 				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-lg modal-dialog-centered">
 						<div class="modal-content">
-							<!-- 모달 헤더 -->
 							<div class="modal-header">
 								<h5 class="modal-title"></h5>
 								<div>
@@ -154,7 +147,6 @@
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
-							<!-- 모달 바디 -->
 							<div class="modal-body">
 								<form id="itemForm">
 									<div class="row mb-3">
@@ -172,10 +164,10 @@
 										</div>
 									</div>
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">단가*</label>
+										<label class="col-sm-3 col-form-label">할인율*</label>
 										<div class="col-sm-9">
-											<input type="number" class="form-control" name="price"
-												required>
+											<input type="number" class="form-control" name="discountPct"
+												required>%
 										</div>
 									</div>
 									<div class="row mb-3">
@@ -183,18 +175,13 @@
 										<div class="col-sm-9 d-flex align-items-center">
 											<div class="form-check me-3">
 												<input class="form-check-input" type="radio"
-													name="priceType" id="priceType1" value="기준단가" required>
-												<label class="form-check-label" for="priceType1">기준단가</label>
-											</div>
-											<div class="form-check me-3">
-												<input class="form-check-input" type="radio"
-													name="priceType" id="priceType2" value="거래처별단가"> <label
-													class="form-check-label" for="priceType2">거래처별단가</label>
+													name="priceType1" id="priceType1" value="거래처단가"> <label
+													class="form-check-label" for="priceType1">거래처단가</label>
 											</div>
 											<div class="form-check">
 												<input class="form-check-input" type="radio"
-													name="priceType" id="priceType3" value="품목별단가"> <label
-													class="form-check-label" for="priceType3">품목별단가</label>
+													name="priceType2" id="priceType2" value="품목단가"> <label
+													class="form-check-label" for="priceType2">품목단가</label>
 											</div>
 										</div>
 									</div>

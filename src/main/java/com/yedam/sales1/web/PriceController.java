@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales1.domain.Price;
-import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.service.PriceService;
 
 @Controller
@@ -37,6 +37,27 @@ public class PriceController {
 
 		return "sales1/priceList";
 	}
+	
+	@GetMapping("api/pricetabPartner")
+	@ResponseBody // JSON 반환을 명시 (클래스에 @RestController가 있다면 생략 가능)
+	public Map<String, Object> pricePartnerList() { // Model 제거
+	    List<Price> prices = priceService.getAllPrice();
+
+	    // 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+	    return priceService.getTableDataFromPartners(prices); 
+	}
+
+	// -----------------------------------------------------------
+	// 3. 품목 탭 데이터 로드 (JSON 데이터 반환 - 수정됨)
+	// -----------------------------------------------------------
+	@GetMapping("api/pricetabProduct")
+	@ResponseBody // JSON 반환을 명시
+	public Map<String, Object> priceProductList() { // Model 제거
+	    List<Price> prices = priceService.getAllPrice();
+
+	    // 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+	    return priceService.getTableDataFromProducts(prices);
+	}
 
 	// 품목 상세정보 조회
 	@GetMapping("api/price/getDetail")
@@ -59,4 +80,11 @@ public class PriceController {
 		return ResponseEntity.ok(saved);
 	}
 
+	
+	@GetMapping("api/priceList")
+	@ResponseBody
+	public Map<String, Object> priceAllList() { // 메서드 이름 변경 가능
+	    List<Price> prices = priceService.getAllPrice();
+	    return priceService.getTableDataFromPrice(prices); 
+	}
 }

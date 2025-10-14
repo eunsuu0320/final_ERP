@@ -54,5 +54,35 @@ public class ShipmentController {
 			return ResponseEntity.status(500).body(Map.of("message", "출하 등록 실패", "error", e.getMessage())); // ⭐ 메시지 변경
 		}
 	}
+	
+	
+	@PostMapping("api/updateShipment")
+	public ResponseEntity<Map<String, Object>> updateShipmentStatus(@RequestBody Map<String, String> request) {
+		try {
+			String shipmentCode = request.get("shipmentCode");
+			String status = request.get("status");
+            
+            // 필수 파라미터 검증
+            if (shipmentCode == null || status == null) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "출하지시서 코드와 상태는 필수입니다."));
+            }
+
+			// Service 계층의 상태 업데이트 메서드 호출 (estimateService에 이 메서드가 정의되어 있어야 합니다.)
+			boolean updated = shipmentService.updateShipmentStatus(shipmentCode, status);
+
+			if (updated) {
+                // 업데이트 성공 시 클라이언트 (JS)가 기대하는 success: true 반환
+				return ResponseEntity.ok(Map.of("success", true, "message", "진행 상태가 성공적으로 변경되었습니다."));
+			} else {
+                // Service 단에서 업데이트할 대상을 찾지 못했거나 DB 오류가 발생한 경우
+				return ResponseEntity.status(400).body(Map.of("success", false, "message", "업데이트할 출하지시서를 찾을 수 없거나 DB 처리 중 오류가 발생했습니다."));
+			}
+
+		} catch (Exception e) {
+			// 예외 발생 시 서버 오류 응답 반환
+			System.err.println("출하지시서 상태 업데이트 중 오류 발생: " + e.getMessage());
+			return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 내부 오류로 상태 업데이트에 실패했습니다.", "error", e.getMessage()));
+		}
+	}
 
 }

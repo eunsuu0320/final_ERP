@@ -224,7 +224,12 @@ const modalConfigs = {
 		url: "/api/modal/estimate",
 		title: "견적서 검색",
 		columns: [
-			{ title: "견적서코드", field: "estimateUniqueCode", width: 140, hozAlign: "center" },
+			{ title: "견적서식별코드", field: "estimateUniqueCode", width: 140, hozAlign: "center" },
+			{ title: "견적서코드", field: "estimateCode", width: 140, hozAlign: "center" },
+			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
+			{ title: "견적금액합계", field: "totalAmount", width: 140, hozAlign: "center" },
+
+
 		],
 		selectable: 1,
 	},
@@ -236,8 +241,26 @@ const modalConfigs = {
 		columns: [
 			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
 			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
-			{ title: "규격", field: "specification", width: 200, hozAlign: "center" },
-			{ title: "단위", field: "unit", width: 200, hozAlign: "center" },
+			{
+				title: "규격/단위",
+				width: 200,
+				hozAlign: "center",
+				formatter: function(cell) {
+					const data = cell.getRow().getData();
+
+					const size = data.productSize || ''; 
+					const unit = data.unit || '';      
+
+					if (size && unit) {
+						return size + " " + unit;
+					} else if (size) {
+						return size;
+					} else if (unit) {
+						return unit;
+					}
+					return '';
+				}
+			},
 		],
 		selectable: 1,
 	},

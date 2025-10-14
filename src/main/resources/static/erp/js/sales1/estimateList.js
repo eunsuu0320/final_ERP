@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	// 진행 상태에 따른 스타일을 정의하는 맵
 	const STATUS_MAP = {
-		"미확인": { label: "미확인", cls: "bg-secondary" }, // 회색 (기본)
-		"진행중": { label: "진행중", cls: "bg-info" },      // 하늘색 (진행 중)
-		"미체결": { label: "미체결", cls: "bg-danger" },    // 빨간색 (미체결/위험)
-		"체결": { label: "체결", cls: "bg-success" }       // 초록색 (체결/성공)
+		"미확인": { label: "미확인"}, 
+		"진행중": { label: "진행중"},      
+		"미체결": { label: "미체결"},   
+		"체결": { label: "체결" }      
 	};
 
 	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
@@ -149,7 +149,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				}
 			});
 	}
-	// -------------------------------------------------------------
+
 
 
 	// 폼 전체 초기화
@@ -211,7 +211,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		const quoteDataObject = Object.fromEntries(quoteData.entries());
 
 
-		const partnerNameValue = document.getElementById('quotePartnerName').value;
 
 		// 2. 견적 상세 정보 (EstimateDetail 엔티티 리스트) 수집
 		const detailList = collectQuoteDetails();
@@ -225,12 +224,11 @@ document.addEventListener("DOMContentLoaded", function() {
 		const finalPayload = {
 			// DTO의 기본 필드
 			partnerCode: quoteDataObject.partnerCode || '', // Hidden input 필드 name="partnerCode"
-
-			// ✨ 최종적으로 partnerName 값을 사용
-			partnerName: partnerNameValue,
-
-			quoteDate: quoteDataObject.quoteDate,
+			deliveryDate: quoteDataObject.deliveryDate,
 			validPeriod: parseInt(quoteDataObject.validPeriod) || 0,
+			postCode: parseInt(quoteDataObject.postCode) || 0,
+			address: quoteDataObject.address  || '',
+			payCondition: quoteDataObject.payCondition  || '',
 			remarks: quoteDataObject.remarks || '',
 			manager: quoteDataObject.manager || '',
 
@@ -374,9 +372,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	initTabFiltering();
 });
 
-// ====================================================================
-// 전역 함수 (HTML oninput 등에서 호출됨)
-// ====================================================================
+
 
 function calculateRow(inputElement) {
 	const row = inputElement.closest('tr');

@@ -53,11 +53,7 @@ public class EstimateController {
 		}
 	}
     
-    /**
-     * POST /api/updateEstimate
-     * 견적서의 진행 상태(status)를 업데이트합니다.
-     * 클라이언트에서 estimateCode와 status 값을 JSON 형태로 전송합니다.
-     */
+
 	@PostMapping("api/updateEstimate")
 	public ResponseEntity<Map<String, Object>> updateEstimateStatus(@RequestBody Map<String, String> request) {
 		try {

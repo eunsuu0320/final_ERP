@@ -14,4 +14,7 @@ public interface OrdersService {
 	Orders saveOrders(Orders orders);
 	
 	Long registerNewOrders(OrderRegistrationDTO dto);
+	
+	boolean updateOrdersStatus(String orderCode, String status);
+
 }

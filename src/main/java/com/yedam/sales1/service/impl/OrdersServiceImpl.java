@@ -6,12 +6,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.OrderDetail;
 import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Partner;
@@ -102,16 +104,17 @@ public class OrdersServiceImpl implements OrdersService {
 		}
 
 		// 3. 총 금액 서버에서 재계산 및 엔티티 생성 준비
-		// ⭐⭐ 이 메서드가 누락되어 에러가 발생했습니다.
 		Double totalAmount = calculateTotalAmount(dto.getDetailList()); 
         
 		Orders orders = createOrderEntity(dto, totalAmount);
 		String companyCode = getCompanyCodeFromAuthentication();
+		String manager = getManagerFromAuthentication();
 
 		// 4. 헤더 코드(orderCode) 자동 부여 및 저장
 		String newOrderCode = generateNewOrderCode(); 
 		orders.setOrderCode(newOrderCode);
 		orders.setCompanyCode(companyCode);
+		orders.setManager(manager);
         
         // save 호출 시 orderUniqueCode (PK)는 시퀀스에 의해 자동 할당됩니다.
 		ordersRepository.save(orders);
@@ -156,9 +159,6 @@ public class OrdersServiceImpl implements OrdersService {
 		return generatedOrderUniqueCode;
 	}
 
-	// =============================================================
-	// 3. 필수 헬퍼 메서드
-	// =============================================================
 	
 	/** 헬퍼: 총 금액 계산 로직 (보안 및 신뢰성 확보) */
     // ⭐⭐ 누락된 메서드 추가
@@ -214,7 +214,7 @@ public class OrdersServiceImpl implements OrdersService {
 		return String.format("%s%04d", prefix, newNum);
 	}
 	
-	/** 헬퍼: Partner Name으로 Partner Code를 조회합니다. */
+	/** =Partner Name으로 Partner Code를 조회= */
 	private String getPartnerCodeByPartnerName(String partnerName) {
 		if (partnerName == null || partnerName.trim().isEmpty()) {
 			return null;
@@ -228,7 +228,7 @@ public class OrdersServiceImpl implements OrdersService {
 		return null;
 	}
 
-	/** 헬퍼: Security 인증 정보에서 회사 코드를 추출 */
+	/** Security 인증 정보에서 회사 코드를 추출 */
 	private String getCompanyCodeFromAuthentication() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if (authentication == null || authentication.getName().equals("anonymousUser")) {
@@ -243,4 +243,46 @@ public class OrdersServiceImpl implements OrdersService {
 
 		return "DEFAULT";
 	}
+	
+	/** Security 인증 정보에서 사원 코드를 추출 */
+	private String getManagerFromAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getName().equals("anonymousUser")) {
+			return "DEFAULT"; 
+		}
+
+		String username = authentication.getName();
+
+		if (username != null && username.contains(":")) {
+			return username.trim().split(":")[1].trim();
+		}
+
+		return "DEFAULT";
+	}
+
+	@Override
+	@Transactional
+	public boolean updateOrdersStatus(String orderCode, String status) {
+		log.info("Updating status for Order Code: {} to Status: {}", orderCode, status);
+		
+		// 1. EstimateCode로 견적서 엔티티를 조회합니다.
+		Optional<Orders> optionalOrder = ordersRepository.findByOrderCode(orderCode);
+		
+		if (optionalOrder.isEmpty()) {
+			log.warn("Update failed: Estimate not found for code {}", orderCode);
+			return false; // 견적서가 없으면 실패
+		}
+		
+		Orders orders = optionalOrder.get();
+		
+		// 2. 상태를 업데이트합니다.
+		orders.setStatus(status);
+		
+		// 3. 변경 사항을 저장합니다. (Transactional 어노테이션 덕분에 save 호출 없이도 플러시될 수 있지만, 명시적으로 호출하는 것이 안전합니다.)
+		ordersRepository.save(orders);
+		
+		log.info("Order {} status successfully updated to {}", orderCode, status);
+		return true;
+	}
+	
 }

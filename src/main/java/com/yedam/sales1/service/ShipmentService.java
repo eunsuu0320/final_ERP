@@ -14,5 +14,9 @@ public interface ShipmentService {
 	Shipment saveShipment(Shipment shipments);
 	
 
-	String registerNewShipment(ShipmentRegistrationDTO dto); // ⭐ 추가된 메서드
+	String registerNewShipment(ShipmentRegistrationDTO dto); 
+	
+	
+	boolean updateShipmentStatus(String shipmentCode, String status);
+
 }
