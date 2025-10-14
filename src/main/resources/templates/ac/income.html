@@ -1,0 +1,281 @@
+<!-- src/main/resources/templates/ac/income.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+  <meta charset="UTF-8" />
+  <title>손익계산서</title>
+  <style>
+    /* 레이아웃 헤더 보정 */
+    #layoutSidenav_content > main { padding-top: 16px; }
+
+    :root{
+      --card:#ffffff; --line:#e9edf3; --muted:#6b7280; --title:#0f172a;
+      --accent:#2563eb10; --shadow:0 6px 22px rgba(2,6,23,.06);
+      --good:#dc2626; --bad:#2563eb;
+    }
+
+    /* 전표 화면과 같은 컨테이너 느낌 */
+    .wrap { padding-top: 24px; padding-bottom: 32px; }
+
+    .panel{ background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); padding:18px; }
+
+    .head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .head h1{
+  margin:0;
+  font-weight:800;
+  color:var(--title);
+  letter-spacing:.2px;
+  font-size:clamp(24px, 1.6rem + 0.6vw, 36px);
+}
+    .right-note{ color:var(--muted); font-size:.9rem; }
+    .badge{ display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:600; font-size:.8rem; }
+
+    /* 상단 툴바 */
+    .toolbar{
+      display:grid; gap:10px; align-items:center;
+      grid-template-columns:auto minmax(260px,1fr) auto minmax(260px,1fr) auto;
+      background:var(--accent); border-radius:10px; padding:10px;
+    }
+    .toolbar label{ font-weight:700; color:#111827; white-space:nowrap; }
+    .toolbar .ctrl{ display:flex; gap:6px; align-items:center; min-width:0; }
+    .toolbar input[type="month"]{
+      height:36px; padding:.35rem .6rem; border:1.5px solid var(--line);
+      border-radius:8px; font-size:.95rem; background:#fff; width:100%; min-width:0;
+    }
+    .toolbar button{
+      height:36px; padding:.35rem .9rem; border-radius:8px; font-size:.95rem;
+      border:1.5px solid #2563eb; color:#2563eb; background:#fff; cursor:pointer; transition:.15s ease;
+    }
+    .toolbar button:hover{ background:#2563eb; color:#fff; }
+    .toolbar .chk{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
+    .grid-compare{ display:contents; }
+
+    /* 안내 카드 */
+    .empty{ border:1px dashed var(--line); background:#fafafa; color:#6b7280; border-radius:12px; padding:28px; text-align:center; margin-top:16px; }
+
+    /* 표 */
+    table{ width:100%; border-collapse:collapse; margin-top:12px; }
+    thead th{ text-align:left; font-weight:700; color:#111827; font-size:.95rem; padding:10px 12px; border-bottom:2px solid var(--line); }
+    tbody th, tbody td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:.95rem; vertical-align:middle; }
+    tbody th{ font-weight:600; color:#1f2937; }
+    tbody th.indent{ padding-left:28px; font-weight:500; color:#374151; }
+    td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+    .subsection{ background:#f8fafc; }
+
+    /* 색상: + 파랑, - 빨강 */
+    .pos{ color:var(--good); }
+    .neg{ color:var(--bad); }
+    .delta{ font-weight:700; }
+
+    .nowrap{ white-space:nowrap; }
+    .chip{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:2px 8px; font-size:.8rem; font-weight:700; background:#eef2ff; color:#3730a3; }
+
+    /* 반응형: 좁으면 줄바꿈 */
+    @media (max-width: 992px){
+      .toolbar{ grid-template-columns: 1fr 1fr auto; }
+      .grid-compare{ grid-column: 1 / -1; }
+    }
+    @media (max-width: 520px){
+      .toolbar{ grid-template-columns: 1fr; }
+      .toolbar button{ justify-self: end; }
+    }
+
+    .hide{ display:none !important; }
+    
+    /* 상단 여백 콤팩트 모드 */
+#layoutSidenav_content > main{ padding-top: 0 !important; }  /* 16px → 0 */
+.wrap{ padding-top: 8px !important; }                          /* 24px → 8 */
+
+/* 첫 줄(제목행)의 마진 조정: mt-4/mb-2 덮어쓰기 */
+.wrap > .d-flex:first-child{
+  margin-top: 4px !important;     /* 1.5rem → 4px */
+  margin-bottom: 8px !important;  /* 0.5rem → 8px */
+}
+  </style>
+</head>
+<body layout:fragment="content">
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container_fluid px-4 wrap">
+        <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
+  <h1 class="mb-0">손익계산서</h1>
+  <div class="text-muted small">
+    기준 통화
+    <span class="badge rounded-pill bg-light text-dark border">원(KRW)</span>
+  </div>
+</div>
+
+        <div class="panel">
+          <div class="toolbar">
+            <label>기간(월)</label>
+            <div class="ctrl">
+              <input type="month" id="fromM"><span>~</span><input type="month" id="toM">
+            </div>
+
+            <div class="chk">
+              <input type="checkbox" id="useCompare">
+              <label for="useCompare" class="nowrap">비교기간 사용</label>
+            </div>
+
+            <div class="ctrl grid-compare hide" id="cmpCtrls">
+              <input type="month" id="fromM2"><span>~</span><input type="month" id="toM2">
+            </div>
+
+            <button id="btn">조회</button>
+          </div>
+
+          <!-- 빈 상태 -->
+          <div id="empty" class="empty">
+            조회할 <b>월 범위</b>를 지정해주세요. (상단에서 시작월과 종료월 선택 후 <b>조회</b>를 눌러주세요)
+          </div>
+
+          <!-- 결과 표 -->
+          <div id="result" class="hide">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+              <div class="chip"><span id="labelBase">-</span></div>
+              <div id="labelCompareWrap" class="chip hide">비교: <span id="labelCompare">-</span></div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>재무제표 표시명</th>
+                  <th class="num">기준</th>
+                  <th class="num hide" id="thCompare">비교</th>
+                  <th class="num hide" id="thDelta">증감(%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th>1. 매출</th><td class="num" id="sales">0</td><td class="num" id="sales_c"></td><td class="num delta" id="sales_d"></td></tr>
+                <tr class="subsection"><th class="indent">상품매출</th><td class="num" id="productSales">0</td><td class="num" id="productSales_c"></td><td class="num delta" id="productSales_d"></td></tr>
+
+                <tr><th>2. 매출원가</th><td class="num" id="cogs">0</td><td class="num" id="cogs_c"></td><td class="num delta" id="cogs_d"></td></tr>
+                <tr class="subsection"><th class="indent">제품매출원가</th><td class="num" id="productCogs">0</td><td class="num" id="productCogs_c"></td><td class="num delta" id="productCogs_d"></td></tr>
+
+                <tr><th>3. 매출 총 이익</th><td class="num" id="grossProfit">0</td><td class="num" id="grossProfit_c"></td><td class="num delta" id="grossProfit_d"></td></tr>
+
+                <tr><th>4. 판매비 및 일반관리비</th><td class="num" id="sga">0</td><td class="num" id="sga_c"></td><td class="num delta" id="sga_d"></td></tr>
+                <tr class="subsection"><th class="indent">직원 급여</th><td class="num" id="salary">0</td><td class="num" id="salary_c"></td><td class="num delta" id="salary_d"></td></tr>
+
+                <tr><th>5. 당기순이익</th><td class="num" id="netIncome">0</td><td class="num" id="netIncome_c"></td><td class="num delta" id="netIncome_d"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API = '/api/income';
+    const $ = id => document.getElementById(id);
+    const show = (el, yes) => el.classList[yes ? 'remove' : 'add']('hide');
+
+    // 숫자 포맷: 음수는 '-' 부호 표기(괄호 X)
+    function fmt(n){
+      const v = Number(n||0);
+      return v.toLocaleString(undefined,{ maximumFractionDigits:0 });
+    }
+    function setNum(el, value){
+      const v = Number(value||0);
+      el.textContent = fmt(v);
+      el.classList.toggle('pos', v > 0);
+      el.classList.toggle('neg', v < 0);
+    }
+    function delta(cur, prev){
+      const c = Number(cur||0), p = Number(prev||0);
+      const diff = c - p;
+      const pct = (p === 0) ? (c === 0 ? 0 : 100) : (diff / p * 100);
+      return { diff, pct };
+    }
+    function setDelta(el, d){
+      const sign = d.diff > 0 ? '▲' : (d.diff < 0 ? '▼' : '•');
+      el.textContent = `${sign} ${Math.abs(d.pct).toFixed(1)}%`;
+      el.classList.toggle('pos', d.diff > 0);
+      el.classList.toggle('neg', d.diff < 0);
+    }
+
+    // Month helpers
+    function monthToFirstDate(m){ return m ? `${m}-01` : ''; }
+    function monthToLastDate(m){
+      if(!m) return '';
+      const [y,mm] = m.split('-').map(Number);
+      const last = new Date(y, mm, 0).getDate();
+      return `${m}-${String(last).padStart(2,'0')}`;
+    }
+    function validMonthOrder(a,b){ return a && b && a <= b; }
+
+    const KEYS = ['sales','productSales','cogs','productCogs','grossProfit','sga','salary','netIncome'];
+
+    async function fetchIncome(from, to){
+      const qs = new URLSearchParams({ from, to }).toString();
+      const res = await fetch(`${API}?${qs}`, { headers:{'Accept':'application/json'} });
+      if(!res.ok) throw new Error(await res.text());
+      return res.json();
+    }
+
+    async function load(){
+      const fromM = $('fromM').value;
+      const toM   = $('toM').value;
+      const useC  = $('useCompare').checked;
+      const fromM2= $('fromM2').value;
+      const toM2  = $('toM2').value;
+
+      if(!fromM || !toM){ show($('result'), false); show($('empty'), true); return; }
+      if(!validMonthOrder(fromM, toM)){ alert('기간(월) 범위가 올바르지 않습니다.'); return; }
+      if(useC){
+        if(!fromM2 || !toM2){ alert('비교기간(월)을 모두 입력하세요.'); return; }
+        if(!validMonthOrder(fromM2, toM2)){ alert('비교기간(월) 범위가 올바르지 않습니다.'); return; }
+      }
+
+      const from  = monthToFirstDate(fromM);
+      const to    = monthToLastDate(toM);
+      const from2 = useC ? monthToFirstDate(fromM2) : '';
+      const to2   = useC ? monthToLastDate(toM2)   : '';
+
+      show($('empty'), false);
+      $('labelBase').textContent = `${fromM} ~ ${toM}`;
+
+      try{
+        const base = await fetchIncome(from, to);
+        KEYS.forEach(k => setNum($(k), base?.[k] ?? 0));
+
+        if(useC){
+          const cmp = await fetchIncome(from2, to2);
+          $('labelCompare').textContent = `${fromM2} ~ ${toM2}`;
+          show($('labelCompareWrap'), true);
+          show($('thCompare'), true);
+          show($('thDelta'), true);
+
+          KEYS.forEach(k => {
+            setNum($(`${k}_c`), cmp?.[k] ?? 0);
+            // 증감: 기준(base) 기준으로 비교(cmp)와 비교
+            setDelta($(`${k}_d`), delta(base?.[k] ?? 0, cmp?.[k] ?? 0));
+          });
+        }else{
+          show($('labelCompareWrap'), false);
+          show($('thCompare'), false);
+          show($('thDelta'), false);
+          KEYS.forEach(k => { const ec=$(`${k}_c`), ed=$(`${k}_d`); if(ec) ec.textContent=''; if(ed) ed.textContent=''; });
+        }
+
+        show($('result'), true);
+      }catch(e){
+        console.error(e);
+        alert('손익계산서 조회 실패');
+        show($('result'), false); show($('empty'), true);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      $('fromM').value=''; $('toM').value='';
+      $('fromM2').value=''; $('toM2').value='';
+      $('useCompare').addEventListener('change', e=> show($('cmpCtrls'), e.target.checked));
+      $('btn').addEventListener('click', load);
+      ['fromM','toM','fromM2','toM2'].forEach(id=> $(id).addEventListener('keydown', e=>{ if(e.key==='Enter') load(); }));
+    });
+  </script>
+</body>
+</html>

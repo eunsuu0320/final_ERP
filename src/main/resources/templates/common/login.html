@@ -1,186 +1,298 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <title>Login - SB Admin</title>
-    <link th:href="@{/erp/css/styles.css}" rel="stylesheet" />
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-    <meta name="_csrf" th:content="${_csrf.token}" />
-	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <meta charset="utf-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>로그인 - 구독핑 이알핑</title>
+
+  <meta name="_csrf" th:content="${_csrf.token}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
+
+  <style>
+    :root{
+      --grad1:#6e72fc; --grad2:#ad1deb; --grad3:#00d4ff;
+      --bg:#0b0c10; --text:#e9ecf1; --muted:#98a2b3;
+      --surface:#151722; --border:rgba(255,255,255,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font-family:"Plus Jakarta Sans",system-ui,Apple SD Gothic Neo,Malgun Gothic,sans-serif;
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* ===== Static gradient backdrop (no blur/animation) ===== */
+    .backdrop{
+      position:fixed; inset:0; z-index:-1;
+      background:
+        radial-gradient(800px 400px at 12% 8%, #1a1443 0%, transparent 60%),
+        radial-gradient(700px 350px at 88% 14%, #0a3a57 0%, transparent 60%),
+        radial-gradient(900px 500px at 50% 110%, #1a2148 0%, transparent 60%),
+        var(--bg);
+    }
+    /* decorative SVG blob (static) */
+    .corner-deco{
+      position:fixed; right:-120px; top:-120px; width:480px; height:480px; opacity:.45; pointer-events:none;
+      background: radial-gradient(circle at 30% 30%, var(--grad3), transparent 55%),
+                  radial-gradient(circle at 70% 40%, var(--grad1), transparent 60%),
+                  radial-gradient(circle at 45% 70%, var(--grad2), transparent 60%);
+      border-radius:50%;
+      filter:saturate(1.05);
+    }
+
+    /* ===== Brand bar (no backdrop-filter) ===== */
+    .brandbar{
+      position:sticky; top:0; z-index:10;
+      background:#0d0f18;
+      border-bottom:1px solid var(--border);
+    }
+    .brandbar .brand{
+      font-weight:900; text-decoration:none;
+      background:linear-gradient(90deg,var(--grad3),var(--grad1));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .brandbar .links a{ color:#c7c9d1; text-decoration:none }
+    .brandbar .links a:hover{ color:#fff }
+
+    /* ===== Auth ===== */
+    .auth-wrap{
+      min-height:calc(100vh - 64px);
+      display:grid; place-items:center; padding:24px;
+    }
+    .auth-card{
+      width:min(460px,100%);
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:26px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.28); /* 가벼운 shadow */
+    }
+    .auth-title{
+      font-weight:900; letter-spacing:.2px; margin:2px 0 14px;
+      background:linear-gradient(90deg,var(--grad3),var(--grad2));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+
+    .form-floating>.form-control{
+      background:#10131d; color:#fff; border-color:rgba(255,255,255,.18);
+    }
+    .form-floating>.form-control:focus{
+      border-color:#8aa4ff; box-shadow: 0 0 0 .2rem rgba(110,114,252,.20);
+    }
+    .form-floating>label{ color:#c5c8d0 }
+
+    .btn-neo{
+      width:100%; font-weight:800; letter-spacing:.2px;
+      background:linear-gradient(90deg,var(--grad1),var(--grad2)); color:#fff;
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: 0 8px 20px rgba(124,58,237,.35);
+      transition: transform .15s ease;
+    }
+    .btn-neo:hover{ transform: translateY(-1px) }
+
+    .help-links a{ color:var(--muted); text-decoration:none }
+    .help-links a:hover{ color:#fff }
+
+    .modal-content{
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      border:1px solid var(--border); color:var(--text);
+    }
+    
+    /* === 비밀번호 찾기 모달: 진하게 + 배경 가리기 === */
+.modal-backdrop { background-color:#000 !important; }
+.modal-backdrop.show { opacity:.88 !important; } /* 필요하면 .95까지 올려도 됨 */
+
+.modal{
+  --bs-modal-bg:#0f1220;                     /* 본문 배경 */
+  --bs-modal-border-color:#24283a;           /* 테두리 */
+  --bs-modal-header-border-color:#24283a;
+  --bs-modal-footer-border-color:#24283a;
+  --bs-modal-color:#e9ecf1;                  /* 글자색 */
+  --bs-modal-box-shadow:0 18px 48px rgba(0,0,0,.55);
+}
+
+.modal-content{
+  background:var(--bs-modal-bg) !important;  /* 그라데이션 제거 → 완전 불투명 */
+  border:1px solid var(--bs-modal-border-color) !important;
+}
+
+#passwordModal .form-control{
+  background:#0b0f1a;                        /* 입력창도 어둡게 */
+  color:#fff;
+  border-color:#2a2e40;
+}
+#passwordModal .form-control:focus{
+  border-color:#758cff;
+  box-shadow:0 0 0 .2rem rgba(110,114,252,.22);
+}
+
+#findEmail::placeholder { color:#bfc7ff; opacity:1; }
+
+    /* Respect reduced-motion */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none !important; transition:none !important }
+    }
+  </style>
 </head>
-<body class="bg-primary">
-    <div id="layoutAuthentication" class="mt-5">
-        <div id="layoutAuthentication_content" class="mt-5">
-            <main>
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-5">
-                            <div class="card shadow-lg border-0 rounded-lg mt-5">
-                                <div class="card-header"><h3 class="text-center font-weight-light my-4">로그인</h3></div>
-                                <div class="card-body">
-                                    <form th:action="@{/doLogin}" method="post" onsubmit="return validateCaptcha();">
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputCompanyCode" type="text"
-                                                   placeholder="회사코드" required />
-                                            <label for="inputCompanyCode">회사코드</label>
-                                        </div>
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputId" type="text" placeholder="ID" required />
-                                            <label for="inputId">ID</label>
-                                        </div>
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" id="inputPassword"
-                                                   type="password" name="password" placeholder="PW" required />
-                                            <label for="inputPassword">PW</label>
-                                        </div>
+<body>
+  <div class="backdrop"></div>
+  <div class="corner-deco"></div>
 
-                                        <!-- 실제 Spring Security에서 인식하는 username -->
-                                        <input type="hidden" id="username" name="username" />
-
-                                        <!-- 로그인 reCAPTCHA -->
-                                        <div class="d-flex justify-content-center mb-3">
-                                            <div id="recaptcha-login"></div>
-                                        </div>
-
-                                        <div class="d-flex align-items-center justify-content-between mt-4 mb-0">
-                                            <a class="small" href="#" data-bs-toggle="modal" data-bs-target="#passwordModal">
-                                                비밀번호 찾기
-                                            </a>
-                                            <button class="btn btn-primary" type="submit">Login</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
+  <!-- Brand bar -->
+  <div class="brandbar py-3">
+    <div class="container px-4 d-flex align-items-center justify-content-between">
+      <a class="brand h4 mb-0" th:href="@{/}">구독핑 이알핑</a>
+      <div class="links small d-none d-sm-flex gap-3">
+        <a th:href="@{/subscription}">구독</a>
+      </div>
     </div>
+  </div>
 
-    <!-- 비밀번호 찾기 모달 -->
-    <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="passwordModalLabel">비밀번호 찾기</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-          </div>
-          <div class="modal-body">
-            <form id="passwordFindForm">
-              <div class="mb-3">
-                <label for="findCompany" class="form-label">회사코드</label>
-                <input type="text" class="form-control" id="findCompany" name="companyCode" required>
-              </div>
-              <div class="mb-3">
-                <label for="findUserId" class="form-label">아이디</label>
-                <input type="text" class="form-control" id="findUserId" name="userId" required>
-              </div>
-              <div class="mb-3">
-                <label for="findEmail" class="form-label">이메일</label>
-                <input type="email" class="form-control" id="findEmail" name="email" 
-                       placeholder="입력한 이메일로 임시 비밀번호가 발송됩니다." required>
-              </div>
+  <!-- Auth -->
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="text-center">
+        <div class="badge rounded-pill text-bg-dark px-3 py-2 mb-2" style="background:#0d0f18;border:1px solid var(--border)">Secure Login</div>
+        <h1 class="auth-title display-6">로그인</h1>
+        <p class="text-white-50 small mb-4">회사코드 + 아이디로 로그인하세요</p>
+      </div>
 
-              <!-- 모달 reCAPTCHA -->
-              <div class="d-flex justify-content-center mb-3">
-                <div id="recaptcha-modal"></div>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-            <button type="button" class="btn btn-primary" onclick="submitPasswordFind()">확인</button>
-          </div>
+      <form th:action="@{/doLogin}" method="post" onsubmit="return validateCaptcha();">
+        <div class="form-floating mb-3">
+          <input id="inputCompanyCode" type="text" class="form-control" placeholder="회사코드" required/>
+          <label for="inputCompanyCode">회사코드</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input id="inputId" type="text" class="form-control" placeholder="ID" required/>
+          <label for="inputId">ID</label>
+        </div>
+        <div class="form-floating mb-3">
+          <input id="inputPassword" name="password" type="password" class="form-control" placeholder="PW" required/>
+          <label for="inputPassword">PW</label>
+        </div>
+
+        <!-- Spring Security username -->
+        <input type="hidden" id="username" name="username"/>
+
+        <!-- reCAPTCHA -->
+        <div class="d-flex justify-content-center mb-3">
+          <div id="recaptcha-login"></div>
+        </div>
+
+        <button type="submit" class="btn btn-neo btn-lg">Login</button>
+
+        <div class="d-flex align-items-center justify-content-between mt-3 help-links">
+          <a class="small" href="#" data-bs-toggle="modal" data-bs-target="#passwordModal">비밀번호 찾기</a>
+          <a class="small" th:href="@{/}"><i class="fa-solid fa-house-chimney me-1"></i>메인으로</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Password Find Modal -->
+  <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title" id="passwordModalLabel">비밀번호 찾기</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+        </div>
+        <div class="modal-body">
+          <form id="passwordFindForm">
+            <div class="mb-3">
+              <label for="findCompany" class="form-label">회사코드</label>
+              <input type="text" class="form-control" id="findCompany" name="companyCode" required>
+            </div>
+            <div class="mb-3">
+              <label for="findUserId" class="form-label">아이디</label>
+              <input type="text" class="form-control" id="findUserId" name="userId" required>
+            </div>
+            <div class="mb-3">
+              <label for="findEmail" class="form-label">이메일</label>
+              <input type="email" class="form-control" id="findEmail" name="email" placeholder="입력한 이메일로 임시 비밀번호가 발송됩니다." required>
+            </div>
+            <div class="d-flex justify-content-center mb-2">
+              <div id="recaptcha-modal"></div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">닫기</button>
+          <button type="button" class="btn btn-neo" onclick="submitPasswordFind()">확인</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Bootstrap & Script -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script th:src="@{/erp/js/scripts.js}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-      let recaptchaLogin, recaptchaModal;
+  <script>
+    let recaptchaLogin, recaptchaModal;
 
-      function onloadCallback() {
-        // 로그인용
-        recaptchaLogin = grecaptcha.render('recaptcha-login', {
-          'sitekey': '6LdsS9MrAAAAAOThzNK1m8wInDgEN9UVephRaG6y'
-        });
+    function onloadCallback(){
+      recaptchaLogin = grecaptcha.render('recaptcha-login', {
+        'sitekey': '6LdsS9MrAAAAAOThzNK1m8wInDgEN9UVephRaG6y'
+      });
+      recaptchaModal = grecaptcha.render('recaptcha-modal', {
+        'sitekey': '6LdsS9MrAAAAAOThzNK1m8wInDgEN9UVephRaG6y'
+      });
+    }
 
-        // 모달용
-        recaptchaModal = grecaptcha.render('recaptcha-modal', {
-          'sitekey': '6LdsS9MrAAAAAOThzNK1m8wInDgEN9UVephRaG6y'
-        });
-      }
+    function mergeUserId(){
+      const company = document.getElementById("inputCompanyCode").value.trim();
+      const userId  = document.getElementById("inputId").value.trim();
+      document.getElementById("username").value = company + ":" + userId;
+    }
+    function validateCaptcha(){
+      mergeUserId();
+      const res = grecaptcha.getResponse(recaptchaLogin);
+      if(res.length === 0){ alert("캡챠 인증을 완료해주세요."); return false; }
+      return true;
+    }
 
-      function mergeUserId() {
-        const company = document.getElementById("inputCompanyCode").value.trim();
-        const userId = document.getElementById("inputId").value.trim();
-        document.getElementById("username").value = company + ":" + userId;
-      }
+    function submitPasswordFind(){
+      const company = document.getElementById("findCompany").value.trim();
+      const userId  = document.getElementById("findUserId").value.trim();
+      const email   = document.getElementById("findEmail").value.trim();
+      const captcha = grecaptcha.getResponse(recaptchaModal);
+      if(!company || !userId || !email){ alert("모든 값을 입력해주세요."); return; }
+      if(captcha.length === 0){ alert("캡챠 인증을 완료해주세요."); return; }
 
-      function validateCaptcha() {
-        mergeUserId();
-        const response = grecaptcha.getResponse(recaptchaLogin);
-        if (response.length === 0) {
-          alert("캡챠 인증을 완료해주세요.");
-          return false;
+      const csrfToken  = document.querySelector("meta[name='_csrf']").getAttribute("content");
+      const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
+      fetch("/common/findPassword",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json", [csrfHeader]: csrfToken },
+        body: JSON.stringify({ companyCode:company, userId:userId, email:email, recaptcha:captcha })
+      })
+      .then(r=>r.json())
+      .then(data=>{
+        alert(data.message);
+        grecaptcha.reset(recaptchaModal);
+        document.getElementById("passwordFindForm").reset();
+        if(data.success){
+          const modal = bootstrap.Modal.getInstance(document.getElementById("passwordModal"));
+          modal.hide();
         }
-        return true;
-      }
+      })
+      .catch(err=>{ console.error(err); alert("오류가 발생했습니다."); });
+    }
 
-      function submitPasswordFind() {
-    	    const company = document.getElementById("findCompany").value.trim();
-    	    const userId = document.getElementById("findUserId").value.trim();
-    	    const email = document.getElementById("findEmail").value.trim();
-    	    const captcha = grecaptcha.getResponse(recaptchaModal);
+    ["inputCompanyCode","inputId"].forEach(id=>{
+      document.getElementById(id).addEventListener("input", mergeUserId);
+    });
+  </script>
 
-    	    if (!company || !userId || !email) {
-    	        alert("모든 값을 입력해주세요.");
-    	        return;
-    	    }
-    	    if (captcha.length === 0) {
-    	        alert("캡챠 인증을 완료해주세요.");
-    	        return;
-    	    }
-
-    	    // CSRF 토큰 읽기
-    	    const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
-    	    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
-
-    	    fetch("/common/findPassword", {
-    	        method: "POST",
-    	        headers: {
-    	            "Content-Type": "application/json",
-    	            [csrfHeader]: csrfToken   // CSRF 헤더 추가
-    	        },
-    	        body: JSON.stringify({companyCode: company, userId: userId, email: email, recaptcha: captcha})
-    	    })
-    	    .then(res => res.json())
-    	    .then(data => {
-    	        alert(data.message);
-    	        grecaptcha.reset(recaptchaModal);
-    	        document.getElementById("passwordFindForm").reset();
-
-    	        if (data.success) {
-    	            const modal = bootstrap.Modal.getInstance(document.getElementById("passwordModal"));
-    	            modal.hide();
-    	        }
-    	    })
-    	    .catch(err => {
-    	        console.error(err);
-    	        alert("오류가 발생했습니다.");
-    	    });
-    	}
-    </script>
-
-    <!-- 구글 reCAPTCHA API (명시적 렌더링 모드) -->
-    <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+  <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
 </body>
 </html>
