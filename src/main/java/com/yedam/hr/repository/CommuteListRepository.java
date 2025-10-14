@@ -42,4 +42,21 @@
 		        @Param("offTime")     Date offTime
 		);
 
+		// onTime이 특정 날짜 범위에 있는 최신 1건 조회
+		@Query(value = """
+				SELECT *
+				FROM (
+				  SELECT c.*
+				  FROM COMMUTE_LIST c
+				  WHERE c.COMPANY_CODE = :cc
+				    AND c.EMP_CODE     = :ec
+				    AND c.ON_TIME BETWEEN :ds AND :de
+				  ORDER BY c.ON_TIME DESC
+				)
+				WHERE ROWNUM = 1
+				""", nativeQuery = true)
+				CommuteList findLatestOnTimeRownum(@Param("cc") String companyCode,
+				                                   @Param("ec") String empCode,
+				                                   @Param("ds") Date dayStartDate,
+				                                   @Param("de") Date dayEndDate);
 	}

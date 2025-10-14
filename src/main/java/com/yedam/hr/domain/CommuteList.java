@@ -40,6 +40,9 @@ public class CommuteList {
     private Date offTime;
 
     private Double workTime;
+    private Double nightTime;
+    private Double OtTime;
+    private Double holidayTime;
 
     private String note;
 }

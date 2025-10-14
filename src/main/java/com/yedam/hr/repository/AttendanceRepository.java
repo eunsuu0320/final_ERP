@@ -16,4 +16,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, String> 
 
 	// 선택 건 사용중단 및 재사용
 	Optional<Attendance> findByAttIdAndCompanyCode(String attId, String companyCode);
+
+
 }
