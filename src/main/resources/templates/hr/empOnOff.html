@@ -43,9 +43,8 @@
 								</div>
 								<div class="col-12 col-sm-3">
 									<div class="form-check">
-										<input class="form-check-input" type="checkbox"
-											id="onoff-outside"> <label class="form-check-label"
-											for="onoff-outside">외근</label>
+										<input class="form-check-input" type="checkbox" id="onoff-holiday">
+											<label class="form-check-label" for="onoff-holiday">휴일</label>
 									</div>
 								</div>
 							</div>
@@ -86,14 +85,6 @@
 										class="form-control text-center" placeholder="분"
 										style="width: 60px;">
 								</div>
-
-								<div class="col-auto ms-2">
-									<div class="form-check">
-										<input class="form-check-input" type="checkbox"
-											id="onoff-amhalf"> <label class="form-check-label"
-											for="onoff-amhalf">오전 반차</label>
-									</div>
-								</div>
 							</div>
 
 							<!-- 사유 -->
@@ -119,7 +110,7 @@
 		<div th:replace="common/modal :: commonModal"></div>
 
 		<!-- 모달 내부 스크립트 -->
-		<script th:inline="javascript">
+<script th:inline="javascript">
 (() => {
   const modalEl = document.getElementById('OnOffModal');
   if (!modalEl) return;
@@ -131,7 +122,7 @@
     inst.hide();
   }
 
-  // 시계
+  // ===== 시계 =====
   let clockTimer = null;
   function startClock() {
     const tick = () => {
@@ -150,7 +141,7 @@
   }
   function stopClock(){ if (clockTimer) clearInterval(clockTimer); }
 
-  // 현재 시각 입력 채우기
+  // ===== 현재 시각 입력 채우기 =====
   function fillNow() {
     const d = new Date();
     const pad2 = n => String(n).padStart(2,'0');
@@ -162,13 +153,13 @@
     set('onoff-mi', pad2(d.getMinutes()));
   }
 
-  // 월 선택(Flatpickr)
-  let monthPicker = null;
-  function openMonthPicker() {
+  // ===== 날짜 피커 (일 선택 가능) =====
+  let datePicker = null;
+  function openDatePicker() {
     const dateBtnEl = modalEl.querySelector('#btn-onoff-datepick');
     if (!dateBtnEl) return;
 
-    let anchorEl = modalEl.querySelector('#onoff-month-anchor');
+    let anchorEl = modalEl.querySelector('#onoff-month-anchor'); // 기존 id 재사용
     if (!anchorEl) {
       anchorEl = document.createElement('input');
       anchorEl.type = 'text';
@@ -177,32 +168,34 @@
       modalEl.appendChild(anchorEl);
     }
 
-    if (!monthPicker) {
-      monthPicker = flatpickr(anchorEl, {
+    if (!datePicker) {
+      datePicker = flatpickr(anchorEl, {
         locale: 'ko',
         clickOpens: false,
         appendTo: modalEl,
         positionElement: dateBtnEl,
+        dateFormat: 'Y-m-d',               // ✅ 날짜 선택
         onChange([d]) {
           if (!d) return;
           const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
+          const pad2 = n => String(n).padStart(2, '0');
           set('onoff-yy', d.getFullYear());
-          set('onoff-mm', String(d.getMonth() + 1).padStart(2,'0'));
-          set('onoff-dd', '01');
-          monthPicker.close();
+          set('onoff-mm', pad2(d.getMonth() + 1));
+          set('onoff-dd', pad2(d.getDate())); // ✅ 더 이상 '01'로 고정하지 않음
+          datePicker.close();
         },
       });
     } else {
-      monthPicker.set('positionElement', dateBtnEl);
+      datePicker.set('positionElement', dateBtnEl);
     }
 
-    const base = new Date(
-      Number(document.getElementById('onoff-yy')?.value) || new Date().getFullYear(),
-      ((Number(document.getElementById('onoff-mm')?.value) || (new Date().getMonth()+1)) - 1),
-      Number(document.getElementById('onoff-dd')?.value) || 1
-    );
-    monthPicker.setDate(base, false);
-    monthPicker.open();
+    // 현재 입력값 기준으로 캘린더 초기 위치
+    const yy = Number(document.getElementById('onoff-yy')?.value) || new Date().getFullYear();
+    const mm = Number(document.getElementById('onoff-mm')?.value) || (new Date().getMonth() + 1);
+    const dd = Number(document.getElementById('onoff-dd')?.value) || new Date().getDate();
+    const base = new Date(yy, mm - 1, dd);
+    datePicker.setDate(base, false);
+    datePicker.open();
   }
 
   // 모달 표시/숨김
@@ -211,10 +204,10 @@
 
   // 날짜 버튼
   modalEl.addEventListener('click', (e) => {
-    if (e.target.closest('#btn-onoff-datepick')) openMonthPicker();
+    if (e.target.closest('#btn-onoff-datepick')) openDatePicker();
   });
 
-  // 사원 선택(돋보기)
+  // ===== 사원 선택(돋보기) =====
   document.getElementById('onoff-emp-search').addEventListener('click', () => {
     openModal("employee", (selected) => {
       if (!selected) return;
@@ -226,32 +219,39 @@
   });
 
   // CSRF
-  const token = document.querySelector('meta[name="_csrf"]').content;
+  const token = document.querySelector('meta[name="_csrf"]')?.content || "";
 
-  // ===== 출근 버튼 =====
+  // ===== 공통 유효성 & 시간 문자열 생성 =====
+  function buildDateTimeOrThrow() {
+    const yy = document.getElementById('onoff-yy')?.value?.trim();
+    const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
+    const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
+    const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
+    const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
+    if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
+    return { date: `${yy}-${mm}-${dd}`, time: `${hh}:${mi}:00` };
+  }
+
+  // ===== 출근 =====
   document.getElementById('btn-on').addEventListener('click', async () => {
     try {
       const companyCode = document.getElementById('companyCode')?.value;
       const empCode     = document.getElementById('onoff-empCode')?.value;
       const place       = document.getElementById('onoff-place')?.value?.trim();
-      const isOutside   = document.getElementById('onoff-outside')?.checked;
+      const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
 
       if (!empCode) throw new Error('사원을 선택하세요.');
       if (!place)   throw new Error('장소를 입력하세요.');
 
-      const yy = document.getElementById('onoff-yy')?.value?.trim();
-      const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
-      const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
-      const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
-      const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
-      if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
+      const { date, time } = buildDateTimeOrThrow();
+      const onTime = `${date}T${time}`;
 
-      const onTime = `${yy}-${mm}-${dd}T${hh}:${mi}:00`;
       const payload = {
         companyCode,
         empCode,
         place,
-        comIs: isOutside ? 'OUT' : 'IN',
+        comIs: isHoliday ? 'H' : 'IN',   // 휴일 체크 시 H
+        holiday: isHoliday,              // 백엔드 분기용
         onTime,
         note: document.getElementById('onoff-reason')?.value || ''
       };
@@ -271,26 +271,27 @@
     }
   });
 
-  // ===== 퇴근 버튼 =====
+  // ===== 퇴근 =====
   document.getElementById('btn-off').addEventListener('click', async () => {
     try {
       const companyCode = document.getElementById('companyCode')?.value;
       const empCode     = document.getElementById('onoff-empCode')?.value;
+      const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
       if (!empCode) throw new Error('사원을 선택하세요.');
 
-      const yy = document.getElementById('onoff-yy')?.value?.trim();
-      const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
-      const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
-      const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
-      const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
-      if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
-
-      const offTime = `${yy}-${mm}-${dd}T${hh}:${mi}:00`;
+      const { date, time } = buildDateTimeOrThrow();
+      const offTime = `${date}T${time}`;
 
       const res = await fetch('/onoff/off', {
         method: 'POST',
         headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
-        body: JSON.stringify({ companyCode, empCode, offTime })
+        body: JSON.stringify({
+          companyCode,
+          empCode,
+          offTime,
+          holiday: isHoliday,       // 계산 로직에 휴일 반영
+          comIs: isHoliday ? 'H' : 'IN'
+        })
       });
 
       const text = await res.text();

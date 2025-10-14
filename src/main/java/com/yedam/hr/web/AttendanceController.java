@@ -22,10 +22,8 @@ import ch.qos.logback.core.model.Model;
 @Controller
 public class AttendanceController {
 
-	@Autowired
-	AttendanceService attendanceService;
-	@Autowired
-	EmpAttendanceService empAttendanceService;
+	@Autowired AttendanceService attendanceService;
+	@Autowired EmpAttendanceService empAttendanceService;
 
 	// 근태 관리 페이지
 	@GetMapping("/attendancePage")
