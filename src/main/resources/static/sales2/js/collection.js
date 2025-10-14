@@ -23,10 +23,10 @@ document.addEventListener("DOMContentLoaded", function () {
     columns: [
       { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false },
       { title: "거래처명", field: "CUSTOMERNAME", hozAlign: "center" },
-      { title: "청구금액", field: "TOTALSALES", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
+      { title: "미수금액", field: "TOTALSALES", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
       { title: "총 수금", field: "TOTALCOLLECTED", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
       { title: "미수금(잔액)", field: "OUTSTANDING", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "미수건수", field: "ARREARSCOUNT", hozAlign: "center" }
+      { title: "미수건수", field: "INVOICE_COUNT", hozAlign: "center" }
     ],
     rowClick: async function (e, row) {
       await openCollectionModal(row.getData());

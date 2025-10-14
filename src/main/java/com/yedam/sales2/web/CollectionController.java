@@ -60,12 +60,13 @@ public class CollectionController {
             Double recpt = Double.valueOf(request.get("recpt").toString());
             String paymentMethods = (String) request.get("paymentMethods");
             String remk = (String) request.get("remk");
-
+            
+            System.out.println("********************** "+recpt);
             // 프로시저 호출 (FIFO 방식 수금처리)
             collectionService.executeCollectionFifo(partnerCode, recpt, paymentMethods, remk, companyCode);
 
             result.put("success", true);
-            result.put("message", "수금 FIFO 처리 완료");
+            result.put("message", "수금 처리 완료");
         } catch (Exception e) {
             e.printStackTrace();
             result.put("success", false);

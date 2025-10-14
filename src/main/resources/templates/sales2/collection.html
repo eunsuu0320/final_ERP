@@ -28,6 +28,7 @@
     .tabulator-header {
       background: #f8f9fa;
     }
+    
   </style>
 </head>
 
@@ -37,38 +38,38 @@
     <div class="container-fluid px-4">
       <h1 class="mt-4">수금관리</h1>
 
-      <!-- 🔍 검색 + 버튼 영역 -->
+      <!-- 검색 + 버튼 영역 -->
       <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
 
-        <!-- 🔎 거래처 검색 -->
-        <div class="input-group" style="width:350px;">
-          <span class="input-group-text">거래처 검색</span>
+        <!-- 거래처 검색 -->
+        <div class="input-group" style="width:400px;">
+          <span class="input-group-text" style="margin-right:5px;">거래처 검색</span>
           <input id="partnerName" type="text" class="form-control" placeholder="거래처명 입력">
           <input type="hidden" id="partnerCode" name="partnerCode">
           <i class="fas fa-search"
-             style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+             style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
              onclick="openModal('partner', function(selected) {
                document.getElementById('partnerCode').value = selected.partnerCode;
                document.getElementById('partnerName').value = selected.partnerName;
              })"></i>
-          <button id="btn-search" class="btn btn-warning" type="button">검색</button>
+          <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
         </div>
 
-        <!-- 📌 버튼 그룹 -->
+        <!-- 버튼 그룹 -->
         <div class="d-flex gap-2">
           <button id="btn-excel" class="btn btn-secondary">Excel</button>
           <button id="btn-pdf" class="btn btn-secondary">PDF</button>
         </div>
       </div>
 
-      <!-- 📋 메인 Tabulator 테이블 -->
+      <!-- 메인 Tabulator 테이블 -->
       <div id="sales-table"></div>
 
       <div id="total-count" class="mt-2 fw-bold">
         총 거래처: <span class="text-primary">0건</span>
       </div>
 
-      <!-- 💰 수금 등록 모달 -->
+      <!-- 수금 등록 모달 -->
       <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered custom-modal">
           <div class="modal-content">
@@ -122,7 +123,7 @@
                 </div>
               </div>
 
-              <!-- 📊 수금 처리 결과 Tabulator -->
+              <!-- 수금 처리 결과 Tabulator -->
               <h6 class="fw-bold mb-2">수금 처리 결과</h6>
               <div id="resultTable"></div>
 
@@ -135,16 +136,16 @@
   </main>
 </div>
 
-<!-- ✅ 공통 모달 -->
+<!-- 공통 모달 -->
 <div th:replace="common/modal :: commonModal"></div>
 
-<!-- ✅ Tabulator JS -->
+<!-- Tabulator JS -->
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-<!-- ✅ Bootstrap -->
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ✅ 별도 JS 파일 -->
+<!-- 별도 JS 파일 -->
 <script th:src="@{/sales2/js/collection.js}"></script>
 
 </body>
