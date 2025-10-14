@@ -13,26 +13,29 @@ import com.yedam.sales2.domain.Sales;
 @Repository
 public interface BusinessProfitsRepository extends JpaRepository<Sales, String> {
 
-    // ✅ 품목별 집계 쿼리 (JPQL)
-    @Query("""
-        SELECT new map(
-            s.productCode as productCode,
-            s.productName as productName,
-            SUM(s.salesQty) as qty,
-            ROUND(AVG(s.salesPrice)) as salePrice,
-            SUM(s.salesAmount) as saleAmt,
-            ROUND(AVG(s.costUnitPrice)) as costPrice,
-            SUM(s.costAmount) as costAmt,
-            SUM(s.salesIncidentalCosts) as expAmt,
-            ROUND((SUM(s.salesAmount) - SUM(s.costAmount) - SUM(s.salesIncidentalCosts)) / SUM(s.salesAmount) * 100, 1) as profitRate
-        )
-        FROM Sales s
-        WHERE (:year IS NULL OR TO_CHAR(s.salesDate, 'YYYY') = :year)
-          AND (:quarter IS NULL OR TO_CHAR(s.salesDate, 'Q') = :quarter)
-          AND (:keyword IS NULL OR LOWER(s.productName) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        GROUP BY s.productCode, s.productName
-        ORDER BY s.productCode
-    """)
+    // 품목별 집계 쿼리 (JPQL)
+    @Query(value = """
+		       SELECT 
+		    s.PRODUCT_CODE        AS PRODUCTCODE,
+		    s.PRODUCT_NAME        AS PRODUCTNAME,
+		    SUM(s.SALES_QTY)      AS QTY,
+		    ROUND(AVG(s.SALES_PRICE)) AS SALEPRICE,
+		    SUM(s.SALES_AMOUNT)   AS SALEAMT,
+		    ROUND(AVG(s.COST_UNIT_PRICE)) AS COSTPRICE,
+		    SUM(s.COST_AMOUNT)    AS COSTAMT,
+		    SUM(s.SALES_INCIDENTAL_COSTS) AS EXPAMT,
+		    ROUND(
+		        ((SUM(s.SALES_AMOUNT) - SUM(s.COST_AMOUNT) - SUM(s.SALES_INCIDENTAL_COSTS))
+		        / NULLIF(SUM(s.SALES_AMOUNT), 0) * 100), 1
+		    ) AS PROFITRATE
+		FROM Sales s
+		WHERE (:year IS NULL OR TO_CHAR(s.SALES_DATE, 'YYYY') = :year)
+		  AND (:quarter IS NULL OR TO_CHAR(s.SALES_DATE, 'Q') = :quarter)
+		  AND (:keyword IS NULL OR LOWER(s.PRODUCT_NAME) LIKE LOWER('%' || :keyword || '%'))
+		GROUP BY s.PRODUCT_CODE, s.PRODUCT_NAME
+		ORDER BY s.PRODUCT_CODE
+    """,  nativeQuery = true)
+    
     List<Map<String, Object>> findSalesProfitList(
             @Param("year") String year,
             @Param("quarter") String quarter,

@@ -1,130 +1,188 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
-  // 📅 최근 5년 드롭다운 자동 생성
+  // ===============================
+  // 📅 최근 5년 드롭다운
+  // ===============================
   const yearSelect = document.getElementById("yearSelect");
+  const quarterSelect = document.getElementById("quarterSelect");
   const currentYear = new Date().getFullYear();
-  for (let y = currentYear; y > currentYear - 5; y--) {
-    const option = document.createElement("option");
-    option.value = y;
-    option.textContent = y;
-    yearSelect.appendChild(option);
+
+  if (yearSelect && yearSelect.options.length === 0) {
+    for (let y = currentYear; y > currentYear - 5; y--) {
+      const option = document.createElement("option");
+      option.value = y;
+      option.textContent = y;
+      yearSelect.appendChild(option);
+    }
   }
 
-  // 🧭 보기 탭 전환
+  // ===============================
+  // 🧭 탭 전환
+  // ===============================
   const btnProduct = document.getElementById("btnProductView");
   const btnEmployee = document.getElementById("btnEmployeeView");
+  if (btnProduct) btnProduct.addEventListener("click", () => (window.location.href = "/businessProfits"));
+  if (btnEmployee) btnEmployee.addEventListener("click", () => (window.location.href = "/employeeProfits"));
 
-  if (btnProduct) {
-    btnProduct.addEventListener("click", () => window.location.href = "/businessProfits");
+  // ===============================
+  // 🧩 필터 파라미터
+  // ===============================
+  function getFilterParams() {
+    let year = yearSelect?.value || null;
+    let quarter = quarterSelect?.value || null;
+    let keyword = document.getElementById("productName")?.value?.trim() || null;
+
+    if (year === "") year = null;
+    if (quarter === "") quarter = null;
+    if (keyword === "") keyword = null;
+
+    return { year, quarter, keyword };
   }
-  if (btnEmployee) {
-    btnEmployee.addEventListener("click", () => window.location.href = "/employeeProfits");
-  }
 
-  // 📈 요약 더미데이터
-  const summaryData = {
-    totalSalesCount: 100,
-    totalSupply: 900000,
-    totalTax: 100000,
-    totalAmount: 1000000
-  };
-  document.getElementById("totalSalesCount").textContent = summaryData.totalSalesCount.toLocaleString();
-  document.getElementById("totalSupply").textContent = summaryData.totalSupply.toLocaleString();
-  document.getElementById("totalTax").textContent = summaryData.totalTax.toLocaleString();
-  document.getElementById("totalAmount").textContent = summaryData.totalAmount.toLocaleString();
-
-  // 📊 사원별 테이블
-  const tableData = [
-    { empCode: "E001", empName: "박효준", qty: 120, supply: 1200000, tax: 120000, total: 1320000 },
-    { empCode: "E002", empName: "이영희", qty: 50, supply: 800000, tax: 80000, total: 880000 },
-    { empCode: "E003", empName: "정우성", qty: 70, supply: 950000, tax: 95000, total: 1045000 },
-    { empCode: "E004", empName: "김민재", qty: 90, supply: 1000000, tax: 100000, total: 1100000 },
-    { empCode: "E005", empName: "최보람", qty: 60, supply: 850000, tax: 85000, total: 935000 }
-  ];
-
+  // ===============================
+  // 📊 Tabulator 테이블
+  // ===============================
   const table = new Tabulator("#sales-table", {
     layout: "fitDataStretch",
     height: "480px",
     pagination: "local",
-    paginationSize: 5,
-    data: tableData,
+    paginationSize: 10,
+
+    // ❗초기 요청에도 companyCode 포함 (500 방지)
+    ajaxURL: "/api/employeeProfits/list",
+    ajaxConfig: "GET",
+    ajaxParams: { companyCode: "C001" },
+
+    ajaxURLGenerator: function (url, config, params) {
+      const filters = getFilterParams();
+      const qs = new URLSearchParams();
+      // 필수
+      qs.append("companyCode", "C001");
+      // 선택
+      if (filters.year) qs.append("year", filters.year);
+      if (filters.quarter) qs.append("quarter", filters.quarter);
+      if (filters.keyword) qs.append("keyword", filters.keyword);
+      // 캐시 방지
+      qs.append("_", Date.now());
+      const full = `${url}?${qs.toString()}`;
+      console.log("[employeeProfits] ajaxURL:", full);
+      return full;
+    },
+
+    ajaxResponse: function (url, params, response) {
+      console.log("📡 사원별 영업이익 목록:", response);
+
+      // ✅ 요약 합계 갱신
+      let totalSalesCount = 0;
+      let totalSupply = 0;
+      let totalTax = 0;
+      let totalAmount = 0;
+
+      if (Array.isArray(response)) {
+        response.forEach((r) => {
+          totalSalesCount += Number(r.salesQty || 0);
+          totalSupply += Number(r.salesAmount || 0);
+          totalTax += Number(r.tax || 0);
+          totalAmount += Number(r.totalAmount || 0);
+        });
+      }
+
+      const tCount = document.getElementById("totalSalesCount");
+      const tSupply = document.getElementById("totalSupply");
+      const tTax = document.getElementById("totalTax");
+      const tAmount = document.getElementById("totalAmount");
+
+      if (tCount) tCount.textContent = totalSalesCount.toLocaleString();
+      if (tSupply) tSupply.textContent = totalSupply.toLocaleString();
+      if (tTax) tTax.textContent = totalTax.toLocaleString();
+      if (tAmount) tAmount.textContent = totalAmount.toLocaleString();
+
+      return response; // 반드시 반환
+    },
+
     placeholder: "데이터가 없습니다.",
     columns: [
       { title: "사원코드", field: "empCode", hozAlign: "center", width: 120 },
-      { title: "사원명", field: "empName", hozAlign: "center", width: 150 },
-      { title: "수량", field: "qty", hozAlign: "right", width: 120 },
-      { title: "공급가액", field: "supply", hozAlign: "right", width: 150 },
+      { title: "사원명", field: "name", hozAlign: "center", width: 150 },
+      { title: "수량", field: "salesQty", hozAlign: "right", width: 120 },
+      { title: "공급가액", field: "salesAmount", hozAlign: "right", width: 150 },
       { title: "부가세", field: "tax", hozAlign: "right", width: 120 },
-      { title: "합계", field: "total", hozAlign: "right", width: 150 }
+      { title: "합계", field: "totalAmount", hozAlign: "right", width: 150 },
     ],
-    rowClick: function (e, row) {
-      const rowData = row.getData();
-      console.log("✅ 행 클릭됨:", rowData);
-      openEmployeeModal(rowData);
-    }
   });
 
-  // 🔍 검색 기능
-  const searchAction = () => {
-    const keyword = document.getElementById("searchInput").value.toLowerCase();
-    table.setFilter("empName", "like", keyword);
+  // ✅ 행 클릭 → 모달
+  table.on("rowClick", function (e, row) {
+    const emp = row.getData();
+    console.log("🧭 선택된 사원:", emp);
+    openEmployeeModal(emp);
+  });
+
+  // ===============================
+  // 🔍 검색/필터 → 재조회
+  // ===============================
+  const reloadTable = () => {
+    console.log("📡 검색 조건:", getFilterParams());
+    table.setData(); // ajaxURLGenerator가 최신 URL 생성
   };
-  document.getElementById("btn-search").addEventListener("click", searchAction);
-  document.getElementById("searchIcon").addEventListener("click", searchAction);
+
+  const searchInput = document.getElementById("productName");
+  document.getElementById("btn-search")?.addEventListener("click", reloadTable);
+  if (searchInput) {
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") reloadTable();
+    });
+  }
+  if (yearSelect) yearSelect.addEventListener("change", reloadTable);
+  if (quarterSelect) quarterSelect.addEventListener("change", reloadTable);
 });
 
-
-// ✅ 모달 열기 함수 (하나만 남김)
-function openEmployeeModal(data) {
-  console.log("✅ openEmployeeModal 실행:", data);
-
+// ===============================
+// 🪟 모달: 상세 테이블
+// ===============================
+function openEmployeeModal(emp) {
   const modalEl = document.getElementById("employeeModal");
-  if (!modalEl) {
-    console.error("❌ employeeModal 요소를 찾을 수 없습니다.");
-    return;
-  }
+  const modalTitle = document.getElementById("employeeModalLabel");
+  if (!modalEl) return console.error("❌ employeeModal 요소를 찾을 수 없습니다.");
 
-  // 제목 변경
-  document.getElementById("employeeModalLabel").textContent = `${data.empName} 사원 판매목록`;
-
-  // Bootstrap 모달 인스턴스 가져오기
+  modalTitle.textContent = `${emp.name} 사원 판매목록`;
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
 
-  // 📊 더미 데이터
-  const salesData = [
-    { date: "2025-09-12", customer: "예스홈", salesAmt: 350000, collectAmt: 150000, remark: "" },
-    { date: "2025-03-15", customer: "씽크존", salesAmt: 250000, collectAmt: 0, remark: "" },
-    { date: "2025-02-05", customer: "바이존", salesAmt: 800000, collectAmt: 700000, remark: "" },
-    { date: "2025-08-08", customer: "참잘", salesAmt: 750000, collectAmt: 500000, remark: "" }
-  ];
-
-  // 이미 존재하는 테이블 초기화
+  // 기존 테이블 제거(중복 방지)
   const existing = Tabulator.findTable("#employee-sales-table");
   if (existing.length) existing[0].destroy();
 
-  // 새 Tabulator 생성
+  // 👉 백엔드 상세 API가 준비되면 여기 ajaxURL/Params로 바꾸면 됨.
+  //    우선 동작 확인용 더미 데이터로 구성
   const modalTable = new Tabulator("#employee-sales-table", {
     layout: "fitDataStretch",
-    height: "400px",
+    height: "380px",
     pagination: "local",
     paginationSize: 5,
-    data: salesData,
     placeholder: "판매 데이터가 없습니다.",
+    data: [
+      { salesDate: "2025-09-12", correspondent: "예스홈", salesAmount: 350000, collectAmt: 150000, remark: "" },
+      { salesDate: "2025-03-15", correspondent: "씽크존", salesAmount: 250000, collectAmt: 0, remark: "" },
+      { salesDate: "2025-02-05", correspondent: "바이존", salesAmount: 800000, collectAmt: 700000, remark: "" },
+      { salesDate: "2025-08-08", correspondent: "참잘", salesAmount: 750000, collectAmt: 500000, remark: "" },
+    ],
     columns: [
-      { title: "일자", field: "date", hozAlign: "center", width: 120 },
-      { title: "거래처명", field: "customer", hozAlign: "center", width: 150 },
-      { title: "매출금액", field: "salesAmt", hozAlign: "right", formatter: "money", width: 150 },
+      { title: "일자", field: "salesDate", hozAlign: "center", width: 120 },
+      { title: "거래처명", field: "correspondent", hozAlign: "center", width: 150 },
+      { title: "매출금액", field: "salesAmount", hozAlign: "right", formatter: "money", width: 150 },
       { title: "수금금액", field: "collectAmt", hozAlign: "right", formatter: "money", width: 150 },
-      { title: "비고", field: "remark", hozAlign: "left" }
-    ]
+      { title: "비고", field: "remark", hozAlign: "left", width: 180 },
+    ],
   });
 
   // 모달 내 검색
-  const modalSearch = () => {
-    const keyword = document.getElementById("modal-searchInput").value.toLowerCase();
-    modalTable.setFilter("customer", "like", keyword);
+  const searchAction = () => {
+    const keyword = (document.getElementById("modal-searchInput")?.value || "").trim().toLowerCase();
+    modalTable.setFilter("correspondent", "like", keyword);
   };
-  document.getElementById("modal-btn-search").onclick = modalSearch;
-  document.getElementById("modal-searchIcon").onclick = modalSearch;
+  const btn = document.getElementById("modal-btn-search");
+  const icon = document.getElementById("modal-searchIcon");
+  if (btn) btn.onclick = searchAction;
+  if (icon) icon.onclick = searchAction;
 }

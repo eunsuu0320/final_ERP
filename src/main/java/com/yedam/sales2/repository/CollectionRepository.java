@@ -21,17 +21,17 @@ public interface CollectionRepository extends JpaRepository<CollectionEntity, St
     @Query(value = """
            SELECT
 			    PARTNER_CODE,
-			    MAX(PARTNER_NAME) AS CUSTOMERNAME,
+			    PARTNER_NAME AS CUSTOMERNAME,
 			    NVL(SUM(DMND_AMT), 0) AS TOTALSALES,
 			    NVL(SUM(UNRCT_BALN), 0) AS OUTSTANDING,
 			    NVL(SUM(DMND_AMT), 0) - NVL(SUM(UNRCT_BALN), 0) AS TOTALCOLLECTED,
-			    COUNT(*) AS INVOICE_COUNT,
-			    COUNT(CASE WHEN COLLECTION_ST IN ('진행중') THEN 1 END) AS ARREARSCOUNT
+			    COUNT(*) AS INVOICE_COUNT
 			FROM INVOICE
 			WHERE COMPANY_CODE = :companyCode
 			  AND IS_CURRENT_VERSION = 'Y'
-			GROUP BY PARTNER_CODE
-			ORDER BY MAX(PARTNER_NAME)
+              AND STATUS = '진행중'
+			GROUP BY PARTNER_CODE, PARTNER_NAME
+			ORDER BY PARTNER_NAME
         """, nativeQuery = true)
         List<Map<String, Object>> findReceivableSummary(@Param("companyCode") String companyCode);
 
