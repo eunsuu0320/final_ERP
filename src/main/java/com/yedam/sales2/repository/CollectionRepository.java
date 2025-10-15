@@ -40,6 +40,7 @@ public interface CollectionRepository extends JpaRepository<CollectionEntity, St
     void callCollectionFifoProc(
         @Param("p_partner_code") String partnerCode,
         @Param("p_payment_amt") Double paymentAmt,
+        @Param("p_post_deduction") Double postDeduction,
         @Param("p_payment_methods") String paymentMethods,
         @Param("p_remk") String remk,
         @Param("p_company_code") String companyCode

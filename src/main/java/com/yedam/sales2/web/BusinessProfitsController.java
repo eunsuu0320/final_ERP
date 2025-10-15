@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales2.service.BusinessProfitsService;
+import com.yedam.sales2.service.EmployeeProfitsService;
 import com.yedam.sales2.service.SalesService;
 
 /*
@@ -17,12 +18,12 @@ import com.yedam.sales2.service.SalesService;
  */
 @Controller
 public class BusinessProfitsController {
-
-	 @Autowired
-	    private SalesService salesService;
 	 
 	 @Autowired
 	    private BusinessProfitsService businessProfitsService;
+	 
+	 @Autowired
+	    private EmployeeProfitsService employeeProfitsService;
 	
 	// 영업이익조회 HTML
 	@GetMapping("businessProfits")
@@ -47,6 +48,17 @@ public class BusinessProfitsController {
     	return businessProfitsService.getSalesProfitList(year, quarter, keyword);
     }
     
-    
-	
+    @ResponseBody
+    @GetMapping("/partners")
+    public List<Map<String, Object>> getEmpPartners(
+        @RequestParam String companyCode,
+        @RequestParam String empCode,
+        @RequestParam(required = false) Integer year,
+        @RequestParam(required = false) Integer quarter,
+        @RequestParam(required = false) String keyword
+    ) {
+        return employeeProfitsService.getEmpPartners(companyCode, empCode, year, quarter, keyword);
+    }
+
+
 }

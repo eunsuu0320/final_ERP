@@ -12,4 +12,9 @@ public interface EmployeeProfitsService {
         Integer quarter,
         String keyword
     );
+    
+    // 사원관리 모달
+    List<Map<String, Object>> getEmpPartners(
+            String companyCode, String empCode, Integer year, Integer quarter, String keyword
+        );
 }

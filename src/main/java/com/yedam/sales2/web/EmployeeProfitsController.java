@@ -37,4 +37,19 @@ public class EmployeeProfitsController {
 	    ) {
 	        return service.getEmployeeSummary(companyCode, year, quarter, keyword);
 	    }
+	    
+	    
+	    // 사원관련 모달
+	    @ResponseBody
+	    @GetMapping("/partners")
+	    public List<Map<String, Object>> getEmpPartners(
+	        @RequestParam String companyCode,
+	        @RequestParam String empCode,
+	        @RequestParam(required = false) Integer year,
+	        @RequestParam(required = false) Integer quarter,
+	        @RequestParam(required = false) String keyword
+	    ) {
+	        return service.getEmpPartners(companyCode, empCode, year, quarter, keyword);
+	    }
+
 	}

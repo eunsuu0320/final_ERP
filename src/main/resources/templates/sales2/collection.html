@@ -28,6 +28,13 @@
     .tabulator-header {
       background: #f8f9fa;
     }
+    /* 조회 버튼 사이즈 업 */
+	.btn-view-invoices {
+	  padding: 5px 15px;      /* 여백 확대 */
+	  font-size: 0.95rem;     /* 글자 조금 키움 */
+	  line-height: 1.25;
+	  border-width: 2px;      /* 테두리 살짝 두껍게 */
+	}
     
   </style>
 </head>
@@ -42,8 +49,7 @@
       <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
 
         <!-- 거래처 검색 -->
-        <div class="input-group" style="width:400px;">
-          <span class="input-group-text" style="margin-right:5px;">거래처 검색</span>
+        <div class="input-group" style="width:350px;">
           <input id="partnerName" type="text" class="form-control" placeholder="거래처명 입력">
           <input type="hidden" id="partnerCode" name="partnerCode">
           <i class="fas fa-search"
@@ -68,7 +74,12 @@
       <div id="total-count" class="mt-2 fw-bold">
         총 거래처: <span class="text-primary">0건</span>
       </div>
-
+	
+	<!-- 청구내역 섹션 (Tabulator) -->
+	<h5 class="mt-4">청구내역</h5>
+	<div id="invoice-table" style="height:260px;"></div>
+	      
+	      
       <!-- 수금 등록 모달 -->
       <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered custom-modal">
@@ -91,11 +102,13 @@
                 <div class="col-md-4">
                   <label class="form-label">*수금일자</label>
                   <input type="date" id="moneyDate" class="form-control" value="2025-10-10">
-                </div>                
+                </div>  
+                              
                 <div class="col-md-4">
                   <label class="form-label">*거래처</label>
                   <input type="text" id="modalPartnerName" class="form-control" placeholder="거래처명 입력">
                 </div>
+                
                 <div class="col-md-4">
                   <label class="form-label">*담당자</label>
                   <input type="text" id="managerName" class="form-control" placeholder="담당자명 입력">
@@ -107,6 +120,12 @@
                   <label class="form-label">*수금금액</label>
                   <input type="text" id="collectAmt" class="form-control" placeholder="금액 입력">
                 </div>
+                
+                <div class="col-md-4">
+                  <label class="form-label">사후공제</label>
+                  <input type="text" id="postDeductionAmt" class="form-control" placeholder="금액 입력">
+                </div>
+                
                 <div class="col-md-4">
                   <label class="form-label">*결제방식</label>
                   <select id="paymentType" class="form-select">
@@ -116,7 +135,9 @@
                     <option value="카드">카드</option>
                   </select>
                 </div>
-                <div class="col-md-4">
+              </div>
+                
+                <div class="col-md-12">
                   <label class="form-label">비고</label>
                   <input type="text" id="remarks" class="form-control" placeholder="비고 입력">
                   <input type="hidden" id="partnerCode" name="partnerCode">

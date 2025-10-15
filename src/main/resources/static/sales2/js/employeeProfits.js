@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ===============================
-// 🪟 모달: 상세 테이블
+// 모달: 상세 테이블
 // ===============================
 function openEmployeeModal(emp) {
   const modalEl = document.getElementById("employeeModal");
@@ -149,40 +149,60 @@ function openEmployeeModal(emp) {
   const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
 
-  // 기존 테이블 제거(중복 방지)
   const existing = Tabulator.findTable("#employee-sales-table");
   if (existing.length) existing[0].destroy();
 
-  // 👉 백엔드 상세 API가 준비되면 여기 ajaxURL/Params로 바꾸면 됨.
-  //    우선 동작 확인용 더미 데이터로 구성
+  // ✅ 파라미터 안전하게 구성 (undefined/""는 제거)
+  const buildParams = (extra = {}) => {
+    const yearSel = document.getElementById("yearSelect")?.value ?? "";
+    const quarterSel = document.getElementById("quarterSelect")?.value ?? "";
+    const params = {
+      companyCode: "C001",
+      empCode: emp.empCode,
+      ...extra,
+    };
+    if (yearSel)   params.year    = parseInt(yearSel, 10);
+    if (quarterSel) params.quarter = parseInt(quarterSel, 10);
+    if (extra.keyword !== undefined && extra.keyword !== null && extra.keyword !== "") {
+      params.keyword = extra.keyword;
+    }
+    return params;
+  };
+
   const modalTable = new Tabulator("#employee-sales-table", {
     layout: "fitDataStretch",
     height: "380px",
     pagination: "local",
-    paginationSize: 5,
+    paginationSize: 8,
     placeholder: "판매 데이터가 없습니다.",
-    data: [
-      { salesDate: "2025-09-12", correspondent: "예스홈", salesAmount: 350000, collectAmt: 150000, remark: "" },
-      { salesDate: "2025-03-15", correspondent: "씽크존", salesAmount: 250000, collectAmt: 0, remark: "" },
-      { salesDate: "2025-02-05", correspondent: "바이존", salesAmount: 800000, collectAmt: 700000, remark: "" },
-      { salesDate: "2025-08-08", correspondent: "참잘", salesAmount: 750000, collectAmt: 500000, remark: "" },
-    ],
+    ajaxURL: "/api/employeeProfits/partners",
+    ajaxConfig: "GET",
+    ajaxParams: buildParams(), // ← 여기!
+    ajaxResponse: function (url, params, response) {
+      console.log("📡 partners response:", response);
+      return response;
+    },
+    ajaxError: function (error) {
+      console.error("❌ partners ajax error:", error);
+      alert("서버 에러가 발생했습니다. 콘솔 로그를 확인하세요.");
+    },
     columns: [
-      { title: "일자", field: "salesDate", hozAlign: "center", width: 120 },
-      { title: "거래처명", field: "correspondent", hozAlign: "center", width: 150 },
-      { title: "매출금액", field: "salesAmount", hozAlign: "right", formatter: "money", width: 150 },
-      { title: "수금금액", field: "collectAmt", hozAlign: "right", formatter: "money", width: 150 },
-      { title: "비고", field: "remark", hozAlign: "left", width: 180 },
+      { title: "거래처명",   field: "partnerName", hozAlign: "left",   minWidth: 200 },
+      { title: "매출금액",   field: "salesAmount", hozAlign: "right",
+        formatter: "money", width: 140, bottomCalc: "sum", bottomCalcFormatter: "money" },
+      { title: "수금금액",   field: "collectAmt",  hozAlign: "right",
+        formatter: "money", width: 140, bottomCalc: "sum", bottomCalcFormatter: "money" },
     ],
   });
 
-  // 모달 내 검색
+  // 🔎 모달 검색 → 서버 재조회
   const searchAction = () => {
-    const keyword = (document.getElementById("modal-searchInput")?.value || "").trim().toLowerCase();
-    modalTable.setFilter("correspondent", "like", keyword);
+    const keyword = (document.getElementById("modal-searchInput")?.value || "").trim();
+    modalTable.setData("/api/employeeProfits/partners", buildParams({ keyword }));
   };
-  const btn = document.getElementById("modal-btn-search");
-  const icon = document.getElementById("modal-searchIcon");
-  if (btn) btn.onclick = searchAction;
-  if (icon) icon.onclick = searchAction;
+  document.getElementById("modal-btn-search")?.addEventListener("click", searchAction);
+  document.getElementById("modal-searchIcon")?.addEventListener("click", searchAction);
+  document.getElementById("modal-searchInput")?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") searchAction();
+  });
 }
