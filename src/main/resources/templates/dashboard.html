@@ -1,584 +1,436 @@
+<!-- src/main/resources/templates/dashboard.html -->
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/main}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}"
+      th:inline="none">
 <head>
-<meta charset="UTF-8">
-<title>구독핑 이알핑</title>
+  <meta charset="UTF-8" />
+  <title>구독핑 이알핑 · Dashboard</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb; --card:#ffffff;
+      --shadow:0 10px 28px rgba(2,6,23,.08);
+      --chip:#f8fafc; --chip-border:#e2e8f0;
+      --accent:#2563eb; --accent-dark:#1e40af;
+      --up:#16a34a; --down:#dc2626;
+    }
+    #layoutSidenav_content>main{ background:#fff; min-height:100%; padding-top:16px; }
+
+    /* ===== 상단 타이틀 ===== */
+    .page-title-wrap{
+      position:relative;
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      margin:8px 0 14px; padding:14px 16px; border:1px solid var(--line);
+      border-radius:14px; background:linear-gradient(180deg,#ffffff,#fafcff);
+      box-shadow:var(--shadow);
+    }
+    .page-title-wrap.loading::after{
+      content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:3px;
+      background:linear-gradient(90deg,var(--accent),#22d3ee,#60a5fa);
+      background-size:200% 100%; border-radius:999px;
+      animation:bar-scan 1.2s linear infinite;
+    }
+    @keyframes bar-scan{ 0%{background-position:0% 0;} 100%{background-position:200% 0;} }
+
+    .page-title{ display:flex; align-items:center; gap:12px; color:var(--text); }
+    .page-title h1{ margin:0; font-size:28px; font-weight:800; letter-spacing:.2px; }
+
+    .badge-live{
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:8px; padding:8px 14px; line-height:1; border-radius:999px;
+      background:rgba(37,99,235,.08); color:var(--accent-dark);
+      font-weight:700; border:1px solid rgba(37,99,235,.18);
+      box-shadow:inset 0 -1px 0 rgba(37,99,235,.08);
+    }
+    .badge-live .dot{ width:8px;height:8px;border-radius:50%; background:#16a34a; box-shadow:0 0 0 4px rgba(22,163,74,.2); }
+
+    .crumbs{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px; background:var(--chip);
+      border:1px solid var(--chip-border); color:var(--text);
+      padding:8px 12px; border-radius:999px; font-weight:600; line-height:1;
+    }
+    .chip i{ color:var(--muted); }
+    .chip.loading{ display:none; }
+    .mini-spinner{
+      width:14px; height:14px; border-radius:50%;
+      border:2px solid rgba(37,99,235,.2); border-top-color:var(--accent);
+      animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+
+    /* ===== KPI 카드 ===== */
+    .kpi-grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr); }
+    .kpi{ grid-column:span 12; position:relative; overflow:hidden; border-radius:16px; padding:16px; color:#fff; box-shadow:var(--shadow); display:flex; align-items:center; gap:14px; }
+    @media (min-width:576px){ .kpi{ grid-column:span 6; } }
+    @media (min-width:1200px){ .kpi{ grid-column:span 4; } }
+    .kpi .icon{ width:56px;height:120px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:rgba(255,255,255,.22);backdrop-filter:blur(2px);flex:none; }
+    .kpi .meta{ flex:1 1 auto; min-width:0; }
+    .kpi .label{ font-weight:700; opacity:.95; }
+    .kpi .value{ font-size:28px; font-weight:900; letter-spacing:.3px; }
+    .kpi small{ opacity:.95; font-weight:600; display:block; }
+
+    /* 전월 대비 퍼센트 뱃지 */
+    .delta{
+      margin-top:6px;
+      display:inline-flex; align-items:center; gap:6px;
+      font-weight:800; padding:4px 10px; border-radius:999px;
+      background:rgba(255,255,255,.22); backdrop-filter:blur(2px);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    .delta.up{ color:#ecfdf5; background:rgba(22,163,74,.28); box-shadow:inset 0 0 0 1px rgba(22,163,74,.35); }
+    .delta.down{ color:#fef2f2; background:rgba(220,38,38,.28); box-shadow:inset 0 0 0 1px rgba(220,38,38,.35); }
+    .delta.flat{ color:#111827; background:rgba(255,255,255,.35); }
+
+    .kpi canvas{ position:absolute; right:-8px; bottom:-8px; width:140px!important; height:60px!important; opacity:.35; }
+    .kpi.sales{ background:linear-gradient(135deg,#60a5fa 0%,#22d3ee 100%); }
+    .kpi.buy  { background:linear-gradient(135deg,#f59e0b 0%,#ef4444 100%); }
+    .kpi.emp  { background:linear-gradient(135deg,#34d399 0%,#22c55e 100%); }
+    .kpi.ar   { background:linear-gradient(135deg,#6366f1 0%,#06b6d4 100%); }
+    .kpi.cnt  { background:linear-gradient(135deg,#14b8a6 0%,#06b6d4 100%); }
+    .kpi.att  { background:linear-gradient(135deg,#a78bfa 0%,#22d3ee 100%); }
+
+    /* 로딩 스켈레톤 */
+    .skeleton{ position:relative; overflow:hidden; }
+    .skeleton .value, .skeleton small, .skeleton .label, .skeleton .delta{ color:transparent!important; }
+    .skeleton::after{
+      content:""; position:absolute; inset:0;
+      background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.35) 50%, rgba(255,255,255,0) 100%);
+      transform:translateX(-100%); animation:shimmer 1.4s infinite;
+    }
+    @keyframes shimmer{ 100%{ transform:translateX(100%);} }
+
+    /* 패널/차트 */
+    .panel{ background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); color:var(--text); }
+    .panel .card-header{ border-bottom:1px solid var(--line); background:linear-gradient(180deg,#ffffff,#fbfcff); color:var(--text); font-weight:700; }
+    .panel .card-body canvas{ width:100% !important; height:260px !important; display:block; }
+
+    /* 토스트 */
+    .toast-wrap{ position:fixed; right:20px; bottom:20px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
+    .toast{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#ffffff; box-shadow:var(--shadow); color:#var(--text); font-weight:600; }
+    .toast.error{ border-color:#fecaca; background:#fff1f2; color:#991b1b; }
+    .toast.info{ border-color:#bfdbfe; background:#eff6ff; color:#1e3a8a; }
+    .toast i{ opacity:.8; }
+  </style>
 </head>
+
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">Dashboard</h1>
-				<ol class="breadcrumb mb-4">
-					<li class="breadcrumb-item active">Dashboard</li>
-				</ol>
-				<div class="row">
-					<div class="col-xl-3 col-md-6">
-						<div class="card bg-primary text-white mb-4">
-							<div class="card-body">Primary Card</div>
-							<div
-								class="card-footer d-flex align-items-center justify-content-between">
-								<a class="small text-white stretched-link" href="#">View
-									Details</a>
-								<div class="small text-white">
-									<i class="fas fa-angle-right"></i>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-xl-3 col-md-6">
-						<div class="card bg-warning text-white mb-4">
-							<div class="card-body">Warning Card</div>
-							<div
-								class="card-footer d-flex align-items-center justify-content-between">
-								<a class="small text-white stretched-link" href="#">View
-									Details</a>
-								<div class="small text-white">
-									<i class="fas fa-angle-right"></i>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-xl-3 col-md-6">
-						<div class="card bg-success text-white mb-4">
-							<div class="card-body">Success Card</div>
-							<div
-								class="card-footer d-flex align-items-center justify-content-between">
-								<a class="small text-white stretched-link" href="#">View
-									Details</a>
-								<div class="small text-white">
-									<i class="fas fa-angle-right"></i>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-xl-3 col-md-6">
-						<div class="card bg-danger text-white mb-4">
-							<div class="card-body">Danger Card</div>
-							<div
-								class="card-footer d-flex align-items-center justify-content-between">
-								<a class="small text-white stretched-link" href="#">View
-									Details</a>
-								<div class="small text-white">
-									<i class="fas fa-angle-right"></i>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-xl-6">
-						<div class="card mb-4">
-							<div class="card-header">
-								<i class="fas fa-chart-area me-1"></i> Area Chart Example
-							</div>
-							<div class="card-body">
-								<canvas id="myAreaChart" width="100%" height="40"></canvas>
-							</div>
-						</div>
-					</div>
-					<div class="col-xl-6">
-						<div class="card mb-4">
-							<div class="card-header">
-								<i class="fas fa-chart-bar me-1"></i> Bar Chart Example
-							</div>
-							<div class="card-body">
-								<canvas id="myBarChart" width="100%" height="40"></canvas>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="card mb-4">
-					<div class="card-header">
-						<i class="fas fa-table me-1"></i> DataTable Example
-					</div>
-					<div class="card-body">
-						<table id="datatablesSimple">
-							<thead>
-								<tr>
-									<th>Name</th>
-									<th>Position</th>
-									<th>Office</th>
-									<th>Age</th>
-									<th>Start date</th>
-									<th>Salary</th>
-								</tr>
-							</thead>
-							<tfoot>
-								<tr>
-									<th>Name</th>
-									<th>Position</th>
-									<th>Office</th>
-									<th>Age</th>
-									<th>Start date</th>
-									<th>Salary</th>
-								</tr>
-							</tfoot>
-							<tbody>
-								<tr>
-									<td>Tiger Nixon</td>
-									<td>System Architect</td>
-									<td>Edinburgh</td>
-									<td>61</td>
-									<td>2011/04/25</td>
-									<td>$320,800</td>
-								</tr>
-								<tr>
-									<td>Garrett Winters</td>
-									<td>Accountant</td>
-									<td>Tokyo</td>
-									<td>63</td>
-									<td>2011/07/25</td>
-									<td>$170,750</td>
-								</tr>
-								<tr>
-									<td>Ashton Cox</td>
-									<td>Junior Technical Author</td>
-									<td>San Francisco</td>
-									<td>66</td>
-									<td>2009/01/12</td>
-									<td>$86,000</td>
-								</tr>
-								<tr>
-									<td>Cedric Kelly</td>
-									<td>Senior Javascript Developer</td>
-									<td>Edinburgh</td>
-									<td>22</td>
-									<td>2012/03/29</td>
-									<td>$433,060</td>
-								</tr>
-								<tr>
-									<td>Airi Satou</td>
-									<td>Accountant</td>
-									<td>Tokyo</td>
-									<td>33</td>
-									<td>2008/11/28</td>
-									<td>$162,700</td>
-								</tr>
-								<tr>
-									<td>Brielle Williamson</td>
-									<td>Integration Specialist</td>
-									<td>New York</td>
-									<td>61</td>
-									<td>2012/12/02</td>
-									<td>$372,000</td>
-								</tr>
-								<tr>
-									<td>Herrod Chandler</td>
-									<td>Sales Assistant</td>
-									<td>San Francisco</td>
-									<td>59</td>
-									<td>2012/08/06</td>
-									<td>$137,500</td>
-								</tr>
-								<tr>
-									<td>Rhona Davidson</td>
-									<td>Integration Specialist</td>
-									<td>Tokyo</td>
-									<td>55</td>
-									<td>2010/10/14</td>
-									<td>$327,900</td>
-								</tr>
-								<tr>
-									<td>Colleen Hurst</td>
-									<td>Javascript Developer</td>
-									<td>San Francisco</td>
-									<td>39</td>
-									<td>2009/09/15</td>
-									<td>$205,500</td>
-								</tr>
-								<tr>
-									<td>Sonya Frost</td>
-									<td>Software Engineer</td>
-									<td>Edinburgh</td>
-									<td>23</td>
-									<td>2008/12/13</td>
-									<td>$103,600</td>
-								</tr>
-								<tr>
-									<td>Jena Gaines</td>
-									<td>Office Manager</td>
-									<td>London</td>
-									<td>30</td>
-									<td>2008/12/19</td>
-									<td>$90,560</td>
-								</tr>
-								<tr>
-									<td>Quinn Flynn</td>
-									<td>Support Lead</td>
-									<td>Edinburgh</td>
-									<td>22</td>
-									<td>2013/03/03</td>
-									<td>$342,000</td>
-								</tr>
-								<tr>
-									<td>Charde Marshall</td>
-									<td>Regional Director</td>
-									<td>San Francisco</td>
-									<td>36</td>
-									<td>2008/10/16</td>
-									<td>$470,600</td>
-								</tr>
-								<tr>
-									<td>Haley Kennedy</td>
-									<td>Senior Marketing Designer</td>
-									<td>London</td>
-									<td>43</td>
-									<td>2012/12/18</td>
-									<td>$313,500</td>
-								</tr>
-								<tr>
-									<td>Tatyana Fitzpatrick</td>
-									<td>Regional Director</td>
-									<td>London</td>
-									<td>19</td>
-									<td>2010/03/17</td>
-									<td>$385,750</td>
-								</tr>
-								<tr>
-									<td>Michael Silva</td>
-									<td>Marketing Designer</td>
-									<td>London</td>
-									<td>66</td>
-									<td>2012/11/27</td>
-									<td>$198,500</td>
-								</tr>
-								<tr>
-									<td>Paul Byrd</td>
-									<td>Chief Financial Officer (CFO)</td>
-									<td>New York</td>
-									<td>64</td>
-									<td>2010/06/09</td>
-									<td>$725,000</td>
-								</tr>
-								<tr>
-									<td>Gloria Little</td>
-									<td>Systems Administrator</td>
-									<td>New York</td>
-									<td>59</td>
-									<td>2009/04/10</td>
-									<td>$237,500</td>
-								</tr>
-								<tr>
-									<td>Bradley Greer</td>
-									<td>Software Engineer</td>
-									<td>London</td>
-									<td>41</td>
-									<td>2012/10/13</td>
-									<td>$132,000</td>
-								</tr>
-								<tr>
-									<td>Dai Rios</td>
-									<td>Personnel Lead</td>
-									<td>Edinburgh</td>
-									<td>35</td>
-									<td>2012/09/26</td>
-									<td>$217,500</td>
-								</tr>
-								<tr>
-									<td>Jenette Caldwell</td>
-									<td>Development Lead</td>
-									<td>New York</td>
-									<td>30</td>
-									<td>2011/09/03</td>
-									<td>$345,000</td>
-								</tr>
-								<tr>
-									<td>Yuri Berry</td>
-									<td>Chief Marketing Officer (CMO)</td>
-									<td>New York</td>
-									<td>40</td>
-									<td>2009/06/25</td>
-									<td>$675,000</td>
-								</tr>
-								<tr>
-									<td>Caesar Vance</td>
-									<td>Pre-Sales Support</td>
-									<td>New York</td>
-									<td>21</td>
-									<td>2011/12/12</td>
-									<td>$106,450</td>
-								</tr>
-								<tr>
-									<td>Doris Wilder</td>
-									<td>Sales Assistant</td>
-									<td>Sidney</td>
-									<td>23</td>
-									<td>2010/09/20</td>
-									<td>$85,600</td>
-								</tr>
-								<tr>
-									<td>Angelica Ramos</td>
-									<td>Chief Executive Officer (CEO)</td>
-									<td>London</td>
-									<td>47</td>
-									<td>2009/10/09</td>
-									<td>$1,200,000</td>
-								</tr>
-								<tr>
-									<td>Gavin Joyce</td>
-									<td>Developer</td>
-									<td>Edinburgh</td>
-									<td>42</td>
-									<td>2010/12/22</td>
-									<td>$92,575</td>
-								</tr>
-								<tr>
-									<td>Jennifer Chang</td>
-									<td>Regional Director</td>
-									<td>Singapore</td>
-									<td>28</td>
-									<td>2010/11/14</td>
-									<td>$357,650</td>
-								</tr>
-								<tr>
-									<td>Brenden Wagner</td>
-									<td>Software Engineer</td>
-									<td>San Francisco</td>
-									<td>28</td>
-									<td>2011/06/07</td>
-									<td>$206,850</td>
-								</tr>
-								<tr>
-									<td>Fiona Green</td>
-									<td>Chief Operating Officer (COO)</td>
-									<td>San Francisco</td>
-									<td>48</td>
-									<td>2010/03/11</td>
-									<td>$850,000</td>
-								</tr>
-								<tr>
-									<td>Shou Itou</td>
-									<td>Regional Marketing</td>
-									<td>Tokyo</td>
-									<td>20</td>
-									<td>2011/08/14</td>
-									<td>$163,000</td>
-								</tr>
-								<tr>
-									<td>Michelle House</td>
-									<td>Integration Specialist</td>
-									<td>Sidney</td>
-									<td>37</td>
-									<td>2011/06/02</td>
-									<td>$95,400</td>
-								</tr>
-								<tr>
-									<td>Suki Burks</td>
-									<td>Developer</td>
-									<td>London</td>
-									<td>53</td>
-									<td>2009/10/22</td>
-									<td>$114,500</td>
-								</tr>
-								<tr>
-									<td>Prescott Bartlett</td>
-									<td>Technical Author</td>
-									<td>London</td>
-									<td>27</td>
-									<td>2011/05/07</td>
-									<td>$145,000</td>
-								</tr>
-								<tr>
-									<td>Gavin Cortez</td>
-									<td>Team Leader</td>
-									<td>San Francisco</td>
-									<td>22</td>
-									<td>2008/10/26</td>
-									<td>$235,500</td>
-								</tr>
-								<tr>
-									<td>Martena Mccray</td>
-									<td>Post-Sales support</td>
-									<td>Edinburgh</td>
-									<td>46</td>
-									<td>2011/03/09</td>
-									<td>$324,050</td>
-								</tr>
-								<tr>
-									<td>Unity Butler</td>
-									<td>Marketing Designer</td>
-									<td>San Francisco</td>
-									<td>47</td>
-									<td>2009/12/09</td>
-									<td>$85,675</td>
-								</tr>
-								<tr>
-									<td>Howard Hatfield</td>
-									<td>Office Manager</td>
-									<td>San Francisco</td>
-									<td>51</td>
-									<td>2008/12/16</td>
-									<td>$164,500</td>
-								</tr>
-								<tr>
-									<td>Hope Fuentes</td>
-									<td>Secretary</td>
-									<td>San Francisco</td>
-									<td>41</td>
-									<td>2010/02/12</td>
-									<td>$109,850</td>
-								</tr>
-								<tr>
-									<td>Vivian Harrell</td>
-									<td>Financial Controller</td>
-									<td>San Francisco</td>
-									<td>62</td>
-									<td>2009/02/14</td>
-									<td>$452,500</td>
-								</tr>
-								<tr>
-									<td>Timothy Mooney</td>
-									<td>Office Manager</td>
-									<td>London</td>
-									<td>37</td>
-									<td>2008/12/11</td>
-									<td>$136,200</td>
-								</tr>
-								<tr>
-									<td>Jackson Bradshaw</td>
-									<td>Director</td>
-									<td>New York</td>
-									<td>65</td>
-									<td>2008/09/26</td>
-									<td>$645,750</td>
-								</tr>
-								<tr>
-									<td>Olivia Liang</td>
-									<td>Support Engineer</td>
-									<td>Singapore</td>
-									<td>64</td>
-									<td>2011/02/03</td>
-									<td>$234,500</td>
-								</tr>
-								<tr>
-									<td>Bruno Nash</td>
-									<td>Software Engineer</td>
-									<td>London</td>
-									<td>38</td>
-									<td>2011/05/03</td>
-									<td>$163,500</td>
-								</tr>
-								<tr>
-									<td>Sakura Yamamoto</td>
-									<td>Support Engineer</td>
-									<td>Tokyo</td>
-									<td>37</td>
-									<td>2009/08/19</td>
-									<td>$139,575</td>
-								</tr>
-								<tr>
-									<td>Thor Walton</td>
-									<td>Developer</td>
-									<td>New York</td>
-									<td>61</td>
-									<td>2013/08/11</td>
-									<td>$98,540</td>
-								</tr>
-								<tr>
-									<td>Finn Camacho</td>
-									<td>Support Engineer</td>
-									<td>San Francisco</td>
-									<td>47</td>
-									<td>2009/07/07</td>
-									<td>$87,500</td>
-								</tr>
-								<tr>
-									<td>Serge Baldwin</td>
-									<td>Data Coordinator</td>
-									<td>Singapore</td>
-									<td>64</td>
-									<td>2012/04/09</td>
-									<td>$138,575</td>
-								</tr>
-								<tr>
-									<td>Zenaida Frank</td>
-									<td>Software Engineer</td>
-									<td>New York</td>
-									<td>63</td>
-									<td>2010/01/04</td>
-									<td>$125,250</td>
-								</tr>
-								<tr>
-									<td>Zorita Serrano</td>
-									<td>Software Engineer</td>
-									<td>San Francisco</td>
-									<td>56</td>
-									<td>2012/06/01</td>
-									<td>$115,000</td>
-								</tr>
-								<tr>
-									<td>Jennifer Acosta</td>
-									<td>Junior Javascript Developer</td>
-									<td>Edinburgh</td>
-									<td>43</td>
-									<td>2013/02/01</td>
-									<td>$75,650</td>
-								</tr>
-								<tr>
-									<td>Cara Stevens</td>
-									<td>Sales Assistant</td>
-									<td>New York</td>
-									<td>46</td>
-									<td>2011/12/06</td>
-									<td>$145,600</td>
-								</tr>
-								<tr>
-									<td>Hermione Butler</td>
-									<td>Regional Director</td>
-									<td>London</td>
-									<td>47</td>
-									<td>2011/03/21</td>
-									<td>$356,250</td>
-								</tr>
-								<tr>
-									<td>Lael Greer</td>
-									<td>Systems Administrator</td>
-									<td>London</td>
-									<td>21</td>
-									<td>2009/02/27</td>
-									<td>$103,500</td>
-								</tr>
-								<tr>
-									<td>Jonas Alexander</td>
-									<td>Developer</td>
-									<td>San Francisco</td>
-									<td>30</td>
-									<td>2010/07/14</td>
-									<td>$86,500</td>
-								</tr>
-								<tr>
-									<td>Shad Decker</td>
-									<td>Regional Director</td>
-									<td>Edinburgh</td>
-									<td>51</td>
-									<td>2008/11/13</td>
-									<td>$183,000</td>
-								</tr>
-								<tr>
-									<td>Michael Bruce</td>
-									<td>Javascript Developer</td>
-									<td>Singapore</td>
-									<td>29</td>
-									<td>2011/06/27</td>
-									<td>$183,000</td>
-								</tr>
-								<tr>
-									<td>Donna Snider</td>
-									<td>Customer Support</td>
-									<td>New York</td>
-									<td>27</td>
-									<td>2011/01/25</td>
-									<td>$112,000</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</main>
-	</div> 
+<div id="layoutSidenav_content">
+  <main>
+    <div class="container-fluid px-4">
+
+      <!-- 상단 타이틀 -->
+      <div class="page-title-wrap" id="page-title-wrap">
+        <div class="page-title">
+          <h1>Dashboard</h1>
+          <span class="badge-live"><span class="dot" aria-hidden="true"></span><span>실시간 요약</span></span>
+        </div>
+        <div class="crumbs">
+          <span class="chip"><i class="fa-regular fa-calendar"></i>기준일 <strong id="as-of-date">—</strong></span>
+          <span class="chip"><i class="fa-solid fa-rotate"></i>동기화 <strong id="sync-time">—</strong></span>
+          <span class="chip loading" id="loading-chip"><span class="mini-spinner" aria-hidden="true"></span><span>불러오는 중…</span></span>
+        </div>
+      </div>
+
+      <!-- KPI 1열 -->
+      <div class="kpi-grid mb-3">
+        <div class="kpi sales skeleton" id="kpi-card-sales">
+          <div class="icon"><i class="fa-solid fa-won-sign"></i></div>
+          <div class="meta">
+            <div class="label">이번 달 매출</div>
+            <div class="value" id="kpi-sales">0</div>
+            <small id="kpi-sales-note">—</small>
+            <span id="kpi-sales-delta" class="delta flat">—</span>
+          </div>
+          <canvas id="spark-sales"></canvas>
+        </div>
+        <div class="kpi buy skeleton" id="kpi-card-buy">
+          <div class="icon"><i class="fa-solid fa-cart-shopping"></i></div>
+          <div class="meta">
+            <div class="label">이번 달 지출</div>
+            <div class="value" id="kpi-buy">0</div>
+            <small id="kpi-buy-note">—</small>
+            <span id="kpi-buy-delta" class="delta flat">—</span>
+          </div>
+          <canvas id="spark-buy"></canvas>
+        </div>
+        <div class="kpi emp skeleton" id="kpi-card-emp">
+          <div class="icon"><i class="fa-solid fa-users"></i></div>
+          <div class="meta">
+            <div class="label">사원수</div>
+            <div class="value" id="kpi-emp">0</div>
+            <small id="kpi-emp-note">—</small>
+          </div>
+          <canvas id="spark-emp"></canvas>
+        </div>
+      </div>
+
+      <!-- KPI 2열 -->
+      <div class="kpi-grid mb-4">
+        <div class="kpi ar skeleton" id="kpi-card-ar">
+          <div class="icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+          <div class="meta">
+            <div class="label">미수금</div>
+            <div class="value" id="kpi-ar">0</div>
+            <small id="kpi-ar-note">전체 합계</small>
+          </div>
+          <canvas id="spark-ar"></canvas>
+        </div>
+
+        <div class="kpi cnt skeleton" id="kpi-card-cnt">
+          <div class="icon"><i class="fa-solid fa-receipt"></i></div>
+          <div class="meta">
+            <div class="label">매출 전표 건수</div>
+            <div class="value" id="kpi-sales-cnt">0</div>
+            <small id="kpi-sales-cnt-note">—</small>
+          </div>
+          <canvas id="spark-sales-cnt"></canvas>
+        </div>
+
+        <div class="kpi att skeleton" id="kpi-card-att">
+          <div class="icon"><i class="fa-solid fa-user-check"></i></div>
+          <div class="meta">
+            <div class="label">금일 출근</div>
+            <div class="value" id="kpi-attend">0</div>
+            <small id="kpi-attend-note">금일 기준</small>
+          </div>
+          <canvas id="spark-attend"></canvas>
+        </div>
+      </div>
+
+      <!-- 차트 -->
+      <div class="row">
+        <div class="col-xl-6">
+          <div class="card panel mb-4">
+            <div class="card-header"><i class="fas fa-chart-line me-2"></i>월별 매출·매입 추이</div>
+            <div class="card-body"><canvas id="chart-line"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="card panel mb-4">
+            <div class="card-header"><i class="fas fa-chart-bar me-2"></i>부서별 인원</div>
+            <div class="card-body"><canvas id="chart-bar"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast-wrap" id="toast-wrap" aria-live="polite" aria-atomic="true"></div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  const won = n => Number(n||0).toLocaleString('ko-KR');
+  const nf  = new Intl.NumberFormat('ko-KR');
+
+  function updateHeaderDates(){
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    const dd = String(now.getDate()).padStart(2,'0');
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mi = String(now.getMinutes()).padStart(2,'0');
+    document.getElementById('as-of-date').textContent = `${yyyy}-${mm}-${dd}`;
+    document.getElementById('sync-time').textContent = `${yyyy}.${mm}.${dd} ${hh}:${mi}`;
+  }
+
+  function showToast(message, type='info', timeout=3000){
+    const wrap = document.getElementById('toast-wrap');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-exclamation':'fa-circle-info'}"></i> <span>${message}</span>`;
+    wrap.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(6px)'; }, timeout);
+    setTimeout(()=> wrap.removeChild(el), timeout+300);
+  }
+
+  function sparkline(canvas, data, color='rgba(37,99,235,1)'){
+    new Chart(canvas, {
+      type:'line',
+      data:{labels:data.map((_,i)=>i+1), datasets:[{
+        data, tension:.35, borderColor:color, fill:true,
+        backgroundColor: color.replace(',1)', ',.15)'),
+        pointRadius:0, borderWidth:2
+      }]},
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}}, scales:{x:{display:false}, y:{display:false}} }
+    });
+  }
+
+  let lineChart, barChart;
+
+  function buildCharts(months, salesTrend, buyTrend, deptNames, deptCounts){
+    // 라인
+    const ctx1 = document.getElementById('chart-line').getContext('2d');
+    if(lineChart) lineChart.destroy();
+    lineChart = new Chart(ctx1,{
+      type:'line',
+      data:{
+        labels:months,
+        datasets:[
+          {label:'매출', data:salesTrend, tension:.35, borderWidth:3, borderColor:'#2563eb', backgroundColor:'rgba(37,99,235,.15)', fill:true},
+          {label:'매입', data:buyTrend,   tension:.35, borderWidth:3, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.15)', fill:true}
+        ]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{labels:{color:'#334155'}}, tooltip:{ callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${nf.format(ctx.parsed.y ?? 0)}` } } },
+        scales:{
+          x:{ ticks:{color:'#64748b'}, grid:{color:'rgba(148,163,184,.25)'} },
+          y:{ beginAtZero:true, suggestedMin:0, ticks:{ color:'#64748b', callback:(v)=> nf.format(v) }, grid:{color:'rgba(148,163,184,.25)'} }
+        }
+      }
+    });
+
+    // 바 (정수 눈금)
+    const counts = (deptCounts || []).map(v => Math.max(0, Math.round(Number(v) || 0)));
+    const maxDept = Math.max(0, ...counts);
+    const hardMax = Math.max(4, maxDept + 1);
+
+    const ctx2 = document.getElementById('chart-bar');
+    if(barChart) barChart.destroy();
+    barChart = new Chart(ctx2,{
+      type:'bar',
+      data:{ labels:deptNames, datasets:[{label:'사원수', data:counts, backgroundColor:'rgba(16,185,129,.25)', borderColor:'#10b981', borderWidth:2}] },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{labels:{color:'#334155'}}, tooltip:{ callbacks:{ label:(ctx)=> `${ctx.dataset.label}: ${Math.round(ctx.parsed.y ?? 0)}` } } },
+        scales:{
+          x:{ ticks:{color:'#64748b'}, grid:{display:false} },
+          y:{ min:0, max:hardMax, beginAtZero:true, ticks:{ stepSize:1, color:'#64748b', callback:(v)=> Number.isInteger(v)?String(v):'' }, grid:{color:'rgba(148,163,184,.25)'} }
+        }
+      }
+    });
+  }
+
+  /* ===== 전월 대비 계산/출력 ===== */
+  function monthLabelToMM(label){
+    // "01", "1", "01월", "1월" 모두 대응
+    const digits = String(label).replace(/[^\d]/g,'');
+    return digits.padStart(2,'0');
+  }
+  function setDeltaBadge(el, cur, prev){
+    if(prev == null || prev === 0){
+      el.className = 'delta flat';
+      el.innerHTML = '<i class="fa-regular fa-circle-question"></i> 전월 데이터 없음';
+      return;
+    }
+    const diff = cur - prev;
+    const pct = (diff / prev) * 100;
+    const sign = pct > 0 ? '+' : '';
+    const cls = pct > 0 ? 'up' : (pct < 0 ? 'down' : 'flat');
+    const icon = pct > 0 ? 'fa-arrow-trend-up' : (pct < 0 ? 'fa-arrow-trend-down' : 'fa-minus');
+    el.className = `delta ${cls}`;
+    el.innerHTML = `<i class="fa-solid ${icon}"></i> ${sign}${pct.toFixed(1)}% 전월 대비`;
+  }
+  function applyMomBadges(months, salesTrend, buyTrend){
+    const now = new Date();
+    const mm = String(now.getMonth()+1).padStart(2,'0');
+    // months 배열에서 현재 월 라벨 인덱스 찾기 (없으면 마지막 값 사용)
+    let idx = months?.findIndex(m => monthLabelToMM(m) === mm);
+    if(idx === -1) idx = (months?.length ?? 1) - 1;
+
+    const curSales = Number(salesTrend?.[idx] ?? 0);
+    const prevSales = idx>0 ? Number(salesTrend?.[idx-1] ?? 0) : null;
+    const curBuy   = Number(buyTrend?.[idx] ?? 0);
+    const prevBuy  = idx>0 ? Number(buyTrend?.[idx-1] ?? 0) : null;
+
+    setDeltaBadge(document.getElementById('kpi-sales-delta'), curSales, prevSales);
+    setDeltaBadge(document.getElementById('kpi-buy-delta'),   curBuy,   prevBuy);
+  }
+
+  /* ===== 헤더 로딩만 사용 ===== */
+  const titleWrap   = document.getElementById('page-title-wrap');
+  const loadingChip = document.getElementById('loading-chip');
+
+  function startLoading(){ titleWrap.classList.add('loading'); loadingChip.style.display = 'inline-flex'; }
+  function stopLoading(){  titleWrap.classList.remove('loading'); loadingChip.style.display = 'none'; }
+
+  /* ===== 데이터 로드 ===== */
+  let inFlightController = null;
+
+  async function fetchSummaryWithRetry(url, options={}, retries=2){
+    try{
+      const res = await fetch(url, options);
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    }catch(err){
+      if (err.name === 'AbortError') throw err;
+      if(retries > 0){
+        const backoff = 400 * Math.pow(1.5, (2-retries));
+        await new Promise(r => setTimeout(r, backoff));
+        return fetchSummaryWithRetry(url, options, retries-1);
+      }
+      throw err;
+    }
+  }
+
+  function clearSkeleton(){ document.querySelectorAll('.kpi.skeleton').forEach(el => el.classList.remove('skeleton')); }
+
+  async function load(){
+    updateHeaderDates();
+
+    if(inFlightController) inFlightController.abort();
+    inFlightController = new AbortController();
+
+    startLoading();
+    try{
+      const d = await fetchSummaryWithRetry('/api/dashboard/summary', {
+        headers:{'Accept':'application/json'},
+        signal: inFlightController.signal
+      }, 2);
+
+      // KPI
+      document.getElementById('kpi-sales').textContent = won(d.salesThisMonth||0);
+      document.getElementById('kpi-buy').textContent   = won(d.buyThisMonth||0);
+      document.getElementById('kpi-emp').textContent   = won(d.employees||0);
+      document.getElementById('kpi-ar').textContent    = won(d.arAmount||0);
+      document.getElementById('kpi-sales-cnt').textContent = won(d.salesCount||0);
+      document.getElementById('kpi-attend').textContent    = won(d.commuteToday||0);
+
+      document.getElementById('kpi-sales-note').textContent = `이번 달: ₩${won(d.salesThisMonth||0)}`;
+      document.getElementById('kpi-buy-note').textContent   = `이번 달: ₩${won(d.buyThisMonth||0)}`;
+      document.getElementById('kpi-emp-note').textContent   = `총 인원: ${won(d.employees||0)}명`;
+      document.getElementById('kpi-sales-cnt-note').textContent = `이번 달 전표`;
+      document.getElementById('kpi-attend-note').textContent = '금일 기준';
+
+      // Sparklines
+      sparkline(document.getElementById('spark-sales'), (d.salesTrend||[]), '#2563eb');
+      sparkline(document.getElementById('spark-buy'),   (d.buyTrend||[]),   '#f59e0b');
+      sparkline(document.getElementById('spark-emp'),   (d.deptCounts||[]), '#10b981');
+      sparkline(document.getElementById('spark-ar'),    (d.arTrend||[]),    '#14b8a6');
+      sparkline(document.getElementById('spark-sales-cnt'), (d.salesCntTrend||[]), '#06b6d4');
+      sparkline(document.getElementById('spark-attend'), [(d.commuteToday||0)], '#8b5cf6');
+
+      // Charts
+      buildCharts(d.months||[], d.salesTrend||[], d.buyTrend||[], d.deptNames||[], d.deptCounts||[]);
+
+      // 전월 대비 퍼센트
+      applyMomBadges(d.months||[], d.salesTrend||[], d.buyTrend||[]);
+
+      clearSkeleton();
+      showToast('대시보드가 최신 상태로 동기화되었습니다.', 'info', 2200);
+    }catch(e){
+      if(e.name !== 'AbortError'){
+        clearSkeleton();
+        showToast('데이터 불러오기에 실패했어요. 잠시 후 다시 시도됩니다.', 'error', 3500);
+        setTimeout(load, 1500);
+      }
+    }finally{
+      stopLoading();
+      inFlightController = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') updateHeaderDates();
+  });
+  document.addEventListener('DOMContentLoaded', load);
+</script>
 </body>
 </html>
