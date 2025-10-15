@@ -1,33 +1,47 @@
 package com.yedam.common.domain;
 
-import java.util.Date;
+import org.hibernate.annotations.GenericGenerator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.yedam.common.Prefixable;
-import com.yedam.hr.domain.Employee;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 @Entity
 @Table(name = "ROLE_PERMISSION")
 @Data
 public class RolePermission implements Prefixable {
-	
+
 	@Id
+	@GeneratedValue(generator = "sequence-id-generator")
+	@GenericGenerator(name = "sequence-id-generator", strategy = "com.yedam.common.SequenceIdGenerator")
+	@Column(name = "PERMISSION_CODE")
 	private String permissionCode;
-	private String moduleCode;
+
+	@Column(name = "ROLE_CODE")
+	private String roleCode;
+
+	@Column(name = "SCREEN_CODE")
 	private String screenCode;
-	private String screenName;
-	// 체크박스는 'Y'면 체크, 'N'이면 해제
-	private String readYn; // 'Y' or 'N'
-	private String createYn; // 'Y' or 'N'
-	private String updateYn; // 'Y' or 'N'
-	private String deleteYn; // 'Y' or 'N'
-	
+
+	@Column(name = "READ_ROLE")
+	private String readRole; // Y/N
+
+	@Column(name = "CREATE_ROLE")
+	private String createRole; // Y/N
+
+	@Column(name = "UPDATE_ROLE")
+	private String updateRole; // Y/N
+
+	@Column(name = "DELETE_ROLE")
+	private String deleteRole; // Y/N
+
 	@Override
 	public String getPrefix() {
 		return "RP";

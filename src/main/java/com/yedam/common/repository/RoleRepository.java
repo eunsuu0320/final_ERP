@@ -35,4 +35,8 @@ public interface RoleRepository extends JpaRepository<Role, String> {
 
     // 목록 조회
     List<Role> findByCompanyCodeOrderByRoleNameAsc(String companyCode);
+    
+    long countByCompanyCodeAndRoleCode(String companyCode, String roleCode);
+    
+    Optional<Role> findByCompanyCodeAndRoleCode(String companyCode, String roleCode);
 }

@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yedam.common.ScreenPerm;
+import com.yedam.common.ScreenPerm.Action;
 import com.yedam.hr.domain.Attendance;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.repository.AttendanceRepository;
@@ -30,12 +32,13 @@ public class ModalController {
 	ProductRepository productRepository;
 	@Autowired
 	EstimateRepository estimateRepository;
-
+	
+	@ScreenPerm(screen = "COM_SUB", action=ScreenPerm.Action.READ)
 	@GetMapping("/employee")
 	public List<Employee> getEmployees() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String companyCode = auth.getName().split(":")[0];
-
+		
 		return employeeRepository.findByCompanyCode(companyCode);
 	}
 
