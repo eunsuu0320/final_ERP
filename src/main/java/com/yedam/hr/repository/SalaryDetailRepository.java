@@ -55,4 +55,7 @@ public interface SalaryDetailRepository extends JpaRepository<SalaryDetail, Long
 	    )
 	    """, nativeQuery = true)
 	int insertDetailsForMaster(String salaryId, String companyCode);
+
+	// 회사코드별, 급여대장별 조회
+	List<SalaryDetail> findByCompanyCodeAndSalaryId(String companyCode, String salaryId);
 }

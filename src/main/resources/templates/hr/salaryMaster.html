@@ -5,160 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <title>급여대장</title>
-<style>
-/* ----- 기본 레이아웃/애니메이션 ----- */
-#salaryCalcModal .modal-dialog {
-  transform: translateY(8px);
-  transition: transform .25s ease;
-}
-#salaryCalcModal.show .modal-dialog {
-  transform: translateY(0);
-}
-#salaryCalcModal .modal-content {
-  border: 0;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow:
-    0 12px 30px rgba(0,0,0,.18),
-    0 2px 8px rgba(0,0,0,.08);
-  background: #fff;
-}
-
-/* ----- 헤더 ----- */
-#salaryCalcModal .modal-header {
-  padding: 14px 18px;
-  background: linear-gradient(135deg, #f6f7ff 0%, #eef2ff 100%);
-  border-bottom: 1px solid rgba(0,0,0,.06);
-}
-#salaryCalcModal .modal-title {
-  font-weight: 700;
-  letter-spacing: -.2px;
-  color: #1e293b; /* slate-800 */
-}
-#salaryCalcModal .btn-close {
-  filter: saturate(0) contrast(0.8) brightness(0.7);
-  transition: transform .15s ease, filter .15s ease;
-}
-#salaryCalcModal .btn-close:hover {
-  transform: rotate(90deg);
-  filter: none;
-}
-
-/* ----- 바디 ----- */
-#salaryCalcModal .modal-body {
-  padding: 18px 18px 8px 18px;
-}
-#salaryCalcModal .modal-body ul {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-}
-#salaryCalcModal .modal-body li {
-  position: relative;
-  padding-left: 28px;
-  margin: 8px 0;
-  color: #334155; /* slate-700 */
-  line-height: 1.55;
-}
-#salaryCalcModal .modal-body li::before {
-  content: "✔";
-  position: absolute;
-  left: 0;
-  top: 0;
-  transform: translateY(2px);
-  font-size: 13px;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  display: inline-grid;
-  place-items: center;
-  background: #e9f3ff;
-  color: #2563eb; /* blue-600 */
-}
-
-#salaryCalcModal .modal-body hr {
-  border: none;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent);
-  margin: 16px 0 14px;
-}
-
-#salaryCalcModal .small.text-muted {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: #64748b; /* slate-500 */
-  background: #f8fafc; /* slate-50 */
-  border: 1px solid rgba(2,6,23,.06);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-/* 라벨 강조 */
-#salaryCalcModal .small.text-muted div > span {
-  color: #111827; /* gray-900 */
-  font-weight: 600;
-}
-
-/* ----- 푸터/버튼 ----- */
-#salaryCalcModal .modal-footer {
-  padding: 14px 18px 18px 18px;
-  border-top: 1px solid rgba(0,0,0,.06);
-}
-#salaryCalcModal .btn-primary {
-  border-radius: 10px;
-  padding: 8px 14px;
-  box-shadow: 0 6px 16px rgba(37,99,235,.22);
-  transition: transform .1s ease, box-shadow .2s ease, filter .2s ease;
-}
-#salaryCalcModal .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(37,99,235,.28);
-  filter: brightness(1.05);
-}
-#salaryCalcModal .btn-secondary {
-  border-radius: 10px;
-  padding: 8px 14px;
-  background: #e5e7eb; /* gray-200 */
-  color: #111827;      /* gray-900 */
-  border: 1px solid rgba(17,24,39,.06);
-}
-#salaryCalcModal .btn-secondary:hover {
-  background: #d1d5db; /* gray-300 */
-}
-
-/* ----- 백드롭(살짝 블러) ----- */
-.modal-backdrop.show {
-  opacity: .25 !important;
-  backdrop-filter: blur(2px);
-}
-
-/* ----- 다크모드(있다면) ----- */
-@media (prefers-color-scheme: dark) {
-  #salaryCalcModal .modal-content { background: #0b1220; }
-  #salaryCalcModal .modal-header {
-    background: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
-    border-color: rgba(255,255,255,.06);
-  }
-  #salaryCalcModal .modal-title { color: #e5e7eb; }
-  #salaryCalcModal .modal-body li { color: #cbd5e1; }
-  #salaryCalcModal .small.text-muted {
-    background: #0f172a;
-    border-color: rgba(255,255,255,.06);
-    color: #94a3b8;
-  }
-  #salaryCalcModal .small.text-muted div > span { color: #f1f5f9; }
-  #salaryCalcModal .modal-footer { border-color: rgba(255,255,255,.06); }
-}
-
-/* ----- 모션 최소화 환경 케어 ----- */
-@media (prefers-reduced-motion: reduce) {
-  #salaryCalcModal .modal-dialog,
-  #salaryCalcModal .btn-close,
-  #salaryCalcModal .btn-primary {
-    transition: none !important;
-  }
-}
-</style>
+<link href="/hr/css/employee.css" rel="stylesheet" />
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
@@ -178,6 +25,7 @@
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					 <div class="ms-auto d-flex">
 					 	<button id="btn-new" class="btn btn-primary me-2">신규</button>
+					 	<button id="btn-fix" class="btn btn-danger me-2">확정</button>
 					    <button class="btn btn-secondary me-2">급여 이체 현황</button>
 					 </div>
 				</div>
@@ -187,6 +35,9 @@
 
 				<!-- 신규 모달 페이지 -->
 				<div th:replace="hr/salaryModal :: salaryModal"></div>
+
+				<!-- 명세서 조회 모달 페이지 -->
+				<div id="salaryPayModalHost"></div>
 
 				<!-- 급여계산 안내/확인 모달 -->
 				<div class="modal fade" id="salaryCalcModal" tabindex="-1" aria-hidden="true">
@@ -217,7 +68,8 @@
 				    </div>
 				  </div>
 				</div>
-			</div>
+				<!--  -->
+		</div>
 	</div>
 	</main>
 	</div>

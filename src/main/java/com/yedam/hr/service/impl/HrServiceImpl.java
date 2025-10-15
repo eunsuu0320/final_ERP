@@ -35,14 +35,10 @@ import jakarta.persistence.EntityNotFoundException;
 @Service
 public class HrServiceImpl implements HrService {
 
-	@Autowired
-	EmployeeRepository employeeRepository;
-	@Autowired
-	HrSignRepository hrSignRepository;
-	@Autowired
-	HrPDFRepository hrPDFRepository;
-	@Autowired
-	HrHistoryRepository hrHistoryRepository;
+	@Autowired EmployeeRepository employeeRepository;
+	@Autowired HrSignRepository hrSignRepository;
+	@Autowired HrPDFRepository hrPDFRepository;
+	@Autowired HrHistoryRepository hrHistoryRepository;
 
 	@Override
 	public List<Employee> findByCompanyCode(String companyCode) {
@@ -179,8 +175,8 @@ public class HrServiceImpl implements HrService {
 	// 단 건 조회
 	@Override
 	@Transactional(readOnly = true)
-	public Employee getEmployee(String EmpCode) {
-		return employeeRepository.findById(EmpCode).orElseThrow(() -> new EntityNotFoundException("사원 없음: " + EmpCode));
+	public Employee getEmployee(String companyCode, String  empCode) {
+		return employeeRepository.findByCompanyCodeAndEmpCode(companyCode, empCode);
 	}
 
 	// 단 건 수정

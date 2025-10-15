@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
@@ -74,7 +76,9 @@ public class HrController {
 	// 단건 조회
 	@GetMapping("/api/employees/{empNo}")
 	public ResponseEntity<Employee> getEmployeeByPath(@PathVariable String empNo) {
-	    Employee emp = hrService.getEmployee(empNo);
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String companyCode = auth.getName().split(":")[0];
+	    Employee emp = hrService.getEmployee(companyCode, empNo);
 	    return (emp != null) ? ResponseEntity.ok(emp)
 	                         : ResponseEntity.notFound().build();
 	}
