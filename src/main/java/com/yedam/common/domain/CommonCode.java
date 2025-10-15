@@ -12,6 +12,8 @@ import lombok.Data;
 public class CommonCode {
 
 	@Id
+	private String codeNum;
+	
 	private String codeId;
 
 	private String groupId;

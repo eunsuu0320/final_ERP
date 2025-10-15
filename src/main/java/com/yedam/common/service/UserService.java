@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,7 +16,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.yedam.common.domain.Role;
 import com.yedam.common.domain.SystemUser;
+import com.yedam.common.repository.RoleRepository;
 import com.yedam.common.repository.UserRepository;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.repository.EmployeeRepository;
@@ -30,7 +33,8 @@ public class UserService implements UserDetailsService {
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JavaMailSender mailSender;
     @Autowired EmployeeRepository employeeRepository;
- 
+    @Autowired RoleRepository roleRepository;
+    
     // 임시 비밀번호 생성 로직
     private static final String PW_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^*";
     private static final SecureRandom RND = new SecureRandom();
@@ -175,13 +179,20 @@ public class UserService implements UserDetailsService {
 
         SystemUser user = userRepository.findByUserIdAndCompanyCode(userId, companyCode)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
-
-        String username = companyCode + ":" + userId + ":" + user.getEmpCode();
-
+        
+        Role role = roleRepository
+                .findByCompanyCodeAndRoleCode(companyCode, user.getRoleCode())
+                .orElseThrow(() -> new UsernameNotFoundException("역할을 찾을 수 없습니다."));
+        
+        String username = companyCode + ":" + userId + ":" + user.getEmpCode() + ":" + user.getRoleCode();
+        
         return User.builder()
                 .username(username)
                 .password(user.getUserPw())
-                .roles(user.getRoleCode())
+                .authorities(
+                        // 표준 ROLE_ 접두사 + 이름 (예: ROLE_MASTER) → hasRole('MASTER')로 체크
+                        new SimpleGrantedAuthority(role.getRoleName())
+                    )
                 .build();
     }
 

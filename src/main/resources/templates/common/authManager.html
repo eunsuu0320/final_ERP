@@ -5,7 +5,6 @@
 <head>
 <meta charset="utf-8" />
 <title>권한 관리</title>
-<!-- 이 페이지에서만 쓰이도록 .rp 네임스페이스로 CSS 스코프 -->
 <style>
 :root {
 	--line: #e5e7eb;
@@ -15,7 +14,7 @@
 	--text: #111827;
 	--accent: #eef4ff;
 	--accent-line: #bfd3ff;
-	--thead: #fafbff;
+	--thead: #fafbff
 }
 
 body {
@@ -23,17 +22,15 @@ body {
 	background: var(--bg);
 	color: var(--text);
 	font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
-		Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+		Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif
 }
 
-/* ===== rp scope ===== */
 .rp .layout {
 	display: flex;
 	gap: 16px;
 	min-width: 0;
 	padding: 16px;
-	/* 페이지 헤더(상단 공통바/브레드크럼) 높이에 맞춰 수치 조정 */
-	height: calc(100vh - 160px);
+	height: calc(100vh - 160px)
 }
 
 .rp .left {
@@ -43,32 +40,32 @@ body {
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	overflow: auto;
-	max-height: 100%;
+	max-height: 100%
 }
 
 .rp .left-head {
 	padding: 12px 14px;
 	border-bottom: 1px solid #eee;
-	font-weight: 700;
+	font-weight: 700
 }
 
 .rp .role-list {
-	padding: 6px;
+	padding: 6px
 }
 
 .rp .role-item {
 	padding: 10px 12px;
 	border-radius: 8px;
-	cursor: pointer;
+	cursor: pointer
 }
 
 .rp .role-item:hover {
-	background: #f7f9ff;
+	background: #f7f9ff
 }
 
 .rp .role-item.active {
 	background: var(--accent);
-	border: 1px solid var(--accent-line);
+	border: 1px solid var(--accent-line)
 }
 
 .rp .right {
@@ -76,19 +73,18 @@ body {
 	min-width: 0;
 	min-height: 0;
 	display: flex;
-	flex-direction: column;
+	flex-direction: column
 }
 
 .rp .toolbar {
 	display: flex;
 	gap: 8px;
 	align-items: center;
-	margin: 0 0 10px;
-	flex: 0 0 auto;
+	margin: 0 0 10px
 }
 
 .rp .toolbar .spacer {
-	flex: 1;
+	flex: 1
 }
 
 .rp .input {
@@ -96,7 +92,7 @@ body {
 	padding: 0 10px;
 	border: 1px solid #c8c8c8;
 	border-radius: 6px;
-	background: #fff;
+	background: #fff
 }
 
 .rp .btn {
@@ -105,17 +101,17 @@ body {
 	border: 1px solid #d0d5dd;
 	border-radius: 8px;
 	background: #fff;
-	cursor: pointer;
+	cursor: pointer
 }
 
 .rp .btn-primary {
 	background: #4f46e5;
 	border-color: #4f46e5;
-	color: #fff;
+	color: #fff
 }
 
 .rp .btn-primary:hover {
-	opacity: .95;
+	opacity: .95
 }
 
 .rp .card {
@@ -125,20 +121,20 @@ body {
 	flex: 1 1 auto;
 	min-height: 0;
 	display: flex;
-	flex-direction: column;
+	flex-direction: column
 }
 
 .rp .table-wrap {
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow: auto;
-	max-width: 100%;
+	max-width: 100%
 }
 
 .rp table {
 	width: 100%;
 	border-collapse: separate;
-	border-spacing: 0;
+	border-spacing: 0
 }
 
 .rp thead th {
@@ -147,53 +143,50 @@ body {
 	z-index: 1;
 	background: var(--thead);
 	border-bottom: 1px solid var(--line);
-	font-weight: 700;
+	font-weight: 700
 }
 
 .rp th, .rp td {
 	padding: 10px 8px;
 	text-align: center;
 	border-bottom: 1px solid #f0f0f0;
-	white-space: nowrap;
+	white-space: nowrap
 }
 
 .rp td:first-child, .rp th:first-child {
-	text-align: center;
+	text-align: center
 }
 
 .rp .empty {
 	padding: 28px;
 	color: var(--muted);
-	text-align: center;
+	text-align: center
 }
 
-/* 모듈 그룹 헤더 행 */
 .rp .mod-row td {
 	background: #f8fafc;
 	font-weight: 700;
 	text-align: left;
-	border-top: 2px solid var(--line);
+	border-top: 2px solid var(--line)
 }
 
-/* 모바일 */
 @media ( max-width :960px) {
 	.rp .layout {
 		flex-direction: column;
-		height: auto;
+		height: auto
 	}
 	.rp .left {
-		max-height: none;
+		max-height: none
 	}
 }
-/* ===== /rp scope ===== */
 </style>
-
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="container-fluid px-4">
 				<h1 class="mt-4">권한 관리</h1>
+
 				<div id="rolePermApp" class="rp">
 					<div class="layout">
 						<!-- 왼쪽: 역할 리스트 -->
@@ -246,25 +239,24 @@ body {
 			</div>
 		</main>
 	</div>
+
 	<script>
 /* ------------------------------
    상태
 --------------------------------*/
 let state = {
   roles: [],               // [{roleCode, roleName}]
-  currentRoleCode: null,   // 선택된 역할코드
-  modules: [],             // [{code,name}]
-  rows: [],                // [{screenCode,screenName,moduleCode,moduleName,r,c,u,d}]
+  currentRoleCode: null,
+  modules: [],             // [{code, name}]
+  rows: [],                // [{moduleCode, moduleName, screenCode, screenName, r,c,u,d}]
   dirty: new Map(),        // key=screenCode, val={r,c,u,d}
-  onlyY: true,             // 사용여부 Y 화면만
+  onlyY: true
 };
 
 /* ------------------------------
    초기화
 --------------------------------*/
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-});
+document.addEventListener('DOMContentLoaded', () => init());
 
 async function init(){
   try {
@@ -294,7 +286,8 @@ async function jput(url, body){
    데이터 로딩
 --------------------------------*/
 async function loadRoles(){
-  // 백엔드: /api/roles → [{roleCode, roleName}] 형태라고 가정
+  // 기존에 사용하던 역할 목록 API 유지
+  // 예) GET /api/role-perms → [{roleCode, roleName}]
   const roles = await jget('/api/role-perms');
   state.roles = roles ?? [];
 
@@ -310,7 +303,7 @@ async function loadRoles(){
 }
 
 async function loadModules(){
-  // 백엔드: /api/screens/modules?onlyY=true → [{code, name}]
+  // GET /api/screens/modules?onlyY=true  → [{code, name}]
   state.modules = await jget(`/api/screens/modules?onlyY=${state.onlyY}`);
   const sel = document.getElementById('selModule');
   sel.innerHTML = '<option value="">모듈 전체</option>';
@@ -325,42 +318,40 @@ async function selectRole(roleCode, el){
   state.currentRoleCode = roleCode;
   document.querySelectorAll('.role-item').forEach(x=>x.classList.remove('active'));
   el?.classList.add('active');
-  await loadPerms(roleCode);       // 역할별 권한 + 화면 병합
+  await loadPerms(roleCode);
   renderTable();
 }
 
 /**
- * 역할별 권한 + 화면 목록 병합
- * - /api/screens?module=&kw=&onlyY= 에서 화면 목록
- * - /api/role-perms?roleCode= 에서 권한 목록
+ * 화면+권한 묶음 조회 (조인 결과를 바로 받음)
+ * 컨트롤러 기준: GET /api/roles/{roleCode}/screens?onlyY=true
+ * (companyCode는 서버에서 SecurityContext로 해결)
+ * 응답: [{moduleCode, screenCode, screenName, readYn, createYn, updateYn, deleteYn}]
  */
 async function loadPerms(roleCode){
-  const kw = document.getElementById('qScreen').value.trim();
+  const kw = document.getElementById('qScreen').value.trim().toLowerCase();
   const module = document.getElementById('selModule').value;
 
-  // 화면 목록 로드
-  const screens = await jget(`/api/screens?onlyY=${state.onlyY}${module ? `&module=${encodeURIComponent(module)}`:''}${kw ? `&kw=${encodeURIComponent(kw)}`:''}`);
+  const list = await jget(`/api/roles/${encodeURIComponent(roleCode)}/screens?onlyY=${state.onlyY}`);
 
-  // 권한 목록 로드(역할별)
-  const perms = await jget(`/api/role-perms?roleCode=${encodeURIComponent(roleCode)}`); 
-  // 예상 응답: [{screenCode, canRead, canCreate, canUpdate, canDelete}]
+  // moduleCode → moduleName 매핑
+  const modMap = new Map((state.modules||[]).map(m=>[m.code, m.name]));
+  let rows = (list||[]).map(x=>({
+    moduleCode : x.moduleCode,
+    moduleName : modMap.get(x.moduleCode) || x.moduleCode,
+    screenCode : x.screenCode,
+    screenName : x.screenName,
+    r: (x.readYn   || 'N') === 'Y',
+    c: (x.createYn || 'N') === 'Y',
+    u: (x.updateYn || 'N') === 'Y',
+    d: (x.deleteYn || 'N') === 'Y',
+  }));
 
-  const permMap = new Map(perms.map(p => [p.screenCode, p]));
+  // 클라이언트 필터(모듈/검색어)
+  if(module) rows = rows.filter(r=>r.moduleCode === module);
+  if(kw) rows = rows.filter(r=> r.screenName.toLowerCase().includes(kw));
 
-  state.rows = (screens || []).map(s => {
-    const p = permMap.get(s.screenCode) || {};
-    return {
-      screenCode : s.screenCode,
-      screenName : s.screenName,
-      moduleCode : s.moduleCode,
-      moduleName : s.moduleName,
-      r: !!p.canRead,
-      c: !!p.canCreate,
-      u: !!p.canUpdate,
-      d: !!p.canDelete,
-    };
-  });
-
+  state.rows = rows;
   state.dirty.clear();
 }
 
@@ -368,24 +359,22 @@ async function loadPerms(roleCode){
    렌더링
 --------------------------------*/
 function bindEvents(){
-  document.getElementById('selModule').addEventListener('change', async () => {
-    if(!state.currentRoleCode){ renderTable(); return; }
-    await loadPerms(state.currentRoleCode);
-    renderTable();
-  });
-  document.getElementById('qScreen').addEventListener('input', debounce(async () => {
-    if(!state.currentRoleCode){ renderTable(); return; }
-    await loadPerms(state.currentRoleCode);
-    renderTable();
-  }, 250));
+  document.getElementById('selModule').addEventListener('change', renderOrReload);
+  document.getElementById('qScreen').addEventListener('input', debounce(renderOrReload, 250));
 
   const head = document.querySelector('#permTable thead');
-  head.querySelector('#colRead').onchange   = e => toggleAll('r', e.target.checked);
+  head.querySelector('#colRead')  .onchange = e => toggleAll('r', e.target.checked);
   head.querySelector('#colCreate').onchange = e => toggleAll('c', e.target.checked);
   head.querySelector('#colUpdate').onchange = e => toggleAll('u', e.target.checked);
   head.querySelector('#colDelete').onchange = e => toggleAll('d', e.target.checked);
 
   document.getElementById('btnSave').addEventListener('click', saveChanges);
+}
+
+async function renderOrReload(){
+  if(!state.currentRoleCode){ renderTable(); return; }
+  await loadPerms(state.currentRoleCode);
+  renderTable();
 }
 
 function renderTable(){
@@ -399,6 +388,8 @@ function renderTable(){
 
   if(list.length === 0){
     document.getElementById('empty').style.display = 'block';
+    // 헤더도 초기화
+    recalcHeaderToggles();
     return;
   }
   document.getElementById('empty').style.display = 'none';
@@ -414,7 +405,10 @@ function renderTable(){
     }
     tbody.appendChild(buildRow(row));
   });
+
+  recalcHeaderToggles();
 }
+
 
 function buildRow(row){
   const tr = document.createElement('tr');
@@ -425,16 +419,40 @@ function buildRow(row){
   tdName.textContent = row.screenName;
   tdName.style.textAlign = 'left';
 
+  const inputs = {};
+
   const mk = (key) => {
     const td = document.createElement('td');
     const cb = document.createElement('input');
     cb.type = 'checkbox';
+    cb.dataset.col = key; // 헤더 상태 재계산용
     cb.checked = !!(state.dirty.get(row.screenCode)?.[key] ?? row[key]);
+    inputs[key] = cb;
+
     cb.onchange = (e)=>{
+      const checked = e.target.checked;
       const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
-      cur[key] = e.target.checked;
+      cur[key] = checked;
+
+      // C/U/D 켜면 R도 자동 켜기
+      if ((key === 'c' || key === 'u' || key === 'd') && checked) {
+        cur.r = true;
+        if (inputs.r && !inputs.r.checked) inputs.r.checked = true;
+      }
+      // R 끄면 C/U/D 자동 끄기
+      if (key === 'r' && !checked) {
+        cur.c = false; cur.u = false; cur.d = false;
+        if (inputs.c) inputs.c.checked = false;
+        if (inputs.u) inputs.u.checked = false;
+        if (inputs.d) inputs.d.checked = false;
+      }
+
       state.dirty.set(row.screenCode, cur);
+
+      // 헤더 전체선택 체크박스 상태 재계산
+      recalcHeaderToggles();
     };
+
     td.appendChild(cb);
     return td;
   };
@@ -444,7 +462,6 @@ function buildRow(row){
 }
 
 function toggleAll(key, checked){
-  // 현재 렌더링된 행만 적용
   const tbody = document.getElementById('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'))
     .filter(tr => !tr.classList.contains('mod-row'));
@@ -454,56 +471,122 @@ function toggleAll(key, checked){
     if(!nameTd) return;
     const screenName = nameTd.textContent.trim();
 
-    // state.rows에서 해당 스크린 찾기
     const row = state.rows.find(r => r.screenName === screenName);
     if(!row) return;
     const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
+    
     cur[key] = checked;
+    
+    if ((key === 'c' || key === 'u' || key === 'd') && checked) {
+        cur.r = true;
+    }
+    
+    if (key === 'r' && !checked) {
+        cur.c = false;
+        cur.u = false;
+        cur.d = false;
+    }
+    
     state.dirty.set(row.screenCode, cur);
   });
 
   renderTable();
 }
 
-/* ------------------------------
-   저장
---------------------------------*/
-async function saveChanges(){
-  if(!state.currentRoleCode){ alert('역할을 먼저 선택하세요.'); return; }
-  const payload = Array.from(state.dirty.entries()).map(([screenCode, v])=>({
-    roleCode: state.currentRoleCode,
-    screenCode,
-    canRead:  !!v.r,
-    canCreate:!!v.c,
-    canUpdate:!!v.u,
-    canDelete:!!v.d,
-  }));
-  if(payload.length===0){ alert('변경된 내용이 없습니다.'); return; }
+function recalcHeaderToggles(){
+  const tbody = document.getElementById('tbody');
+  const head = document.querySelector('#permTable thead');
 
-  try{
-    // 백엔드: PUT /api/role-perms (배열)
-    await jput('/api/role-perms', payload);
+  const headMap = {
+    r: head.querySelector('#colRead'),
+    c: head.querySelector('#colCreate'),
+    u: head.querySelector('#colUpdate'),
+    d: head.querySelector('#colDelete'),
+  };
 
-    // 성공 시 rows 반영 & dirty 초기화
-    payload.forEach(ch=>{
-      const row = state.rows.find(r=>r.screenCode===ch.screenCode);
-      if(row){ row.r=ch.canRead; row.c=ch.canCreate; row.u=ch.canUpdate; row.d=ch.canDelete; }
-    });
-    state.dirty.clear();
-    alert('저장되었습니다.');
-  }catch(err){
-    console.error(err);
-    alert('저장 중 오류가 발생했습니다.');
+  for (const [key, headCb] of Object.entries(headMap)) {
+    if (!headCb) continue;
+    const boxes = tbody.querySelectorAll(`input[type="checkbox"][data-col="${key}"]`);
+    const total = boxes.length;
+    if (total === 0){
+      headCb.checked = false;
+      headCb.indeterminate = false;
+      continue;
+    }
+    let checked = 0;
+    boxes.forEach(b => { if (b.checked) checked++; });
+
+    headCb.checked = (checked === total);
+    headCb.indeterminate = (checked > 0 && checked < total);
   }
 }
 
 /* ------------------------------
-   작은 유틸
+   저장 (백엔드 PUT 연결 필요)
+--------------------------------*/
+async function saveChanges(){
+	  if(!state.currentRoleCode){ alert('역할을 먼저 선택하세요.'); return; }
+
+	  // 1) 현재 렌더된 행에서 실제 체크박스 상태 읽기
+	  const tbody = document.getElementById('tbody');
+	  const trs = Array.from(tbody.querySelectorAll('tr'))
+	    .filter(tr => !tr.classList.contains('mod-row'));
+
+	  const payload = [];
+	  trs.forEach(tr => {
+	    const tds = tr.querySelectorAll('td');
+	    if (tds.length < 6) return;
+
+	    const screenName = tds[1].textContent.trim();
+	    const row = state.rows.find(r => r.screenName === screenName);
+	    if (!row) return;
+
+	    const cbRead   = tds[2].querySelector('input[type="checkbox"]');
+	    const cbCreate = tds[3].querySelector('input[type="checkbox"]');
+	    const cbUpdate = tds[4].querySelector('input[type="checkbox"]');
+	    const cbDelete = tds[5].querySelector('input[type="checkbox"]');
+
+	    payload.push({
+	      roleCode  : state.currentRoleCode,
+	      screenCode: row.screenCode,
+	      canRead   : !!(cbRead?.checked),
+	      canCreate : !!(cbCreate?.checked),
+	      canUpdate : !!(cbUpdate?.checked),
+	      canDelete : !!(cbDelete?.checked),
+	    });
+	  });
+
+	  // 바뀐 것만 보내고 싶다면 이전값과 비교해서 필터링
+	  // (원하면 이 블록을 주석 해제)
+	  // const changed = payload.filter(p => {
+	  //   const r = state.rows.find(x => x.screenCode === p.screenCode);
+	  //   return r && (r.r!==p.canRead || r.c!==p.canCreate || r.u!==p.canUpdate || r.d!==p.canDelete);
+	  // });
+	  // if (changed.length === 0) { alert('변경된 내용이 없습니다.'); return; }
+
+	  try{
+	    console.log('PUT /api/role-save payload = ', payload); // 디버깅용
+	    await jput('/api/role-save', payload);
+
+	    // 성공 시 state 갱신
+	    payload.forEach(ch => {
+	      const r = state.rows.find(x => x.screenCode === ch.screenCode);
+	      if (r){ r.r = ch.canRead; r.c = ch.canCreate; r.u = ch.canUpdate; r.d = ch.canDelete; }
+	    });
+	    state.dirty.clear();
+	    alert('저장되었습니다.');
+	  }catch(err){
+	    console.error(err);
+	    alert('저장 중 오류가 발생했습니다.');
+	  }
+	}
+
+/* ------------------------------
+   유틸
 --------------------------------*/
 function debounce(fn, ms){
   let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
 }
 </script>
-
 </body>
 </html>
