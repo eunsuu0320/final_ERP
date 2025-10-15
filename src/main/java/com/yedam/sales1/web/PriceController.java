@@ -4,26 +4,37 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Price;
+import com.yedam.sales1.domain.PriceDetail;
+import com.yedam.sales1.domain.Product;
+import com.yedam.sales1.service.PartnerService;
 import com.yedam.sales1.service.PriceService;
+import com.yedam.sales1.service.ProductService;
 
 @Controller
 public class PriceController {
 
 	private final PriceService priceService;
+	private final PartnerService partnerService;
+	private final ProductService productService;
 
 	@Autowired
-	public PriceController(PriceService priceService) {
+	public PriceController(PriceService priceService, PartnerService partnerService, ProductService productService) {
 		this.priceService = priceService;
+		this.partnerService = partnerService;
+		this.productService = productService;
 	}
 
 	@GetMapping("priceList")
@@ -37,14 +48,50 @@ public class PriceController {
 
 		return "sales1/priceList";
 	}
-	
+
+	// 단가그룹의 거래처 리스트 받아오기
+	@GetMapping("api/price/getPartner")
+	@ResponseBody
+	public List<String> pricePartnerList(@RequestParam("priceUniqueCode") Integer priceUniqueCode) {
+		// priceService.getAllPartner(priceCode)는 List<String>을 반환한다고 가정
+		return priceService.getAllPartner(priceUniqueCode);
+	}
+
+	// 거래처설정 Modal
+	@GetMapping("api/price/getAllPartner")
+	@ResponseBody
+	public Map<String, Object> pricePartnerModalList() {
+		List<Partner> partners = partnerService.getAllPartner();
+
+		// 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+		return priceService.getTableDataFromPartnerModal(partners);
+	}
+
+	// 단가그룹의 품목 리스트 받아오기
+	@GetMapping("api/price/getProduct")
+	@ResponseBody
+	public List<String> priceProductList(@RequestParam("priceUniqueCode") Integer priceUniqueCode) {
+		// priceService.getAllPartner(priceCode)는 List<String>을 반환한다고 가정
+		return priceService.getAllProduct(priceUniqueCode);
+	}
+
+	// 품목설정 Modal
+	@GetMapping("api/price/getAllProduct")
+	@ResponseBody
+	public Map<String, Object> priceProductModalList() {
+		List<Product> products = productService.getAllProduct();
+
+		// 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+		return priceService.getTableDataFromProductModal(products);
+	}
+
 	@GetMapping("api/pricetabPartner")
 	@ResponseBody // JSON 반환을 명시 (클래스에 @RestController가 있다면 생략 가능)
 	public Map<String, Object> pricePartnerList() { // Model 제거
-	    List<Price> prices = priceService.getAllPrice();
+		List<Price> prices = priceService.getAllPricePartner();
 
-	    // 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
-	    return priceService.getTableDataFromPartners(prices); 
+		// 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+		return priceService.getTableDataFromPartners(prices);
 	}
 
 	// -----------------------------------------------------------
@@ -53,10 +100,10 @@ public class PriceController {
 	@GetMapping("api/pricetabProduct")
 	@ResponseBody // JSON 반환을 명시
 	public Map<String, Object> priceProductList() { // Model 제거
-	    List<Price> prices = priceService.getAllPrice();
+		List<Price> prices = priceService.getAllPriceProduct();
 
-	    // 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
-	    return priceService.getTableDataFromProducts(prices);
+		// 서비스에서 Map<String, Object> 형태로 데이터를 가공하여 반환
+		return priceService.getTableDataFromProducts(prices);
 	}
 
 	// 품목 상세정보 조회
@@ -80,11 +127,60 @@ public class PriceController {
 		return ResponseEntity.ok(saved);
 	}
 
-	
 	@GetMapping("api/priceList")
 	@ResponseBody
 	public Map<String, Object> priceAllList() { // 메서드 이름 변경 가능
-	    List<Price> prices = priceService.getAllPrice();
-	    return priceService.getTableDataFromPrice(prices); 
+		List<Price> prices = priceService.getAllPrice();
+		return priceService.getTableDataFromPrice(prices);
+	}
+
+	// =========================================================================
+	// 거래처 설정 저장 (savePartners)
+	// =========================================================================
+	@PostMapping("/api/price/savePartners")
+	public ResponseEntity<?> registPartner(@RequestBody Map<String, Object> payload) {
+	    System.out.println("==============================================================");
+	    System.out.println("payload: " + payload);
+
+	    Integer priceCode = null;
+	    try {
+	        priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
+	    } catch (Exception e) {
+	        System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
+	        e.printStackTrace(); // 🔥 상세 원인 출력
+	        return ResponseEntity.badRequest()
+	                .body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
+	    }
+
+	    @SuppressWarnings("unchecked")
+	    List<String> partnerCodes = (List<String>) payload.get("partnerCodes");
+
+	    try {
+	        PriceDetail saved = priceService.savePriceDetailPartner(priceCode, partnerCodes);
+	        return ResponseEntity.ok(saved);
+	    } catch (Exception e) {
+	        e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                             .body("서버 처리 중 오류 발생: " + e.getMessage());
+	    }
+	}
+
+	
+	
+	// =========================================================================
+	// 품목 설정 저장 (saveProducts)
+	// =========================================================================
+	@PostMapping("/api/price/saveProducts")
+	// @RequestBody Map을 사용하여 JSON 본문을 전체 맵으로 받습니다.
+	public ResponseEntity<PriceDetail> registProduct(@RequestBody Map<String, Object> payload) {
+
+		Integer priceCode = (Integer) payload.get("priceCode");
+
+		@SuppressWarnings("unchecked")
+		List<String> productCodes = (List<String>) payload.get("productCodes");
+
+		PriceDetail saved = priceService.savePriceDetailProduct(priceCode, productCodes);
+
+		return ResponseEntity.ok(saved);
 	}
 }

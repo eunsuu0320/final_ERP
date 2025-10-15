@@ -64,6 +64,25 @@
 }
 
 
+
+
+
+.loading-overlay {
+    position: absolute; /* 또는 fixed */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; /* 모달보다 낮게, 콘텐츠보다 높게 */
+}
+
+
+
 .loading-overlay {
     position: absolute; /* 부모 컨테이너(#priceTableContainer)를 기준으로 배치 */
     top: 0;

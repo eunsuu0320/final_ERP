@@ -84,7 +84,8 @@
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
 						aria-label="type-filter" id="priceTab">
-						<button type="button" class="btn btn-primary" data-type="ALL" onclick="changeTabData('ALL', this)">전체</button>
+						<button type="button" class="btn btn-primary" data-type="ALL"
+							onclick="changeTabData('ALL', this)">전체</button>
 						<button type="button" class="btn btn-outline-primary"
 							data-type="PRODUCT" onclick="changeTabData('PRODUCT', this)">품목단가</button>
 						<button type="button" class="btn btn-outline-primary"
@@ -99,21 +100,22 @@
 
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
-						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '단가그룹코드' or col == '단가그룹명' or col == '단가유형' or col == '비고 'or col == '단가적용시작일' or col == '단가적용종료일' or col == '할인율' or col == '거래처설정' or col == '품목설정' or col == '사용구분'}" />
-						<span th:text="${col}"></span>
+						type="checkbox" id="colCheckbox" class="colCheckbox"
+						th:value="${col}" th:checked="false" /> <span th:text="${col}"></span>
 					</label>
 				</div>
 
 
 				<div id="priceTableContainer" style="position: relative;">
-				    <div id="loading-overlay" class="loading-overlay" style="display: none;">
-				        <div class="spinner-border text-primary" role="status">
-				            <span class="visually-hidden">Loading...</span>
-				        </div>
-				    </div>
-				    <div id="productTable"></div>
+					<div id="loading-overlay" class="loading-overlay"
+						style="display: none;">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">데이터를 불러오는 중...</span>
+						</div>
+					</div>
 				</div>
+
+
 
 
 				<div class="modal fade" id="paymentModal" tabindex="-1"
@@ -142,8 +144,6 @@
 										onclick="saveModal()">저장</button>
 									<button type="button" class="btn btn-dark"
 										onclick="resetModal()">초기화</button>
-									<button type="button" class="btn btn-secondary"
-										onclick="getModal()">가져오기</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
@@ -198,6 +198,141 @@
 						</div>
 					</div>
 				</div>
+
+
+
+				<div class="modal fade" id="choosePartnerModal" tabindex="-1"
+					aria-hidden="true">
+					<div class="modal-dialog modal-lg modal-dialog-centered">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">거래처 설정</h5>
+								<div>
+									<button type="button" class="btn btn-primary savePartnerButton"
+										onclick="saveChoosePartner(this.getAttribute('data-price-unique-code'))" >저장</button>
+									<button type="button" class="btn btn-dark"
+										onclick="resetChoosePartner()">초기화</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+								</div>
+							</div>
+
+							<div class="modal-body">
+								<!-- 1. 검색/필터 영역 (기존 코드) -->
+								<div class="row">
+									<div class="col-md-6 mb-3">
+										<label for="partnerNameSearch" class="me-3">거래처명</label>
+										<div class="d-flex align-items-center">
+											<div class="input-group input-group-sm">
+												<input type="hidden" id="partnerCode" name="partnerCode">
+												<input type="text" class="form-control w-auto"
+													placeholder="검색어 입력" id="partnerName">
+												<button class="btn btn-outline-secondary" type="button">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+									</div>
+
+									<div class="col-md-6 mb-3">
+										<label for="partnerLevelSearch" class="me-3">등급</label>
+										<div class="d-flex align-items-center">
+											<div class="input-group input-group-sm">
+												<input type="hidden" id="partnerLevel" name="partnerLevel">
+												<input type="text" class="form-control w-auto"
+													placeholder="검색어 입력" id="partnerLevelNameDisplay">
+												<button class="btn btn-outline-secondary" type="button">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<!-- 2. 거래처 목록 영역 (Tabulator 컨테이너 추가) -->
+								<div class="row mt-3">
+									<div class="col-12">
+										<h6 class="mb-2">거래처 목록</h6>
+										<!-- 이 div에 Tabulator 테이블 인스턴스를 연결하여 거래처 목록을 표시합니다. -->
+										<div id="partnerListTable"
+											style="height: 300px; border: 1px solid #dee2e6;"></div>
+
+									</div>
+								</div>
+								<!-- /거래처 목록 영역 -->
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+
+
+
+
+
+				<div class="modal fade" id="chooseProductModal" tabindex="-1"
+					aria-hidden="true">
+					<div class="modal-dialog modal-lg modal-dialog-centered">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">품목 설정</h5>
+								<div>
+									<button type="button" class="btn btn-primary savePartnerButton" 
+										onclick="saveChoosePartner(this.getAttribute('data-price-unique-code'))">저장</button>
+									<button type="button" class="btn btn-dark"
+										onclick="resetChooseProduct()">초기화</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+								</div>
+							</div>
+
+							<div class="modal-body">
+								<div class="row">
+									<div class="col-md-6 mb-3">
+										<label for="productNameSearch" class="me-3">품목명</label>
+										<div class="d-flex align-items-center">
+											<div class="input-group input-group-sm">
+												<input type="hidden" id="productCodeSearch"
+													name="productCodeSearch"> <input type="text"
+													class="form-control w-auto" placeholder="검색어 입력"
+													id="productNameSearch">
+												<button class="btn btn-outline-secondary" type="button">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
+										</div>
+									</div>
+
+								</div>
+
+								<div class="row mt-3">
+									<div class="col-12">
+										<h6 class="mb-2">품목 목록</h6>
+										<div id="productListTable"
+											style="height: 300px; border: 1px solid #dee2e6;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+
+
+				<div id="productTable">
+					<div id="main-table-loading-overlay" class="loading-overlay"
+						style="display: none;">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+						<p>데이터를 불러오는 중...</p>
+					</div>
+				</div>
+
+
+
+
+
+
 
 
 			</div>

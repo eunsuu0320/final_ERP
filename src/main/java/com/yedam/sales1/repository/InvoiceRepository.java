@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import com.yedam.sales1.domain.Invoice;
 
 @Repository
-public interface InvoiceRepository extends JpaRepository<Invoice, String> {
+public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
 	List<Invoice> findAll();
 
