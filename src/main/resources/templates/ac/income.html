@@ -33,25 +33,32 @@
     .badge{ display:inline-block; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#3730a3; font-weight:600; font-size:.8rem; }
 
     /* 상단 툴바 */
-    .toolbar{
-      display:grid; gap:10px; align-items:center;
-      grid-template-columns:auto minmax(260px,1fr) auto minmax(260px,1fr) auto;
-      background:var(--accent); border-radius:10px; padding:10px;
-    }
-    .toolbar label{ font-weight:700; color:#111827; white-space:nowrap; }
-    .toolbar .ctrl{ display:flex; gap:6px; align-items:center; min-width:0; }
-    .toolbar input[type="month"]{
-      height:36px; padding:.35rem .6rem; border:1.5px solid var(--line);
-      border-radius:8px; font-size:.95rem; background:#fff; width:100%; min-width:0;
-    }
-    .toolbar button{
-      height:36px; padding:.35rem .9rem; border-radius:8px; font-size:.95rem;
-      border:1.5px solid #2563eb; color:#2563eb; background:#fff; cursor:pointer; transition:.15s ease;
-    }
-    .toolbar button:hover{ background:#2563eb; color:#fff; }
-    .toolbar .chk{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
-    .grid-compare{ display:contents; }
+.toolbar{
+  display:grid; gap:10px; align-items:center;
+  /* ① 라벨 | 기준기간 | 체크 | 비교기간 | 버튼 */
+  grid-template-columns:auto minmax(280px,1fr) auto minmax(280px,1fr) auto;
+  background:var(--accent); border-radius:10px; padding:10px;
+}
+.toolbar .ctrl{ display:flex; gap:6px; align-items:center; min-width:0; }
+.toolbar .ctrl input[type="month"]{
+  height:36px; padding:.35rem .6rem; border:1.5px solid var(--line);
+  border-radius:8px; font-size:.95rem; background:#fff;
+  flex:1 1 160px; min-width:160px;   /* ② 너무 좁아지지 않게 */
+}
+.toolbar button{
+  height:36px; padding:.35rem .9rem; border-radius:8px; font-size:.95rem;
+  border:1.5px solid #2563eb; color:#2563eb; background:#fff;
+  cursor:pointer; transition:.15s ease;
+  justify-self:end;                  /* ③ 버튼이 늘어나지 않게 */
+  width:auto; white-space:nowrap;
+}
+.toolbar button:hover{ background:#2563eb; color:#fff; }
+.toolbar .chk{ display:flex; align-items:center; gap:6px; white-space:nowrap; }
 
+/* 비교기간 컨트롤: 한 블록으로 취급(필요 시 다음 줄로 내려감) */
+.grid-compare{
+  display:flex; gap:6px; align-items:center; min-width:320px;
+}
     /* 안내 카드 */
     .empty{ border:1px dashed var(--line); background:#fafafa; color:#6b7280; border-radius:12px; padding:28px; text-align:center; margin-top:16px; }
 
@@ -72,17 +79,29 @@
     .nowrap{ white-space:nowrap; }
     .chip{ display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:2px 8px; font-size:.8rem; font-weight:700; background:#eef2ff; color:#3730a3; }
 
-    /* 반응형: 좁으면 줄바꿈 */
-    @media (max-width: 992px){
-      .toolbar{ grid-template-columns: 1fr 1fr auto; }
-      .grid-compare{ grid-column: 1 / -1; }
-    }
-    @media (max-width: 520px){
-      .toolbar{ grid-template-columns: 1fr; }
-      .toolbar button{ justify-self: end; }
-    }
+    /* 넓은 화면에서 살짝만 좁아져도 비교기간을 다음 칸들로 넓게 사용 */
+@media (max-width: 1200px){
+  .toolbar{
+    grid-template-columns:auto minmax(280px,1fr) auto minmax(280px,1fr) auto;
+  }
+  /* ④ 비교기간 블록을 가운데 넓은 영역(2~4번 칼럼)으로 늘림 */
+  .grid-compare{ grid-column: 2 / 5; }
+}
 
-    .hide{ display:none !important; }
+/* 태블릿 이하: 두 줄 구성(기존 규칙 보완) */
+@media (max-width: 992px){
+  .toolbar{ grid-template-columns: 1fr 1fr auto; }
+  .grid-compare{ grid-column: 1 / -1; }   /* 비교기간이 한 줄 전체 차지 */
+}
+
+/* 모바일: 버튼만 우측 정렬 유지 */
+@media (max-width: 520px){
+  .toolbar{ grid-template-columns: 1fr; }
+  .toolbar button{ justify-self:end; }
+}
+
+/* 숨김 유틸 */
+.hide{ display:none !important; }
     
     /* 상단 여백 콤팩트 모드 */
 #layoutSidenav_content > main{ padding-top: 0 !important; }  /* 16px → 0 */

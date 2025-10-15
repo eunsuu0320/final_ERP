@@ -1,128 +1,256 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/main}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
 <head>
-  <meta charset="UTF-8" />
-  <title>일반전표 등록</title>
-  <style>
-    .fixed-wrap{ width:100%; max-width:1600px; margin:0 auto; padding:0 8px 8px; }
-    .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0 10px; }
-    .vf-box{ background:#f4f5f7; border-radius:10px; padding:12px 14px 14px; border:1px solid #ddd; }
-    .vf-label{font-weight:600}
-    .vf-hr{border-top:1px dashed #d7d7d7;margin:10px 0 10px}
-    .vf-num{text-align:right}
-    .vf-loading{ opacity:.6 }
-    .toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
-    .form-label{ margin-bottom:.25rem; }
-    .row.g-2 > [class^="col"]{ margin-bottom:.4rem; }
-    .gx-tight { --bs-gutter-x: .9rem; }
-    .form-control, .form-select, .btn { height: 36px; padding: .35rem .6rem; font-size: .95rem; border-width: 1.5px; }
-    .input-group .btn{ height:36px; }
-    #vf-voucherNo[readonly]{ background:#fff; }
-    .toolbar .btn{ display:inline-flex; align-items:center; justify-content:center; height:34px; padding:0 .75rem; font-size:.92rem; }
-  </style>
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="UTF-8" />
+<title>일반전표 등록</title>
+<style>
+.fixed-wrap {
+	width: 100%;
+	max-width: 1600px;
+	margin: 0 auto;
+	padding: 0 8px 8px;
+}
+
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 6px 0 10px;
+}
+
+.vf-box {
+	background: #f4f5f7;
+	border-radius: 10px;
+	padding: 12px 14px 14px;
+	border: 1px solid #ddd;
+}
+
+.vf-label {
+	font-weight: 600
+}
+
+.vf-hr {
+	border-top: 1px dashed #d7d7d7;
+	margin: 10px 0 10px
+}
+
+.vf-num {
+	text-align: right
+}
+
+.vf-loading {
+	opacity: .6
+}
+
+.toast-min {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	background: #333;
+	color: #fff;
+	padding: 10px 14px;
+	border-radius: 8px;
+	opacity: .95;
+	z-index: 2000
+}
+
+.form-label {
+	margin-bottom: .25rem;
+}
+
+.row.g-2>[class^="col"] {
+	margin-bottom: .4rem;
+}
+
+.gx-tight {
+	--bs-gutter-x: .9rem;
+}
+
+.form-control, .form-select, .btn {
+	height: 36px;
+	padding: .35rem .6rem;
+	font-size: .95rem;
+	border-width: 1.5px;
+}
+
+.input-group .btn {
+	height: 36px;
+}
+
+#vf-voucherNo[readonly] {
+	background: #fff;
+}
+
+.toolbar .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	padding: 0 .75rem;
+	font-size: .92rem;
+}
+/* 인풋 내부 아이콘 버튼 */
+.input-with-icon {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+}
+
+.input-with-icon .form-control {
+	padding-right: 40px;
+	width: 100%;
+}
+
+.input-with-icon .icon-btn {
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	border: 0;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	width: 28px;
+	height: 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 6px;
+	z-index: 2;
+}
+
+.input-with-icon .icon-btn:focus {
+	outline: 2px solid #86b7fe;
+	outline-offset: 2px;
+}
+
+.input-with-icon .icon-btn .fa-solid {
+	font-size: 16px;
+	color: #6c757d;
+}
+
+.input-with-icon .icon-btn:hover .fa-solid {
+	color: #333;
+}
+</style>
 </head>
 
 <body layout:fragment="content">
-  <div id="layoutSidenav_content">
-    <main>
-      <div class="fixed-wrap">
-        <!-- ===== 상단 툴바 ===== -->
-        <div class="toolbar">
-          <h1 class="mb-0">일반전표 등록</h1>
-          <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" th:href="@{/statements}">목록</a>
-            <button id="btn-reset" type="button" class="btn btn-outline-secondary">초기화</button>
-            <button id="vf-save" type="button" class="btn btn-primary">저장</button>
-          </div>
-        </div>
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="fixed-wrap">
+				<!-- ===== 상단 툴바 ===== -->
+				<div class="toolbar">
+					<h1 class="mb-0">일반전표 등록</h1>
+					<div class="d-flex gap-2">
+						<a class="btn btn-outline-secondary" th:href="@{/statements}">목록</a>
+						<button id="btn-reset" type="button"
+							class="btn btn-outline-secondary">초기화</button>
+						<button id="vf-save" type="button" class="btn btn-primary">저장</button>
+					</div>
+				</div>
 
-        <!-- ===== 본문 ===== -->
-        <div class="vf-box">
-          <div class="row gx-tight g-2 mb-2">
-            <div class="col-lg-6">
-              <label class="form-label vf-label">전표유형</label>
-              <select id="vf-type" class="form-select"></select>
-            </div>
-          </div>
+				<!-- ===== 본문 ===== -->
+				<div class="vf-box">
+					<div class="row gx-tight g-2 mb-2">
+						<div class="col-lg-6">
+							<label class="form-label vf-label">전표유형</label> <select
+								id="vf-type" class="form-select"></select>
+						</div>
+					</div>
 
-          <!-- 상단 폼: 한 줄 2개 -->
-          <div class="row gx-tight g-2">
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-voucherDate">전표일자</label>
-              <input id="vf-voucherDate" type="date" class="form-control">
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">전표번호</label>
-              <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동발번" readonly>
-              <input id="vf-resvId" type="hidden">
-            </div>
+					<!-- 상단 폼: 한 줄 2개 -->
+					<div class="row gx-tight g-2">
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-voucherDate">전표일자</label>
+							<input id="vf-voucherDate" type="date" class="form-control">
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">전표번호</label> <input
+								id="vf-voucherNo" type="text" class="form-control"
+								placeholder="자동발번" readonly> <input id="vf-resvId"
+								type="hidden">
+						</div>
 
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-saleDate">판매일자</label>
-              <input id="vf-saleDate" type="date" class="form-control">
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">담당자</label>
-              <input id="vf-empName" type="text" class="form-control" readonly>
-            </div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-saleDate">판매일자</label>
+							<input id="vf-saleDate" type="date" class="form-control">
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">담당자</label> <input
+								id="vf-empName" type="text" class="form-control" readonly>
+						</div>
 
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
-              <div class="input-group">
-                <input id="vf-saleCode" type="text" class="form-control" placeholder="">
-                <button id="vf-find-saleCode" class="btn btn-outline-secondary" type="button">🔍</button>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">거래처</label>
-              <div class="input-group">
-                <input id="vf-partnerName" type="text" class="form-control" placeholder="">
-                <button id="vf-find-partner" class="btn btn-outline-secondary" type="button">🔍</button>
-              </div>
-            </div>
-          </div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
+							<div class="input-with-icon">
+								<input id="vf-saleCode" type="text" class="form-control"
+									placeholder="">
+								<button id="vf-find-saleCode" class="icon-btn" type="button"
+									aria-label="판매/구매코드 찾기">
+									<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+								</button>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">거래처</label>
+							<div class="input-with-icon">
+								<input id="vf-partnerName" type="text" class="form-control"
+									placeholder="">
+								<button id="vf-find-partner" class="icon-btn" type="button"
+									aria-label="거래처 찾기">
+									<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+								</button>
+							</div>
+						</div>
 
-          <div class="vf-hr"></div>
+					</div>
 
-          <!-- 하단 폼 -->
-          <div class="row gx-tight g-2">
-            <div class="col-12">
-              <label class="form-label vf-label">부가세유형</label>
-              <select id="vf-taxType" class="form-select">
-                <option value="TAXABLE">과세(10%)</option>
-                <option value="ZERO">영세(0%)</option>
-                <option value="EXEMPT">면세(0%)</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">공급가액</label>
-              <input id="vf-supply" type="text" class="form-control vf-num" value="0">
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">부가세</label>
-              <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">총 금액</label>
-              <input id="vf-total" type="text" class="form-control vf-num" value="0">
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">적요</label>
-              <input id="vf-remark" type="text" class="form-control" placeholder="">
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+					<div class="vf-hr"></div>
 
-  <!-- 공통 모달(fragment) + 공통 스크립트 -->
-  <div th:replace="~{common/modal :: commonModal}"></div>
-  <script th:src="@{/main/js/modal.js}" defer></script>
+					<!-- 하단 폼 -->
+					<div class="row gx-tight g-2">
+						<div class="col-12">
+							<label class="form-label vf-label">부가세유형</label> <select
+								id="vf-taxType" class="form-select">
+								<option value="TAXABLE">과세(10%)</option>
+								<option value="ZERO">영세(0%)</option>
+								<option value="EXEMPT">면세(0%)</option>
+							</select>
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">공급가액</label> <input
+								id="vf-supply" type="text" class="form-control vf-num" value="0">
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">부가세</label> <input id="vf-vat"
+								type="text" class="form-control vf-num" value="0" readonly>
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">총 금액</label> <input
+								id="vf-total" type="text" class="form-control vf-num" value="0">
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">적요</label> <input
+								id="vf-remark" type="text" class="form-control" placeholder="">
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
 
-  <script>
+	<!-- 공통 모달(fragment) + 공통 스크립트 -->
+	<div th:replace="~{common/modal :: commonModal}"></div>
+	<script th:src="@{/main/js/modal.js}" defer></script>
+
+	<script>
   window.addEventListener('DOMContentLoaded', () => {
     const toast=(m,ms=1600)=>{const t=document.createElement('div');t.className='toast-min';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);};
     const fmt=n=>Number(n||0).toLocaleString();
