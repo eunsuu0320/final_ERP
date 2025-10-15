@@ -23,7 +23,7 @@ public interface HrService {
                       MultiValueMap<String, String> params);
 
     // 단건조회
-    public Employee getEmployee(String empCode);
+    public Employee getEmployee(String companyCode, String empCode);
 
     // 수정
     void updateEmployee(Employee employee,

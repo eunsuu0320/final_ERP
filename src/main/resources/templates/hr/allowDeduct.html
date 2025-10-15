@@ -1,66 +1,177 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
 <head>
-<meta charset="UTF-8">
-<title>수당/공제 관리</title>
+  <meta charset="UTF-8">
+  <title>수당/공제 관리</title>
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">수당/공제 관리</h1>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">수당/공제 관리</h1>
 
-				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+        <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
 
-				<!-- 탭 + 버튼 영역 -->
-				<div class="d-flex justify-content-between mb-3">
-					<!-- 수당/공제 탭 -->
-					<ul class="nav nav-tabs" id="payTab" role="tablist">
-						<li class="nav-item">
-							<button class="nav-link active" id="allow-tab"
-								data-bs-toggle="tab" data-bs-target="#allow" type="button">수당</button>
-						</li>
-						<li class="nav-item">
-							<button class="nav-link" id="deduct-tab" data-bs-toggle="tab"
-								data-bs-target="#deduct" type="button">공제</button>
-						</li>
-					</ul>
-
-					<!-- 오른쪽 버튼 -->
-					<div>
-						<button id="allDec-save" class="btn btn-primary me-2">저장</button>
-						<button id="allDec-stop" class="btn btn-danger me-2">사용중단</button>
-						<button id="allDec-reStart" class="btn btn-warning">재사용</button>
-					</div>
-				</div>
-
-				<!-- 탭 콘텐츠 -->
-				<div class="tab-content mt-3">
-					<!-- 수당 -->
-					<div class="tab-pane fade show active" id="allow">
-						<div id="allowance-area">
-
-						<!-- 수당 테이블 -->
-						<div id="allowance-table"></div>
-
-						</div>
-					</div>
-					<!-- 공제 -->
-					<div class="tab-pane fade" id="deduct">
-						<div id="deduction-area">
-
-						<!-- 공제 테이블 -->
-						<div id="deduction-table"></div>
-
-						</div>
-					</div>
-				</div>
-
+        <!-- 탭 + 버튼 영역 -->
+        <div class="d-flex justify-content-between mb-3">
+          <ul class="nav nav-tabs" id="payTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="allow-tab" data-bs-toggle="tab" data-bs-target="#allow" type="button">수당</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="deduct-tab" data-bs-toggle="tab" data-bs-target="#deduct" type="button">공제</button>
+            </li>
+          </ul>
+        	<!-- 오른쪽 버튼 -->
+			<div>
+			  <button id="btn-guide" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#formulaGuideModal">가이드</button>
+			  <button id="allDec-save" class="btn btn-primary me-2">저장</button>
+			  <button id="allDec-stop" class="btn btn-danger me-2">사용중단</button>
+			  <button id="allDec-reStart" class="btn btn-warning">재사용</button>
 			</div>
-		</main>
+        </div>
+
+        <!-- 탭 콘텐츠 -->
+        <div class="tab-content mt-3">
+          <div class="tab-pane fade show active" id="allow">
+            <div id="allowance-area">
+              <div id="allowance-table"></div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="deduct">
+            <div id="deduction-area">
+              <div id="deduction-table"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+	<style>
+	  /* ----- Formula Guide (compact, nowrap) ----- */
+	  .fg-modal .modal-dialog{ max-width:1080px }
+	  .fg-modal .modal-content{ border:0; border-radius:14px; overflow:hidden; box-shadow:0 12px 28px rgba(0,0,0,.15) }
+	  .fg-head{ background:linear-gradient(135deg,#f8f9fa 0%,#f1f3f5 100%); padding:.6rem .9rem }
+	  .fg-title{ margin:0; font-size:1rem; font-weight:700; letter-spacing:.2px }
+	  .fg-body{ padding:.6rem .9rem; font-size:.92rem; max-height:unset; overflow:hidden } /* 스크롤 없음 */
+	  .fg-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+	  .fg-card{ background:#fff; border:1px solid #e9ecef; border-radius:12px; padding:.55rem .6rem }
+	  .fg-card h6{ font-size:.95rem; margin:0 0 .45rem; font-weight:700; display:flex; align-items:center; gap:.5rem }
+	  .fg-badge{ font-size:.72rem; padding:.08rem .4rem; border-radius:6px; background:#edf2ff; color:#364fc7 }
+	  .fg-sub{ color:#868e96; font-size:.86rem; margin-bottom:.45rem }
+
+	  /* 표: 한 줄 고정 + 말줄임 */
+	  .fg-table{ width:100%; border-collapse:separate; border-spacing:0; font-size:.9rem; table-layout:fixed }
+	  .fg-table th,.fg-table td{
+	    border:1px solid #e9ecef; padding:.34rem .45rem; vertical-align:middle;
+	    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+	  }
+	  .fg-table thead th{ background:#f8f9fa; font-weight:600 }
+	  .code{ font-family:ui-monospace,Menlo,Consolas,monospace }
+	  .fg-ex{ background:#f8f9fa; border:1px dashed #e9ecef; border-radius:10px; padding:.45rem .55rem; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+	  @media (max-width:1200px){ .fg-modal .modal-dialog{ max-width:960px } }
+
+	  .fg-modal .modal-dialog{ max-width:1220px; } /* 폭 살짝 넓힘 */
+	  .fg-row{ grid-template-columns: 1fr 1fr; }   /* 좌/우 균형 유지 */
+
+	  /* 표는 한 줄 유지(요청사항), 예시는 줄바꿈 허용 */
+	  .fg-table{ table-layout:fixed; }
+	  .fg-table th,.fg-table td{
+	    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+	  }
+	  .fg-ex, .fg-sub{ white-space:normal; } /* 예시/안내문은 감싸기 */
+
+	  /* 공제 표 3열 맞춤 */
+	  .fg-deduct col:nth-child(1){ width:28%; }
+	  .fg-deduct col:nth-child(2){ width:40%; }
+	  .fg-deduct col:nth-child(3){ width:auto; }
+
+	  /* 상단 안내문 살짝 더 작게 */
+	  .fg-sub{ font-size:.84rem; line-height:1.35; }
+	</style>
+
+	<!-- 계산식(포뮬러) 가이드 모달 (좌/우 2단, 스크롤 없음, X 버튼 있음) -->
+	<div class="modal fade fg-modal" id="formulaGuideModal" tabindex="-1" aria-hidden="true">
+	  <div class="modal-dialog modal-dialog-centered modal-xl">
+	    <div class="modal-content">
+	      <div class="fg-head d-flex align-items-center justify-content-between">
+	        <h5 class="fg-title">계산식 가이드</h5>
+
+	        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+	      </div>
+
+	      <div class="fg-body">
+	        <div class="fg-sub">
+	          형식 <span class="code">키워드:값</span> · 여러 규칙 <span class="code">|</span> 연결
+	          예) <span class="code">OT:12,1.5,209|ROUND:10</span>
+	          · 결과: 수당→<span class="code">ALL_01~ALL_10</span>, 공제→<span class="code">DED_01~DED_10</span>
+	        </div>
+
+	        <div class="fg-row">
+	          <!-- 수당 -->
+	          <div class="fg-card">
+	            <h6>수당 </h6>
+	            <table class="fg-table mb-2">
+	              <colgroup>
+	                <col style="width:28%"><col style="width:40%"><col style="width:auto">
+	              </colgroup>
+	              <thead>
+	                <tr><th>키워드</th><th>형식</th><th>설명/기본</th></tr>
+	              </thead>
+	              <tbody>
+	                <tr><td class="code" title="CONST">CONST</td><td class="code" title="CONST:금액">CONST:금액</td><td title="정액 수당">정액 수당</td></tr>
+	                <tr><td class="code">MEAL</td><td class="code">MEAL[:금액]</td><td>식대(미지정 200,000)</td></tr>
+	                <tr><td class="code">PCT_BASE</td><td class="code">PCT_BASE:%</td><td>기본급의 %</td></tr>
+	                <tr><td class="code">ANNUAL</td><td class="code">ANNUAL[:분모]</td><td>기본급/분모 × 사용연차(기본 30)</td></tr>
+	                <tr><td class="code">PER_DEP</td><td class="code">PER_DEP:금액</td><td>부양가족수 × 금액</td></tr>
+	                <tr><td class="code">OT</td><td class="code">OT:시간[,가중치[,분모]]</td><td>연장(1.5, 209)</td></tr>
+	                <tr><td class="code">NIGHT</td><td class="code">NIGHT:시간[,가중치[,분모]]</td><td>야간(0.5, 209)</td></tr>
+	                <tr><td class="code">HOLIDAY</td><td class="code">HOLIDAY:시간[,가중치[,분모]]</td><td>휴일(1.5, 209)</td></tr>
+	                <tr><td class="code">ROUND</td><td class="code">ROUND:자리수</td><td>반올림(0=원, 10=십원)</td></tr>
+	              </tbody>
+	            </table>
+	            <div class="fg-ex" title="MEAL | PCT_BASE:20 | OT:12,1.5,209|ROUND:10 | ANNUAL|ROUND:0">
+	              예시: MEAL / PCT_BASE:20 / OT:12,1.5,209|ROUND:10 / ANNUAL|ROUND:0
+	            </div>
+	          </div>
+
+	          <!-- 공제 -->
+	          <div class="fg-card">
+	            <h6>공제</h6>
+	            <table class="fg-table mb-2">
+	              <colgroup>
+	                <col style="width:28%"><col style="width:40%"><col style="width:auto">
+	              </colgroup>
+	              <thead>
+	                <tr><th>키워드</th><th>형식</th><th>설명/기본</th></tr>
+	              </thead>
+	              <tbody>
+	                <tr><td class="code">CONST</td><td class="code">CONST:금액</td><td>정액 공제</td></tr>
+	                <tr><td class="code">PCT_BASE</td><td class="code">PCT_BASE:%</td><td>기본급의 % 공제</td></tr>
+	                <tr><td class="code">PCT_OF</td><td class="code">PCT_OF:슬롯,%</td><td>같은 행 슬롯 금액의 %</td></tr>
+	                <tr><td class="code">ROUND</td><td class="code">ROUND:자리수</td><td>반올림(0=원, 10=십원)</td></tr>
+	              </tbody>
+	            </table>
+	            <div class="fg-ex">
+				  <div><strong>예시</strong></div>
+				  • 국민연금(예): <code>PCT_BASE:4.5|ROUND:0</code><br>
+				  • 건강보험(예): <code>PCT_BASE:3.545|ROUND:0</code><br>
+				  • 장기요양: <code>PCT_OF:DED_02,12.95|ROUND:0</code><br>
+				  • 고용보험(예): <code>PCT_BASE:0.9|ROUND:0</code><br>
+				  • 소득세(예): <code>CONST:50000</code><br>
+				  • 지방소득세: <code>PCT_OF:DED_05,10|ROUND:0</code>
+				</div>
+	          </div>
+	        </div>
+	      </div>
+	      <!-- 닫기 버튼 영역 없음 (헤더 X만) -->
+	    </div>
+	  </div>
 	</div>
-	<script src="/hr/js/allowanceDedcut.js"></script>
+  </div>
+
+  <script src="/hr/js/allowanceDedcut.js"></script>
 </body>
 </html>

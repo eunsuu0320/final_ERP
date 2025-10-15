@@ -15,7 +15,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 		pagination: "local",
 		paginationSize: 20,
 		placeholder: "조회된 급여대장이 없습니다.",
+		selectable: true,
 		columns: [
+			{
+				title: "선택",
+				formatter: "rowSelection",
+				titleFormatter: "rowSelection",
+				headerSort: false,
+				width: 44,
+				hozAlign: "center",
+				headerHozAlign: "center",
+			},
 			{ title: "귀속날짜", field: "payPeriod", width: 120 },
 			{ title: "지급구분", field: "payType", width: 90 },
 			{ title: "대장명칭", field: "payName", width: 300 },
@@ -26,32 +36,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 				field: "payCount",
 				hozAlign: "center",
 				formatter: function(cell) {
-					var v = cell.getValue();
-					var cnt = (v != null ? v : 0);
-					return '<button type="button"'
-						+ 'id="payCount"'
-						+ ' class="btn btn-outline-primary btn-sm py-1 px-2"'
-						+ ' style="font-size:13px; line-height:1.2; min-width:64px;">'
-						+ '계산</button>';
+					var d = cell.getRow().getData();
+					var isConfirmed = d && (d.confirmIs === "Y" || d.confirmIs === "y");
+					if (isConfirmed) {
+						return '<button type="button"'
+							+ ' class="btn btn-secondary btn-sm py-1 px-2" disabled'
+							+ ' style="font-size:13px; line-height:1.2; min-width:72px;"'
+							+ ' title="확정된 건은 계산할 수 없습니다.">계산</button>';
+					} else {
+						return '<button type="button"'
+							+ ' class="btn btn-outline-primary btn-sm py-1 px-2"'
+							+ ' style="font-size:13px; line-height:1.2; min-width:72px;"'
+							+ ' title="해당 대장을 계산합니다.">계산</button>';
+					}
 				},
-				cellClick: salaryCalc,
+				cellClick: function(e, cell) {
+					var d = cell.getRow().getData();
+					if (!d) return;
+					// 확정 건 클릭 시 아무 반응 없음(비활성 버튼이라 기본적으로 클릭 안 됨)
+					if (d.confirmIs === "Y" || d.confirmIs === "y") return;
+					// 미확정 건만 계산 로직 실행 (기존 salaryCalc 사용)
+					salaryCalc(e, cell);
+				},
 			},
 			{
 				title: "명세서",
 				field: "payload",
 				hozAlign: "center",
-				formatter: function(cell) {
-					var v = cell.getValue();
-					var cnt = (v != null ? v : 0);
-					return '<button type="button"'
-						+ ' class="btn btn-outline-primary btn-sm py-1 px-2"'
-						+ ' style="font-size:13px; line-height:1.2; min-width:64px;">'
-						+ '조회</button>';
+				formatter: function() {
+					return '<button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" style="font-size:13px; line-height:1.2; min-width:64px;">조회</button>';
 				},
 				cellClick: function(e, cell) {
-					// 기존 핸들러 유지 (예: 모달 띄우기)
-					// handlePayrollCalcClick(e, cell);  // 사용 중이면 이걸로 대체
-					alert("명세서 조회");
+					var btn = e.target.closest('button');
+					if (!btn) return; // 버튼 클릭일 때만
+					showSalaryPayModalFromRow(cell.getRow(), btn);
 				}
 			},
 			{ title: "인원수", field: "payCount", hozAlign: "center" },
@@ -212,6 +230,131 @@ document.addEventListener("DOMContentLoaded", async () => {
 			}
 		}, { once: false }); // 한 번만 바인딩할 거면 true로 바꿔도 OK
 	})();
+
+	// 확정
+	const fixBtn = document.getElementById("btn-fix");
+	if (fixBtn) {
+		fixBtn.addEventListener("click", async () => {
+			try {
+				const selectedRows = salaryTable.getSelectedRows();
+				if (!selectedRows || selectedRows.length === 0) {
+					alert("확정할 급여대장을 선택하세요.");
+					return;
+				}
+				// 선택 행들의 salaryId 수집
+				const ids = selectedRows
+					.map(r => {
+						const d = r.getData();
+						return (d && typeof d.salaryId !== "undefined") ? d.salaryId : null;
+					})
+					.filter(v => v !== null);
+
+				if (ids.length === 0) {
+					alert("선택된 대장에 유효한 ID가 없습니다.");
+					return;
+				}
+
+				// 서버 확정 요청 (기존에 사용하던 엔드포인트가 있다면 그걸로 교체)
+				const res = await fetch("/api/payroll/confirm", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRF-Token": token
+					},
+					body: JSON.stringify({
+						companyCode: manager,
+						salaryIds: ids
+					})
+				});
+
+				if (!res.ok) {
+					const txt = await res.text();
+					alert("확정 처리 실패\n" + txt);
+					return;
+				}
+				// 응답을 사용해도 되고(인원수/총액 등), 최소한 확정 플래그는 Y로 반영
+				let result = null;
+				try { result = await res.json(); } catch (_) { }
+
+				// 선택된 모든 행을 로컬에서도 즉시 Y로 업데이트 → calc 버튼 자동 비활성화
+				for (let i = 0; i < selectedRows.length; i++) {
+					const d = selectedRows[i].getData();
+					if (d && ids.includes(d.salaryId)) {
+						selectedRows[i].update({ confirmIs: "Y" });
+					}
+				}
+				alert("확정 처리 완료되었습니다.");
+				await loadSalaries();
+
+			} catch (err) {
+				console.error(err);
+				alert("확정 처리 중 오류가 발생했습니다.");
+			}
+		});
+	}
+
+	// 명세서 조회 클릭
+	async function showSalaryPayModalFromRow(row, btn) {
+		// 버튼 클릭 아닐 때 대비
+		if (btn) {
+			var original = btn.innerHTML;
+			btn.disabled = true;
+			btn.innerHTML = "조회 중...";
+		}
+
+		// 행 데이터에서 salaryId 추출
+		var d = row ? row.getData() : null;
+		var salaryId = d && d.salaryId ? String(d.salaryId) : "";
+		console.log(salaryId);
+
+		if (!salaryId) {
+			alert("대상 급여대장 ID(salaryId)가 없습니다.");
+			if (btn) { btn.disabled = false; btn.innerHTML = original; }
+			return;
+		}
+
+		try {
+			// 프래그먼트 GET (salaryId를 반드시 쿼리스트링으로 전달)
+			var res = await fetch("/salaryPay?salaryId=" + encodeURIComponent(salaryId), {
+				method: "GET",
+				cache: "no-store"
+			});
+
+			if (!res.ok) {
+				var txt = await res.text();
+				alert("명세서 조회 실패: " + txt);
+				return;
+			}
+
+			// HTML 주입
+			var html = await res.text();
+			var host = document.getElementById("salaryPayModalHost");
+			if (!host) {
+				host = document.createElement("div");
+				host.id = "salaryPayModalHost";
+				document.body.appendChild(host);
+			}
+			host.innerHTML = html;
+
+			// 모달 표시
+			var modalEl = document.getElementById("payDetailModal");
+			if (!modalEl) {
+				alert("모달 엘리먼트를 찾을 수 없습니다.");
+				return;
+			}
+			var instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+			instance.show();
+		} catch (err) {
+			console.error(err);
+			alert("명세서 조회 중 오류가 발생했습니다.");
+		} finally {
+			if (btn) {
+				btn.disabled = false;
+				btn.innerHTML = original;
+			}
+		}
+	}
+
 
 	// 최초 데이터 로드
 	loadSalaries();
