@@ -58,12 +58,13 @@ public class CollectionController {
             // JS에서 받은 값 꺼내기
             String partnerCode = (String) request.get("partnerCode");
             Double recpt = Double.valueOf(request.get("recpt").toString());
+            Double postDeduction  = Double.valueOf(String.valueOf(request.getOrDefault("postDeduction", 0)));
             String paymentMethods = (String) request.get("paymentMethods");
             String remk = (String) request.get("remk");
             
             System.out.println("********************** "+recpt);
             // 프로시저 호출 (FIFO 방식 수금처리)
-            collectionService.executeCollectionFifo(partnerCode, recpt, paymentMethods, remk, companyCode);
+            collectionService.executeCollectionFifo(partnerCode, recpt, postDeduction, paymentMethods, remk, companyCode);
 
             result.put("success", true);
             result.put("message", "수금 처리 완료");

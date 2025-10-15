@@ -14,7 +14,7 @@ public interface CollectionService {
     List<Map<String, Object>> getReceivableSummary(String companyCode);
     
     // 수금 등록
-    void executeCollectionFifo(String partnerCode, Double paymentAmt, String paymentMethods, String remk, String companyCode);
+    void executeCollectionFifo(String partnerCode, Double paymentAmt, Double postDeduction, String paymentMethods, String remk, String companyCode);
 
 
 }
