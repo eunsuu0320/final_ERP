@@ -172,15 +172,32 @@ public class PriceController {
 	// =========================================================================
 	@PostMapping("/api/price/saveProducts")
 	// @RequestBody Map을 사용하여 JSON 본문을 전체 맵으로 받습니다.
-	public ResponseEntity<PriceDetail> registProduct(@RequestBody Map<String, Object> payload) {
-
-		Integer priceCode = (Integer) payload.get("priceCode");
-
-		@SuppressWarnings("unchecked")
-		List<String> productCodes = (List<String>) payload.get("productCodes");
-
-		PriceDetail saved = priceService.savePriceDetailProduct(priceCode, productCodes);
-
-		return ResponseEntity.ok(saved);
+	public ResponseEntity<?> registProduct(@RequestBody Map<String, Object> payload) {
+		Integer priceCode = null;
+	    try {
+	        priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
+	    } catch (Exception e) {
+	        System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
+	        e.printStackTrace(); // 🔥 상세 원인 출력
+	        return ResponseEntity.badRequest()
+	                .body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
+	    }
+		
+	    @SuppressWarnings("unchecked")
+	    List<String> productCodes = (List<String>) payload.get("productCodes");
+		
+		
+	    try {
+	        PriceDetail saved = priceService.savePriceDetailProduct(priceCode, productCodes);
+	        return ResponseEntity.ok(saved);
+	    } catch (Exception e) {
+	        e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                             .body("서버 처리 중 오류 발생: " + e.getMessage());
+	    }
+	    
+	    
+	    
+	
 	}
 }

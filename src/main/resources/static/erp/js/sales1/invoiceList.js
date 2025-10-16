@@ -10,6 +10,74 @@ document.addEventListener("DOMContentLoaded", function() {
 		"회계반영완료": { label: "회계반영완료" }
 	};
 
+	function initTabFiltering() {
+
+		const tabButtons = document.querySelectorAll('#invoiceTab button');
+
+		tabButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const type = this.dataset.type;
+
+				// 1. 버튼 스타일 변경 (전환)
+				tabButtons.forEach(b => {
+					b.classList.remove('btn-primary');
+					b.classList.add('btn-outline-primary');
+				});
+				this.classList.remove('btn-outline-primary');
+				this.classList.add('btn-primary');
+
+				// 2. Tabulator 필터링 적용
+				applyFilter(type);
+			});
+		});
+	}
+
+
+	function applyFilter(type) {
+		// 전역으로 저장된 Tabulator 인스턴스를 가져옵니다.
+		const table = window.invoiceTableInstance;
+		if (!table) {
+			console.error("Tabulator instance is not initialized.");
+			return;
+		}
+
+		// '진행상태'에 해당하는 필드 이름은 '진행상태' 문자열 자체를 사용합니다.
+		const filterField = "진행상태";
+		let filterValue = null;
+
+		// HTML 탭 타입(data-type)과 서버 데이터 값(DB/VO 값)을 매핑
+		switch (type) {
+			case 'ALL':
+				// 'ALL' 탭은 모든 필터를 지웁니다.
+				table.clearFilter();
+				return;
+			case 'NONINVOICE':
+				filterValue = "미청구";
+				break;
+			case 'NONCHECK':
+				filterValue = "미확인";
+				break;
+			case '"ONGOING"':
+				filterValue = "진행중";
+				break;
+			case 'DMND':
+				filterValue = "수금완료";
+				break;
+			case 'ACSUCCESS':
+				filterValue = "회계반영완료";
+				break;
+			default:
+				return;
+		}
+
+		// 필터 적용: setFilter(필드 이름, 비교 연산자, 값)
+		if (filterValue) {
+			table.setFilter(filterField, "=", filterValue);
+		}
+	}
+
+
+
 	// 품목상세모달
 	window.showDetailModal = function(modalType) {
 		let modalName = '';
@@ -217,5 +285,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	];
 
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.priceTableInstance = tableInstance;
+	window.invoiceTableInstance = tableInstance;
+	initTabFiltering();
 });

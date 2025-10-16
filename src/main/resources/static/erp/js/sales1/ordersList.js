@@ -13,6 +13,73 @@ document.addEventListener("DOMContentLoaded", function() {
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
 
+	function initTabFiltering() {
+
+		const tabButtons = document.querySelectorAll('#ordersTab button');
+
+		tabButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const type = this.dataset.type;
+
+				// 1. 버튼 스타일 변경 (전환)
+				tabButtons.forEach(b => {
+					b.classList.remove('btn-primary');
+					b.classList.add('btn-outline-primary');
+				});
+				this.classList.remove('btn-outline-primary');
+				this.classList.add('btn-primary');
+
+				// 2. Tabulator 필터링 적용
+				applyFilter(type);
+			});
+		});
+	}
+
+
+	function applyFilter(type) {
+		// 전역으로 저장된 Tabulator 인스턴스를 가져옵니다.
+		const table = window.orderTableInstance;
+		if (!table) {
+			console.error("Tabulator instance is not initialized.");
+			return;
+		}
+
+		// '진행상태'에 해당하는 필드 이름은 '진행상태' 문자열 자체를 사용합니다.
+		const filterField = "진행상태";
+		let filterValue = null;
+
+		// HTML 탭 타입(data-type)과 서버 데이터 값(DB/VO 값)을 매핑
+		switch (type) {
+			case 'ALL':
+				// 'ALL' 탭은 모든 필터를 지웁니다.
+				table.clearFilter();
+				return;
+			case 'NONCHECK':
+				console.log("미확인");
+				filterValue = "미확인";
+				break;
+			case 'ONGOING':
+				filterValue = "진행중";
+				break;
+			case 'SHIPMENTSUCCESS':
+				filterValue = "출하지시완료";
+				break;
+			case 'SUCCESS':
+				filterValue = "완료";
+				break;
+			default:
+				return;
+		}
+
+		// 필터 적용: setFilter(필드 이름, 비교 연산자, 값)
+		if (filterValue) {
+			table.setFilter(filterField, "=", filterValue);
+		}
+	}
+
+
+
+
 	// 폼 전체 초기화
 	window.resetOrder = function() {
 		const form = document.getElementById("orderForm");
@@ -259,7 +326,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	// makeTabulator는 salesCommon.js에 정의된 것으로 가정
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.orderTableInstance = tableInstance; 
+	window.orderTableInstance = tableInstance;
+
+	initTabFiltering();
 });
 
 
@@ -306,13 +375,13 @@ window.updateStatusAPI = function(code, status, selectElement) {
 			return res.json();
 		})
 		.then(response => {
-			if (response.success) { 
+			if (response.success) {
 				if (window.orderTableInstance) {
 					window.orderTableInstance.getRows().find(r => r.getData().주문서코드 === code)?.update({ '진행상태': status });
 				}
 			} else {
 				alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
-				
+
 				if (selectElement) {
 					selectElement.value = currentStatus;
 				}
@@ -321,7 +390,7 @@ window.updateStatusAPI = function(code, status, selectElement) {
 		.catch(err => {
 			console.error("상태 변경 API 호출 실패:", err);
 			alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
-			
+
 			if (selectElement) {
 				selectElement.value = currentStatus;
 			}

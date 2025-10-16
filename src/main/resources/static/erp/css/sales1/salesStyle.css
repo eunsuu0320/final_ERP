@@ -31,11 +31,14 @@
 
 #postcodeLayer {
 	display: none;
-	position: fixed; /* 반드시 fixed */
+	position: fixed;
 	width: 400px;
-	height: 530px; /* 푸터까지 포함 */
-	bottom: 100px; /* 아래 여백 */
-	right: 300px; /* 오른쪽 여백 */
+	height: 530px;
+	/* --- 위치를 화면 정중앙으로 변경하여 테스트 --- */
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	/* ------------------------------------------ */
 	z-index: 9999;
 	background-color: #fff;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -63,35 +66,30 @@
 	min-width: 1000px;
 }
 
-
-
-
-
 .loading-overlay {
-    position: absolute; /* 또는 fixed */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 1050; /* 모달보다 낮게, 콘텐츠보다 높게 */
+	/* 뷰포트 전체를 덮도록 고정 위치 설정 */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	/* 반투명한 배경색 설정 (뒤의 내용을 어둡게 하여 로딩 화면을 강조) */
+	background-color: rgba(255, 255, 255, 0.8);
+	/* 다른 모든 요소 위에 표시되도록 z-index 설정 */
+	z-index: 10000;
+	/* 내용을 중앙에 배치 */
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+
+	/* 기본적으로는 숨겨져 있어야 함 (JS에서 'flex'로 변경) */
+	/* display: none; */
 }
 
-
-
-.loading-overlay {
-    position: absolute; /* 부모 컨테이너(#priceTableContainer)를 기준으로 배치 */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.7); /* 반투명 흰색 배경 */
-    z-index: 10; /* 테이블 위에 표시되도록 높이 설정 */
-    display: flex; /* 중앙 정렬을 위해 flex 사용 */
-    justify-content: center;
-    align-items: center;
+/* 로딩 메시지 텍스트 스타일 */
+.loading-overlay p {
+	margin-top: 10px;
+	font-size: 1.1rem;
+	color: #0d6efd; /* Bootstrap primary color */
 }

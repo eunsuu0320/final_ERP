@@ -15,7 +15,6 @@
 	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body layout:fragment="content">
-
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="containerBox">
@@ -106,14 +105,14 @@
 				</div>
 
 
-				<div id="priceTableContainer" style="position: relative;">
-					<div id="loading-overlay" class="loading-overlay"
-						style="display: none;">
-						<div class="spinner-border text-primary" role="status">
-							<span class="visually-hidden">데이터를 불러오는 중...</span>
-						</div>
-					</div>
-				</div>
+
+
+
+
+
+
+
+
 
 
 
@@ -209,7 +208,7 @@
 								<h5 class="modal-title">거래처 설정</h5>
 								<div>
 									<button type="button" class="btn btn-primary savePartnerButton"
-										onclick="saveChoosePartner(this.getAttribute('data-price-unique-code'))" >저장</button>
+										onclick="saveChoosePartner(this.getAttribute('data-price-unique-code'))">저장</button>
 									<button type="button" class="btn btn-dark"
 										onclick="resetChoosePartner()">초기화</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -217,34 +216,39 @@
 							</div>
 
 							<div class="modal-body">
-								<!-- 1. 검색/필터 영역 (기존 코드) -->
 								<div class="row">
-									<div class="col-md-6 mb-3">
-										<label for="partnerNameSearch" class="me-3">거래처명</label>
+									<!-- 거래처명 검색 (col-md-4) -->
+									<div class="col-md-4 mb-3">
+										<label for="partnerNameSearch" class="form-label me-3">거래처명</label>
 										<div class="d-flex align-items-center">
 											<div class="input-group input-group-sm">
-												<input type="hidden" id="partnerCode" name="partnerCode">
-												<input type="text" class="form-control w-auto"
-													placeholder="검색어 입력" id="partnerName">
-												<button class="btn btn-outline-secondary" type="button">
+												<input type="text" class="form-control modalSearchCondition" placeholder="검색어 입력"
+													id="partnerName">
+												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
 										</div>
 									</div>
 
-									<div class="col-md-6 mb-3">
-										<label for="partnerLevelSearch" class="me-3">등급</label>
+									<!-- 등급 검색 (col-md-4) -->
+									<div class="col-md-4 mb-3">
+										<label for="partnerLevelSearch" class="form-label me-3">등급</label>
 										<div class="d-flex align-items-center">
 											<div class="input-group input-group-sm">
-												<input type="hidden" id="partnerLevel" name="partnerLevel">
-												<input type="text" class="form-control w-auto"
-													placeholder="검색어 입력" id="partnerLevelNameDisplay">
-												<button class="btn btn-outline-secondary" type="button">
+												<input type="text" class="form-control modalSearchCondition" placeholder="검색어 입력"
+													id="partnerLevelNameDisplay">
+												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
 										</div>
+									</div>
+
+									<!-- 검색초기화 버튼 (col-md-4, 수직 정렬을 위해 d-flex align-items-end 적용) -->
+									<div class="col-md-4 mb-3 d-flex align-items-end">
+										<button type="button" class="btn btn-outline-secondary btn-sm resetModalSearch">
+											검색초기화</button>
 									</div>
 								</div>
 
@@ -277,8 +281,8 @@
 							<div class="modal-header">
 								<h5 class="modal-title">품목 설정</h5>
 								<div>
-									<button type="button" class="btn btn-primary savePartnerButton" 
-										onclick="saveChoosePartner(this.getAttribute('data-price-unique-code'))">저장</button>
+									<button type="button" class="btn btn-primary saveProductButton"
+										onclick="saveChooseProduct(this.getAttribute('data-price-unique-code'))">저장</button>
 									<button type="button" class="btn btn-dark"
 										onclick="resetChooseProduct()">초기화</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -290,18 +294,23 @@
 									<div class="col-md-6 mb-3">
 										<label for="productNameSearch" class="me-3">품목명</label>
 										<div class="d-flex align-items-center">
-											<div class="input-group input-group-sm">
+											<!-- Input Group이 너무 넓게 늘어나지 않도록 max-width 설정 -->
+											<div class="input-group input-group-sm"
+												style="max-width: 250px;">
 												<input type="hidden" id="productCodeSearch"
 													name="productCodeSearch"> <input type="text"
-													class="form-control w-auto" placeholder="검색어 입력"
+													class="form-control modalSearchCondition" placeholder="검색어 입력"
 													id="productNameSearch">
-												<button class="btn btn-outline-secondary" type="button">
+												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
+											<!-- 검색초기화 버튼을 input-group 옆으로 이동시키고 여백(ms-2) 추가 -->
+											<button type="button"
+												class="btn btn-outline-secondary btn-sm ms-2 resetModalSearch">
+												검색초기화</button>
 										</div>
 									</div>
-
 								</div>
 
 								<div class="row mt-3">
@@ -318,8 +327,13 @@
 
 
 
+
+
+
+
+
 				<div id="productTable">
-					<div id="main-table-loading-overlay" class="loading-overlay"
+					<div id="loading-overlay" class="loading-overlay"
 						style="display: none;">
 						<div class="spinner-border text-primary" role="status">
 							<span class="visually-hidden">Loading...</span>
@@ -327,9 +341,6 @@
 						<p>데이터를 불러오는 중...</p>
 					</div>
 				</div>
-
-
-
 
 
 
