@@ -92,5 +92,18 @@ public class CollectionController {
         result.put("empName", empName);
         return result;
     }
+    
+    // 청구서 조회
+    @GetMapping("/api/receivable/invoices")
+    @ResponseBody
+    public List<com.yedam.sales1.domain.Invoice> getInvoicesByPartner(String partnerCode) {
+        if (partnerCode == null || partnerCode.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String companyCode = auth.getName().split(":")[0];
+        return collectionService.getInvoicesByPartnerJpa(companyCode, partnerCode);
+    }
+
   
 }
