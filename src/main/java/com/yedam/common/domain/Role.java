@@ -2,20 +2,24 @@ package com.yedam.common.domain;
 
 import org.hibernate.annotations.GenericGenerator;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.yedam.common.Prefixable;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Entity
 @Table(name = "ROLE")
 @Data
 public class Role implements Prefixable {
     
 	@Id
+	@Column(name = "ROLE_CODE")
 	@GeneratedValue(generator = "sequence-id-generator")
     @GenericGenerator(
             name = "sequence-id-generator",

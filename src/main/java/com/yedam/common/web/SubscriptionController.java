@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.common.domain.Company;
 import com.yedam.common.domain.Subscription;
 import com.yedam.common.domain.SystemUser;
 import com.yedam.common.repository.CompanyRepository;
+import com.yedam.common.repository.RoleRepository;
 import com.yedam.common.repository.SubscriptionRepository;
 import com.yedam.common.repository.UserRepository;
 import com.yedam.common.service.UserService;
@@ -33,6 +35,7 @@ public class SubscriptionController {
     private final SubscriptionRepository subscriptionRepository;
     private final CompanyRepository companyRepository;
     private final UserService userService;
+    private final RoleRepository roleRepository;
 
     // ===== 공통: 로그인 회사코드 꺼내기 =====
     private String currentCompanyCode() {
@@ -47,6 +50,7 @@ public class SubscriptionController {
                                      @RequestParam(required=false) String dept,
                                      @RequestParam(required=false) String useYn) {
         String companyCode = currentCompanyCode();
+        
         return userRepository.findUserByCompanyCode(companyCode, kw, dept, useYn);
     }
 
@@ -65,6 +69,8 @@ public class SubscriptionController {
                 .orElseThrow(() -> new IllegalStateException("회사 정보를 찾을 수 없습니다."));
     }
 
+    
+    @ScreenPerm(screen = "COM_SUB", action=ScreenPerm.Action.CREATE)
     // ===== 사용자 등록(임시 비밀번호 생성 + 이메일 발송)
     @PostMapping("/api/common/users")
     @Transactional
@@ -82,7 +88,15 @@ public class SubscriptionController {
         // 회사 내 userId 중복 체크
         userRepository.findByUserIdAndCompanyCode(req.getUserId(), companyCode)
                 .ifPresent(u -> { throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 아이디입니다."); });
-
+        
+        if (req.getRoleCode() != null && !req.getRoleCode().isBlank()) {
+            String roleName = req.getRoleCode(); // 프론트에서 넘어온 값: MASTER/MANAGER/USER
+            String roleCode = roleRepository.findByCompanyCodeAndRoleNameIgnoreCase(companyCode, roleName)
+                    .map(r -> r.getRoleCode())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 권한명입니다: " + roleName));
+            req.setRoleCode(roleCode);
+        }
+        
         // 서비스에 위임(임시비번 생성 + 암호화 저장 + 메일발송)
         SystemUser saved = userService.createUserWithTempPassword(req, companyCode);
 
@@ -90,10 +104,20 @@ public class SubscriptionController {
     }
 
     // ===== 사용자 수정(사번/사원명/부서 제외)
+    @ScreenPerm(screen = "COM_SUB", action=ScreenPerm.Action.UPDATE)
     @PutMapping("/api/common/users/{userCode}")
     @Transactional
     public SystemUser updateUser(@PathVariable String userCode, @RequestBody SystemUser req) {
         String companyCode = currentCompanyCode();
+
+        if (req.getRoleCode() != null && !req.getRoleCode().isBlank()) {
+            String roleName = req.getRoleCode();
+            String roleCode = roleRepository.findByCompanyCodeAndRoleNameIgnoreCase(companyCode, roleName)
+                    .map(r -> r.getRoleCode())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 권한명입니다: " + roleName));
+            req.setRoleCode(roleCode);
+        }
+
         return userService.updateUser(req, userCode, companyCode);
     }
 

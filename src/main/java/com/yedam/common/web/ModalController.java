@@ -33,7 +33,6 @@ public class ModalController {
 	@Autowired
 	EstimateRepository estimateRepository;
 	
-	@ScreenPerm(screen = "COM_SUB", action=ScreenPerm.Action.READ)
 	@GetMapping("/employee")
 	public List<Employee> getEmployees() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();

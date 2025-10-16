@@ -1,0 +1,74 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+  <meta charset="utf-8" />
+  <title>접근 권한 없음</title>
+  <meta name="robots" content="noindex,nofollow" />
+
+  <!-- 이 페이지 전용 스코프드 CSS -->
+  <style>
+  .forb-page {
+    --bg:#f6f7fb; --card:#ffffff; --text:#111827; --muted:#6b7280;
+    --accent:#ef4444; --line:#e5e7eb;
+    display:grid; place-items:center; min-height:calc(100vh - 160px);
+    padding:24px; background:var(--bg); color:var(--text);
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  }
+  .forb-page .card {
+    width:min(720px,94vw); background:var(--card); border:1px solid var(--line);
+    border-radius:16px; padding:32px 28px; box-shadow:0 6px 24px rgba(0,0,0,.06); text-align:center;
+  }
+  .forb-page .icon {
+    width:64px; height:64px; border-radius:50%; display:inline-grid; place-items:center;
+    margin:0 auto 16px; background:#fee2e2; color:var(--accent); font-weight:900; border:1px solid #fecaca;
+  }
+  .forb-page h1 { margin:8px 0 6px; font-size:1.75rem; line-height:1.2; }
+  .forb-page p.msg { margin:0 0 18px; color:var(--muted); }
+  .forb-page .hint {
+    margin:8px 0 22px; padding:10px 12px; border-radius:10px; background:#f9fafb;
+    color:#374151; border:1px solid var(--line); font-size:.95rem;
+  }
+  .forb-page .actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .forb-page .btn {
+    height:40px; padding:0 16px; border-radius:10px; border:1px solid var(--line);
+    background:#fff; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center;
+  }
+  .forb-page .btn-primary { background:#4f46e5; border-color:#4f46e5; color:#fff; }
+  .forb-page .small { margin-top:14px; font-size:.85rem; color:var(--muted); }
+  </style>
+</head>
+
+<body layout:fragment="content">
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <div class="forb-page" role="alert" aria-live="polite">
+          <section class="card" aria-label="권한 없음 안내">
+            <div class="icon" aria-hidden="true">!</div>
+            <h1>접근 권한이 없습니다</h1>
+
+            <!-- 서버에서 전달된 메시지 (없으면 기본문구) -->
+            <p class="msg"
+               th:text="${message} ?: '이 페이지에 접근할 권한이 없습니다.'">
+              이 페이지에 접근할 권한이 없습니다.
+            </p>
+
+            <div class="hint">
+              필요한 권한이 맞는지 관리자에게 문의하시거나, 다른 계정으로 로그인해 주세요.
+            </div>
+
+            <div class="actions">
+              <button class="btn" type="button" onclick="history.back()">이전 페이지</button>
+              <a class="btn" th:href="@{/dashboard}">대시보드로</a>
+              <a class="btn btn-primary" th:href="@{/common/login}">로그인 페이지</a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="/main/js/forbidden.js"></script>
+</body>
+</html>

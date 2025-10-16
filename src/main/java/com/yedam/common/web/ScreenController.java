@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.common.domain.ModuleDto;
 import com.yedam.common.domain.RolePermSaveReq;
 import com.yedam.common.domain.RoleScreenPermDto;
@@ -45,6 +46,7 @@ public class ScreenController {
         return screenRepository.findModules(onlyY);
     }
     
+    @ScreenPerm(screen = "COM_ROLE", action = ScreenPerm.Action.CREATE)    
     @PutMapping("/api/role-save")
     public ResponseEntity<Void> save(@RequestBody List<RolePermSaveReq> reqs){
         // Username = "C001:admin01:0001"

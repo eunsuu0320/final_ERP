@@ -39,4 +39,6 @@ public interface RoleRepository extends JpaRepository<Role, String> {
     long countByCompanyCodeAndRoleCode(String companyCode, String roleCode);
     
     Optional<Role> findByCompanyCodeAndRoleCode(String companyCode, String roleCode);
+    
+    Optional<Role> findByCompanyCodeAndRoleNameIgnoreCase(String companyCode, String roleName);
 }
