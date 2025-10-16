@@ -14,5 +14,5 @@ public interface SalaryMasterService {
 
 	int confirmSelected(String companyCode, List<String> salaryIds);
 
-	String findByCompanyCodeAndSalaryId(String companyCode, String salaryId);
+	SalaryMaster findByCompanyCodeAndSalaryId(String companyCode, String salaryId);
 }

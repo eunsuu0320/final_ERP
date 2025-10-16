@@ -22,9 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
+import com.yedam.hr.dto.EmployeeDTO;
 import com.yedam.hr.service.HrService;
-
-import jakarta.transaction.Transactional;
 
 @Controller
 public class HrController {
@@ -51,11 +50,10 @@ public class HrController {
 	}
 
 	// 사원 등록 처리
-	@Transactional
 	@PostMapping(value = "/saveContract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@ResponseBody
 	public String saveContract(
-	        @ModelAttribute Employee employee,
+	        @ModelAttribute EmployeeDTO employee,
 	        @RequestParam(value="signImg", required=false) MultipartFile signImg,
 	        @RequestParam(value="pdfFile", required=false) MultipartFile pdfFile,
 	     // 🔹 같은 name의 값들을 모두 받기 (권장)

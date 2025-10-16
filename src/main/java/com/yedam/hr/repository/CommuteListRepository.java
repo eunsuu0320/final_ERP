@@ -17,7 +17,7 @@
 	public interface CommuteListRepository extends JpaRepository<CommuteList, Long> {
 
 		// 회사코드별 출퇴근 목록
-		List<CommuteList> findByCompanyCode(String companyCode);
+		List<CommuteList> findByCompanyCodeOrderByComIdDesc(String companyCode);
 
 		   /**
 	     * 회사코드 + 사원코드가 같고, ON_TIME의 '날짜'가 offTime의 '날짜'와 같은 행을 찾아

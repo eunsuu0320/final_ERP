@@ -355,6 +355,144 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 	}
 
+	// 검색
+	const selField = document.getElementById("sel-field");
+	const txtSearch = document.getElementById("txt-search");
+	const btnSearch = document.getElementById("btn-search");
+
+	// 필드 선택에 따라 placeholder 안내
+	function updatePlaceholder() {
+		if (!txtSearch) return;
+		if (selField?.value === "payPeriod") {
+			txtSearch.placeholder = "예) 2025-08";
+		} else {
+			txtSearch.placeholder = "대장명칭 입력";
+		}
+	}
+	selField?.addEventListener("change", updatePlaceholder);
+	updatePlaceholder();
+
+	// 유틸: 문자열 → 날짜 파싱 (YYYY-MM-DD | YYYY-MM)
+	function tryParseDate(s) {
+		if (!s) return null;
+		const t = s.trim();
+		// YYYY-MM-DD
+		let m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+		if (m) {
+			const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+			return isNaN(d.getTime()) ? null : d;
+		}
+		// YYYY-MM (월의 1일로 처리)
+		m = t.match(/^(\d{4})-(\d{2})$/);
+		if (m) {
+			const d = new Date(Number(m[1]), Number(m[2]) - 1, 1);
+			return isNaN(d.getTime()) ? null : d;
+		}
+		return null;
+	}
+
+	// 유틸: 행의 payPeriod 값을 Date로
+	function getRowPeriodDate(rowData) {
+		// 우선순위: payPeriod -> payDate -> payYm
+		const v = rowData?.payPeriod || rowData?.payDate || rowData?.payYm || "";
+		// payYm(YYYYMM) 같은 형식이면 변환
+		if (/^\d{6}$/.test(v)) {
+			const y = Number(v.slice(0, 4));
+			const m = Number(v.slice(4, 6)) - 1;
+			const d = new Date(y, m, 1);
+			return isNaN(d.getTime()) ? null : d;
+		}
+		// 일반적인 문자열(YYYY-MM[-DD]) 처리
+		return tryParseDate(v);
+	}
+
+	// 검색 실행
+	async function runSearch() {
+		const field = selField?.value || "payPeriod";
+		const keywordRaw = (txtSearch?.value || "").trim();
+
+		// 입력 없으면 필터 제거 + 전체 재조회
+		if (!keywordRaw) {
+			salaryTable.clearFilter(true);
+			// 원래 전체 목록을 서버에서 받아오던 흐름 유지
+			await loadSalaries();
+			return;
+		}
+
+		// 클라이언트 필터링
+		if (field === "payName") {
+			// 대장명칭 부분일치 (대소문자 무시)
+			const kw = keywordRaw.toLowerCase();
+			salaryTable.setFilter(function(data) {
+				const v = (data?.payName || "").toString().toLowerCase();
+				return v.includes(kw);
+			});
+		} else {
+			// payPeriod: 날짜/연월 검색
+			// 포맷 1) "YYYY-MM-DD ~ YYYY-MM-DD"
+			// 포맷 2) "YYYY-MM ~ YYYY-MM"
+			// 포맷 3) 단일 "YYYY-MM" 또는 "YYYY-MM-DD"
+			const parts = keywordRaw.split("~").map(s => s.trim()).filter(Boolean);
+
+			// 범위 검색
+			if (parts.length === 2) {
+				const d1 = tryParseDate(parts[0]);
+				const d2 = tryParseDate(parts[1]);
+				if (!d1 || !d2) {
+					alert("날짜 형식이 올바르지 않습니다. 예) 2025-08-01 ~ 2025-08-31 또는 2025-08 ~ 2025-09");
+					return;
+				}
+				const from = d1 < d2 ? d1 : d2;
+				const to = d1 < d2 ? d2 : d1;
+				// 날짜 상한 보정(하루 끝으로) – 월 단위 입력이라도 안전하게 포함
+				const toEnd = new Date(to.getFullYear(), to.getMonth(), to.getDate() || 1, 23, 59, 59, 999);
+
+				salaryTable.setFilter(function(data) {
+					const rd = getRowPeriodDate(data);
+					if (!rd) return false;
+					return rd >= from && rd <= toEnd;
+				});
+			} else {
+				// 단일 날짜/연월
+				const d = tryParseDate(parts[0]);
+				if (d) {
+					// 연월만 입력했다면 같은 달 레코드 매칭
+					const isMonthOnly = /^\d{4}-\d{2}$/.test(parts[0]);
+					salaryTable.setFilter(function(data) {
+						const rd = getRowPeriodDate(data);
+						if (!rd) return false;
+						if (isMonthOnly) {
+							return rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth();
+						}
+						// 일자까지 입력 시 같은 날짜인지 비교
+						return rd.getFullYear() === d.getFullYear() &&
+							rd.getMonth() === d.getMonth() &&
+							rd.getDate() === d.getDate();
+					});
+				} else {
+					// 날짜 형식 아니면 문자열 포함으로 fallback
+					const kw = parts[0].toLowerCase();
+					salaryTable.setFilter(function(data) {
+						const v = (data?.payPeriod || data?.payDate || data?.payYm || "").toString().toLowerCase();
+						return v.includes(kw);
+					});
+				}
+			}
+		}
+	}
+
+	// 버튼/엔터 키 바인딩
+	btnSearch?.addEventListener("click", (e) => {
+		e.preventDefault();
+		runSearch();
+	});
+	txtSearch?.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			runSearch();
+		}
+	});
+
 
 	// 최초 데이터 로드
 	loadSalaries();

@@ -30,7 +30,7 @@ public class DedcutServiceImpl implements DedcutService {
 		for (String code : codes) {
 			Dedcut dedcut = dedcutRepository.findByDedIdAndCompanyCode(code, companyCode)
 					.orElseThrow(() -> new RuntimeException("해당 공제 없음 " + code));
-			dedcut.setAllIs(status);
+			dedcut.setDedIs(status);
 			dedcutRepository.save(dedcut);
 		}
 	}
