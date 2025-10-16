@@ -1,33 +1,236 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>결제 완료</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f6fa; text-align: center; padding: 50px; }
-    .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: inline-block; }
-    h2 { color: #4a2fbf; }
-    .detail { margin-top: 20px; font-size: 15px; line-height: 1.6; }
-    .btn-home { margin-top: 30px; display: inline-block; padding: 12px 20px; background: #4a2fbf; color: white; text-decoration: none; border-radius: 6px; }
-    .btn-home:hover { background: #6a4fbf; }
-  </style>
+<meta charset="UTF-8">
+<title>결제 완료</title>
+<link
+	href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css"
+	rel="stylesheet">
+<style>
+:root {
+	--bg: #0b0c10;
+	--bg-grad-1: #1a1443;
+	--bg-grad-2: #0a3a57;
+	--bg-grad-3: #1a2148;
+	--card: #ffffff;
+	--text: #0f172a;
+	--line: #e5e7eb;
+	--accent: #2563eb;
+	--accent-2: #22d3ee;
+	--success: #16a34a;
+	--shadow: 0 10px 28px rgba(2, 6, 23, .16);
+	--radius: 14px;
+}
+
+* {
+	box-sizing: border-box
+}
+
+body {
+	margin: 0;
+	font-family: 'SUIT', system-ui, -apple-system, Segoe UI, Roboto,
+		Noto Sans KR, sans-serif;
+	color: #e9ecf1;
+	background: radial-gradient(1200px 500px at 10% -10%, var(--bg-grad-1)
+		0%, transparent 60%),
+		radial-gradient(900px 400px at 90% 10%, var(--bg-grad-2) 0%,
+		transparent 60%),
+		radial-gradient(1000px 600px at 50% 120%, var(--bg-grad-3) 0%,
+		transparent 60%), var(--bg);
+	background-attachment: fixed;
+	min-height: 100vh;
+}
+
+.app-header {
+	width: min(820px, 94%);
+	margin: 40px auto 14px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 16px;
+	border: 1px solid rgba(255, 255, 255, .12);
+	border-radius: var(--radius);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	background: linear-gradient(180deg, rgba(255, 255, 255, .08),
+		rgba(255, 255, 255, .04));
+	box-shadow: var(--shadow);
+}
+
+.app-title {
+	display: flex;
+	align-items: center;
+	gap: 10px
+}
+
+.app-title h1 {
+	margin: 0;
+	font-weight: 900;
+	font-size: 22px;
+	letter-spacing: .2px
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 12px;
+	border-radius: 999px;
+	line-height: 1;
+	font-weight: 900;
+	color: #e9ecf1;
+	background: rgba(255, 255, 255, .08);
+	border: 1px solid rgba(255, 255, 255, .18);
+}
+
+.container {
+	width: min(820px, 94%);
+	margin: 0 auto 80px;
+	background: linear-gradient(180deg, rgba(255, 255, 255, .98),
+		rgba(255, 255, 255, .94));
+	color: var(--text);
+	border: 1px solid rgba(255, 255, 255, .18);
+	border-radius: 20px;
+	box-shadow: var(--shadow);
+	padding: 28px 24px;
+	text-align: center;
+}
+
+.success-icon {
+	width: 66px;
+	height: 66px;
+	border-radius: 999px;
+	margin: 0 auto 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	background: linear-gradient(135deg, #10b981 0%, #22c55e 100%);
+	box-shadow: 0 12px 26px rgba(16, 185, 129, .28);
+	font-size: 28px;
+	font-weight: 900;
+}
+
+h2 {
+	margin: 6px 0 8px;
+	font-size: 26px;
+	font-weight: 900;
+	background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2)
+		100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+}
+
+.detail {
+	margin: 18px auto 0;
+	font-size: 15px;
+	line-height: 1.75;
+	color: #1f2937;
+	text-align: left;
+	width: 100%;
+	max-width: 520px;
+	border-top: 1px dashed #e5e7eb;
+	padding-top: 14px;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	padding: 6px 0
+}
+
+.row b {
+	color: #111827
+}
+
+.btns {
+	margin-top: 26px;
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	flex-wrap: wrap
+}
+
+.btn {
+	display: inline-block;
+	padding: 12px 16px;
+	border-radius: 12px;
+	border: 1px solid #cbd5e1;
+	text-decoration: none;
+	font-weight: 900;
+	background: #eff6ff;
+	color: #0b1220;
+	box-shadow: 0 3px 10px rgba(2, 6, 23, .06);
+	transition: transform .15s ease, filter .15s ease;
+}
+
+.btn:hover {
+	filter: brightness(.98)
+}
+
+.btn:active {
+	transform: translateY(1px)
+}
+
+/* 값+단위를 한 덩어리로 오른쪽 정렬 */
+.detail .row .right {
+	margin-left: auto;
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	text-align: right;
+}
+
+.detail .row .right b {
+	font-variant-numeric: tabular-nums; /* 자리폭 일정해서 깔끔 */
+}
+</style>
 </head>
 <body>
-  <div class="box">
-    <h2>결제가 완료되었습니다 🎉</h2>
-    <div class="detail">
-      <p>구독번호: <strong th:text="${info.subscriptionCode}"></strong></p>
-  	  <p>회사코드: <strong th:text="${info.companyCode}"></strong></p>
-      <p>구매자: <strong th:text="${info.buyerName}"></strong></p>
-      <p>결제 금액: <strong th:text="${#numbers.formatInteger(info.amount.total, 3, 'COMMA')}"></strong>원</p>
-      <p>부가세: <strong th:text="${#numbers.formatInteger(info.amount.vat, 3, 'COMMA')}"></strong>원</p>
-    </div>
-    <a href="/" class="btn-home">메인으로 돌아가기</a>
-    <a th:if="${info.subscriptionCode}"
-       th:href="@{|/pay/contract/download?subscriptionCode=${info.subscriptionCode}|}"
-       class="btn-home" style="margin-left:10px;">
-       계약서 내려받기(PDF)
-    </a>
-  </div>
+	<div class="app-header">
+		<div class="app-title">
+			<h1>결제 완료</h1>
+		</div>
+		<div>
+			<span class="chip">구독 처리 완료</span>
+		</div>
+	</div>
+
+	<div class="container">
+		<div class="success-icon">✔</div>
+		<h2>결제가 완료되었습니다 🎉</h2>
+
+		<div class="detail">
+			<div class="row">
+				<span>구독번호</span><b th:text="${info.subscriptionCode}">SUB-0000</b>
+			</div>
+			<div class="row">
+				<span>회사코드</span><b th:text="${info.companyCode}">C000</b>
+			</div>
+			<div class="row">
+				<span>구매자</span><b th:text="${info.buyerName}">홍길동</b>
+			</div>
+			<div class="row">
+				<span>결제 금액</span> <span class="right"> <b
+					th:text="${#numbers.formatInteger(info.amount.total, 3, 'COMMA')}">30,000</b>
+					<span>원</span>
+				</span>
+			</div>
+			<div class="row">
+				<span>부가세</span> <span class="right"> <b
+					th:text="${#numbers.formatInteger(info.amount.vat, 3, 'COMMA')}">3,000</b>
+					<span>원</span>
+				</span>
+			</div>
+		</div>
+
+		<div class="btns">
+			<a href="/" class="btn">메인으로 돌아가기</a> <a
+				th:if="${info.subscriptionCode}"
+				th:href="@{|/pay/contract/download?subscriptionCode=${info.subscriptionCode}|}"
+				class="btn">계약서 내려받기(PDF)</a>
+		</div>
+	</div>
 </body>
 </html>
