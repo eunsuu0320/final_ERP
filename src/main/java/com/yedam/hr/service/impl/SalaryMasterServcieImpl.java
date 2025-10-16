@@ -71,8 +71,7 @@ public class SalaryMasterServcieImpl implements SalaryMasterService {
 	}
 
 	@Override
-	public String findByCompanyCodeAndSalaryId(String companyCode, String salaryId) {
-	    SalaryMaster m = salaryMasterRepository.findByCompanyCodeAndSalaryId(companyCode, salaryId);
-	    return (m == null || m.getPayYm() == null) ? "" : m.getPayYm();
+	public SalaryMaster findByCompanyCodeAndSalaryId(String companyCode, String salaryId) {
+	    return salaryMasterRepository.findByCompanyCodeAndSalaryId(companyCode, salaryId);
 	}
 }

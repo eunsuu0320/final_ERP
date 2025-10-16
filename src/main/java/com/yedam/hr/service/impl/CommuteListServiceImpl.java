@@ -30,7 +30,7 @@ public class CommuteListServiceImpl implements CommuteListService {
 
     @Override
     public List<CommuteList> getCommuteLists(String companyCode) {
-        return commuteListRepository.findByCompanyCode(companyCode);
+        return commuteListRepository.findByCompanyCodeOrderByComIdDesc(companyCode);
     }
 
     /**

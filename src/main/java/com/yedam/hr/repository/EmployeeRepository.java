@@ -1,5 +1,6 @@
 package com.yedam.hr.repository;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,5 +48,15 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 			    and e.empCode     = :empCode
 			""")
 	Employee findByCompanyCodeAndEmpCode(String companyCode, String empCode);
+
+	// 급여대장 명세서 조회할 때 넘겨주는 값.
+	@Query("""
+		    select e
+		    from Employee e
+		    where e.companyCode = :companyCode
+		      and e.empCode in :empCodes
+		      and e.resignDate is null
+		""")
+		List<Employee> findByCompanyCodeAndEmpCodeIn(String companyCode, Collection<String> empCodes);
 
 }

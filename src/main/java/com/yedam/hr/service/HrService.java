@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
+import com.yedam.hr.dto.EmployeeDTO;
 
 public interface HrService {
 
@@ -15,7 +16,7 @@ public interface HrService {
 	List<Employee> findByCompanyCode(String companyCode);
 
 	   // 사원 + 근로계약서 + pdf 등록
-    void saveContract(Employee employee,
+    void saveContract(EmployeeDTO employee,
                       HrSign sign,
                       HrPDF pdf,
                       MultipartFile signImg,

@@ -23,7 +23,7 @@ public class HrHistorySerivceImpl implements HrHistorySerivce {
 
     @Override
     public List<HrHistoryDTO> findByCompanyCode(String companyCode) {
-        List<HrHistory> list = historyRepository.findByCompanyCode(companyCode);
+        List<HrHistory> list = historyRepository.findByCompanyCodeOrderByCreatedAtDesc(companyCode);
 
         // ★ 문제 요약 로그 (무엇이 null/미존재인지 바로 확인)
         for (HrHistory h : list) {
