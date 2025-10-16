@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	// 진행 상태에 따른 스타일을 정의하는 맵
 	const STATUS_MAP = {
-		"미확인": { label: "미확인"}, 
-		"진행중": { label: "진행중"},      
-		"미체결": { label: "미체결"},   
-		"체결": { label: "체결" }      
+		"미확인": { label: "미확인" },
+		"진행중": { label: "진행중" },
+		"미체결": { label: "미체결" },
+		"체결": { label: "체결" }
 	};
 
 	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
@@ -227,8 +227,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			deliveryDate: quoteDataObject.deliveryDate,
 			validPeriod: parseInt(quoteDataObject.validPeriod) || 0,
 			postCode: parseInt(quoteDataObject.postCode) || 0,
-			address: quoteDataObject.address  || '',
-			payCondition: quoteDataObject.payCondition  || '',
+			address: quoteDataObject.address || '',
+			payCondition: quoteDataObject.payCondition || '',
 			remarks: quoteDataObject.remarks || '',
 			manager: quoteDataObject.manager || '',
 
@@ -293,7 +293,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 			// ✨ 수정된 HTML name 속성을 사용하여 객체 구성
 			detailList.push({
-				productCode: row.querySelector('input[name="productCode"]').value || '',
+				productCode: row.querySelector('input[name="itemCode"]').value || '',
 				quantity: window.cleanValue(row.querySelector('input[name="quantity"]').value),
 				price: window.cleanValue(row.querySelector('input[name="price"]').value),
 				remarks: row.querySelector('input[name="remarks"]').value || '',
@@ -390,6 +390,8 @@ function calculateRow(inputElement) {
 	const unitPriceInput = row.querySelector('input[name="price"]'); // ✨ name="price" 적용
 	const supplyAmountInput = row.querySelector('input[name="supplyAmount"]');
 	const taxAmountInput = row.querySelector('input[name="taxAmount"]');
+	const finalAmountInput = row.querySelector('input[name="finalAmount"]');
+
 
 	// 3. 계산을 위해 콤마가 제거된 순수한 숫자값 사용
 	const quantity = cleanValue(quantityInput.value);
@@ -398,10 +400,12 @@ function calculateRow(inputElement) {
 	// 4. 공급가액 및 부가세 계산
 	const supplyAmount = quantity * unitPrice;
 	const taxAmount = Math.floor(supplyAmount * 0.1);
+	const finalAmount = supplyAmount + taxAmount;
 
 	// 5. 계산된 공급가액과 부가세에 콤마 포맷팅 적용 후 출력
 	supplyAmountInput.value = supplyAmount.toLocaleString('ko-KR');
 	taxAmountInput.value = taxAmount.toLocaleString('ko-KR');
+	finalAmountInput.value = finalAmount.toLocaleString('ko-KR');
 
 	// 6. 전체 합계 재계산
 	calculateTotal();

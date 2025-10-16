@@ -139,7 +139,7 @@ public class PriceServiceImpl implements PriceService {
                     row.put("단가그룹코드", price.getPriceGroupCode());
                     row.put("단가그룹명", price.getPriceGroupName());
                     row.put("단가유형", price.getPriceType());
-                    row.put("할인율", price.getDiscountPct());
+                    row.put("할인율", (price.getDiscountPct() * 100) + " %");
                     row.put("단가적용시작일", price.getStartDate());
                     row.put("단가적용종료일", price.getEndDate());
                     row.put("사용구분", price.getUsageStatus());
@@ -188,7 +188,7 @@ public class PriceServiceImpl implements PriceService {
                     row.put("단가그룹코드", price.getPriceGroupCode());
                     row.put("단가그룹명", price.getPriceGroupName());
                     row.put("단가유형", price.getPriceType());
-                    row.put("할인율", price.getDiscountPct());
+                    row.put("할인율", (price.getDiscountPct() * 100) + " %");
                     row.put("단가적용시작일", price.getStartDate());
                     row.put("단가적용종료일", price.getEndDate());
                     row.put("사용구분", price.getUsageStatus());
@@ -243,7 +243,7 @@ public class PriceServiceImpl implements PriceService {
                 row.put("단가그룹코드", price.getPriceGroupCode());
                 row.put("단가그룹명", price.getPriceGroupName());
                 row.put("단가유형", price.getPriceType());
-                row.put("할인율", price.getDiscountPct());
+                row.put("할인율", (price.getDiscountPct() * 100) + " %");
                 row.put("단가적용시작일", price.getStartDate());
                 row.put("단가적용종료일", price.getEndDate());
                 row.put("사용구분", price.getUsageStatus());
@@ -293,8 +293,12 @@ public class PriceServiceImpl implements PriceService {
     }
 
     @Override
-    public Price getPriceByPriceGroupCode(String PriceGroupCode) {
-        return priceRepository.findByPriceGroupCode(PriceGroupCode);
+    public Price getPriceByPriceGroupCode(String priceGroupCode) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+    	System.out.println("============priceServiceImpl 확인===============");
+    	System.out.println(companyCode);
+    	System.out.println(priceGroupCode);
+        return priceRepository.findByPriceGroupCode(priceGroupCode, companyCode);
     }
 
     // =========================================================================

@@ -175,7 +175,7 @@ const modalConfigs = {
 
 	warehouse: {
 		url: "/api/modal/warehouse",
-		title: "품목 검색",
+		title: "창고 검색",
 		columns: [
 			{ title: "창고", field: "productCode" },
 			{ title: "품목명", field: "productName" },
@@ -224,10 +224,11 @@ const modalConfigs = {
 		url: "/api/modal/estimate",
 		title: "견적서 검색",
 		columns: [
-			{ title: "견적서식별코드", field: "estimateUniqueCode", width: 140, hozAlign: "center" },
-			{ title: "견적서코드", field: "estimateCode", width: 140, hozAlign: "center" },
-			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
-			{ title: "견적금액합계", field: "totalAmount", width: 140, hozAlign: "center" },
+			{ title: "견적서코드", field: "estimateCode", hozAlign: "center" },
+			{ title: "거래처코드", field: "partnerCode", hozAlign: "center" },
+			{ title: "납기일", field: "expiryDate", hozAlign: "center" },
+			{ title: "견적금액합계", field: "totalAmount", hozAlign: "center" },
+			{ title: "비고", field: "remarks", hozAlign: "center" },
 
 
 		],
@@ -240,6 +241,7 @@ const modalConfigs = {
 		title: "품목 검색",
 		columns: [
 			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
+			{ title: "품목그룹", field: "productGroup", width: 200, hozAlign: "center" },
 			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
 			{
 				title: "규격/단위",
@@ -248,8 +250,8 @@ const modalConfigs = {
 				formatter: function(cell) {
 					const data = cell.getRow().getData();
 
-					const size = data.productSize || ''; 
-					const unit = data.unit || '';      
+					const size = data.productSize || '';
+					const unit = data.unit || '';
 
 					if (size && unit) {
 						return size + " " + unit;
@@ -261,10 +263,28 @@ const modalConfigs = {
 					return '';
 				}
 			},
+			{
+				title: "기본단가",
+				field: "price",
+				width: 200,
+				hozAlign: "center", // 금액은 우측 정렬이 가독성이 좋습니다.
+				// 콤마 포맷터 적용
+				formatter: function(cell) {
+					const price = cell.getValue();
+					// 값이 유효한 숫자인지 확인
+					if (price === null || price === undefined || isNaN(price) || price === '') {
+						return '';
+					}
+					// toLocaleString()을 사용하여 콤마를 적용합니다.
+					return Number(price).toLocaleString('ko-KR');
+				}
+			},
+			{ title: "비고", field: "remarks", width: 280, hozAlign: "center" },
+
 		],
 		selectable: 1,
 	},
-	
+
 	//  품목 - sales2
 	productCode2: {
 		url: "/api/modal/productCode",
@@ -303,7 +323,7 @@ function openModal(type, onSelect, commonGroup) {
 
 	table = new Tabulator("#commonModalTable", {
 		ajaxURL: config.url,
-		ajaxParams: commonGroup ? { commonGroup: commonGroup } : {}, // 공통그룹 파라미터
+		ajaxParams: commonGroup ? { commonGroup: commonGroup } : {},
 		layout: "fitColumns",
 		pagination: "local",
 		paginationSize: 10,
@@ -318,10 +338,9 @@ function openModal(type, onSelect, commonGroup) {
 				cellClick: (e, cell) => {
 					const selected = cell.getRow().getData();
 
-					// ✅ 근태 모달일 경우 사용 여부 체크
 					if (type === "attendance" && selected.attIs === "N") {
 						alert("사용안함 항목은 선택할 수 없습니다.");
-						return; // 선택 막기
+						return;
 					}
 
 					if (onSelect) {
@@ -332,9 +351,17 @@ function openModal(type, onSelect, commonGroup) {
 			}
 		],
 		ajaxResponse: function(url, params, response) {
-			return response; // 필요 시 response.data 로 변경
+			if (type === "estimate") {
+				const filtered = response.filter(item => item.isCurrentVersion === 'Y');
+				console.log("원본 데이터:", response);       // 서버에서 넘어온 전체 데이터
+				console.log("필터링 후 데이터:", filtered); // isCurrentVersion='Y'만 남긴 데이터
+				return filtered;
+			}
+			return response;
 		}
+
 	});
+
 
 	// 검색 이벤트 연결
 	const searchInput = document.getElementById("commonModalSearch");
