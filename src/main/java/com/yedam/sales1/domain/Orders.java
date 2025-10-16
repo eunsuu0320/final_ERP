@@ -70,6 +70,16 @@ public class Orders {
     @Column(name = "COMPANY_CODE", length = 20, nullable = false)
     private String companyCode;
 
+    
+ // 거래처 연관 (복합키 조인)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+      @JoinColumn(name = "PARTNER_CODE", referencedColumnName = "PARTNER_CODE", insertable = false, updatable = false),
+      @JoinColumn(name = "COMPANY_CODE", referencedColumnName = "COMPANY_CODE", insertable = false, updatable = false)
+    })
+    private Partner partner;
+    
+    
     @PrePersist
     public void prePersist() {
         Date now = new Date();

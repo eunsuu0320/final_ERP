@@ -102,14 +102,14 @@
        <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
 
         <!-- 사원 검색 -->
-        <div class="input-group" style="width:400px;">
-          <span class="input-group-text" style="margin-right:5px; margin-left:10px;">품목명 검색</span>
-          <input id="productName" type="text" class="form-control" placeholder="품목 입력">
-          <input type="hidden" id="salesCode" name="salesCode">
+        <div class="input-group" style="width:350px;">
+          <input id="name" type="text" class="form-control" placeholder="사원명 입력">
+          <input type="hidden" id="empCode" name="empCode">
           <i class="fas fa-search"
              style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
              onclick="openModal('employee', function(selected) {
-               document.getElementById('empCode').value = selected.partnerCode;
+               document.getElementById('empCode').value = selected.empCode;
+               document.getElementById('name').value = selected.name;
              })"></i>
           <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
         </div>
@@ -156,9 +156,9 @@
       <div class="modal-body">
         <!-- 검색 영역 -->
         <div class="d-flex align-items-center mb-3">
-          <label class="fw-bold me-2">사원명:</label>
+          <label class="fw-bold me-2">검색:</label>
           <div style="position: relative; display: inline-block;">
-            <input id="modal-searchInput" type="text" placeholder="사원명 입력" style="width:180px; padding-right:30px;">
+            <input id="modal-searchInput" type="text" placeholder="거래처명 입력" style="width:180px; padding-right:30px;">
             <i class="fas fa-search"
               id="modal-searchIcon"
               style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"></i>

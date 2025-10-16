@@ -29,6 +29,12 @@ public class AllDecController {
 		return "hr/allowDeduct";
 	}
 
+	// 수당 공제 포뮬러 가이드 페이지
+	@GetMapping("/formulaModal")
+	public String getFormulaModalString(Model model) {
+		return "hr/formulaModal";
+	}
+
 	// 수당 회사코드별 조회 목록
 	@GetMapping("/allowance")
 	@ResponseBody

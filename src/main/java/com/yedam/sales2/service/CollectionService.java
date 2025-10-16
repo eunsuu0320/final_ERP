@@ -14,8 +14,10 @@ public interface CollectionService {
     List<Map<String, Object>> getReceivableSummary(String companyCode);
     
     // 수금 등록
-    void executeCollectionFifo(String partnerCode, Double paymentAmt, String paymentMethods, String remk, String companyCode);
-
+    void executeCollectionFifo(String partnerCode, Double paymentAmt, Double postDeduction, String paymentMethods, String remk, String companyCode);
+    
+    // 청구서 조회
+    List<com.yedam.sales1.domain.Invoice> getInvoicesByPartnerJpa(String companyCode, String partnerCode);
 
 }
 

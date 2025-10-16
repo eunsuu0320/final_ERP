@@ -32,7 +32,14 @@ public class CollectionServiceImpl implements CollectionService{
 	 // 수금 등록
 	    @Override
 	    @Transactional
-	    public void executeCollectionFifo(String partnerCode, Double paymentAmt, String paymentMethods, String remk, String companyCode) {
-	        collectionRepository.callCollectionFifoProc(partnerCode, paymentAmt, paymentMethods, remk, companyCode);
+	    public void executeCollectionFifo(String partnerCode, Double paymentAmt,  Double postDeduction, String paymentMethods, String remk, String companyCode) {
+	        collectionRepository.callCollectionFifoProc(partnerCode, paymentAmt, postDeduction, paymentMethods, remk, companyCode);
 	    }
+	    
+	 // 청구서 조회
+	    @Override
+	    public List<com.yedam.sales1.domain.Invoice> getInvoicesByPartnerJpa(String companyCode, String partnerCode) {
+	        return collectionRepository.findInvoicesByPartnerJpa(companyCode, partnerCode);
+	    }
+
 }

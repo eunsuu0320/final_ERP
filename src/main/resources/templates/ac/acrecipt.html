@@ -3,35 +3,86 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/main}">
 <head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <meta charset="UTF-8" />
-  <title>거래명세서</title>
 
   <style>
     /* ===== 페이지 레이아웃(목록/검색) ===== */
-    .wrap{width:100%;max-width:1600px;margin:0 auto;padding:0 8px;}
-    .section{margin:12px 0;}
-    .searchline{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;}
-    .form-group{display:flex;flex-direction:column;gap:6px;}
-    .form-label{font-size:.95rem;}
-    .input-with-icon{display:flex;align-items:center;gap:6px;}
-    .input-with-icon .form-control{width:220px;}
-    .btn{height:38px;padding:0 .9rem;}
-    .btn-icon{min-width:38px;}
-    .actions-right{display:flex;justify-content:flex-end;gap:8px;}
-    .table-wrap{position:relative;background:#fff;border:1px solid #e1e3e6;border-radius:8px;overflow:hidden;--grid-h: calc(72vh - 80px);}
-    .tabulator{border:0;}
-    .tabulator-header{border-bottom:1px solid #e1e3e6;}
-    .tabulator-col{background:#f7f7f9;font-weight:700;}
-    .tabulator-tableholder{max-height:var(--grid-h);}
-    .loading-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.55);backdrop-filter:blur(1px);z-index:50;}
-    .loading-overlay.show{display:flex;}
-    .loading-box{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid #e4e6eb;box-shadow:0 4px 18px rgba(0,0,0,.08);font-weight:600;color:#333;}
-    .toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
+.wrap{width:100%;max-width:1600px;margin:0 auto;padding:0 8px;}
+.section{margin:12px 0;}
+.btn{height:38px;padding:0 .9rem;}
+.btn-icon{min-width:38px;}
+.actions-right{display:flex;justify-content:flex-end;gap:8px;}
+.table-wrap{position:relative;background:#fff;border:1px solid #e1e3e6;border-radius:8px;overflow:hidden;--grid-h: calc(72vh - 80px);}
+.tabulator{border:0;}
+.tabulator-header{border-bottom:1px solid #e1e3e6;}
+.tabulator-col{background:#f7f7f9;font-weight:700;}
+.tabulator-tableholder{max-height:var(--grid-h);}
+.loading-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.55);backdrop-filter:blur(1px);z-index:50;}
+.loading-overlay.show{display:flex;}
+.loading-box{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#fff;border:1px solid #e4e6eb;box-shadow:0 4px 18px rgba(0,0,0,.08);font-weight:600;color:#333;}
+.toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
 
-    /* 인쇄 컬러 보정 */
-    @media print{
-      body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    }
+/* 인쇄 컬러 보정 */
+@media print{
+  body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+
+/* ===== 검색바 한 줄 정렬 ===== */
+/* 레이블은 위, 입력창은 아래에; 전체는 가로 1줄 유지 */
+.searchline{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:nowrap;      /* 줄바꿈 금지 */
+  overflow-x:auto;       /* 화면이 좁으면 가로 스크롤 */
+  padding-bottom:2px;
+}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:.95rem;}
+
+/* 텍스트 입력 + 돋보기 버튼(내장) */
+.input-with-icon{position:relative;display:inline-block;width:220px;}
+.input-with-icon .form-control{width:100%;padding-right:40px;}
+.input-with-icon .icon-btn{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  border:0;background:transparent;padding:0;margin:0;
+  width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;border-radius:6px;z-index:2;
+}
+.input-with-icon .icon-btn:focus{outline:2px solid #86b7fe;outline-offset:2px;}
+.input-with-icon .icon-btn .fa-solid{font-size:16px;color:#6c757d;}
+.input-with-icon .icon-btn:hover .fa-solid{color:#333;}
+
+/* 일자 범위 + 버튼 라인 */
+.date-row{display:flex;align-items:center;gap:6px;width:100%;}
+.date-row .form-control{width:150px;}
+/* 인쇄 버튼을 오른쪽 끝으로 밀기 */
+.push-right{margin-left:auto;}
+/* 부트스트랩이 없을 경우를 위한 보조 클래스 */
+.date-row .ms-auto{margin-left:auto;}
+
+/* 반응형(선택): 아주 좁은 화면에서만 줄바꿈 허용 */
+@media (max-width: 980px){
+  .searchline{flex-wrap:wrap;}
+  .push-right,.date-row .ms-auto{margin-left:0;}
+}
+
+/* 검색 라인은 전체 너비 사용 */
+.searchline{ width:100%; }
+
+/* 기본은 내용만큼만 차지 */
+.searchline > .form-group{ flex:0 0 auto; }
+
+/* 마지막 form-group(일자범위)은 남은 공간을 모두 차지 */
+.searchline > .form-group:last-child{ 
+  flex:1 1 auto;               /* ✅ 중요 */
+  min-width: 520px;            /* 너무 좁아지는 것 방지(원하면 조정/삭제) */
+}
+
+/* 일자범위 내부 줄 & 인쇄 오른쪽 밀기 */
+.date-row{ display:flex; align-items:center; gap:6px; width:100%; }
+.push-right{ margin-left:auto; }   /* ✅ 인쇄 버튼 오른쪽 끝으로 */
   </style>
 </head>
 
@@ -45,43 +96,50 @@
       </div>
 
       <!-- 우측 상단 버튼 -->
-      <div class="section">
-        <div class="actions-right">
-          <!-- ⭐ 반드시 type="button" -->
-          <button id="btn-print" type="button" class="btn btn-dark">인쇄</button>
-        </div>
-      </div>
-
       <!-- 검색 -->
-      <div class="section">
-        <div class="searchline">
-          <div class="form-group">
-            <label class="form-label" for="s-partner">거래처명</label>
-            <div class="input-with-icon">
-              <input id="s-partner" type="text" class="form-control" placeholder="거래처명">
-              <button id="btn-find-partner" type="button" class="btn btn-outline-secondary btn-icon" title="거래처 검색" aria-label="거래처 검색">🔍</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="s-product">품목명</label>
-            <div class="input-with-icon">
-              <input id="s-product" type="text" class="form-control" placeholder="품목명">
-              <button id="btn-find-product" type="button" class="btn btn-outline-secondary btn-icon" title="품목 검색" aria-label="품목 검색">🔍</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">일자 범위</label>
-            <div class="input-with-icon" style="gap:6px;">
-              <input id="s-from" type="date" class="form-control">
-              <span style="align-self:center;color:#6b7280;">~</span>
-              <input id="s-to" type="date" class="form-control">
-              <!-- ⭐ 반드시 type="button" -->
-              <button id="btn-search" type="button" class="btn btn-warning">검색</button>
-              <button id="btn-reset"  type="button" class="btn btn-outline-secondary">초기화</button>
-            </div>
-          </div>
-        </div>
+<div class="section">
+  <div class="searchline">
+    <!-- 거래처명 -->
+    <div class="form-group form-group--partner">
+      <label class="form-label" for="s-partner">거래처명</label>
+      <div class="input-with-icon">
+        <input id="s-partner" type="text" class="form-control" placeholder="거래처명">
+        <button id="btn-find-partner" type="button" class="icon-btn" aria-label="거래처 검색">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </button>
       </div>
+    </div>
+
+    <!-- 품목명 -->
+    <div class="form-group form-group--product">
+      <label class="form-label" for="s-product">품목명</label>
+      <div class="input-with-icon">
+        <input id="s-product" type="text" class="form-control" placeholder="품목명">
+        <button id="btn-find-product" type="button" class="icon-btn" aria-label="품목 검색">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 일자 범위 + 버튼들 -->
+    <div class="form-group">
+      <label class="form-label">일자 범위</label>
+      <div class="date-row">
+        <input id="s-from" type="date" class="form-control">
+        <span style="color:#6b7280;">~</span>
+        <input id="s-to" type="date" class="form-control">
+
+        <button id="btn-search" type="button" class="btn btn-warning">검색</button>
+        <button id="btn-reset"  type="button" class="btn btn-outline-secondary">초기화</button>
+
+        <!-- 여기서부터 오른쪽 끝으로 밀기 -->
+        <div class="push-right"></div>
+        <button id="btn-print" type="button" class="btn btn-dark">인쇄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
       <!-- 목록 -->
       <div class="box">

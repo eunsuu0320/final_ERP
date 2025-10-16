@@ -208,7 +208,7 @@ window.makeTabulator = function(rows, tabulatorColumns) {
 		movableColumns: true,
 		resizableRows: false,
 		pagination: "local",
-		paginationSize: 10
+		paginationSize: 12
 	});
 
 	// 컬럼 토글 체크박스

@@ -184,5 +184,11 @@ public class SalesServiceImpl implements SalesService {
 		return result;
 	}
     
+    // 미수금 to5
+    @Override
+    public List<Map<String, Object>> getTopOutstanding(String companyCode, int limit) {
+        // 레포지토리 메서드명과 정확히 일치!
+        return salesRepository.findTopOutstanding(companyCode, limit);
+    }
     
 }

@@ -38,4 +38,8 @@ public interface SalesService {
 	
 	// 사원별 영업매출
 	List<Map<String, Object>> getEmpPlanList(String companyCode, String planYear);
+	
+	// 미수금 top5
+	 List<Map<String, Object>> getTopOutstanding(String companyCode, int limit);
+	
 }

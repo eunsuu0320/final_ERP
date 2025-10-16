@@ -11,7 +11,7 @@ async function loadCodeMaps(groups = ["GRP011", "GRP013", "GRP010", "GRP015"]) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-	const tableEl = document.getElementById("employee-table");
+	const tableEl = document.getElementById("employee-table");0.
 	if (!tableEl) {
 		console.error("#employee-table 엘리먼트를 찾을 수 없습니다.");
 		return;

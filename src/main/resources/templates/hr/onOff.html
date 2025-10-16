@@ -84,9 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     dayCellContent(info) { return String(info.date.getDate()); }, // 숫자만
     events: loadEvents,
     dateClick: () => {},                 // ✅ 날짜 클릭 무반응
-    eventClick(info) {
-      alert(`[상세]\n날짜: ${info.event.startStr}\n제목: ${info.event.title}`);
-    }
+    eventClick(info) {}
   });
 
   calendar.render();
@@ -157,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('titleBar').textContent = `${y}/${m}`;
   }
 
-  // ===== 이벤트 로더: "총원(내근 + 외근)" =====
+//===== 이벤트 로더: "출근 인원수" =====
   async function loadEvents(fetchInfo, success) {
     try {
       const res = await fetch(`/onoff?companyCode=${encodeURIComponent(COMPANY_CODE)}`);
@@ -166,24 +164,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const startMs = fetchInfo.start.getTime();
       const endMs   = fetchInfo.end.getTime();
+
+      // 화면에 보이는 기간만 필터
       const rowsInRange = all.filter(r => {
         const t = new Date(r.onTime).getTime();
         return t >= startMs && t < endMs;
       });
 
-      const map = {};
+      // 날짜별 출근 사원(중복 제거)
+      const byDate = {};
       for (const r of rowsInRange) {
         const key = dateKeyFromISO(r.onTime);
-        if (!map[key]) map[key] = { in: new Set(), out: new Set() };
-        if (String(r.comIs).toUpperCase() === 'OUT') map[key].out.add(r.empCode);
-        else                                         map[key].in.add(r.empCode);
+        if (!byDate[key]) byDate[key] = new Set();
+        byDate[key].add(r.empCode); // 같은 날 같은 사원 여러 건이어도 1회로 집계
       }
 
-      const events = Object.keys(map).map(k => {
-        const inCnt  = map[k].in.size;
-        const outCnt = map[k].out.size;
-        const total  = inCnt + outCnt;
-        return { start: k, title: `${total} (${inCnt} + ${outCnt})`, color: '#e05239' };
+      // 이벤트 생성: "출근 N명"
+      const events = Object.keys(byDate).map(k => {
+        const total = byDate[k].size;
+        return {
+          start: k,
+          title: `출근 ${total}명`,
+          backgroundColor: '#e05239',
+          borderColor: '#e05239'
+        };
       });
 
       success(events);

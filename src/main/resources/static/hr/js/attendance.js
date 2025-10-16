@@ -28,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const USE_YN = await loadCommonCode("GRP007");
 
 	// 근태 항목
-	// tabulator
 	const attendanceTable = new Tabulator(document.getElementById("att-table"), {
 		layout: "fitColumns",
 		pagination: "local",
@@ -49,9 +48,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 			{
 				title: "사용여부",
 				field: "attIs",
+				hozAlign: "center",
 				editor: "list",
-				editorParams: { values: USE_YN },
-				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
+				editorParams: {
+					// 키는 저장값(Y/N), 값은 표시 라벨
+					values: { "Y": "사용함", "N": "사용안함" }
+				},
+				formatter: function(cell) {
+					var v = cell.getValue();
+					var sz = "13px";
+					var pad = "0.35em 0.6em";
+					if (v === "Y" || v === "y" || v === "사용함") {
+						return '<span class="badge bg-success" style="font-size:' + sz + ';padding:' + pad + ';">사용함</span>';
+					}
+					return '<span class="badge bg-danger" style="font-size:' + sz + ';padding:' + pad + ';">사용안함</span>';
+				},
+				// 혹시 '사용함/사용안함' 문자열이 들어올 때 Y/N로 정규화
+				mutatorEdit: function(value) {
+					if (value === "사용함") return "Y";
+					if (value === "사용안함") return "N";
+					return (value ?? "").toString().toUpperCase();
+				},
+				accessorDownload: function(value) {
+					return value === "Y" ? "사용함" : "사용안함";
+				}
 			},
 			{ title: "비고", field: "note", editor: "input" },
 		],

@@ -40,8 +40,25 @@ public interface CollectionRepository extends JpaRepository<CollectionEntity, St
     void callCollectionFifoProc(
         @Param("p_partner_code") String partnerCode,
         @Param("p_payment_amt") Double paymentAmt,
+        @Param("p_post_deduction") Double postDeduction,
         @Param("p_payment_methods") String paymentMethods,
         @Param("p_remk") String remk,
         @Param("p_company_code") String companyCode
     );
+    
+    // 청구서 조회
+    @Query("""
+        SELECT i
+          FROM Invoice i
+         WHERE i.companyCode = :companyCode
+           AND i.partnerCode = :partnerCode
+           AND i.isCurrentVersion = 'Y'
+           AND i.status IN ('진행중','수금완료','수금대기')
+         ORDER BY i.dmndDate ASC, i.invoiceUniqueCode ASC
+    """)
+    List<com.yedam.sales1.domain.Invoice> findInvoicesByPartnerJpa(
+        @Param("companyCode") String companyCode,
+        @Param("partnerCode") String partnerCode
+    );
+
 }

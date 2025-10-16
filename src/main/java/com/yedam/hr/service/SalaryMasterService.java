@@ -12,5 +12,7 @@ public interface SalaryMasterService {
 	// 급여대장 마스터 + 급여대장 디테일(금액 전체 0)으로 등록
 	SalaryMaster insertSalaryMaster(SalaryMaster salaryMaster);
 
+	int confirmSelected(String companyCode, List<String> salaryIds);
 
+	SalaryMaster findByCompanyCodeAndSalaryId(String companyCode, String salaryId);
 }
