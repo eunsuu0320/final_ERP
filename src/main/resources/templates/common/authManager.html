@@ -1,246 +1,282 @@
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}">
 <head>
 <meta charset="utf-8" />
 <title>권한 관리</title>
 <style>
 :root {
-	--line: #e5e7eb;
-	--muted: #8a8f98;
-	--bg: #f5f7fb;
-	--card: #fff;
-	--text: #111827;
-	--accent: #eef4ff;
-	--accent-line: #bfd3ff;
-	--thead: #fafbff
+  --line: #e5e7eb;
+  --muted: #8a8f98;
+  --bg: #f5f7fb;
+  --card: #fff;
+  --text: #111827;
+  --accent: #eef4ff;
+  --accent-line: #bfd3ff;
+  --thead: #fafbff
 }
 
 body {
-	margin: 0;
-	background: var(--bg);
-	color: var(--text);
-	font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
-		Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+    Arial, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif
 }
 
 .rp .layout {
-	display: flex;
-	gap: 16px;
-	min-width: 0;
-	padding: 16px;
-	height: calc(100vh - 160px)
+  display: flex;
+  gap: 16px;
+  min-width: 0;
+  padding: 16px;
+  height: calc(100vh - 160px)
 }
 
 .rp .left {
-	flex: 0 0 260px;
-	min-width: 260px;
-	background: #fff;
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	overflow: auto;
-	max-height: 100%
+  flex: 0 0 260px;
+  min-width: 260px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: auto;
+  max-height: 100%
 }
 
 .rp .left-head {
-	padding: 12px 14px;
-	border-bottom: 1px solid #eee;
-	font-weight: 700
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  font-weight: 700
 }
 
 .rp .role-list {
-	padding: 6px
+  padding: 6px
 }
 
 .rp .role-item {
-	padding: 10px 12px;
-	border-radius: 8px;
-	cursor: pointer
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer
 }
 
 .rp .role-item:hover {
-	background: #f7f9ff
+  background: #f7f9ff
 }
 
 .rp .role-item.active {
-	background: var(--accent);
-	border: 1px solid var(--accent-line)
+  background: var(--accent);
+  border: 1px solid var(--accent-line)
 }
 
 .rp .right {
-	flex: 1 1 auto;
-	min-width: 0;
-	min-height: 0;
-	display: flex;
-	flex-direction: column
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column
 }
 
 .rp .toolbar {
-	display: flex;
-	gap: 8px;
-	align-items: center;
-	margin: 0 0 10px
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 10px
 }
 
 .rp .toolbar .spacer {
-	flex: 1
+  flex: 1
 }
 
 .rp .input {
-	height: 36px;
-	padding: 0 10px;
-	border: 1px solid #c8c8c8;
-	border-radius: 6px;
-	background: #fff
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  background: #fff
 }
 
 .rp .btn {
-	height: 36px;
-	padding: 0 14px;
-	border: 1px solid #d0d5dd;
-	border-radius: 8px;
-	background: #fff;
-	cursor: pointer
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer
 }
 
 .rp .btn-primary {
-	background: #4f46e5;
-	border-color: #4f46e5;
-	color: #fff
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff
 }
 
 .rp .btn-primary:hover {
-	opacity: .95
+  opacity: .95
 }
 
 .rp .card {
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	background: #fff;
-	flex: 1 1 auto;
-	min-height: 0;
-	display: flex;
-	flex-direction: column
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column
 }
 
 .rp .table-wrap {
-	flex: 1 1 auto;
-	min-height: 0;
-	overflow: auto;
-	max-width: 100%
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  max-width: 100%
 }
 
 .rp table {
-	width: 100%;
-	border-collapse: separate;
-	border-spacing: 0
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0
 }
 
 .rp thead th {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	background: var(--thead);
-	border-bottom: 1px solid var(--line);
-	font-weight: 700
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--thead);
+  border-bottom: 1px solid var(--line);
+  font-weight: 700
 }
 
 .rp th, .rp td {
-	padding: 10px 8px;
-	text-align: center;
-	border-bottom: 1px solid #f0f0f0;
-	white-space: nowrap
+  padding: 10px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap
 }
 
 .rp td:first-child, .rp th:first-child {
-	text-align: center
+  text-align: center
 }
 
 .rp .empty {
-	padding: 28px;
-	color: var(--muted);
-	text-align: center
+  padding: 28px;
+  color: var(--muted);
+  text-align: center
 }
 
 .rp .mod-row td {
-	background: #f8fafc;
-	font-weight: 700;
-	text-align: left;
-	border-top: 2px solid var(--line)
+  background: #f8fafc;
+  font-weight: 700;
+  text-align: left;
+  border-top: 2px solid var(--line)
 }
 
 @media ( max-width :960px) {
-	.rp .layout {
-		flex-direction: column;
-		height: auto
-	}
-	.rp .left {
-		max-height: none
-	}
+  .rp .layout {
+    flex-direction: column;
+    height: auto
+  }
+  .rp .left {
+    max-height: none
+  }
 }
+
+/* ===== 저장 중 표시 ===== */
+.rp .spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: -2px;
+  animation: rp-spin .6s linear infinite;
+}
+@keyframes rp-spin { to { transform: rotate(360deg); } }
+
+.rp.saving {
+  pointer-events: none;
+  opacity: .8;
+}
+.rp.saving #btnSave { pointer-events: auto; }
+
+/* ===== 조회 로딩 오버레이 ===== */
+.rp .table-wrap { position: relative; }
+.rp .overlay {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.6);
+  backdrop-filter: saturate(1.1) blur(1px);
+}
+.rp .overlay.hidden { display: none; }
+.rp .overlay .bubble {
+  border: 1px solid #cfcfd4; background: #fff; border-radius: 10px;
+  padding: 10px 14px; font-weight: 700; font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.05);
+}
+
 </style>
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">권한 관리</h1>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">권한 관리</h1>
 
-				<div id="rolePermApp" class="rp">
-					<div class="layout">
-						<!-- 왼쪽: 역할 리스트 -->
-						<aside class="left" aria-label="역할 목록">
-							<div class="left-head">권한(ROLE)</div>
-							<div id="roleList" class="role-list"></div>
-						</aside>
+        <div id="rolePermApp" class="rp">
+          <div class="layout">
+            <!-- 왼쪽: 역할 리스트 -->
+            <aside class="left" aria-label="역할 목록">
+              <div class="left-head">권한(ROLE)</div>
+              <div id="roleList" class="role-list"></div>
+            </aside>
 
-						<!-- 오른쪽: 필터 + 표 -->
-						<section class="right" aria-label="권한 편집">
-							<div class="toolbar">
-								<label for="selModule" class="sr-only"
-									style="position: absolute; left: -10000px;">모듈</label> <select
-									id="selModule" class="input">
-									<option value="">모듈 전체</option>
-								</select> <label for="qScreen" class="sr-only"
-									style="position: absolute; left: -10000px;">화면 검색</label> <input
-									id="qScreen" class="input" placeholder="화면명 검색" />
+            <!-- 오른쪽: 필터 + 표 -->
+            <section class="right" aria-label="권한 편집">
+              <div class="toolbar">
+                <label for="selModule" class="sr-only"
+                  style="position: absolute; left: -10000px;">모듈</label>
+                <select id="selModule" class="input">
+                  <option value="">모듈 전체</option>
+                </select>
+                <label for="qScreen" class="sr-only"
+                  style="position: absolute; left: -10000px;">화면 검색</label>
+                <input id="qScreen" class="input" placeholder="화면명 검색" />
 
-								<div class="spacer"></div>
+                <div class="spacer"></div>
 
-								<button id="btnSave" class="btn btn-primary" type="button">변경
-									저장</button>
-							</div>
+                <button id="btnSave" class="btn btn-primary" type="button">변경 저장</button>
+              </div>
 
-							<div class="card table-wrap">
-								<table id="permTable" aria-label="권한 테이블">
-									<thead>
-										<tr>
-											<th style="width: 44px"></th>
-											<th style="text-align: left">화면</th>
-											<th><input type="checkbox" id="colRead" title="조회 전체선택">
-												조회</th>
-											<th><input type="checkbox" id="colCreate"
-												title="등록 전체선택"> 등록</th>
-											<th><input type="checkbox" id="colUpdate"
-												title="수정 전체선택"> 수정</th>
-											<th><input type="checkbox" id="colDelete"
-												title="삭제 전체선택"> 삭제</th>
-										</tr>
-									</thead>
-									<tbody id="tbody"></tbody>
-								</table>
-								<div id="empty" class="empty" style="display: none">데이터가
-									없습니다.</div>
-							</div>
-						</section>
-					</div>
+              <div class="card table-wrap">
+                <table id="permTable" aria-label="권한 테이블">
+                  <thead>
+                    <tr>
+                      <th style="width: 44px"></th>
+                      <th style="text-align: left">화면</th>
+                      <th><input type="checkbox" id="colRead"   title="조회 전체선택"> 조회</th>
+                      <th><input type="checkbox" id="colCreate" title="등록 전체선택"> 등록</th>
+                      <th><input type="checkbox" id="colUpdate" title="수정 전체선택"> 수정</th>
+                      <th><input type="checkbox" id="colDelete" title="삭제 전체선택"> 삭제</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbody"></tbody>
+                </table>
+                <div id="empty" class="empty" style="display: none">데이터가 없습니다.</div>
+                
+                <div id="loadOverlay" class="overlay hidden" aria-live="polite">
+				  <div class="bubble">
+				    <span class="spinner"></span><span id="loadLabel">로딩 중…</span>
+				  </div>
 				</div>
-			</div>
-		</main>
-	</div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-	<script>
+  <script>
 /* ------------------------------
    상태
 --------------------------------*/
@@ -252,6 +288,28 @@ let state = {
   dirty: new Map(),        // key=screenCode, val={r,c,u,d}
   onlyY: true
 };
+
+const loadOverlay = document.getElementById('loadOverlay');
+const loadLabel   = document.getElementById('loadLabel');
+
+function disableControls(on){
+  ['#selModule','#qScreen','#colRead','#colCreate','#colUpdate','#colDelete','#btnSave']
+    .forEach(sel => { const el = document.querySelector(sel); if (el) el.disabled = on; });
+
+  document.querySelectorAll('#tbody input[type="checkbox"]').forEach(cb => cb.disabled = on);
+  document.querySelectorAll('.role-item').forEach(li => li.style.pointerEvents = on ? 'none' : '');
+}
+
+function showLoading(text){
+  if (text) loadLabel.textContent = text;
+  loadOverlay.classList.remove('hidden');
+  disableControls(true);
+}
+function hideLoading(){
+  loadOverlay.classList.add('hidden');
+  disableControls(false);
+}
+
 
 /* ------------------------------
    초기화
@@ -286,10 +344,13 @@ async function jput(url, body){
    데이터 로딩
 --------------------------------*/
 async function loadRoles(){
-  // 기존에 사용하던 역할 목록 API 유지
-  // 예) GET /api/role-perms → [{roleCode, roleName}]
   const roles = await jget('/api/role-perms');
-  state.roles = roles ?? [];
+
+  // MANAGER, USER만 남기기 (대문자 비교)
+  state.roles = (roles ?? []).filter(r => {
+    const name = (r.roleName || r.roleCode || '').toUpperCase();
+    return name === 'MANAGER' || name === 'USER';
+  });
 
   const wrap = document.getElementById('roleList');
   wrap.innerHTML = '';
@@ -301,6 +362,7 @@ async function loadRoles(){
     wrap.appendChild(li);
   });
 }
+
 
 async function loadModules(){
   // GET /api/screens/modules?onlyY=true  → [{code, name}]
@@ -315,11 +377,20 @@ async function loadModules(){
 }
 
 async function selectRole(roleCode, el){
-  state.currentRoleCode = roleCode;
-  document.querySelectorAll('.role-item').forEach(x=>x.classList.remove('active'));
-  el?.classList.add('active');
-  await loadPerms(roleCode);
-  renderTable();
+	  state.currentRoleCode = roleCode;
+	  document.querySelectorAll('.role-item').forEach(x=>x.classList.remove('active'));
+	  el?.classList.add('active');
+
+	  try{
+	    showLoading('로딩 중…');
+	    await loadPerms(roleCode);
+	    renderTable();
+	  } catch(e){
+	    console.error(e);
+	    alert('권한 정보를 불러오지 못했습니다.');
+	  } finally{
+	    hideLoading();
+	  }
 }
 
 /**
@@ -373,8 +444,16 @@ function bindEvents(){
 
 async function renderOrReload(){
   if(!state.currentRoleCode){ renderTable(); return; }
-  await loadPerms(state.currentRoleCode);
-  renderTable();
+  try{
+    showLoading('로딩 중…');
+    await loadPerms(state.currentRoleCode);
+    renderTable();
+  } catch(e){
+    console.error(e);
+    alert('권한 정보를 불러오지 못했습니다.');
+  } finally{
+    hideLoading();
+  }
 }
 
 function renderTable(){
@@ -388,7 +467,6 @@ function renderTable(){
 
   if(list.length === 0){
     document.getElementById('empty').style.display = 'block';
-    // 헤더도 초기화
     recalcHeaderToggles();
     return;
   }
@@ -408,7 +486,6 @@ function renderTable(){
 
   recalcHeaderToggles();
 }
-
 
 function buildRow(row){
   const tr = document.createElement('tr');
@@ -434,7 +511,7 @@ function buildRow(row){
       const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
       cur[key] = checked;
 
-      // C/U/D 켜면 R도 자동 켜기
+      // C/U/D 켜면 R도 자동 켜기 (UI 즉시 반영)
       if ((key === 'c' || key === 'u' || key === 'd') && checked) {
         cur.r = true;
         if (inputs.r && !inputs.r.checked) inputs.r.checked = true;
@@ -448,8 +525,6 @@ function buildRow(row){
       }
 
       state.dirty.set(row.screenCode, cur);
-
-      // 헤더 전체선택 체크박스 상태 재계산
       recalcHeaderToggles();
     };
 
@@ -467,30 +542,27 @@ function toggleAll(key, checked){
     .filter(tr => !tr.classList.contains('mod-row'));
 
   rows.forEach(tr=>{
-    const nameTd = tr.children[1];
-    if(!nameTd) return;
-    const screenName = nameTd.textContent.trim();
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 6) return;
 
+    const screenName = tds[1].textContent.trim();
     const row = state.rows.find(r => r.screenName === screenName);
     if(!row) return;
+
     const cur = state.dirty.get(row.screenCode) || {r:row.r,c:row.c,u:row.u,d:row.d};
-    
     cur[key] = checked;
-    
+
+    // 전체선택에서도 의존성 적용
     if ((key === 'c' || key === 'u' || key === 'd') && checked) {
-        cur.r = true;
+      cur.r = true;
     }
-    
     if (key === 'r' && !checked) {
-        cur.c = false;
-        cur.u = false;
-        cur.d = false;
+      cur.c = false; cur.u = false; cur.d = false;
     }
-    
     state.dirty.set(row.screenCode, cur);
   });
 
-  renderTable();
+  renderTable(); // 다시 그리면 체크상태+헤더동기화 반영
 }
 
 function recalcHeaderToggles(){
@@ -522,64 +594,94 @@ function recalcHeaderToggles(){
 }
 
 /* ------------------------------
-   저장 (백엔드 PUT 연결 필요)
+   저장 중 표시/잠금
+--------------------------------*/
+function setSaving(on) {
+  const root = document.querySelector('.rp');
+  const btn  = document.getElementById('btnSave');
+
+  root.classList.toggle('saving', on);
+
+  if (on) {
+    btn.disabled = true;
+    btn.dataset.label = btn.textContent;
+    btn.innerHTML = '<span class="spinner"></span>저장 중…';
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.label || '변경 저장';
+  }
+
+  // 상단 컨트롤
+  ['#selModule','#qScreen','#colRead','#colCreate','#colUpdate','#colDelete']
+    .forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) el.disabled = on;
+    });
+
+  // 표 체크박스
+  document.querySelectorAll('#tbody input[type="checkbox"]').forEach(cb => cb.disabled = on);
+
+  // 왼쪽 역할 목록
+  document.querySelectorAll('.role-item').forEach(li => li.style.pointerEvents = on ? 'none' : '');
+}
+
+/* ------------------------------
+   저장
 --------------------------------*/
 async function saveChanges(){
-	  if(!state.currentRoleCode){ alert('역할을 먼저 선택하세요.'); return; }
+  if(!state.currentRoleCode){ alert('역할을 먼저 선택하세요.'); return; }
 
-	  // 1) 현재 렌더된 행에서 실제 체크박스 상태 읽기
-	  const tbody = document.getElementById('tbody');
-	  const trs = Array.from(tbody.querySelectorAll('tr'))
-	    .filter(tr => !tr.classList.contains('mod-row'));
+  // 현재 렌더된 행에서 실제 체크박스 상태를 읽어 payload 구성
+  const tbody = document.getElementById('tbody');
+  const trs = Array.from(tbody.querySelectorAll('tr')).filter(tr => !tr.classList.contains('mod-row'));
 
-	  const payload = [];
-	  trs.forEach(tr => {
-	    const tds = tr.querySelectorAll('td');
-	    if (tds.length < 6) return;
+  const payload = [];
+  trs.forEach(tr => {
+    const tds = tr.querySelectorAll('td');
+    if (tds.length < 6) return;
 
-	    const screenName = tds[1].textContent.trim();
-	    const row = state.rows.find(r => r.screenName === screenName);
-	    if (!row) return;
+    const screenName = tds[1].textContent.trim();
+    const row = state.rows.find(r => r.screenName === screenName);
+    if (!row) return;
 
-	    const cbRead   = tds[2].querySelector('input[type="checkbox"]');
-	    const cbCreate = tds[3].querySelector('input[type="checkbox"]');
-	    const cbUpdate = tds[4].querySelector('input[type="checkbox"]');
-	    const cbDelete = tds[5].querySelector('input[type="checkbox"]');
+    const cbRead   = tds[2].querySelector('input[type="checkbox"]');
+    const cbCreate = tds[3].querySelector('input[type="checkbox"]');
+    const cbUpdate = tds[4].querySelector('input[type="checkbox"]');
+    const cbDelete = tds[5].querySelector('input[type="checkbox"]');
 
-	    payload.push({
-	      roleCode  : state.currentRoleCode,
-	      screenCode: row.screenCode,
-	      canRead   : !!(cbRead?.checked),
-	      canCreate : !!(cbCreate?.checked),
-	      canUpdate : !!(cbUpdate?.checked),
-	      canDelete : !!(cbDelete?.checked),
-	    });
-	  });
+    payload.push({
+      roleCode  : state.currentRoleCode,
+      screenCode: row.screenCode,
+      canRead   : !!(cbRead?.checked),
+      canCreate : !!(cbCreate?.checked),
+      canUpdate : !!(cbUpdate?.checked),
+      canDelete : !!(cbDelete?.checked),
+    });
+  });
 
-	  // 바뀐 것만 보내고 싶다면 이전값과 비교해서 필터링
-	  // (원하면 이 블록을 주석 해제)
-	  // const changed = payload.filter(p => {
-	  //   const r = state.rows.find(x => x.screenCode === p.screenCode);
-	  //   return r && (r.r!==p.canRead || r.c!==p.canCreate || r.u!==p.canUpdate || r.d!==p.canDelete);
-	  // });
-	  // if (changed.length === 0) { alert('변경된 내용이 없습니다.'); return; }
+  if (payload.length === 0) { alert('변경된 내용이 없습니다.'); return; }
 
-	  try{
-	    console.log('PUT /api/role-save payload = ', payload); // 디버깅용
-	    await jput('/api/role-save', payload);
+  try{
+    setSaving(true);
 
-	    // 성공 시 state 갱신
-	    payload.forEach(ch => {
-	      const r = state.rows.find(x => x.screenCode === ch.screenCode);
-	      if (r){ r.r = ch.canRead; r.c = ch.canCreate; r.u = ch.canUpdate; r.d = ch.canDelete; }
-	    });
-	    state.dirty.clear();
-	    alert('저장되었습니다.');
-	  }catch(err){
-	    console.error(err);
-	    alert('저장 중 오류가 발생했습니다.');
-	  }
-	}
+    // PUT 저장 (네 서버 엔드포인트 유지)
+    await jput('/api/role-save', payload);
+
+    // 성공 시 state 갱신 & 헤더 동기화
+    payload.forEach(ch => {
+      const r = state.rows.find(x => x.screenCode === ch.screenCode);
+      if (r){ r.r = ch.canRead; r.c = ch.canCreate; r.u = ch.canUpdate; r.d = ch.canDelete; }
+    });
+    state.dirty.clear();
+    recalcHeaderToggles();
+
+  }catch(err){
+    console.error(err);
+  }finally{
+    setSaving(false);
+    renderTable(); // 최신 상태로 재그림
+  }
+}
 
 /* ------------------------------
    유틸
@@ -587,6 +689,6 @@ async function saveChanges(){
 function debounce(fn, ms){
   let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); };
 }
-</script>
+  </script>
 </body>
 </html>
