@@ -116,11 +116,12 @@
         <!-- 거래처 검색 -->
         <div class="input-group" style="width:350px;">
           <input id="productName" type="text" class="form-control" placeholder="품목 입력">
-          <input type="hidden" id="salesCode" name="salesCode">
+          <input type="hidden" id="productCode" name="productCode">
           <i class="fas fa-search"
              style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
              onclick="openModal('productCode2', function(selected) {
-               document.getElementById('productCode').value = selected.partnerCode;
+               document.getElementById('productCode').value = selected.productCode;
+               document.getElementById('productName').value = selected.productName;
              })"></i>
           <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
         </div>

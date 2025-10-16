@@ -103,12 +103,13 @@
 
         <!-- 사원 검색 -->
         <div class="input-group" style="width:350px;">
-          <input id="productName" type="text" class="form-control" placeholder="사원명 입력">
-          <input type="hidden" id="salesCode" name="salesCode">
+          <input id="name" type="text" class="form-control" placeholder="사원명 입력">
+          <input type="hidden" id="empCode" name="empCode">
           <i class="fas fa-search"
              style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
              onclick="openModal('employee', function(selected) {
-               document.getElementById('empCode').value = selected.partnerCode;
+               document.getElementById('empCode').value = selected.empCode;
+               document.getElementById('name').value = selected.name;
              })"></i>
           <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
         </div>

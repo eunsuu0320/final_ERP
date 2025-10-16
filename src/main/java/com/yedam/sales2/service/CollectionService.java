@@ -15,7 +15,9 @@ public interface CollectionService {
     
     // 수금 등록
     void executeCollectionFifo(String partnerCode, Double paymentAmt, Double postDeduction, String paymentMethods, String remk, String companyCode);
-
+    
+    // 청구서 조회
+    List<com.yedam.sales1.domain.Invoice> getInvoicesByPartnerJpa(String companyCode, String partnerCode);
 
 }
 

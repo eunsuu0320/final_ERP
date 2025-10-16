@@ -13,11 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales2.domain.DSalesPlan;
-import com.yedam.sales2.domain.EmpPlan;
 import com.yedam.sales2.domain.SalesPlan;
+import com.yedam.sales2.repository.SalesRepository;
 import com.yedam.sales2.service.SalesService;
 
 /*
@@ -28,6 +29,9 @@ public class SalesPlanController {
 	
 	@Autowired
 	 private SalesService salesService;
+	
+	@Autowired
+	private SalesRepository salesRepository;
 		
 	// 영업계획목록 html
 	@GetMapping("salesList")
@@ -133,6 +137,12 @@ public class SalesPlanController {
  		return salesService.getEmpPlanList(companyCode, planYear);
  	}
  	
-
-
+ 	// 미수금 top5
+ 	@GetMapping("/api/invoices/top-outstanding")
+ 	@ResponseBody
+ 	public List<Map<String,Object>> topOutstanding(
+ 	        @RequestParam String companyCode,
+ 	        @RequestParam(defaultValue = "5") int limit) {
+ 	    return salesService.getTopOutstanding(companyCode, limit);
+ 	}
 }
