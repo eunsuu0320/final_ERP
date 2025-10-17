@@ -20,7 +20,8 @@ const modalConfigs = {
 			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
 			{ title: "거래처명", field: "partnerName", minWidth: 200 },
 			{ title: "연락처", field: "tel", width: 140 },
-			{ title: "담당자", field: "picName", width: 120 },
+			{ title: "담당자", field: "picName", width: 120 }
+
 		],
 		selectable: 1,
 	},
@@ -173,17 +174,6 @@ const modalConfigs = {
 	},
 
 
-	warehouse: {
-		url: "/api/modal/warehouse",
-		title: "창고 검색",
-		columns: [
-			{ title: "창고", field: "productCode" },
-			{ title: "품목명", field: "productName" },
-			{ title: "품목그룹", field: "productGroup" },
-			{ title: "직급", field: "gradeCode.codeName" }
-		]
-	},
-
 
 
 	// ✅ 출하지시서 모달
@@ -295,6 +285,33 @@ const modalConfigs = {
 		],
 		selectable: 1,
 	},
+
+	salesEmployee: {
+		url: "/api/modal/salesEmployee",
+		title: "영업사원 검색",
+		columns: [
+			{ title: "사원코드", field: "empCode", hozAlign: "center" },
+			{ title: "사원명", field: "name", hozAlign: "center" },
+			{ title: "연락처", field: "phone", hozAlign: "center" },
+		],
+		selectable: 1,
+	},
+
+	salesPartner: {
+		url: "/api/modal/salesPartner",
+		title: "거래처 검색",
+		columns: [
+			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
+			{ title: "거래처명", field: "partnerName", minWidth: 200 },
+			{ title: "연락처", field: "partnerPhone", width: 140 },
+			{ title: "담당자", field: "name", width: 120 },
+			{ title: "우편번호", field: "postCode", hozAlign: "center" },
+			{ title: "주소", field: "address", hozAlign: "center" }
+
+		],
+		selectable: 1,
+	},
+
 
 
 

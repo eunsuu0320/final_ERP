@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function() {
 
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["품목코드", "품목명", "규격/단위", "이미지", "비고"];
+	const defaultVisible = ["품목코드", "품목명", "품목그룹", "규격/단위", "창고코드", "이미지", "비고"];
 
 	// *주의: loadCommonCode 함수 등은 JSP 페이지 내에 별도로 정의되어 있다고 가정합니다.*
 	loadCommonCode('GRP001', 'productGroupSearch', '품목그룹');

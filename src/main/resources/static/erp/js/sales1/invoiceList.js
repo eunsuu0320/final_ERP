@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			case 'NONCHECK':
 				filterValue = "미확인";
 				break;
-			case '"ONGOING"':
+			case 'ONGOING':
 				filterValue = "진행중";
 				break;
 			case 'DMND':
@@ -83,10 +83,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		let modalName = '';
 		// 모달 열기
 		if (modalType === 'detail') {
-			modalName = '청구서상세정보'
+			modalName = '청구서 상세정보'
 
 		} else if (modalType === 'regist') {
-			modalName = '청구서등록'
+			modalName = '청구서 등록'
 		}
 		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
 		modal.show();
@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const row = window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code);
 		// API 호출 전 현재 상태를 저장합니다.
 		const currentStatus = row?.getData()?.진행상태;
+		console.log("updateStatusAPI 실행.", code)
 
 		if (currentStatus === status) {
 			console.log(`[청구서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
@@ -117,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const csrfToken = document.querySelector('meta[name="_csrf"]').content;
 
 		const data = {
-			invoceCode: code, // 서버에 보낼 견적서 코드
+			invoiceCode: code, // 서버에 보낼 견적서 코드
 			status: status
 		};
 
@@ -243,7 +244,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				visible: defaultVisible.includes(col)
 			};
 
-			if (col === "품목코드") {
+			if (col === "청구서코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail')">${value}</div>`;

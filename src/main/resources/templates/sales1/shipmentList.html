@@ -23,63 +23,72 @@
 					<h1 class="mt-4">출하관리</h1>
 				</div>
 
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2" onclick="filterSelect()">검색</button>
-					<button class="btn btn-primary me-2"
-						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-dark me-2">초기화</button>
-				</div>
 
 				<!-- 검색 바 -->
 				<div class="searchTool d-flex align-items-center mb-3">
-					<div>
-						<label for="quoteDate" class="me-3" style="width: 80px;">기준일자</label>
-						<div class="me-5 d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="date" class="form-control form-control-sm"
-									id="quoteDate" name="quoteDate" style="flex-grow: 1;"> ~ <input
-									type="date" class="form-control form-control-sm" id="quoteDate"
-									name="quoteDate" style="flex-grow: 1;">
+					<div class="d-flex">
+
+						<div>
+							<label for="quoteDate" class="me-3" style="width: 80px;">기준일자</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="date" class="form-control form-control-sm"
+										id="quoteDate" name="quoteDate" style="flex-grow: 1;">
+									<span class="mx-2">~</span><input type="date"
+										class="form-control form-control-sm" id="quoteDate"
+										name="quoteDate" style="flex-grow: 1;">
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="warehouseCode" class="me-3">창고</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="warehouseCode">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="partnerCode" class="me-3">거래처</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="partnerName">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="productCode" class="me-3">품목</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="productCode">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
-					<div>
-						<label for="warehouseCode" class="me-3">창고</label>
-						<div class="me-5 d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="warehouseCode">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="execDaumPostcode()">
-									<i class="bi bi-search"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-					<div>
-						<label for="partnerCode" class="me-3">거래처</label>
-						<div class="me-5 d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="partnerName">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="execDaumPostcode()">
-									<i class="bi bi-search"></i>
-								</button>
-							</div>
-						</div>
-					</div>
-					<div>
-						<label for="productCode" class="me-3">품목</label>
-						<div class="me-5 d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="productCode">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="execDaumPostcode()">
-									<i class="bi bi-search"></i>
-								</button>
-							</div>
+
+					<div class="d-flex flex-column align-items-start ms-3">
+						<div style="height: 24px;"></div>
+
+						<div class="d-flex align-items-center">
+							<button class="btn btn-warning me-2 btn-sm"
+								onclick="filterSearch()">검색</button>
+							<button class="btn btn-dark btn-sm"
+								onclick="filterReset('.searchTool')">초기화</button>
 						</div>
 					</div>
 
@@ -88,23 +97,26 @@
 
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
-						aria-label="type-filter">
+						aria-label="type-filter" id="shipmentTab">
 						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SALES">미지시</button>
+							data-type="NONSHIPMENT">미지시</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SALES">결재중</button>
+							data-type="ONCHECKING">결재중</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="BUY">확인</button>
+							data-type="CHECK">확인</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SUCCESS">진행중</button>
+							data-type="ONSHIPMENT">출하중</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SUCCESS">출하완료</button>
+							data-type="SUCCESSHIPMENT">출하완료</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="SUCCESS">회계반영완료</button>
+							data-type="SUCCESSAC">회계반영완료</button>
 					</div>
 
 					<div class="d-flex align-items-center">
+						<button class="btn btn-primary me-2"
+							onclick="showDetailModal('regist')">신규</button>
+						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 						<button class="btn btn-secondary me-2" onclick="insertAc()">회계일괄반영</button>
 						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
 						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
@@ -147,101 +159,179 @@
 									<div class="row mb-3 g-3 border-bottom pb-3">
 										<h6 class="mt-4 mb-2 fw-bold">1. 기본정보</h6>
 
-										<div class="col-12 row g-3">
-											<div class="col-6 d-flex align-items-center">
-												<label for="quoteDate"
-													class="col-form-label fw-bold text-nowrap"
-													style="width: 80px;">일자</label> <input type="date"
-													class="form-control form-control-sm" id="quoteDate"
-													name="quoteDate" style="flex-grow: 1;">
-											</div>
-										</div>
-										<div class="col-12 d-flex align-items-center">
-											<label for="quotePartner"
+										<div class="col-6 d-flex align-items-center">
+											<label for="partnerNameModal"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 80px;">거래처</label>
+												style="width: 120px;">거래처</label>
 
-											<div class="input-group input-group-sm" style="flex-grow: 1;">
-												<input type="text" class="form-control form-control-sm"
-													id="quotePartnerName" name="partnerName" placeholder="거래처명">
-												<input type="hidden" name="partnerCode" value="">
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="hidden" id="partnerCodeModal"
+													name="partnerCode"> <input type="text"
+													class="form-control" placeholder="검색어 입력"
+													id="partnerNameModal">
 												<button class="btn btn-outline-secondary" type="button"
-													onclick="searchPartner()">
+													onclick="openModal('salesPartner', function(selected) {
+                document.getElementById('partnerNameModal').value = selected.partnerName;
+                document.getElementById('partnerCodeModal').value = selected.partnerCode;
+                document.getElementById('manager').value = selected.name;
+				document.getElementById('empCode').value = selected.manager;
+				document.getElementById('managerPhone').value = selected.phone;
+                document.getElementById('partnerPhone').value = selected.partnerPhone;
+                document.getElementById('postCode').value = selected.postCode;
+                document.getElementById('address').value = selected.address;
+
+
+            })">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
 										</div>
 
-										<div class="col-12 d-flex align-items-center">
+
+
+
+
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="partnerPhone"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">거래처 연락처</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="text" class="form-control" id="partnerPhone">
+											</div>
+										</div>
+
+
+
+										<div class="col-12 d-flex flex-column">
+
+											<div class="d-flex align-items-center mb-2">
+												<label for="zipcode"
+													class="col-form-label fw-bold text-nowrap"
+													style="width: 120px;">납품장소</label>
+
+												<div class="input-group input-group-sm me-2"
+													style="max-width: 400px;">
+													<input type="text" class="form-control" name="postCode"
+														id="postCode" placeholder="우편번호" readonly>
+												</div>
+
+												<button class="btn btn-secondary btn-sm" type="button">변경</button>
+
+											</div>
+
+											<div class="d-flex align-items-center">
+												<div style="width: 120px;"></div>
+
+												<input type="text" class="form-control form-control-sm"
+													name="address" id="address" placeholder="상세 주소"
+													style="max-width: 962px;">
+											</div>
+										</div>
+
+
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
 											<label for="manager"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 80px;">담당자</label> <input type="text"
-												class="form-control form-control-sm" id="manager"
-												name="manager" placeholder="거래처명">
+												style="width: 120px;">담당자</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="hidden" id="empCode" name="empCode"> <input
+													type="text" class="form-control" id="manager"
+													name="manager">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('salesEmployee', function(selected) {
+                document.getElementById('manager').value = selected.name;
+				document.getElementById('empCode').value = selected.empCode;
+				document.getElementById('managerPhone').value = selected.phone;
+
+
+            })">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
 										</div>
-										<div class="col-12 d-flex align-items-center">
-											<label for="phone" class="col-form-label fw-bold text-nowrap"
-												style="width: 80px;">거래처연락처</label> <input type="text"
-												class="form-control form-control-sm" id="phone" name="phone"
-												placeholder="거래처연락처">
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="managerPhone"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">담당자 연락처</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="text" class="form-control" id="managerPhone">
+											</div>
 										</div>
 
-										<div class="col-12 d-flex">
 
 
 
-											<div class="d-flex align-items-center me-4"
-												style="width: 35%;">
-												<label for="quoteDeliveryDateText"
-													class="col-form-label fw-bold text-nowrap me-2"
-													style="width: 80px;">출하예정일</label> <input type="date"
-													class="form-control form-control-sm"
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="quoteDeliveryDateText"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">출하예정일</label>
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="date" class="form-control form-control-sm"
 													id="quoteDeliveryDateText" name="deliveryDateText"
 													style="flex-grow: 1;">
 											</div>
-											<div class="col-12 d-flex align-items-center">
-												<label for="warehouse"
-													class="col-form-label fw-bold text-nowrap"
-													style="width: 80px;">출하창고</label><input type="text"
-													class="form-control form-control-sm" id="warehouse"
-													name="warehouse" placeholder="출하창고">
-											</div>
 
 										</div>
 
-										<div class="col-12 d-flex">
-
-											<div class="d-flex align-items-center me-4"
-												style="width: 50%;">
-												<label for="quoteDeliveryLocation"
-													class="col-form-label fw-bold text-nowrap me-2"
-													style="width: 80px;">납품장소</label>
-												<div class="input-group input-group-sm">
-													<input type="text" class="form-control"
-														name="deliveryLocation" id="zipcode" placeholder="우편번호"
-														readonly>
-													<button class="btn btn-outline-secondary" type="button"
-														onclick="execDaumPostcode()">
-														<i class="bi bi-search"></i>
-													</button>
-												</div>
-											</div>
-
-											<div class="d-flex align-items-center" style="width: 50%;">
-												<input type="text" class="form-control form-control-sm"
-													name="deliveryDetailLocation" id="address"
-													placeholder="상세 주소">
+										<div class="col-6 d-flex align-items-center">
+											<label for="warehouse"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">출하창고</label>
+											<div class="col-sm-7">
+												<select class="form-select comboSelect form-select-sm"
+													name="warehouse"></select>
 											</div>
 										</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 										<div class="col-12 d-flex align-items-start">
 											<label for="quoteRemarks"
 												class="col-form-label fw-bold text-nowrap pt-1"
-												style="width: 80px;">비고</label>
+												style="width: 120px;">비고</label>
 											<textarea class="form-control form-control-sm"
 												id="quoteRemarks" name="remarks" rows="2"
-												style="flex-grow: 1;"></textarea>
+												style="max-width: 962px;"></textarea>
 										</div>
 
 									</div>

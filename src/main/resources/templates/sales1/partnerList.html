@@ -28,17 +28,12 @@
 					<h1 class="mt-4">거래처관리</h1>
 				</div>
 
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
-					<button class="btn btn-primary me-2"
-						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-					<button class="btn btn-dark me-2">초기화</button>
-				</div>
 
-				<div class="searchTool d-flex align-items-center mb-3">
-					<div class="me-5">
-						<label for="partnerNameSearch" class="me-3">거래처명</label>
+				<div class="searchTool d-flex align-items-end mb-3">
+
+					<div class="me-5 d-flex flex-column align-items-start">
+						<label for="partnerNameSearch"
+							class="col-form-label fw-bold text-nowrap">거래처명</label>
 						<div class="d-flex align-items-center">
 							<div class="input-group input-group-sm">
 								<input type="text" class="form-control w-auto"
@@ -51,9 +46,19 @@
 						</div>
 					</div>
 
+
+					<div class="d-flex">
+						<button class="btn btn-warning me-2 btn-sm"
+							onclick="filterSelect()">검색</button>
+						<button class="btn btn-dark btn-sm" onclick="filterReset()">초기화</button>
+					</div>
+
 				</div>
 
 				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-primary me-2"
+						onclick="showDetailModal('regist')">신규</button>
+					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-secondary me-2">이력조회</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
 					<button class="btn btn-secondary me-2">Excel</button>
@@ -164,9 +169,6 @@
 											<label class="col-sm-3 col-form-label">업태</label>
 											<div class="col-sm-9">
 												<select class="form-select comboSelect" name="businessType">
-													<option value="" disabled selected>업태 선택</option>
-													<option value="제조업">제조업</option>
-													<option value="도매업">도매업</option>
 												</select>
 											</div>
 										</div>
@@ -176,9 +178,6 @@
 											<div class="col-sm-9">
 												<select class="form-select comboSelect"
 													name="businessSector">
-													<option value="" disabled selected>업종 선택</option>
-													<option value="인형">인형</option>
-													<option value="부품">부품</option>
 												</select>
 											</div>
 										</div>
@@ -363,8 +362,6 @@
 						</div>
 					</div>
 				</div>
-
-
 			</div>
 		</main>
 	</div>

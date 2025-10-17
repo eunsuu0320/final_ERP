@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yedam.sales1.domain.Partner;
+import com.yedam.sales1.dto.PartnerModalDto;
 
 @Repository
 public interface PartnerRepository extends
@@ -21,9 +23,23 @@ public interface PartnerRepository extends
 	
 	Partner findByPartnerName(String partnerName);
 	
-//	@Query("SELECT p FROM Partner p " +
-//		       "WHERE (:partnerName IS NULL OR p.partnerName = :partnerName) ")
-//		List<Partner> findByFilter(
-//		        @Param("productName") String productName);
+	
+	
+	@Query("""
+		    select new com.yedam.sales1.dto.PartnerModalDto(
+		        p.partnerCode,
+		        p.partnerName,
+		        p.partnerPhone,
+		        p.manager,
+		        e.name,
+		        e.phone,
+		        p.postCode,
+		        p.address
+		    ) 
+		    from Partner p
+		    JOIN p.managerEmp e
+		    where p.companyCode = :companyCode
+		""")
+		List<PartnerModalDto> findPartnerModalDataByCompanyCode(@Param("companyCode") String companyCode);
 
 }

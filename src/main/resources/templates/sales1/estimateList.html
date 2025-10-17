@@ -23,65 +23,70 @@
 					<h1 class="mt-4">견적서관리</h1>
 				</div>
 
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2" onclick="filterSelect()">검색</button>
-					<button class="btn btn-primary me-2"
-						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-dark me-2">초기화</button>
-				</div>
 
 				<div class="searchTool d-flex align-items-center mb-3">
+					<div class="d-flex">
 
 
-					<div class="me-5">
-						<label for="partnerNameSearch" class="form-label fw-bold">거래처명</label>
+						<div class="me-5">
+							<label for="partnerNameSearch" class="form-label fw-bold">거래처명</label>
 
-						<div>
-							<div class="input-group input-group-sm">
-								<input type="hidden" id="partnerCodeSearch" name="partnerCode">
-								<input type="text" class="form-control" placeholder="검색어 입력"
-									id="partnerNameSearch" style="width: 150px;">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openModal('partner', function(selected) {
+							<div>
+								<div class="input-group input-group-sm">
+									<input type="hidden" id="partnerCodeSearch" name="partnerCode">
+									<input type="text" class="form-control" placeholder="검색어 입력"
+										id="partnerNameSearch" style="width: 150px;">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openModal('partner', function(selected) {
                     document.getElementById('partnerNameSearch').value = selected.partnerName;
                     document.getElementById('partnerCodeSearch').value = selected.partnerCode;
                 })">
-									<i class="bi bi-search"></i>
-								</button>
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="me-5">
-						<label for="managerSearch" class="form-label fw-bold">담당자</label>
+						<div class="me-5">
+							<label for="managerSearch" class="form-label fw-bold">담당자</label>
 
-						<div>
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control" placeholder="검색어 입력"
-									id="managerSearch" style="width: 150px;">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
-									<i class="bi bi-search"></i>
-								</button>
+							<div>
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control" placeholder="검색어 입력"
+										id="managerSearch" style="width: 150px;">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openSalesModal()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
 							</div>
 						</div>
-					</div>
 
-					<div class="me-5">
-						<label for="startDate" class="form-label fw-bold">유효기간</label>
+						<div class="me-5">
+							<label for="startDate" class="form-label fw-bold">유효기간</label>
+
+							<div class="d-flex align-items-center">
+								<input type="date" class="form-control form-control-sm"
+									id="startDate" name="startDate" style="width: 130px;">
+								<span class="mx-2">~</span> <input type="date"
+									class="form-control form-control-sm" id="endDate"
+									name="endDate" style="width: 130px;">
+							</div>
+						</div>
+
+
+
+					</div>
+					<div class="d-flex flex-column align-items-start ms-3">
+						<div style="height: 34px;"></div>
 
 						<div class="d-flex align-items-center">
-							<input type="date" class="form-control form-control-sm"
-								id="startDate" name="startDate" style="width: 130px;"> <span
-								class="mx-2">~</span> <input type="date"
-								class="form-control form-control-sm" id="endDate" name="endDate"
-								style="width: 130px;">
+							<button class="btn btn-warning me-2 btn-sm"
+								onclick="filterSearch()">검색</button>
+							<button class="btn btn-dark btn-sm"
+								onclick="filterReset('.searchTool')">초기화</button>
 						</div>
 					</div>
-
-
-
-
 
 				</div>
 				<div class="d-flex justify-content-between align-items-center mb-3">
@@ -99,6 +104,9 @@
 					</div>
 
 					<div class="d-flex align-items-center">
+						<button class="btn btn-primary me-2"
+							onclick="showDetailModal('regist')">신규</button>
+						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
 						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
@@ -166,7 +174,18 @@
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
-												<input type="text" class="form-control" id="manager" name="manager">
+												<input type="hidden" id="empCode" name="empCode"> <input
+													type="text" class="form-control" id="manager"
+													name="manager">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('salesEmployee', function(selected) {
+                document.getElementById('manager').value = selected.name;
+				document.getElementById('empCode').value = selected.empCode;
+
+
+            })">
+													<i class="bi bi-search"></i>
+												</button>
 											</div>
 										</div>
 
@@ -200,9 +219,8 @@
 
 												<div class="input-group input-group-sm"
 													style="max-width: 400px;">
-													<input type="text" class="form-control"
-														name="postCode" id="zipcode" placeholder="우편번호"
-														readonly>
+													<input type="text" class="form-control" name="postCode"
+														id="zipcode" placeholder="우편번호" readonly>
 													<button class="btn btn-outline-secondary" type="button"
 														onclick="execDaumPostcode()">
 														<i class="bi bi-search"></i>
@@ -214,8 +232,8 @@
 												<div style="width: 135px;"></div>
 
 												<input type="text" class="form-control form-control-sm"
-													name="address" id="address"
-													placeholder="상세 주소" style="flex-grow: 1;">
+													name="address" id="address" placeholder="상세 주소"
+													style="flex-grow: 1;">
 											</div>
 										</div>
 
@@ -288,10 +306,12 @@
 												</td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemName" id="itemName" style="background-color: lightgray;" readonly></td>
+													name="itemName" id="itemName"
+													style="background-color: lightgray;" readonly></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemSpec" id="itemSpec" style="background-color: lightgray;" readonly></td>
+													name="itemSpec" id="itemSpec"
+													style="background-color: lightgray;" readonly></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
@@ -303,14 +323,17 @@
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="supplyAmount" value="0" style="background-color: lightgray;" readonly></td>
+													name="supplyAmount" value="0"
+													style="background-color: lightgray;" readonly></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="taxAmount" value="0" style="background-color: lightgray;" readonly></td>
+													name="taxAmount" value="0"
+													style="background-color: lightgray;" readonly></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="finalAmount" value="0" style="background-color: lightgray;" readonly></td>
+													name="finalAmount" value="0"
+													style="background-color: lightgray;" readonly></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input"

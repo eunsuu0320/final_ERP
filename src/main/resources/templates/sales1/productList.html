@@ -25,59 +25,70 @@
 
 
 				<div class="searchTool d-flex align-items-end mb-3">
-
 					<div class="d-flex">
-						<div class="me-5" style="width: 200px;">
-							<label for="productNameSearch" class="me-3">품목명</label>
+
+						<div class="me-5 d-flex flex-column align-items-start"
+							style="width: 200px;">
+							<label for="productNameSearch"
+								class="col-form-label fw-bold text-nowrap">품목명</label>
+							<div class="d-flex align-items-center w-100">
+								<div class="input-group input-group-sm w-100">
+									<input type="text" class="form-control" placeholder="검색어 입력"
+										id="productNameSearch">
+								</div>
+							</div>
+						</div>
+
+						<div class="me-5 d-flex flex-column align-items-start">
+							<label for="productGroupSearch"
+								class="col-form-label fw-bold text-nowrap">품목그룹</label>
 							<div class="d-flex align-items-center">
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="productNameSearch">
+										placeholder="검색어 입력" id="productGroupSearch">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openModal('commonCode', function(selected) {
+                                        document.getElementById('productGroupSearch').value=selected.codeName;}, 'GRP001')">
+										<i class="bi bi-search"></i>
+									</button>
 								</div>
 							</div>
 						</div>
 
-						<div class="me-5" style="width: 200px;">
-							<label for="productGroupSearch" class="me-3">품목그룹</label>
+						<div class="me-5 d-flex flex-column align-items-start">
+							<label for="warehouseCodeSearch"
+								class="col-form-label fw-bold text-nowrap">창고</label>
 							<div class="d-flex align-items-center">
 								<div class="input-group input-group-sm">
-
-									<select class="form-select comboSelect"
-										name="productGroupSearch" required>
-										<option value="" disabled selected>품목그룹을 선택하세요</option>
-									</select>
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="warehouseCodeSearch">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openModal('commonCode', function(selected) {
+                                        document.getElementById('warehouseCodeSearch').value=selected.codeName;}, 'GRP003')">
+										<i class="bi bi-search"></i>
+									</button>
 								</div>
 							</div>
 						</div>
 
+					</div>
 
-						<div class="me-5" style="width: 200px;">
-							<label for="warehouseCodeSearch" class="me-3">창고</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<select class="form-select comboSelect"
-										name="warehouseCodeSearch" required>
-										<option value="" disabled selected>창고을 선택하세요</option>
-									</select>
-								</div>
-							</div>
+					<div class="d-flex flex-column align-items-start ms-3">
+						<div style="height: 34px;"></div>
+
+						<div class="d-flex align-items-center">
+							<button class="btn btn-warning me-2 btn-sm"
+								onclick="filterSearch()">검색</button>
+							<button class="btn btn-dark btn-sm"
+								onclick="filterReset('.searchTool')">초기화</button>
 						</div>
 					</div>
-
-					<div class="d-flex align-items-center me-auto"
-						style="padding-bottom: 2px;">
-						<button class="btn btn-warning me-2" onclick="filterSearch()">검색</button>
-						<button class="btn btn-dark" onclick="filterReset('.searchTool')">초기화</button>
-					</div>
-
-					<div class="d-flex align-items-center justify-content-end">
-						<button class="btn btn-primary me-2"
-							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-danger" id="deleteSelected">삭제</button>
-					</div>
-
 				</div>
+
 				<div class="d-flex align-items-center mb-3 justify-content-end">
+					<button class="btn btn-primary me-2"
+						onclick="showDetailModal('regist')">신규</button>
+					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 					<button class="btn btn-secondary me-2"
 						onclick="getHistory('product')">이력조회</button>
 					<button class="btn btn-secondary me-2">인쇄</button>
@@ -86,7 +97,7 @@
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '품목코드' or col == '품목명' or col == '규격/단위' or col == '이미지' or col == '비고'}" />
+						th:checked="${col == '품목코드' or col == '품목명' or col == '품목그룹' or col == '규격/단위' or col == '이미지' or col == '창고코드' or col == '비고'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
