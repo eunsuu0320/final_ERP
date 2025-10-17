@@ -1,4 +1,3 @@
-<!-- src/main/resources/templates/sales3/salesdash.html -->
 <!DOCTYPE html>
 <html lang="ko"
       xmlns:th="http://www.thymeleaf.org"
@@ -15,7 +14,6 @@
     .wrap{ padding-top:8px; padding-bottom:24px; }
 
     .head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
-    .head h1{ margin:0; font-weight:800; letter-spacing:.2px; color:var(--text); font-size:clamp(22px,1.4rem + .4vw,28px); }
     .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f8fafc; border:1px solid #e2e8f0; font-weight:800; color:#0b1220; }
 
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr); }
@@ -94,22 +92,16 @@
           <div class="muted" id="yearlyInfo"></div>
         </div>
         <div class="card" style="grid-column:span 5;">
-          <h3>분기별 영업이익률 (해당 연도)</h3>
+          <h3>분기별 영업이익률 (현재 연도)</h3>
           <div class="chart-box"><canvas id="chartQuarter"></canvas></div>
-          <div class="muted" style="margin-top:6px">
-            <span class="badge" style="background:#dcfce7;color:#065f46;">실선: 이익률(%)</span>
-            &nbsp;·&nbsp;
-            <span class="badge" style="background:#dbeafe;color:#1e40af;">막대: 실적</span>
-            &nbsp;·&nbsp;
-            <span class="badge" style="background:#e5e7eb;color:#111827;">막대: 목표</span>
-          </div>
+          
         </div>
       </div>
 
       <!-- TABLES -->
       <div class="grid" style="margin-top:16px">
         <div class="card" style="grid-column:span 7;">
-          <h3>Top5 거래처 매출</h3>
+          <h3>거래처 매출 Top5</h3>
           <table class="table" id="tblPartners">
             <thead>
             <tr><th class="rank">순위</th><th>거래처명</th><th class="right">매출액</th><th class="right">미수금</th></tr>
@@ -132,14 +124,7 @@
   </main>
 </div>
 
-<!-- Thymeleaf 값 주입 -->
-<script th:inline="javascript">
-  window.SALES3 = {
-    companyCode: /*[[${companyCode}]]*/ 'C001',
-    currentYear: /*[[${currentYear}]]*/ (new Date().getFullYear())
-  };
-</script>
-
+<!-- Thymeleaf 값 주입: companyCode / currentYear -->
 <script th:inline="javascript">
   window.SALES3 = {
     companyCode: /*[[${companyCode}]]*/ 'C001',
@@ -155,7 +140,7 @@
   const $ = sel => document.querySelector(sel);
   const safeArr = v => Array.isArray(v) ? v : [];
 
-  // (Chart.js v2) 공통 옵션
+  /* Chart.js v2 공통 옵션 (메인 레이아웃에서 v2.8.0 로딩 기준) */
   const commonOptsV2 = {
     responsive: true,
     maintainAspectRatio: false,
@@ -194,10 +179,9 @@
   }
 
   function drawQuarter(labels, rate, actual, target){
-    // 빈 배열/NaN 방지
     var cleanRate = rate.map(function(v){ return Number(v)||0; });
-    var maxOfRate = Math.max.apply(null, cleanRate.concat([0])); // 모두 0이면 0
-    var maxRate = Math.max(100, Math.ceil(maxOfRate * 1.2));     // 최소 100%
+    var maxOfRate = Math.max.apply(null, cleanRate.concat([0]));
+    var maxRate = Math.max(100, Math.ceil(maxOfRate * 1.2));  // 최소 100%, 살짝 여유
 
     new Chart(document.getElementById('chartQuarter').getContext('2d'), {
       type:'bar',
@@ -208,9 +192,11 @@
             borderColor:'rgba(22,163,74,1)', backgroundColor:'rgba(22,163,74,0.1)',
             borderWidth:2, pointRadius:3, tension:0.3, fill:false },
           { type:'bar', label:'실적', data:actual, yAxisID:'y-axis-1',
-            backgroundColor:'rgba(37,99,235,0.6)', borderColor:'rgba(37,99,235,1)', borderWidth:1, maxBarThickness:38 },
+            backgroundColor:'rgba(37,99,235,0.5)', borderColor:'rgba(37,99,235,1)',
+            borderWidth:1, maxBarThickness:38 },
           { type:'bar', label:'목표', data:target, yAxisID:'y-axis-1',
-            backgroundColor:'rgba(17,24,39,0.25)', borderColor:'rgba(17,24,39,0.5)', borderWidth:1, maxBarThickness:38 }
+            backgroundColor:'rgba(241,196,15,0.5)', borderColor:'rgba(241,196,15,1)',
+            borderWidth:1, maxBarThickness:38 }
         ]
       },
       options:Object.assign({}, commonOptsV2, {
@@ -269,16 +255,22 @@
       if(lblY.length){
         drawYearly(lblY, datY);
         $('#yearlyInfo').textContent =
-          `가장 최근 연도: ${lblY[lblY.length-1]} | 합계: ${fmtWon(datY.reduce((a,b)=>a+b,0))} 원`;
+          `현재 연도: ${lblY[lblY.length-1]} | 합계: ${fmtWon(datY.reduce((a,b)=>a+b,0))} 원`;
       }else{
         $('#yearlyInfo').textContent = '표시할 데이터가 없습니다.';
       }
 
-      // 분기별
-      const lblQ   = quarter.map(d=>`${d.quarter}Q`);
-      const rate   = quarter.map(d=>Number(d.rate||0));
-      const actual = quarter.map(d=>Number(d.actual||0));
-      const target = quarter.map(d=>Number(d.target||0));
+      // 분기별: 레이블 '1분기~4분기', 이익률은 (실적/목표*100)로 재계산
+      const lblQ    = quarter.map(d => `${d.quarter}분기`);
+      const actual  = quarter.map(d => Number(d.actual||0));
+      const target  = quarter.map(d => Number(d.target||0));
+      const rate    = quarter.map((d, i) => {
+        const a = actual[i], t = target[i];
+        if(!t) return 0;
+        // 소수 1자리 (예: 123.4)
+        return Math.round((a * 1000) / t) / 10;
+      });
+
       if(lblQ.length){ drawQuarter(lblQ, rate, actual, target); }
 
       // Top5 거래처
