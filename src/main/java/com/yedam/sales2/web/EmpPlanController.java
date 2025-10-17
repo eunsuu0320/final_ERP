@@ -68,5 +68,5 @@ public class EmpPlanController {
  	public List<EsdpPlan> getDetailList(String espCode) {
  		return empService.findByEspCode(espCode);
  	}
-    
+ 	
 }	

@@ -19,5 +19,4 @@ public interface EmpService {
 	 //사원별 조회
 	 List<EsdpPlan> findByEspCode(String espCode);
 
-	 
 }
