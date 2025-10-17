@@ -1,69 +1,72 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/main}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
 <head>
-  <meta charset="UTF-8">
-  <title>사원 관리</title>
-  <link href="/hr/css/employee.css" rel="stylesheet" />
+<meta charset="UTF-8">
+<title>사원 관리</title>
+<link href="/hr/css/employee.css" rel="stylesheet" />
 </head>
 <body layout:fragment="content">
-  <div id="layoutSidenav_content">
-    <main>
-      <div class="container-fluid px-4">
-        <h1 class="mt-4">사원 관리</h1>
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="container-fluid px-4">
+				<h1 class="mt-4">사원 관리</h1>
 
-        <!-- ✅ companyCode는 한 번만 -->
-        <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+				<!-- ✅ companyCode는 한 번만 -->
+				<input type="hidden" id="companyCode"
+					th:value="${#authentication.name.split(':')[0]}">
 
-        <div class="d-flex align-items-center mb-3">
-          <select id="sel-field" class="form-select w-auto me-2">
-            <option value="empCode">사원번호</option>
-            <option value="name">성명</option>
-            <option value="dept">부서명</option>
-          </select>
-          <input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
-          <button id="btn-search" class="btn btn-warning me-2">검색</button>
+				<div class="d-flex align-items-center mb-3">
+					<select id="sel-field" class="form-select w-auto me-2">
+						<option value="empCode">사원번호</option>
+						<option value="name">성명</option>
+						<option value="dept">부서명</option>
+					</select> <input id="txt-search" type="text"
+						class="form-control w-auto me-2" placeholder="검색어 입력">
+					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 
-          <div class="ms-auto d-flex">
-            <button id="btn-new" class="btn btn-primary me-2">신규</button>
-            <button id="btn-update" class="btn btn-success me-2">수정</button>
-            <button class="btn btn-secondary me-2">인쇄</button>
-            <!-- ❌ 중복된 companyCode input 제거 -->
-            <button id="btn-history" class="btn btn-dark">이력조회</button>
-          </div>
-        </div>
+					<div class="ms-auto d-flex">
+						<button id="btn-new" class="btn btn-primary me-2">신규</button>
+						<button id="btn-update" class="btn btn-success me-2">수정</button>
+						<button class="btn btn-secondary me-2">인쇄</button>
+						<!-- ❌ 중복된 companyCode input 제거 -->
+						<button id="btn-history" class="btn btn-dark">이력조회</button>
+					</div>
+				</div>
 
-        <!-- 사원등록 모달 include -->
-        <div th:replace="hr/employeeModal :: empModal"></div>
+				<!-- 사원등록 모달 include -->
+				<div th:replace="hr/employeeModal :: empModal"></div>
 
-        <!-- 사원 테이블 -->
-        <div id="employee-table"></div>
+				<!-- 사원 테이블 -->
+				<div id="employee-table"></div>
 
-        <!-- 이력조회 모달 -->
-        <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
-          <div class="modal-dialog modal-xl modal-dialog-centered">
-            <div class="modal-content shadow-lg">
-              <div class="modal-header">
-                <h5 class="modal-title">사원 이력 조회</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <div id="history-table"></div>
-              </div>
-            </div>
-          </div>
-        </div>
+				<!-- 이력조회 모달 -->
+				<div class="modal fade" id="historyModal"
+					tabindex="-1" aria-hidden="true">
+					<div class="modal-dialog modal-xl modal-dialog-centered">
+						<div class="modal-content shadow-lg">
+							<div class="modal-header">
+								<h5 class="modal-title">사원 이력 조회</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+							</div>
+							<div class="modal-body">
+								<div id="history-table"></div>
+							</div>
+						</div>
+					</div>
+				</div>
 
-      </div>
-    </main>
-  </div>
+			</div>
+		</main>
+	</div>
 
-  <div th:replace="common/modal :: commonModal"></div>
-  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-  <script src="/hr/js/employee.js"></script>
+	<div th:replace="common/modal :: commonModal"></div>
+	<script
+		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script src="/hr/js/employee.js"></script>
 
-  <script>
+	<script>
     // 우편번호 검색 전역 노출
     window.execDaumPostcode = function() {
       new daum.Postcode({
@@ -109,58 +112,57 @@
       return document.getElementById("companyCode")?.value || "";
     }
 
-    // 안전한 fetch + 방어형 setData
     async function openHistoryModal(companyCode) {
-      const url = `/api/history/${encodeURIComponent(companyCode)}`;
+    	  const url = `/api/history/${encodeURIComponent(companyCode)}`;
+    	  const historyModalEl = document.getElementById("historyModal");
+    	  const modal = bootstrap.Modal.getOrCreateInstance(historyModalEl);
 
-      try {
-        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    	  if (!historyModalEl.classList.contains("show")) modal.show();
+    	  setTimeout(() => modal.handleUpdate && modal.handleUpdate(), 0);
 
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          console.error("[history] HTTP", res.status, text?.slice(0, 300));
-          alert("이력 조회 실패: 서버 오류가 발생했습니다.");
-          historyTable.setData([]); // 방어
-          return;
-        }
+    	  // 전역 로딩 표시
+    	  showGlobalLoading("이력 불러오는 중...");
 
-        // 응답 파싱(문자/JSON 모두 방어)
-        let raw = await res.text();
-        let payload;
-        try { payload = JSON.parse(raw); }
-        catch (e) {
-          console.error("[history] JSON 파싱 실패:", raw?.slice(0, 300));
-          alert("이력 조회 실패: 응답 형식이 올바르지 않습니다.");
-          historyTable.setData([]);
-          return;
-        }
+    	  try {
+    	    const res = await fetch(url, { headers: { "Accept": "application/json" } });
+    	    if (!res.ok) {
+    	      const text = await res.text().catch(() => "");
+    	      console.error("[history] HTTP", res.status, text?.slice(0, 300));
+    	      alert("이력 조회 실패: 서버 오류가 발생했습니다.");
+    	      await historyTable.setData([]);
+    	      return;
+    	    }
 
-        // 배열 추출(백엔드가 감싼 구조 대비)
-        let rows = Array.isArray(payload)
-          ? payload
-          : (Array.isArray(payload?.data) ? payload.data
-             : Array.isArray(payload?.list) ? payload.list
-             : Array.isArray(payload?.content) ? payload.content
-             : null);
+    	    const raw = await res.text();
+    	    let payload;
+    	    try { payload = JSON.parse(raw); } catch {
+    	      alert("이력 조회 실패: 응답 형식이 올바르지 않습니다.");
+    	      await historyTable.setData([]);
+    	      return;
+    	    }
 
-        if (!Array.isArray(rows)) {
-          console.error("[history] 배열 아님:", payload);
-          alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
-          historyTable.setData([]);
-          return;
-        }
+    	    const rows = Array.isArray(payload) ? payload
+    	               : Array.isArray(payload?.data) ? payload.data
+    	               : Array.isArray(payload?.list) ? payload.list
+    	               : Array.isArray(payload?.content) ? payload.content
+    	               : null;
 
-        await historyTable.setData(rows);
+    	    if (!Array.isArray(rows)) {
+    	      alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
+    	      await historyTable.setData([]);
+    	      return;
+    	    }
 
-        // 데이터 로딩 완료 후 모달 오픈
-        new bootstrap.Modal(document.getElementById("historyModal")).show();
-
-      } catch (err) {
-        console.error("[history] 예외:", err);
-        alert("이력 조회 중 오류가 발생했습니다.");
-        historyTable.setData([]);
-      }
-    }
+    	    await historyTable.setData(rows);
+    	  } catch (err) {
+    	    console.error("[history] 예외:", err);
+    	    alert("이력 조회 중 오류가 발생했습니다.");
+    	    await historyTable.setData([]);
+    	  } finally {
+    	    hideGlobalLoading();
+    	    modal.handleUpdate && modal.handleUpdate();
+    	  }
+    	}
 
     // 버튼 클릭 → 이력조회
     document.getElementById("btn-history")?.addEventListener("click", () => {

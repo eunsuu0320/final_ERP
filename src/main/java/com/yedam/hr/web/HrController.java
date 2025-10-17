@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.hr.domain.Employee;
 import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
@@ -50,6 +51,7 @@ public class HrController {
 	}
 
 	// 사원 등록 처리
+	@ScreenPerm(screen = "HR_EMP", action = ScreenPerm.Action.CREATE)
 	@PostMapping(value = "/saveContract", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@ResponseBody
 	public String saveContract(
@@ -82,6 +84,7 @@ public class HrController {
 	}
 
 	// 단건 수정
+	@ScreenPerm(screen = "HR_EMP", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("/updateEmployee")
 	@ResponseBody
 	public String updateEmployee(@ModelAttribute Employee employee,
