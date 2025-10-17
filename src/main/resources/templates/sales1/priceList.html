@@ -22,61 +22,70 @@
 					<h1 class="mt-4">단가관리</h1>
 				</div>
 
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
-					<button class="btn btn-primary me-2"
-						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-dark me-2">초기화</button>
-				</div>
+
 
 				<div class="searchTool d-flex align-items-center mb-3">
+					<div class="d-flex">
 
-					<div class="me-5">
-						<label for="partnerNameSearch" class="me-3">거래처명</label>
-						<div class="d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="hidden" id="partnerCode" name="partnerCode">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="partnerName">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openModal('partner', function(selected) {
+						<div class="me-5">
+							<label for="partnerNameSearch" class="me-3">거래처명</label>
+							<div class="d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="hidden" id="partnerCode" name="partnerCode">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="partnerName">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openModal('partner', function(selected) {
 					                    document.getElementById('partnerName').value=selected.partnerName;
 									document.getElementById('partnerCode').value=selected.partnerCode;})">
-									<i class="bi bi-search"></i>
-								</button>
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
 							</div>
 						</div>
+
+
+						<div class="me-5">
+							<label for="productNameSearch" class="me-3">품목명</label>
+							<div class="d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="productNameSearch">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openSalesModal()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="me-5">
+							<label for="priceGroupSearch" class="me-3">단가그룹</label>
+							<div class="d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="priceGroupSearch">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="openSalesModal()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+
 					</div>
+					<div class="d-flex flex-column align-items-start ms-3">
+						<div style="height: 24px;"></div>
 
-
-					<div class="me-5">
-						<label for="productNameSearch" class="me-3">품목명</label>
 						<div class="d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="productNameSearch">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
-									<i class="bi bi-search"></i>
-								</button>
-							</div>
+							<button class="btn btn-warning me-2 btn-sm"
+								onclick="filterSearch()">검색</button>
+							<button class="btn btn-dark btn-sm"
+								onclick="filterReset('.searchTool')">초기화</button>
 						</div>
 					</div>
 
-
-					<div class="me-5">
-						<label for="priceGroupSearch" class="me-3">단가그룹</label>
-						<div class="d-flex align-items-center">
-							<div class="input-group input-group-sm">
-								<input type="text" class="form-control w-auto"
-									placeholder="검색어 입력" id="priceGroupSearch">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
-									<i class="bi bi-search"></i>
-								</button>
-							</div>
-						</div>
-					</div>
 
 				</div>
 
@@ -92,6 +101,8 @@
 					</div>
 
 					<div class="d-flex align-items-center">
+						<button class="btn btn-primary me-2"
+							onclick="showDetailModal('regist')">신규</button>
 						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
 						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
@@ -222,9 +233,10 @@
 										<label for="partnerNameSearch" class="form-label me-3">거래처명</label>
 										<div class="d-flex align-items-center">
 											<div class="input-group input-group-sm">
-												<input type="text" class="form-control modalSearchCondition" placeholder="검색어 입력"
-													id="partnerName">
-												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
+												<input type="text" class="form-control modalSearchCondition"
+													placeholder="검색어 입력" id="partnerName">
+												<button class="btn btn-outline-secondary modalSearchBtn"
+													type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
@@ -236,9 +248,10 @@
 										<label for="partnerLevelSearch" class="form-label me-3">등급</label>
 										<div class="d-flex align-items-center">
 											<div class="input-group input-group-sm">
-												<input type="text" class="form-control modalSearchCondition" placeholder="검색어 입력"
-													id="partnerLevelNameDisplay">
-												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
+												<input type="text" class="form-control modalSearchCondition"
+													placeholder="검색어 입력" id="partnerLevelNameDisplay">
+												<button class="btn btn-outline-secondary modalSearchBtn"
+													type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
@@ -247,7 +260,8 @@
 
 									<!-- 검색초기화 버튼 (col-md-4, 수직 정렬을 위해 d-flex align-items-end 적용) -->
 									<div class="col-md-4 mb-3 d-flex align-items-end">
-										<button type="button" class="btn btn-outline-secondary btn-sm resetModalSearch">
+										<button type="button"
+											class="btn btn-outline-secondary btn-sm resetModalSearch">
 											검색초기화</button>
 									</div>
 								</div>
@@ -299,9 +313,10 @@
 												style="max-width: 250px;">
 												<input type="hidden" id="productCodeSearch"
 													name="productCodeSearch"> <input type="text"
-													class="form-control modalSearchCondition" placeholder="검색어 입력"
-													id="productNameSearch">
-												<button class="btn btn-outline-secondary modalSearchBtn" type="button">
+													class="form-control modalSearchCondition"
+													placeholder="검색어 입력" id="productNameSearch">
+												<button class="btn btn-outline-secondary modalSearchBtn"
+													type="button">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>

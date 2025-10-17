@@ -11,10 +11,86 @@ document.addEventListener("DOMContentLoaded", function() {
 		"미지시": { label: "미지시" },
 		"결재중": { label: "결재중" },
 		"확인": { label: "확인" },
-		"진행중": { label: "진행중" },
+		"출하중": { label: "출하중" },
 		"출하완료": { label: "출하완료" },
 		"회계반영완료": { label: "회계반영완료" }
 	};
+
+
+	function initTabFiltering() {
+
+		const tabButtons = document.querySelectorAll('#shipmentTab button');
+
+		tabButtons.forEach(btn => {
+			btn.addEventListener('click', function() {
+				const type = this.dataset.type;
+
+				// 1. 버튼 스타일 변경 (전환)
+				tabButtons.forEach(b => {
+					b.classList.remove('btn-primary');
+					b.classList.add('btn-outline-primary');
+				});
+				this.classList.remove('btn-outline-primary');
+				this.classList.add('btn-primary');
+
+				// 2. Tabulator 필터링 적용
+				applyFilter(type);
+			});
+		});
+	}
+
+
+	function applyFilter(type) {
+		// 전역으로 저장된 Tabulator 인스턴스를 가져옵니다.
+		const table = window.shipmentTableInstance;
+		if (!table) {
+			console.error("Tabulator instance is not initialized.");
+			return;
+		}
+
+		// '진행상태'에 해당하는 필드 이름은 '진행상태' 문자열 자체를 사용합니다.
+		const filterField = "진행상태";
+		let filterValue = null;
+
+		// HTML 탭 타입(data-type)과 서버 데이터 값(DB/VO 값)을 매핑
+		switch (type) {
+			case 'ALL':
+				// 'ALL' 탭은 모든 필터를 지웁니다.
+				table.clearFilter();
+				return;
+			case 'NONSHIPMENT':
+				filterValue = "미지시";
+				break;
+			case 'ONCHECKING':
+				filterValue = "결재중";
+				break;
+			case 'CHECK':
+				filterValue = "확인";
+				break;
+			case 'ONSHIPMENT':
+				filterValue = "출하중";
+				break;
+			case 'SUCCESSHIPMENT':
+				filterValue = "출하완료";
+				break;
+			case 'SUCCESSAC':
+				filterValue = "회계반영완료";
+				break;
+			default:
+				return;
+		}
+
+		// 필터 적용: setFilter(필드 이름, 비교 연산자, 값)
+		if (filterValue) {
+			table.setFilter(filterField, "=", filterValue);
+		}
+	}
+
+
+
+
+
+
 
 	window.updateStatusAPI = function(code, status, selectElement) {
 		const row = window.shipmentTableInstance.getRows().find(r => r.getData().출하지시서코드 === code);
@@ -112,31 +188,41 @@ document.addEventListener("DOMContentLoaded", function() {
 		console.log("출하 모달 전체 초기화 완료.");
 	}
 
-	// 이미지모달 (공통 함수 window.showImageModal 사용)
-	window.showImageModal = function(url) {
-		const modalImg = document.getElementById("modalImg");
-		modalImg.src = url;
-
-		const modal = new bootstrap.Modal(document.getElementById('imgModal'));
-		modal.show();
-	}
 
 
 	// 출하 상세/등록 모달 
-	window.showDetailModal = function(modalType) {
-		let modalName = '';
-		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
+	window.showDetailModal = function(modalType, keyword) {
+		const modalName = modalType === 'detail' ? '출하지시서 상세정보' : '출하지시서 등록';
+		const modalEl = document.getElementById("newDetailModal");
+		const modal = new bootstrap.Modal(modalEl);
+		const form = document.getElementById("shipmentForm");
 
-		if (modalType === 'detail') {
-			modalName = '출하지시서 상세정보';
+		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 
-		} else if (modalType === 'regist') {
-			modalName = '출하지시서 등록';
-			window.resetQuote(); // 신규 등록 시 폼 초기화
-		}
+		form.reset();
+
+
+
+		const commonCodePromises = [
+			loadCommonCode('GRP003', 'warehouse', '창고'),
+		];
 
 		modal.show();
-		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
+
+		if (modalType === 'detail' && keyword) {
+			Promise.all(commonCodePromises)
+				.then(() => {
+					// loadDetailData 함수는 외부에서 제공된다고 가정
+					loadDetailData('shipment', keyword, form);
+				})
+				.catch(err => {
+					console.error("공통 코드 로딩 중 치명적인 오류 발생:", err);
+					alert("필수 데이터 로딩 중 오류가 발생했습니다. 관리자에게 문의하세요.");
+				});
+		} else {
+			// 신규 등록 시 결제 정보 초기화
+			resetItemGrid();
+		}
 	};
 
 
@@ -369,6 +455,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	// Tabulator 테이블 생성 (공통함수 window.makeTabulator 사용)
 	const tableInstance = window.makeTabulator(rows, tabulatorColumns);
 	window.shipmentTableInstance = tableInstance;
+	initTabFiltering();
 });
 
 

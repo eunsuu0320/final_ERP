@@ -1,10 +1,10 @@
 package com.yedam.sales1.domain;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.yedam.sales2.domain.CollectionEntity;
 
 import jakarta.persistence.Column;
