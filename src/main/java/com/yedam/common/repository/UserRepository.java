@@ -12,7 +12,8 @@ import com.yedam.common.domain.SystemUser;
 
 public interface UserRepository extends JpaRepository<SystemUser, String> {
 	Optional<SystemUser> findByUserId(String userId);
-
+	
+	@EntityGraph(attributePaths = {"employee", "employee.deptCode", "role"})
 	Optional<SystemUser> findByUserIdAndCompanyCode(String userId, String companyCode);
 
 	@Query("SELECT u FROM SystemUser u JOIN Employee e ON u.empCode = e.empCode " +

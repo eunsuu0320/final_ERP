@@ -46,7 +46,7 @@ public class ScreenController {
         return screenRepository.findModules(onlyY);
     }
     
-    @ScreenPerm(screen = "COM_ROLE", action = ScreenPerm.Action.CREATE)    
+    @ScreenPerm(screen = "COM_ROLE", anyOf = { ScreenPerm.Action.CREATE, ScreenPerm.Action.UPDATE })    
     @PutMapping("/api/role-save")
     public ResponseEntity<Void> save(@RequestBody List<RolePermSaveReq> reqs){
         // Username = "C001:admin01:0001"
