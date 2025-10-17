@@ -184,7 +184,7 @@ public class UserService implements UserDetailsService {
                 .findByCompanyCodeAndRoleCode(companyCode, user.getRoleCode())
                 .orElseThrow(() -> new UsernameNotFoundException("역할을 찾을 수 없습니다."));
         
-        String username = companyCode + ":" + userId + ":" + user.getEmpCode() + ":" + user.getRoleCode();
+        String username = companyCode + ":" + userId + ":" + user.getEmpCode() + ":" + user.getRoleCode() + ":" + user.getEmployee().getName() + ":" + user.getEmployee().getDeptCode().getCodeName() + ":" + user.getRole().getRemk();
         
         return User.builder()
                 .username(username)
