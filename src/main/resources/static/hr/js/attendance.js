@@ -11,7 +11,6 @@ async function loadCommonCode(groupName) {
 async function loadMapEmployees() {
 	const res = await fetch(`/employees?companyCode=${manager}`);
 	const list = await res.json();
-	// { "0001": "홍길동", "0002": "최은수", ... } 형태로 변환
 	return Object.fromEntries(list.map(it => [it.empCode, it.name]));
 }
 
@@ -19,7 +18,6 @@ async function loadMapEmployees() {
 async function loadMapAttendances() {
 	const res = await fetch(`/attendance?companyCode=${manager}`);
 	const list = await res.json();
-	// { "ATT0001": "연차", "ATT0002": "병가", ... }
 	return Object.fromEntries(list.map(it => [it.attId, it.attType]));
 }
 
@@ -31,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const attendanceTable = new Tabulator(document.getElementById("att-table"), {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 20,
 		selectable: true,
 		columns: [
 			{
@@ -176,7 +174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const empAttInsertTable = new Tabulator(document.getElementById("empAttInsert-table"), {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 20,
 		columns: [
 			{
 				title: "근태일자",
@@ -198,7 +196,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				editorParams: { values: Object.keys(HOLY).map(code => ({ value: code, label: HOLY[code] })) },
 				formatter: (cell) => HOLY[cell.getValue()] ?? cell.getValue(), // 화면엔 라벨 표시
 			},
-			{ title: "근태(일/시간)", field: "workTime", editor: "input" },
+			{ title: "근태시간", field: "workTime", editor: "input" },
 			{ title: "비고", field: "note", editor: "textarea" }
 		],
 		data: [{ companyCode: manager }]
@@ -240,7 +238,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 				return;
 			}
 
-			// 2. payload 만들기
+			// 2) 행 단위 검증 (필수값 및 형식)
+			const errors = [];
+			const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+
+			for (let i = 0; i < rows.length; i++) {
+				const r = rows[i];
+				const no = i + 1;
+
+				if (!r || !r.workDate || typeof r.workDate !== "string" || !dateRe.test(r.workDate)) {
+					errors.push(`[${no}행] 근태일자(yyyy-MM-dd)`);
+				}
+				if (!r || !r.empCode) {
+					errors.push(`[${no}행] 사원코드(empCode)`);
+				}
+				if (!r || !r.attId) {
+					errors.push(`[${no}행] 근태코드(attId)`);
+				}
+				const wt = (r && r.workTime !== "" && r.workTime != null) ? Number(r.workTime) : NaN;
+				if (!Number.isFinite(wt) || wt < 0) {
+					errors.push(`[${no}행] 근태(일/시간)(workTime)은 0 이상 숫자`);
+				}
+				if (r && r.holyIs != null && r.holyIs !== "" && !Object.prototype.hasOwnProperty.call(HOLY, r.holyIs)) {
+					errors.push(`[${no}행] 휴가여부(holyIs)는 목록에서 선택`);
+				}
+			}
+
+			if (errors.length) {
+				alert("먼저 값을 올바르게 입력하세요.\n\n확인 필요 항목:\n" + errors.join("\n"));
+				return;
+			}
+
+			// 3. payload 만들기
 			const payload = rows.filter(r => r.empCode && r.attId).map(r => ({
 				...r,
 				companyCode: undefined // ❌ companyCode는 body에 넣을 필요 없음
@@ -285,7 +314,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const empAttSelectTable = new Tabulator(document.getElementById("empAttSelect-table"), {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 20,
 		placeholder: "조회된 사원의 근태 목록이 없습니다.",
 		selectable: true,
 		columns: [

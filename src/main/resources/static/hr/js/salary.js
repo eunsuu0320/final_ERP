@@ -295,18 +295,35 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	// 명세서 조회 클릭
 	async function showSalaryPayModalFromRow(row, btn) {
-		// 버튼 클릭 아닐 때 대비
+		// 1) 행 데이터 먼저 확보
+		const d = row && typeof row.getData === "function" ? row.getData() : row;
+		if (!d) {
+			alert("행 데이터를 찾을 수 없습니다.");
+			return;
+		}
+
+		// 2) payCount / payTotal 안전 변환 (콤마·'원' 등 제거)
+		const rawCount = d.payCount ?? d.count ?? d.cnt ?? 0;
+		const rawTotal = d.payTotal ?? d.total ?? d.paySum ?? 0;
+		const numCount = Number(String(rawCount).replace(/[^\d.-]/g, "")) || 0;
+		const numTotal = Number(String(rawTotal).replace(/[^\d.-]/g, "")) || 0;
+
+		// 3) 실제 값 확인
+		if (numCount <= 0 || numTotal <= 0) {
+			alert("먼저 급여계산을 실행해주세요.");
+			return;
+		}
+
+		// 4) 버튼 상태 처리
+		let original;
 		if (btn) {
-			var original = btn.innerHTML;
+			original = btn.innerHTML;
 			btn.disabled = true;
 			btn.innerHTML = "조회 중...";
 		}
 
-		// 행 데이터에서 salaryId 추출
-		var d = row ? row.getData() : null;
-		var salaryId = d && d.salaryId ? String(d.salaryId) : "";
-		console.log(salaryId);
-
+		// 5) salaryId 추출
+		const salaryId = d.salaryId ? String(d.salaryId) : "";
 		if (!salaryId) {
 			alert("대상 급여대장 ID(salaryId)가 없습니다.");
 			if (btn) { btn.disabled = false; btn.innerHTML = original; }
@@ -314,21 +331,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 
 		try {
-			// 프래그먼트 GET (salaryId를 반드시 쿼리스트링으로 전달)
-			var res = await fetch("/salaryPay?salaryId=" + encodeURIComponent(salaryId), {
+			// 프래그먼트 GET (salaryId 쿼리로 전달)
+			const res = await fetch("/salaryPay?salaryId=" + encodeURIComponent(salaryId), {
 				method: "GET",
-				cache: "no-store"
+				cache: "no-store",
 			});
-
 			if (!res.ok) {
-				var txt = await res.text();
+				const txt = await res.text();
 				alert("명세서 조회 실패: " + txt);
 				return;
 			}
 
-			// HTML 주입
-			var html = await res.text();
-			var host = document.getElementById("salaryPayModalHost");
+			const html = await res.text();
+			let host = document.getElementById("salaryPayModalHost");
 			if (!host) {
 				host = document.createElement("div");
 				host.id = "salaryPayModalHost";
@@ -336,13 +351,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 			}
 			host.innerHTML = html;
 
-			// 모달 표시
-			var modalEl = document.getElementById("payDetailModal");
+			const modalEl = document.getElementById("payDetailModal");
 			if (!modalEl) {
 				alert("모달 엘리먼트를 찾을 수 없습니다.");
 				return;
 			}
-			var instance = bootstrap.Modal.getOrCreateInstance(modalEl);
+			const instance = bootstrap.Modal.getOrCreateInstance(modalEl);
 			instance.show();
 		} catch (err) {
 			console.error(err);
@@ -354,6 +368,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 			}
 		}
 	}
+
 
 	// 검색
 	const selField = document.getElementById("sel-field");
