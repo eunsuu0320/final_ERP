@@ -8,7 +8,8 @@
 			<div class="modal-dialog modal-lg modal-dialog-centered">
 				<div class="modal-content">
 
-				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+					<input type="hidden" id="companyCode"
+						th:value="${#authentication.name.split(':')[0]}">
 
 					<!-- 바디 -->
 					<div class="modal-body">
@@ -43,8 +44,9 @@
 								</div>
 								<div class="col-12 col-sm-3">
 									<div class="form-check">
-										<input class="form-check-input" type="checkbox" id="onoff-holiday">
-											<label class="form-check-label" for="onoff-holiday">휴일</label>
+										<input class="form-check-input" type="checkbox"
+											id="onoff-holiday"> <label class="form-check-label"
+											for="onoff-holiday">휴일</label>
 									</div>
 								</div>
 							</div>
@@ -98,7 +100,8 @@
 
 							<!-- 액션 -->
 							<div class="d-grid d-sm-flex justify-content-sm-center">
-								<button type="button" id="btn-on" class="btn btn-primary px-4" style="margin-right: 0.2rem;">출근</button>
+								<button type="button" id="btn-on" class="btn btn-primary px-4"
+									style="margin-right: 0.2rem;">출근</button>
 								<button type="button" id="btn-off" class="btn btn-danger px-4">퇴근</button>
 							</div>
 						</form>
@@ -110,7 +113,7 @@
 		<div th:replace="common/modal :: commonModal"></div>
 
 		<!-- 모달 내부 스크립트 -->
-<script th:inline="javascript">
+		<script th:inline="javascript">
 (() => {
   const modalEl = document.getElementById('OnOffModal');
   if (!modalEl) return;
@@ -272,39 +275,72 @@
   });
 
   // ===== 퇴근 =====
-  document.getElementById('btn-off').addEventListener('click', async () => {
-    try {
-      const companyCode = document.getElementById('companyCode')?.value;
-      const empCode     = document.getElementById('onoff-empCode')?.value;
-      const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
-      if (!empCode) throw new Error('사원을 선택하세요.');
+ // ===== 퇴근 =====
+document.getElementById('btn-off').addEventListener('click', async () => {
+  try {
+    const companyCode = document.getElementById('companyCode')?.value;
+    const empCode     = document.getElementById('onoff-empCode')?.value;
+    const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
+    if (!empCode) throw new Error('사원을 선택하세요.');
 
-      const { date, time } = buildDateTimeOrThrow();
-      const offTime = `${date}T${time}`;
+    const yy = document.getElementById('onoff-yy')?.value?.trim();
+    const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
+    const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
+    const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
+    const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
+    if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
+    const offTime = `${yy}-${mm}-${dd}T${hh}:${mi}:00`;
 
-      const res = await fetch('/onoff/off', {
-        method: 'POST',
-        headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
-        body: JSON.stringify({
-          companyCode,
-          empCode,
-          offTime,
-          holiday: isHoliday,       // 계산 로직에 휴일 반영
-          comIs: isHoliday ? 'H' : 'IN'
-        })
-      });
+    const token = document.querySelector('meta[name="_csrf"]')?.content || "";
+    const res = await fetch('/onoff/off', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+      body: JSON.stringify({
+        companyCode,
+        empCode,
+        offTime,
+        holiday: isHoliday,
+        comIs: isHoliday ? 'H' : 'IN'
+      })
+    });
 
-      const text = await res.text();
-      let payload; try { payload = JSON.parse(text); } catch { payload = { message: text }; }
-      if (!res.ok) throw new Error(payload?.message || '퇴근 등록 실패');
+    const text = await res.text();
+    let payload; try { payload = JSON.parse(text); } catch { payload = { message: text }; }
+    if (!res.ok) throw new Error(payload?.message || '퇴근 등록 실패');
 
-      alert('퇴근하였습니다.');
-      closeModalAndReload();
-    } catch (err) {
-      console.error(err);
-      alert(err.message || '오류가 발생했습니다.');
+    const updated = Number(payload?.updated ?? 0);
+
+    // ✅ 코드별 알림
+    if (updated === -1) {
+      alert('오늘 출근 기록이 없어 퇴근을 등록할 수 없습니다.');
+      return;
     }
-  });
+    if (updated === -2) {
+      alert('이미 퇴근 처리된 기록입니다.');
+      return;
+    }
+    if (updated === -3) {
+      alert('퇴근 시간이 출근 시간보다 이릅니다. 시간을 확인하세요.');
+      return;
+    }
+    if (updated <= 0) {
+      alert('출근 기록(미퇴근)이 없어 퇴근을 등록할 수 없습니다.');
+      return;
+    }
+
+    alert('퇴근하였습니다.');
+    // 닫고 새로고침(기존 로직 그대로)
+    const modalEl = document.getElementById('OnOffModal');
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalEl.addEventListener('hidden.bs.modal', () => { location.reload(); }, { once: true });
+    inst.hide();
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message || '오류가 발생했습니다.');
+  }
+});
+
 
   // 초기 1회
   fillNow();

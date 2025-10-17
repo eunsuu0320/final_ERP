@@ -28,7 +28,6 @@
 		@Query(value = """
 		    UPDATE COMMUTE_LIST
 		       SET OFF_TIME  = CAST(:offTime AS DATE),
-		           -- 시간(소수) 저장. 분(int)로 저장하려면 * 24 * 60 로 변경
 		           WORK_TIME = ROUND( (CAST(:offTime AS DATE) - ON_TIME) * 24, 2 )
 		     WHERE COMPANY_CODE = :companyCode
 		       AND EMP_CODE     = :empCode
