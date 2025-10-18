@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const allowanceTable = new Tabulator(allowanceEl, {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 20,
 		selectable: true,
 		columns: [
 			{
@@ -30,17 +30,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 				hozAlign: "center",
 				headerHozAlign: "center",
 			},
-			{ title: "수당코드", field: "allId", editor: false },
+			{ title: "수당코드", field: "allId", editor: false, width: 150 },
 			{ title: "수당항목", field: "allName", editor: "input" },
-			{ title: "계산식", field: "formula", editor: "input" },
+			{ title: "계산식", field: "formula", editor: "input", width: 300},
 			{ title: "산출 방법", field: "calcNote", editor: "input" },
 			{
 				title: "사용여부",
 				field: "allIs",
+				hozAlign: "center",
+				formatter: function(cell) {
+					var v = cell.getValue();
+					var sz = "13px";
+					var pad = "0.35em 0.6em";
+					if (v === "Y" || v === "y" || v === "사용함") {
+						return '<span class="badge bg-success" style="font-size:' + sz + ';padding:' + pad + ';">사용함</span>';
+					}
+					return '<span class="badge bg-danger" style="font-size:' + sz + ';padding:' + pad + ';">사용안함</span>';
+				},
 				editor: "select",
-				editorParams: { values: USE_YN },
-				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
-			}
+				editorParams: { values: { "Y": "사용함", "N": "사용안함" } }
+			},
+			{ title: "MapNum", field: "mapNum", visible: false },
 		],
 	});
 
@@ -48,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const deductionTable = new Tabulator(deductionEl, {
 		layout: "fitColumns",
 		pagination: "local",
-		paginationSize: 10,
+		paginationSize: 20,
 		selectable: true,
 		columns: [
 			{
@@ -60,17 +70,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 				hozAlign: "center",
 				headerHozAlign: "center",
 			},
-			{ title: "공제코드", field: "dedId", editor: false },
+			{ title: "공제코드", field: "dedId", editor: false, width: 150 },
 			{ title: "공제항목", field: "dedName", editor: "input" },
-			{ title: "계산식", field: "formula", editor: "input" },
+			{ title: "계산식", field: "formula", editor: "input", width: 300},
 			{ title: "산출 방법", field: "calcNote", editor: "input" },
 			{
 				title: "사용여부",
-				field: "allIs",
+				field: "dedIs",
+				hozAlign: "center",
+				formatter: function(cell) {
+					var v = cell.getValue();
+					var sz = "13px";
+					var pad = "0.35em 0.6em";
+					if (v === "Y" || v === "y" || v === "사용함") {
+						return '<span class="badge bg-success" style="font-size:' + sz + ';padding:' + pad + ';">사용함</span>';
+					}
+					return '<span class="badge bg-danger" style="font-size:' + sz + ';padding:' + pad + ';">사용안함</span>';
+				},
 				editor: "select",
-				editorParams: { values: USE_YN },
-				formatter: (cell) => USE_YN[cell.getValue()] || cell.getValue()
-			}
+				editorParams: { values: { "Y": "사용함", "N": "사용안함" } }
+			},
+			{ title: "MapNum", field: "mapNum", visible: false },
 		],
 	});
 
@@ -143,11 +163,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 	// 버튼 이벤트 (공용)
 	document.getElementById("allDec-save").addEventListener("click", async () => {
 		if (activeTab === "allow") {
-			const rows = allowanceTable.getData().filter(r => r.allName);
+			const rows = allowanceTable.getData().filter(r => r.allName).map((r, i) => { r.mapNum = i + 1; return r });
 			await saveData(`/allowance/saveAll?companyCode=${manager}`, rows,
 				"수당 등록 완료되었습니다", "수당 등록 실패하였습니다. 잠시 후 다시 시도해주세요.", loadAllowances);
 		} else {
-			const rows = deductionTable.getData().filter(r => r.dedName);
+			const rows = deductionTable.getData().filter(r => r.dedName).map((r, i) => { r.mapNum = i + 1; return r });
 			await saveData(`/dedcut/saveAll?companyCode=${manager}`, rows,
 				"공제 등록 완료되었습니다", "공제 등록 실패하였습니다. 잠시 후 다시 시도해주세요.", loadDeductions);
 		}
@@ -155,11 +175,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	document.getElementById("allDec-stop").addEventListener("click", async () => {
 		if (activeTab === "allow") {
-			const codes = allowanceTable.getSelectedData().map(r => r.allId);
+			const codes = allowanceTable.getSelectedData().map(r => r.allId).map((r, i) => { r.mapNum = i + 1; return r });
 			if (codes.length) await updateStatus(`/allowance/updateStatus?companyCode=${manager}`, codes, "N",
 				"수당 사용중단 완료되었습니다.", "수당 사용중단 실패하였습니다. 잠시 후 다시 시도해주세요.", loadAllowances);
 		} else {
-			const codes = deductionTable.getSelectedData().map(r => r.dedId);
+			const codes = deductionTable.getSelectedData().map(r => r.dedId).map((r, i) => { r.mapNum = i + 1; return r });
 			if (codes.length) await updateStatus(`/dedcut/updateStatus?companyCode=${manager}`, codes, "N",
 				"공제 사용중단 완료되었습니다.", "공제 사용중단 실패하였습니다. 잠시 후 다시 시도해주세요.", loadDeductions);
 		}

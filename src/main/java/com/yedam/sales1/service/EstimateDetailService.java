@@ -8,6 +8,4 @@ public interface EstimateDetailService {
 	List<EstimateDetail> getAllEstimateDetail();
 	
 	EstimateDetail saveEstimateDetail(EstimateDetail estimateDetail);
-
-	EstimateDetail getLoanByEstimateUniqueCode(String keyword);
 }

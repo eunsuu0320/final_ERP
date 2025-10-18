@@ -24,25 +24,20 @@ import com.yedam.hr.domain.Employee;
 import com.yedam.hr.domain.HrHistory;
 import com.yedam.hr.domain.HrPDF;
 import com.yedam.hr.domain.HrSign;
+import com.yedam.hr.dto.EmployeeDTO;
 import com.yedam.hr.repository.EmployeeRepository;
 import com.yedam.hr.repository.HrHistoryRepository;
 import com.yedam.hr.repository.HrPDFRepository;
 import com.yedam.hr.repository.HrSignRepository;
 import com.yedam.hr.service.HrService;
 
-import jakarta.persistence.EntityNotFoundException;
-
 @Service
 public class HrServiceImpl implements HrService {
 
-	@Autowired
-	EmployeeRepository employeeRepository;
-	@Autowired
-	HrSignRepository hrSignRepository;
-	@Autowired
-	HrPDFRepository hrPDFRepository;
-	@Autowired
-	HrHistoryRepository hrHistoryRepository;
+	@Autowired EmployeeRepository employeeRepository;
+	@Autowired HrSignRepository hrSignRepository;
+	@Autowired HrPDFRepository hrPDFRepository;
+	@Autowired HrHistoryRepository hrHistoryRepository;
 
 	@Override
 	public List<Employee> findByCompanyCode(String companyCode) {
@@ -50,22 +45,24 @@ public class HrServiceImpl implements HrService {
 	}
 
 	@Override
-	public void saveContract(Employee employee, HrSign sign, HrPDF pdf, MultipartFile signImg, MultipartFile pdfFile,
+	@Transactional
+	public void saveContract(EmployeeDTO dto, HrSign sign, HrPDF pdf, MultipartFile signImg, MultipartFile pdfFile,
 			MultiValueMap<String, String> params) {
 
 		// 로그인 사용자 아이디 넣기
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String manager = auth.getName().split(":")[0];
-
+		String managerCode = auth.getName().split(":")[2];
+		Employee employee = null;
 		String signFileName = null;
 
 		// 1. 사원 등록 (없으면 insert)
-		employee.setCompanyCode(manager);
+		dto.setCompanyCode(manager);
 		try {
-			if (employee.getEmpCode() == null || !employeeRepository.existsById(employee.getEmpCode())) {
-				employeeRepository.save(employee);
-			}
+			employee = employeeRepository.save(dto.toEntity());
+
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("사원 저장 중 오류 발생", e);
 		}
 
@@ -166,7 +163,7 @@ public class HrServiceImpl implements HrService {
 			history.setEventType("등록"); // 등록/수정 구분
 			history.setEventDetail("사원 신규 등록 및 계약서 저장");
 
-			history.setManager(manager);
+			history.setManager(managerCode);
 
 			hrHistoryRepository.save(history);
 
@@ -178,8 +175,8 @@ public class HrServiceImpl implements HrService {
 	// 단 건 조회
 	@Override
 	@Transactional(readOnly = true)
-	public Employee getEmployee(String EmpCode) {
-		return employeeRepository.findById(EmpCode).orElseThrow(() -> new EntityNotFoundException("사원 없음: " + EmpCode));
+	public Employee getEmployee(String companyCode, String  empCode) {
+		return employeeRepository.findByCompanyCodeAndEmpCode(companyCode, empCode);
 	}
 
 	// 단 건 수정

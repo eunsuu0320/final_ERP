@@ -11,6 +11,8 @@
 	rel="stylesheet">
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
 <body layout:fragment="content">
 
@@ -18,177 +20,384 @@
 		<main>
 			<div class="containerBox">
 				<div class="container-fluid px-4">
-					<h1 class="mt-4">출하지시서</h1>
-					<ol class="breadcrumb mb-4">
-						<li class="breadcrumb-item"><a th:href="@{/dashboard}">Dashboard</a></li>
-						<li class="breadcrumb-item active">출하지시서</li>
-					</ol>
+					<h1 class="mt-4">출하관리</h1>
 				</div>
 
-				<!-- 버튼 영역 -->
-				<!-- ㅣㅣ -->
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-warning me-2" onclick="filterSelect">검색</button>
-					<button class="btn btn-primary me-2"
-						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-					<button class="btn btn-dark me-2">초기화</button>
-				</div>
 
 				<!-- 검색 바 -->
 				<div class="searchTool d-flex align-items-center mb-3">
-					<div class="me-5 d-flex align-items-center">
-						<label for="partnerName" class="me-3">거래처명</label> <input
-							type="text" class="form-control w-auto" placeholder="검색어 입력"
-							id="partnerName">
+					<div class="d-flex">
+
+						<div>
+							<label for="quoteDate" class="me-3" style="width: 80px;">기준일자</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="date" class="form-control form-control-sm"
+										id="quoteDate" name="quoteDate" style="flex-grow: 1;">
+									<span class="mx-2">~</span><input type="date"
+										class="form-control form-control-sm" id="quoteDate"
+										name="quoteDate" style="flex-grow: 1;">
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="warehouseCode" class="me-3">창고</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="warehouseCode">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="partnerCode" class="me-3">거래처</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="partnerName">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+						<div>
+							<label for="productCode" class="me-3">품목</label>
+							<div class="me-5 d-flex align-items-center">
+								<div class="input-group input-group-sm">
+									<input type="text" class="form-control w-auto"
+										placeholder="검색어 입력" id="productCode">
+									<button class="btn btn-outline-secondary" type="button"
+										onclick="execDaumPostcode()">
+										<i class="bi bi-search"></i>
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="d-flex flex-column align-items-start ms-3">
+						<div style="height: 24px;"></div>
+
+						<div class="d-flex align-items-center">
+							<button class="btn btn-warning me-2 btn-sm"
+								onclick="filterSearch()">검색</button>
+							<button class="btn btn-dark btn-sm"
+								onclick="filterReset('.searchTool')">초기화</button>
+						</div>
+					</div>
+
+				</div>
+
+
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<div class="btn-group btn-type ms-2" role="group"
+						aria-label="type-filter" id="shipmentTab">
+						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="NONSHIPMENT">미지시</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="ONCHECKING">결재중</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="CHECK">확인</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="ONSHIPMENT">출하중</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="SUCCESSHIPMENT">출하완료</button>
+						<button type="button" class="btn btn-outline-primary"
+							data-type="SUCCESSAC">회계반영완료</button>
+					</div>
+
+					<div class="d-flex align-items-center">
+						<button class="btn btn-primary me-2"
+							onclick="showDetailModal('regist')">신규</button>
+						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
+						<button class="btn btn-secondary me-2" onclick="insertAc()">회계일괄반영</button>
+						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
+						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
 				</div>
 
-				<div class="d-flex align-items-center mb-3 justify-content-end">
-					<button class="btn btn-secondary me-2">이력조회</button>
-					<button class="btn btn-secondary me-2">인쇄</button>
-					<button class="btn btn-secondary me-2">Excel</button>
-				</div>
-
-				<!-- 컬럼 선택 체크박스 -->
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '거래처코드' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
+						th:checked="${col == '출하지시서코드' or col == '출하예정일자' or col == '거래처명' or col == '창고명' or col == '품목명' or col == '수량합계' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
 
 
-				<!-- Tabulator 테이블 -->
 				<div id="productTable"></div>
 
-				<!-- 결제정보 모달 -->
-				<div class="modal fade" id="paymentModal" tabindex="-1"
-					aria-hidden="true">
-					<div class="modal-dialog modal-xl">
-						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title" id="ModalLabel">결제정보</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-							</div>
-							<div
-								class="modal-body d-flex justify-content-center align-items-center">
-							</div>
-						</div>
-					</div>
-				</div>
 
-				<!-- 신규/상세 모달 -->
 				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
-					<div class="modal-dialog modal-lg modal-dialog-centered">
+					<div class="modal-dialog modal-xl modal-dialog-centered">
 						<div class="modal-content">
-							<!-- 모달 헤더 -->
 							<div class="modal-header">
 								<h5 class="modal-title"></h5>
-								<div>
-									<button type="button" class="btn btn-primary"
+								<div class="d-flex align-items-center">
+									<button type="button" class="btn btn-primary me-2"
 										onclick="saveModal()">저장</button>
-									<button type="button" class="btn btn-dark"
-										onclick="resetModal()">초기화</button>
-									<button type="button" class="btn btn-secondary"
-										onclick="getModal()">가져오기</button>
-									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+									<button type="button" class="btn btn-dark me-3"
+										onclick="resetQuote()">초기화</button>
+									<button type="button" class="btn btn-secondary me-3"
+										onclick="selectOrder()">주문서조회</button>
+									<button type="button" class="btn-close" data-bs-dismiss="modal"
+										aria-label="Close"></button>
 								</div>
 							</div>
-							<!-- 모달 바디 -->
+
 							<div class="modal-body">
-								<form id="itemForm">
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목코드*</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productCode"
-												disabled placeholder="자동생성">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목명*</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="productName"
-												required>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">규격*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productSize"
-												required>
-												<option value="" disabled selected>규격을 선택하세요</option>
-												<option value="S">S</option>
-												<option value="M">M</option>
-												<option value="L">L</option>
-											</select>
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">단위*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="unit" required>
-												<option value="" disabled selected>단위를 선택하세요</option>
-												<option value="kg">kg</option>
-												<option value="cm">cm</option>
-											</select>
+								<form id="shipmentForm">
+
+									<div class="row mb-3 g-3 border-bottom pb-3">
+										<h6 class="mt-4 mb-2 fw-bold">1. 기본정보</h6>
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="partnerNameModal"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">거래처</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="hidden" id="partnerCodeModal"
+													name="partnerCode"> <input type="text"
+													class="form-control" placeholder="검색어 입력"
+													id="partnerNameModal">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('salesPartner', function(selected) {
+                document.getElementById('partnerNameModal').value = selected.partnerName;
+                document.getElementById('partnerCodeModal').value = selected.partnerCode;
+                document.getElementById('manager').value = selected.name;
+				document.getElementById('empCode').value = selected.manager;
+				document.getElementById('managerPhone').value = selected.phone;
+                document.getElementById('partnerPhone').value = selected.partnerPhone;
+                document.getElementById('postCode').value = selected.postCode;
+                document.getElementById('address').value = selected.address;
+
+
+            })">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
 										</div>
 
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목그룹*</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="productGroup"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="잡화">잡화</option>
-												<option value="공구">공구</option>
-											</select>
+
+
+
+
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="partnerPhone"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">거래처 연락처</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="text" class="form-control" id="partnerPhone">
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">입고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="inPrice">
+
+
+
+										<div class="col-12 d-flex flex-column">
+
+											<div class="d-flex align-items-center mb-2">
+												<label for="zipcode"
+													class="col-form-label fw-bold text-nowrap"
+													style="width: 120px;">납품장소</label>
+
+												<div class="input-group input-group-sm me-2"
+													style="max-width: 400px;">
+													<input type="text" class="form-control" name="postCode"
+														id="postCode" placeholder="우편번호" readonly>
+												</div>
+
+												<button class="btn btn-secondary btn-sm" type="button">변경</button>
+
+											</div>
+
+											<div class="d-flex align-items-center">
+												<div style="width: 120px;"></div>
+
+												<input type="text" class="form-control form-control-sm"
+													name="address" id="address" placeholder="상세 주소"
+													style="max-width: 962px;">
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">출고단가</label>
-										<div class="col-sm-9">
-											<input type="number" class="form-control" name="outPrice">
+
+
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="manager"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">담당자</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="hidden" id="empCode" name="empCode"> <input
+													type="text" class="form-control" id="manager"
+													name="manager">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('salesEmployee', function(selected) {
+                document.getElementById('manager').value = selected.name;
+				document.getElementById('empCode').value = selected.empCode;
+				document.getElementById('managerPhone').value = selected.phone;
+
+
+            })">
+													<i class="bi bi-search"></i>
+												</button>
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">창고</label>
-										<div class="col-sm-9">
-											<select class="form-select comboSelect" name="warehouseCode"
-												required>
-												<option value="" disabled selected>품목그룹을 선택하세요</option>
-												<option value="본사창고">본사창고</option>
-												<option value="예담창고">예담창고</option>
-											</select>
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="managerPhone"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">담당자 연락처</label>
+
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="text" class="form-control" id="managerPhone">
+											</div>
 										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">비고</label>
-										<div class="col-sm-9">
-											<input type="text" class="form-control" name="remarks">
-										</div>
-									</div>
-									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">품목 이미지</label>
-										<div class="col-sm-9">
-											<input type="file" class="form-control" name="productImage"
-												accept="image/*">
+
+
+
+
+
+
+
+
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="quoteDeliveryDateText"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">출하예정일</label>
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="date" class="form-control form-control-sm"
+													id="quoteDeliveryDateText" name="deliveryDateText"
+													style="flex-grow: 1;">
+											</div>
 
 										</div>
+
+										<div class="col-6 d-flex align-items-center">
+											<label for="warehouse"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">출하창고</label>
+											<div class="col-sm-7">
+												<select class="form-select comboSelect form-select-sm"
+													name="warehouse"></select>
+											</div>
+										</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+										<div class="col-12 d-flex align-items-start">
+											<label for="quoteRemarks"
+												class="col-form-label fw-bold text-nowrap pt-1"
+												style="width: 120px;">비고</label>
+											<textarea class="form-control form-control-sm"
+												id="quoteRemarks" name="remarks" rows="2"
+												style="max-width: 962px;"></textarea>
+										</div>
+
 									</div>
 								</form>
+
+								<h6 class="mt-4 mb-2 fw-bold">2. 출하항목</h6>
+								<div class="d-flex justify-content-end mb-3">
+									<button type="button"
+										class="btn btn-sm btn-outline-success me-2"
+										onclick="addItemRow()">+ 행 추가</button>
+									<button type="button" class="btn btn-sm btn-outline-danger"
+										onclick="deleteSelectedItemRows()">- 선택 삭제</button>
+								</div>
+								<div class="table-responsive">
+									<table id="quoteDetailTable"
+										class="table table-bordered table-sm">
+										<thead class="table-light text-center">
+											<tr>
+												<th style="width: 30px;"></th>
+												<th style="width: 15%;">품목코드*</th>
+												<th style="width: 25%;">품목명</th>
+												<th style="width: 10%;">규격</th>
+												<th style="width: 10%;">창고수량*</th>
+												<th style="width: 10%;">수량*</th>
+												<th style="width: 10%;">출하지시여부</th>
+												<th style="width: 15%;">비고</th>
+											</tr>
+										</thead>
+										<tbody id="itemDetailBody">
+											<tr class="new-item-row bg-light" data-row-id="new">
+												<td class="text-center"><input type="checkbox"
+													class="form-check-input"></td>
+												<td><input type="text"
+													class="form-select form-select-sm item-input"
+													name="productCode" placeholder="코드"
+													onblur="loadItemDetails(this)"></td>
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="itemName" readonly></td>
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="itemSpec" readonly></td>
+
+												<td><input type="text"
+													class="form-control form-control-sm item-input text-end"
+													name="warehouseQty" value="0"></td>
+
+												<td><input type="text"
+													class="form-control form-control-sm item-input text-end"
+													name="quantity" value="0"></td>
+												<td><input type="text"
+													class="form-control form-control-sm item-input text-end"
+													name="isShipment" value="0" readonly></td>
+
+
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="remarks"></td>
+											</tr>
+
+										</tbody>
+									</table>
+								</div>
+
+
 							</div>
-
-
 						</div>
 					</div>
 				</div>
@@ -197,6 +406,19 @@
 			</div>
 		</main>
 	</div>
+	<div id="modalOverlay" class="modal-overlay" style="display: none;"></div>
+
+	<div id="postcodeLayer" class="postcode-layer">
+		<div class="close-btn text-end p-2">
+			<button type="button" class="btn-close"
+				onclick="document.getElementById('postcodeLayer').style.display='none'">
+			</button>
+		</div>
+	</div>
+
+
+	<div th:replace="common/modal :: commonModal"></div>
+
 
 	<script th:inline="javascript">
 		var columns = /*[[${columns}]]*/[];
@@ -204,6 +426,8 @@
 	</script>
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+	<script
+		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 	<!-- 분리한 JS 파일 -->
 	<script
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

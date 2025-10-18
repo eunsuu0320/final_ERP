@@ -12,7 +12,8 @@ import com.yedam.common.domain.SystemUser;
 
 public interface UserRepository extends JpaRepository<SystemUser, String> {
 	Optional<SystemUser> findByUserId(String userId);
-
+	
+	@EntityGraph(attributePaths = {"employee", "employee.deptCode", "role"})
 	Optional<SystemUser> findByUserIdAndCompanyCode(String userId, String companyCode);
 
 	@Query("SELECT u FROM SystemUser u JOIN Employee e ON u.empCode = e.empCode " +
@@ -38,8 +39,13 @@ public interface UserRepository extends JpaRepository<SystemUser, String> {
 	           )
 	         order by e.dept, e.name
 	    """)
-	    List<SystemUser> findUserByCompanyCode(@Param("companyCode") String companyCode,
-	                                           @Param("kw") String kw,
-	                                           @Param("dept") String dept,
-	                                           @Param("useYn") String useYn);
+    List<SystemUser> findUserByCompanyCode(@Param("companyCode") String companyCode,
+                                           @Param("kw") String kw,
+                                           @Param("dept") String dept,
+                                           @Param("useYn") String useYn);
+	
+	
+	@EntityGraph(attributePaths = {"employee", "employee.deptCode"})
+	Optional<SystemUser> findByUserCode(String userCode);
+
 }

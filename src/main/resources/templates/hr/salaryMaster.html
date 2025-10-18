@@ -5,6 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <title>급여대장</title>
+<link href="/hr/css/employee.css" rel="stylesheet" />
 </head>
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
@@ -16,17 +17,14 @@
 
 				<div class="d-flex align-items-center mb-3">
 					<select id="sel-field" class="form-select w-auto me-2">
-						<option value="empCode">귀속날짜</option>
-						<option value="name">성명</option>
-						<option value="dept">부서명</option>
-					</select> <input id="txt-search" type="text"
-						class="form-control w-auto me-2" placeholder="검색어 입력">
+						<option value="payPeriod">귀속날짜</option>
+						<option value="payName">대장명칭</option>
+					</select>
+					<input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
 					<button id="btn-search" class="btn btn-warning me-2">검색</button>
 					 <div class="ms-auto d-flex">
 					 	<button id="btn-new" class="btn btn-primary me-2">신규</button>
-						<button id="btn-dicide" class="btn btn-success me-2">근무기록 확정</button>
-					    <button class="btn btn-secondary me-2">급여 이체 현황</button>
-					    <button class="btn btn-secondary me-2">근무 확정 현황</button>
+					 	<button id="btn-fix" class="btn btn-danger me-2">확정</button>
 					 </div>
 				</div>
 
@@ -35,12 +33,47 @@
 
 				<!-- 신규 모달 페이지 -->
 				<div th:replace="hr/salaryModal :: salaryModal"></div>
-			</div>
+
+				<!-- 명세서 조회 모달 페이지 -->
+				<div id="salaryPayModalHost"></div>
+
+				<!-- 급여계산 안내/확인 모달 -->
+				<div class="modal fade" id="salaryCalcModal" tabindex="-1" aria-hidden="true">
+				  <div class="modal-dialog modal-md modal-dialog-centered">
+				    <div class="modal-content">
+				      <div class="modal-header">
+				        <h5 class="modal-title">급여계산 안내</h5>
+				        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+				      </div>
+				      <div class="modal-body">
+				        <ul class="mb-0">
+				          <li>현재 대장에 대해 수당/공제 계산을 실행합니다.</li>
+				          <li>이미 계산된 항목은 재계산될 수 있습니다.</li>
+				          <li>계산 후 인원수/지급총액이 갱신됩니다.</li>
+				        </ul>
+				        <hr class="my-3">
+				        <div class="small text-muted">
+				          <div>대장명칭: <span id="calc-payName">-</span></div>
+				          <div>지급연월: <span id="calc-payYm">-</span></div>
+				        </div>
+				      </div>
+				      <div class="modal-footer">
+				        <button id="btn-calc-run" type="button" class="btn btn-primary">
+				          계산 실행
+				        </button>
+				        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+				      </div>
+				    </div>
+				  </div>
+				</div>
+				<!--  -->
+		</div>
 	</div>
 	</main>
 	</div>
 
 	<script src="/hr/js/salary.js"></script>
+	<script src="/hr/js/salaryPay.js"></script>
 
 </body>
 </html>

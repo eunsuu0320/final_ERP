@@ -1,7 +1,11 @@
 package com.yedam.sales1.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.*; // jakarta.persistence.* 임포트 유지
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Date;
 
@@ -12,17 +16,27 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SequenceGenerator(
+    name = "ORDER_SEQ_GENERATOR", 
+    sequenceName = "ORDER_SEQ",   
+    initialValue = 1,             
+    allocationSize = 1            
+)
 public class Orders {
 
     @Id
-    @Column(name = "UNIQUE_CODE", nullable = false)
-    private Long uniqueCode;
+    @GeneratedValue(
+        strategy = GenerationType.SEQUENCE, 
+        generator = "ORDER_SEQ_GENERATOR" 
+    )
+    @Column(name = "ORDER_UNIQUE_CODE", nullable = false)
+    private Long orderUniqueCode; 
 
     @Column(name = "ESTIMATE_UNIQUE_CODE", nullable = false)
     private Long estimateUniqueCode;
 
     @Column(name = "ORDER_CODE", length = 20, nullable = false)
-    private String orderCode;
+    private String orderCode; 
 
     @Column(name = "PARTNER_CODE", length = 20, nullable = false)
     private String partnerCode;
@@ -56,6 +70,16 @@ public class Orders {
     @Column(name = "COMPANY_CODE", length = 20, nullable = false)
     private String companyCode;
 
+    
+ // 거래처 연관 (복합키 조인)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+      @JoinColumn(name = "PARTNER_CODE", referencedColumnName = "PARTNER_CODE", insertable = false, updatable = false),
+      @JoinColumn(name = "COMPANY_CODE", referencedColumnName = "COMPANY_CODE", insertable = false, updatable = false)
+    })
+    private Partner partner;
+    
+    
     @PrePersist
     public void prePersist() {
         Date now = new Date();

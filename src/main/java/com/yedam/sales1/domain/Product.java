@@ -57,6 +57,9 @@ public class Product {
     
     @Column(name = "STOCK")
     private Integer stock;           // 재고
+    
+    @Column(name = "PRICE")
+    private Integer price;           // 기본단가
 
     // Jpa의 PrePersist 이벤트를 사용하여 INSERT 시 자동으로 생성일자를 설정
     @PrePersist

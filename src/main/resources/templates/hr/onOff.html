@@ -58,125 +58,146 @@
   <!-- 신규 버튼 -> 사원 출퇴근 기록 모달  -->
 <div th:replace="~{hr/empOnOff :: OnOffModal}"></div>
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const calendarEl = document.getElementById('calendar');
+document.addEventListener('DOMContentLoaded', async () => {
+  const calendarEl = document.getElementById('calendar');
+  const COMPANY_CODE = document.getElementById('companyCode')?.value || '';
 
-    // FullCalendar 생성
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+  // ===== 유틸 =====
+  const dateKey = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
+  const dateKeyFromISO = iso => dateKey(new Date(iso));
+
+  // ===== FullCalendar =====
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    locale: 'ko',
+    initialView: 'dayGridMonth',
+    firstDay: 0,
+    height: '100%',
+    expandRows: true,
+    dayMaxEventRows: 3,
+    headerToolbar: false,
+    titleFormat: { year: 'numeric', month: '2-digit' },
+    dayCellContent(info) { return String(info.date.getDate()); }, // 숫자만
+    events: loadEvents,
+    dateClick: () => {},                 // ✅ 날짜 클릭 무반응
+    eventClick(info) {}
+  });
+
+  calendar.render();
+  updateTitleBar();
+  fitCalendarHeight();
+
+  // ===== 툴바 =====
+  document.getElementById('btn-prev').onclick  = () => { calendar.prev();  updateTitleBar(); fitCalendarHeight(); };
+  document.getElementById('btn-next').onclick  = () => { calendar.next();  updateTitleBar(); fitCalendarHeight(); };
+  document.getElementById('btn-today').onclick = () => { calendar.today(); updateTitleBar(); fitCalendarHeight(); };
+
+  const btnMonth = document.getElementById('btn-month');
+  const btnList  = document.getElementById('btn-list');
+  if (btnMonth) btnMonth.onclick = () => { calendar.changeView('dayGridMonth'); updateTitleBar(); fitCalendarHeight(); };
+  if (btnList)  btnList.onclick  = () => { calendar.changeView('listMonth');    updateTitleBar(); fitCalendarHeight(); };
+
+  // 신규 버튼 → 모달 열기
+  const OnOffModal = () => new bootstrap.Modal(document.getElementById('OnOffModal'));
+  document.getElementById('btn-empOnOff-new').onclick = () => { OnOffModal().show(); };
+
+  // 출근 기록 조회
+  document.getElementById('btn-empOnOff-list').onclick = () => { window.location.href = "/onOffListPage"; };
+
+  // 📅 버튼: 월 바로 이동
+  document.getElementById('btn-datepick').onclick = () => {
+    const picker = flatpickr(document.getElementById('btn-datepick'), {
       locale: 'ko',
-      initialView: 'dayGridMonth',
-      firstDay: 0,
-      height: '100%',
-
-      dayCellContent(info) {
-    	    return String(info.date.getDate()); // 숫자만
-    	  },
-
-      expandRows: true,
-      dayMaxEventRows: 3,
-      headerToolbar: false,
-      titleFormat: { year: 'numeric', month: '2-digit' },
-      events: loadEvents,
-      dateClick(info) { openCreateModal(info.dateStr); },
-      eventClick(info) { alert(`[상세]\n날짜: ${info.event.startStr}\n제목: ${info.event.title}`); }
+      plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m", altFormat: "Y년 m월" })]
     });
+    picker.open();
+  };
 
-    calendar.render();
-    updateTitleBar();
+  // ===== 높이 자동 =====
+  function fitCalendarHeight() {
+    const wrap = document.querySelector('.cal-wrap');
+    if (!wrap) return;
+    const top = wrap.getBoundingClientRect().top;
+    const gap = 16;
+    wrap.style.height = (window.innerHeight - top - gap) + 'px';
+    calendar.updateSize();
+  }
+  window.addEventListener('resize', fitCalendarHeight);
 
-    // ===== 툴바 동작 =====
-    document.getElementById('btn-prev').onclick = () => { calendar.prev(); updateTitleBar(); fitCalendarHeight(); };
-    document.getElementById('btn-next').onclick = () => { calendar.next(); updateTitleBar(); fitCalendarHeight(); };
-    document.getElementById('btn-today').onclick = () => { calendar.today(); updateTitleBar(); fitCalendarHeight(); };
-
-    // 존재하지 않는 버튼 안전 처리(있을 경우만 바인딩)
-    const btnMonth = document.getElementById('btn-month');
-    const btnList  = document.getElementById('btn-list');
-    if (btnMonth) btnMonth.onclick = () => { calendar.changeView('dayGridMonth'); updateTitleBar(); fitCalendarHeight(); };
-    if (btnList)  btnList.onclick  = () => { calendar.changeView('listMonth');    updateTitleBar(); fitCalendarHeight(); };
-
- // DOMContentLoaded 내부
-    const OnOffModal = () => new bootstrap.Modal(document.getElementById('OnOffModal'));
-
-    document.getElementById('btn-empOnOff-new').onclick = () => {
-      // 필요한 값 세팅 후
-      OnOffModal().show();
-    };
-
-    function openCreateModal(dateStr){
-      // 필요한 값 세팅 후
-      OnOffModal().show();
-    }
-
-    // 출근 기록 조회 버튼
-    document.getElementById("btn-empOnOff-list").onclick = () => {
-    	 window.location.href = "/onOffListPage";
-    }
-
-    // 📅 아이콘: 월/연도 바로 이동
-    document.getElementById('btn-datepick').onclick = () => {
-      const picker = flatpickr(document.getElementById('btn-datepick'), {
-        locale: 'ko',
-        plugins: [new monthSelectPlugin({ shorthand: true, dateFormat: "Y-m", altFormat: "Y년 m월" })]
-      });
-      picker.open();
-    };
-
-    // ✅ 화면 높이에 맞춰 cal-wrap 높이를 계산/적용
-    function fitCalendarHeight() {
-      const wrap = document.querySelector('.cal-wrap');
-      if (!wrap) return;
-      const top = wrap.getBoundingClientRect().top; // 래퍼의 화면상 Y
-      const gap = 16;                                // 하단 여백
-      wrap.style.height = (window.innerHeight - top - gap) + 'px';
-      calendar.updateSize();                         // FullCalendar 재계산
-    }
-    window.addEventListener('resize', fitCalendarHeight);
-    // 초기 1회 적용
-    fitCalendarHeight();
-
-    // Flatpickr 월 선택 플러그인(간단 구현)
-    function monthSelectPlugin(cfg) {
-      return function(fp) {
-        return {
-          onReady() {
-            fp.set('dateFormat', cfg?.dateFormat || 'Y-m');
-            fp.set('altFormat',  cfg?.altFormat  || 'Y년 m월');
-          },
-          onChange(selectedDates) {
-            if (!selectedDates?.[0]) return;
-            // 해당 월의 1일로 이동
-            const d = selectedDates[0];
-            calendar.gotoDate(new Date(d.getFullYear(), d.getMonth(), 1));
-            updateTitleBar();
-            fitCalendarHeight();
-            fp.close();
-          }
+  // 월 선택 플러그인
+  function monthSelectPlugin(cfg) {
+    return function(fp) {
+      return {
+        onReady() {
+          fp.set('dateFormat', cfg?.dateFormat || 'Y-m');
+          fp.set('altFormat',  cfg?.altFormat  || 'Y년 m월');
+        },
+        onChange(selectedDates) {
+          if (!selectedDates?.[0]) return;
+          const d = selectedDates[0];
+          calendar.gotoDate(new Date(d.getFullYear(), d.getMonth(), 1));
+          updateTitleBar();
+          fitCalendarHeight();
+          fp.close();
         }
       }
     }
+  }
 
-    function updateTitleBar(){
-      const d = calendar.getDate();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,'0');
-      document.getElementById('titleBar').textContent = `${y}/${m}`;
-    }
+  function updateTitleBar(){
+    const d = calendar.getDate();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    document.getElementById('titleBar').textContent = `${y}/${m}`;
+  }
 
-    // ===== 예시: 이벤트 로딩 =====
-    async function loadEvents(fetchInfo, success) {
-      const y = fetchInfo.start.getFullYear();
-      const m = String(fetchInfo.start.getMonth()+1).padStart(2,'0');
-      const events = [
-        { start: `${y}-${m}-09`, title: '10(7 + 3)', color: '#e05239' },
-      ];
+//===== 이벤트 로더: "출근 인원수" =====
+  async function loadEvents(fetchInfo, success) {
+    try {
+      const res = await fetch(`/onoff?companyCode=${encodeURIComponent(COMPANY_CODE)}`);
+      if (!res.ok) throw new Error('근태 목록을 불러오지 못했습니다.');
+      const all = await res.json();
+
+      const startMs = fetchInfo.start.getTime();
+      const endMs   = fetchInfo.end.getTime();
+
+      // 화면에 보이는 기간만 필터
+      const rowsInRange = all.filter(r => {
+        const t = new Date(r.onTime).getTime();
+        return t >= startMs && t < endMs;
+      });
+
+      // 날짜별 출근 사원(중복 제거)
+      const byDate = {};
+      for (const r of rowsInRange) {
+        const key = dateKeyFromISO(r.onTime);
+        if (!byDate[key]) byDate[key] = new Set();
+        byDate[key].add(r.empCode); // 같은 날 같은 사원 여러 건이어도 1회로 집계
+      }
+
+      // 이벤트 생성: "출근 N명"
+      const events = Object.keys(byDate).map(k => {
+        const total = byDate[k].size;
+        return {
+          start: k,
+          title: `출근 ${total}명`,
+          backgroundColor: '#e05239',
+          borderColor: '#e05239'
+        };
+      });
+
       success(events);
+    } catch (e) {
+      console.error(e);
+      success([]);
     }
-
-    function openCreateModal(dateStr){
-      alert(`[신규 등록]\n기준일: ${dateStr}`);
-    }
-  });
+  }
+});
 </script>
+
 </body>
 </html>

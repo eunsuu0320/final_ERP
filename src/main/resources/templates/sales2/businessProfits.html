@@ -89,19 +89,19 @@
        <div class="container-fluid px-4">
            <h1 class="mt-4 mb-4">영업이익관리</h1>
 
-           <!-- ✅ 보기 탭 버튼 -->
+           <!-- 보기 탭 버튼 -->
            <div class="view-buttons">
                <button class="view-btn active" id="btnProductView">품목별</button>
                <button class="view-btn" id="btnEmployeeView">사원별</button>
            </div>
 
-           <!-- ✅ 필터 영역 -->
+           <!-- 필터 영역 -->
            <div class="filter-bar">
                <label>년도 :</label>
-               <select id="yearSelect"></select>
+               <select id="yearSelectProduct"></select>
 
                <label>분기 :</label>
-               <select id="quarterSelect">
+               <select id="quarterSelectProduct">
                    <option value="">전체</option>
                    <option value="1">1분기</option>
                    <option value="2">2분기</option>
@@ -110,16 +110,24 @@
                </select>
 
  
-                    <label>검색(품목명):</label>
-		          <div style="position: relative; display: inline-block;">
-		          <input id="searchInput" type="text" placeholder="사원명 입력" style="width:180px; padding-right:30px;">
-		          <i class="fas fa-search"
-		             style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"
-		             id="searchIcon"></i>
-		        </div>
-		
-		        <button id="btn-search" type="button">검색</button>
-		      </div>
+       <!-- 검색 + 버튼 영역 -->
+      <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+
+        <!-- 거래처 검색 -->
+        <div class="input-group" style="width:350px;">
+          <input id="productName" type="text" class="form-control" placeholder="품목 입력">
+          <input type="hidden" id="productCode" name="productCode">
+          <i class="fas fa-search"
+             style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+             onclick="openModal('productCode2', function(selected) {
+               document.getElementById('productCode').value = selected.productCode;
+               document.getElementById('productName').value = selected.productName;
+             })"></i>
+          <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
+        </div>
+       </div>
+     </div>
+
            
 
 		<h3 class="mt-4 mb-4">요약</h3>
@@ -153,5 +161,7 @@
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/sales2/js/businessProfits.js}"></script>
+<!-- 공통 모달 -->
+<div th:replace="common/modal :: commonModal"></div>
 </body>
 </html>

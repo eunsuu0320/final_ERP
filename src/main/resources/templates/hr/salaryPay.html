@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <style>
+    #payDetailModal .modal-dialog { max-width: 1400px; width: 95vw; }
+    #payDetailModal .modal-body { max-height: calc(100vh - 200px); overflow: auto; }
+    .sheet { background: #fff; }
+    .pay-title { font-size: 22px; font-weight: 700; letter-spacing: -0.2px; }
+    table.payroll { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    table.payroll th, table.payroll td { border: 1px solid #bbb; padding: 6px 8px; vertical-align: middle; font-size: 13px; }
+    table.payroll thead th { text-align: center; background: #f6f7fb; }
+    .subhead { font-size: 11px; color: #666; line-height: 1.2; }
+    .w-80{width:80px}.w-100{width:100px}.w-120{width:120px}.w-140{width:140px}.w-160{width:160px}
+    .sticky-ctrls { position: sticky; top: 0; z-index: 5; background: #fff; padding-top: 10px; }
+    .table-sm td, .table-sm th { padding: .4rem .5rem; }
+    .note { font-size: 12px; color: #6c757d; }
+    .no-select, .no-select * { -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
+    #employeeTable tbody tr { cursor:pointer; transition:background-color .12s ease, box-shadow .12s ease; }
+    #employeeTable tbody tr:hover { background:#f6f9ff; box-shadow: inset 3px 0 0 0 #0d6efd1a; }
+  </style>
+</head>
+
+<body>
+  <!-- 급여 명세서 모달 -->
+  <div class="modal fade" id="payDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">명세서 조회</h5>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary me-2" id="btnPayPrint" onclick="payPrint()">인쇄</button>
+            <button type="button" class="btn btn-dark me-2" id="btnPayExcel" onclick="payExcel()">Excel</button>
+            <button type="button" class="btn-close me-2" data-bs-dismiss="modal" aria-label="닫기"></button>
+          </div>
+        </div>
+
+        <div class="modal-body no-select">
+          <div class="table-responsive mb-4">
+            <div class="d-flex align-items-center mb-2">
+              <h3 th:text="|[${list.payYm}] ${list.payName}|"></h3>
+              <div class="small text-muted ms-auto" th:text="|지급일자 : ${list.payDate}|"></div>
+            </div>
+
+            <!-- ▼ 라벨/공통값 메타 (payPrint에서 meta.dataset.* 로 읽음) -->
+            <div id="salaryMeta"
+			     th:data-pay-ym="${list.payYm}"
+			     th:data-pay-date="${list.payDate}"
+
+			     th:data-all01="${list.allLabels['ALL_01'] ?: ''}"
+			     th:data-all02="${list.allLabels['ALL_02'] ?: ''}"
+			     th:data-all03="${list.allLabels['ALL_03'] ?: ''}"
+			     th:data-all04="${list.allLabels['ALL_04'] ?: ''}"
+			     th:data-all05="${list.allLabels['ALL_05'] ?: ''}"
+			     th:data-all06="${list.allLabels['ALL_06'] ?: ''}"
+			     th:data-all07="${list.allLabels['ALL_07'] ?: ''}"
+			     th:data-all08="${list.allLabels['ALL_08'] ?: ''}"
+			     th:data-all09="${list.allLabels['ALL_09'] ?: ''}"
+			     th:data-all10="${list.allLabels['ALL_10'] ?: ''}"
+
+			     th:data-ded01="${list.dedLabels['DED_01'] ?: ''}"
+			     th:data-ded02="${list.dedLabels['DED_02'] ?: ''}"
+			     th:data-ded03="${list.dedLabels['DED_03'] ?: ''}"
+			     th:data-ded04="${list.dedLabels['DED_04'] ?: ''}"
+			     th:data-ded05="${list.dedLabels['DED_05'] ?: ''}"
+			     th:data-ded06="${list.dedLabels['DED_06'] ?: ''}"
+			     th:data-ded07="${list.dedLabels['DED_07'] ?: ''}"
+			     th:data-ded08="${list.dedLabels['DED_08'] ?: ''}"
+			     th:data-ded09="${list.dedLabels['DED_09'] ?: ''}"
+			     th:data-ded10="${list.dedLabels['DED_10'] ?: ''}"
+			     style="display:none">
+			</div>
+            <!-- ▲ 라벨/공통값 메타 -->
+
+            <!-- 상단 요약 테이블 (기존 그대로) -->
+            <table class="payroll" id="summaryTable">
+              <thead th:with="
+                  base=${(list.basePaySum ?: 0) != 0},
+                  a01=${(list.allSums['ALL_01'] ?: 0) != 0},
+                  a02=${(list.allSums['ALL_02'] ?: 0) != 0},
+                  a03=${(list.allSums['ALL_03'] ?: 0) != 0},
+                  a04=${(list.allSums['ALL_04'] ?: 0) != 0},
+                  a05=${(list.allSums['ALL_05'] ?: 0) != 0},
+                  a06=${(list.allSums['ALL_06'] ?: 0) != 0},
+                  a07=${(list.allSums['ALL_07'] ?: 0) != 0},
+                  a08=${(list.allSums['ALL_08'] ?: 0) != 0},
+                  a09=${(list.allSums['ALL_09'] ?: 0) != 0},
+                  a10=${(list.allSums['ALL_10'] ?: 0) != 0},
+                  d01=${(list.dedSums['DED_01'] ?: 0) != 0},
+                  d02=${(list.dedSums['DED_02'] ?: 0) != 0},
+                  d03=${(list.dedSums['DED_03'] ?: 0) != 0},
+                  d04=${(list.dedSums['DED_04'] ?: 0) != 0},
+                  d05=${(list.dedSums['DED_05'] ?: 0) != 0},
+                  d06=${(list.dedSums['DED_06'] ?: 0) != 0},
+                  d07=${(list.dedSums['DED_07'] ?: 0) != 0},
+                  d08=${(list.dedSums['DED_08'] ?: 0) != 0},
+                  d09=${(list.dedSums['DED_09'] ?: 0) != 0},
+                  d10=${(list.dedSums['DED_10'] ?: 0) != 0},
+                  payCols=${(base?1:0)+(a01?1:0)+(a02?1:0)+(a03?1:0)+(a04?1:0)+(a05?1:0)+(a06?1:0)+(a07?1:0)+(a08?1:0)+(a09?1:0)+(a10?1:0)},
+                  dedCols=${(d01?1:0)+(d02?1:0)+(d03?1:0)+(d04?1:0)+(d05?1:0)+(d06?1:0)+(d07?1:0)+(d08?1:0)+(d09?1:0)+(d10?1:0)}
+              ">
+                <tr>
+                  <th rowspan="2">성명</th>
+                  <th rowspan="2">부서명</th>
+                  <th th:if="${payCols > 0}" th:attr="colspan=${payCols}">수당내역</th>
+                  <th rowspan="2">수당총액</th>
+                  <th th:if="${dedCols > 0}" th:attr="colspan=${dedCols}">공제내역</th>
+                  <th rowspan="2">공제총액</th>
+                  <th rowspan="2">총지급액</th>
+                </tr>
+                <tr>
+                  <th th:if="${base}">기본급</th>
+
+                  <th th:if="${a01}" th:text="${(list.allLabels['ALL_01'] ?: '수당1')}">수당1</th>
+                  <th th:if="${a02}" th:text="${(list.allLabels['ALL_02'] ?: '수당2')}">수당2</th>
+                  <th th:if="${a03}" th:text="${(list.allLabels['ALL_03'] ?: '수당3')}">수당3</th>
+                  <th th:if="${a04}" th:text="${(list.allLabels['ALL_04'] ?: '수당4')}">수당4</th>
+                  <th th:if="${a05}" th:text="${(list.allLabels['ALL_05'] ?: '수당5')}">수당5</th>
+                  <th th:if="${a06}" th:text="${(list.allLabels['ALL_06'] ?: '수당6')}">수당6</th>
+                  <th th:if="${a07}" th:text="${(list.allLabels['ALL_07'] ?: '수당7')}">수당7</th>
+                  <th th:if="${a08}" th:text="${(list.allLabels['ALL_08'] ?: '수당8')}">수당8</th>
+                  <th th:if="${a09}" th:text="${(list.allLabels['ALL_09'] ?: '수당9')}">수당9</th>
+                  <th th:if="${a10}" th:text="${(list.allLabels['ALL_10'] ?: '수당10')}">수당10</th>
+
+                  <th th:if="${d01}" th:text="${(list.dedLabels['DED_01'] ?: '공제1')}">공제1</th>
+                  <th th:if="${d02}" th:text="${(list.dedLabels['DED_02'] ?: '공제2')}">공제2</th>
+                  <th th:if="${d03}" th:text="${(list.dedLabels['DED_03'] ?: '공제3')}">공제3</th>
+                  <th th:if="${d04}" th:text="${(list.dedLabels['DED_04'] ?: '공제4')}">공제4</th>
+                  <th th:if="${d05}" th:text="${(list.dedLabels['DED_05'] ?: '공제5')}">공제5</th>
+                  <th th:if="${d06}" th:text="${(list.dedLabels['DED_06'] ?: '공제6')}">공제6</th>
+                  <th th:if="${d07}" th:text="${(list.dedLabels['DED_07'] ?: '공제7')}">공제7</th>
+                  <th th:if="${d08}" th:text="${(list.dedLabels['DED_08'] ?: '공제8')}">공제8</th>
+                  <th th:if="${d09}" th:text="${(list.dedLabels['DED_09'] ?: '공제9')}">공제9</th>
+                  <th th:if="${d10}" th:text="${(list.dedLabels['DED_10'] ?: '공제10')}">공제10</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th colspan="2" class="text-center">총합계</th>
+
+                  <td class="text-end" th:if="${(list.basePaySum ?: 0) != 0}" th:text="${#numbers.formatInteger(list.basePaySum ?: 0, 0, 'COMMA')}">0</td>
+
+                  <td class="text-end" th:if="${(list.allSums['ALL_01'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_01'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_02'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_02'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_03'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_03'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_04'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_04'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_05'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_05'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_06'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_06'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_07'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_07'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_08'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_08'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_09'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_09'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.allSums['ALL_10'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allSums['ALL_10'] ?: 0, 0, 'COMMA')}">0</td>
+
+                  <td class="text-end" th:if="${(list.allTotalSum ?: 0) != 0}" th:text="${#numbers.formatInteger(list.allTotalSum ?: 0, 0, 'COMMA')}">0</td>
+
+                  <td class="text-end" th:if="${(list.dedSums['DED_01'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_01'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_02'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_02'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_03'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_03'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_04'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_04'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_05'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_05'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_06'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_06'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_07'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_07'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_08'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_08'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_09'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_09'] ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.dedSums['DED_10'] ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedSums['DED_10'] ?: 0, 0, 'COMMA')}">0</td>
+
+                  <td class="text-end" th:if="${(list.dedTotalSum ?: 0) != 0}" th:text="${#numbers.formatInteger(list.dedTotalSum ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:if="${(list.netPaySum ?: 0) != 0}" th:text="${#numbers.formatInteger(list.netPaySum ?: 0, 0, 'COMMA')}">0</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="note mt-1">* 이번 달 총 합계 참고용입니다.</div>
+          </div>
+
+          <!-- 사원 목록 (체크박스에 개별 금액/합계 data-* 주입) -->
+          <div class="sticky-ctrls d-flex justify-content-between align-items-center mb-2">
+            <span class="mb-0">사원 목록</span>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered align-middle table-hover" id="employeeTable">
+              <thead class="table-light">
+                <tr>
+                  <th class="text-center" style="width:48px;">
+                    <div class="form-check d-flex justify-content-center m-0">
+                      <input class="form-check-input" type="checkbox" id="pickAll" />
+                    </div>
+                  </th>
+                  <th>사번</th>
+                  <th>성명</th>
+                  <th>부서</th>
+                  <th class="text-end">기본급</th>
+                  <th class="text-end">수당총액</th>
+                  <th class="text-end">공제총액</th>
+                  <th class="text-end">총지급액</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="sd,iterStat : ${list.details}"
+                    th:with="emp=${list.employees[sd.empCode]}"
+                    th:attr="data-row-index=${iterStat.index}">
+                  <td class="text-center">
+                    <div class="form-check d-flex justify-content-center m-0">
+                      <input class="form-check-input pick" type="checkbox"
+                             th:id="|pick-${sd.empCode}|"
+                             th:attr="
+                               data-empno=${sd.empCode},
+                               data-name=${emp?.name},
+                               data-dept=${emp?.deptCode != null ? emp.deptCode.codeName : emp?.dept},
+                               data-pos=${emp?.positionCode != null ? emp.positionCode.codeName : emp?.position},
+
+                               data-salary=${emp?.salary ?: 0},
+
+                               data-all01=${sd.all01 ?: 0}, data-all02=${sd.all02 ?: 0},
+                               data-all03=${sd.all03 ?: 0}, data-all04=${sd.all04 ?: 0},
+                               data-all05=${sd.all05 ?: 0}, data-all06=${sd.all06 ?: 0},
+                               data-all07=${sd.all07 ?: 0}, data-all08=${sd.all08 ?: 0},
+                               data-all09=${sd.all09 ?: 0}, data-all10=${sd.all10 ?: 0},
+
+                               data-ded01=${sd.ded01 ?: 0}, data-ded02=${sd.ded02 ?: 0},
+                               data-ded03=${sd.ded03 ?: 0}, data-ded04=${sd.ded04 ?: 0},
+                               data-ded05=${sd.ded05 ?: 0}, data-ded06=${sd.ded06 ?: 0},
+                               data-ded07=${sd.ded07 ?: 0}, data-ded08=${sd.ded08 ?: 0},
+                               data-ded09=${sd.ded09 ?: 0}, data-ded10=${sd.ded10 ?: 0},
+
+                               data-alltotal=${sd.allTotal ?: 0},
+                               data-dedtotal=${sd.dedTotal ?: 0},
+                               data-netpay=${sd.netPay ?: 0}
+                             ">
+                    </div>
+                  </td>
+                  <td th:text="${sd.empCode}">E001</td>
+                  <td th:text="${emp?.name}">홍길동</td>
+                  <td th:text="${emp?.deptCode != null ? emp.deptCode.codeName : emp?.dept}">총무팀</td>
+                  <td class="text-end" th:text="${#numbers.formatInteger(emp?.salary ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:text="${#numbers.formatInteger(sd.allTotal ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:text="${#numbers.formatInteger(sd.dedTotal ?: 0, 0, 'COMMA')}">0</td>
+                  <td class="text-end" th:text="${#numbers.formatInteger(sd.netPay   ?: 0, 0, 'COMMA')}">0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div><!-- /modal-body -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>

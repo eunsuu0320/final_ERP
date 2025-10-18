@@ -1,66 +1,59 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
 <head>
-<meta charset="UTF-8">
-<title>수당/공제 관리</title>
+  <meta charset="UTF-8">
+  <title>수당/공제 관리</title>
+  <link href="/hr/css/employee.css" rel="stylesheet"
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">수당/공제 관리</h1>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">수당/공제 관리</h1>
 
-				<input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
+        <input type="hidden" id="companyCode" th:value="${#authentication.name.split(':')[0]}">
 
-				<!-- 탭 + 버튼 영역 -->
-				<div class="d-flex justify-content-between mb-3">
-					<!-- 수당/공제 탭 -->
-					<ul class="nav nav-tabs" id="payTab" role="tablist">
-						<li class="nav-item">
-							<button class="nav-link active" id="allow-tab"
-								data-bs-toggle="tab" data-bs-target="#allow" type="button">수당</button>
-						</li>
-						<li class="nav-item">
-							<button class="nav-link" id="deduct-tab" data-bs-toggle="tab"
-								data-bs-target="#deduct" type="button">공제</button>
-						</li>
-					</ul>
-
-					<!-- 오른쪽 버튼 -->
-					<div>
-						<button id="allDec-save" class="btn btn-primary me-2">저장</button>
-						<button id="allDec-stop" class="btn btn-danger me-2">사용중단</button>
-						<button id="allDec-reStart" class="btn btn-warning">재사용</button>
-					</div>
-				</div>
-
-				<!-- 탭 콘텐츠 -->
-				<div class="tab-content mt-3">
-					<!-- 수당 -->
-					<div class="tab-pane fade show active" id="allow">
-						<div id="allowance-area">
-
-						<!-- 수당 테이블 -->
-						<div id="allowance-table"></div>
-
-						</div>
-					</div>
-					<!-- 공제 -->
-					<div class="tab-pane fade" id="deduct">
-						<div id="deduction-area">
-
-						<!-- 공제 테이블 -->
-						<div id="deduction-table"></div>
-
-						</div>
-					</div>
-				</div>
-
+        <!-- 탭 + 버튼 영역 -->
+        <div class="d-flex justify-content-between mb-3">
+          <ul class="nav nav-tabs" id="payTab" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="allow-tab" data-bs-toggle="tab" data-bs-target="#allow" type="button">수당</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="deduct-tab" data-bs-toggle="tab" data-bs-target="#deduct" type="button">공제</button>
+            </li>
+          </ul>
+        	<!-- 오른쪽 버튼 -->
+			<div>
+			  <button id="btn-guide" class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#formulaGuideModal">가이드</button>
+			  <button id="allDec-save" class="btn btn-primary me-2">저장</button>
+			  <button id="allDec-stop" class="btn btn-danger me-2">사용중단</button>
+			  <button id="allDec-reStart" class="btn btn-warning">재사용</button>
 			</div>
-		</main>
-	</div>
-	<script src="/hr/js/allowanceDedcut.js"></script>
+        </div>
+
+        <!-- 탭 콘텐츠 -->
+        <div class="tab-content mt-3">
+          <div class="tab-pane fade show active" id="allow">
+            <div id="allowance-area">
+              <div id="allowance-table"></div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="deduct">
+            <div id="deduction-area">
+              <div id="deduction-table"></div>
+            </div>
+          </div>
+        </div>
+
+	        <!-- 포뮬러 가이드 모달 -->
+			<div th:replace="hr/formula :: formulaModal"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/hr/js/allowanceDedcut.js"></script>
 </body>
 </html>

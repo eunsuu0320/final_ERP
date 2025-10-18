@@ -1,216 +1,351 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- templates/hr/empOnOffModal.html -->
-<div th:fragment="OnOffModal">
-  <div class="modal fade" id="OnOffModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
+	<!-- templates/hr/empOnOffModal.html -->
+	<div th:fragment="OnOffModal">
+		<div class="modal fade" id="OnOffModal" tabindex="-1"
+			aria-hidden="true">
+			<div class="modal-dialog modal-lg modal-dialog-centered">
+				<div class="modal-content">
 
-        <!-- 바디 -->
-        <div class="modal-body">
-          <!-- 상단 현재 시각(배지 제거) -->
-          <div class="text-center mb-3">
-            <span id="onoff-now" class="fs-4 fw-bold text-primary align-middle">--:--:--</span>
-          </div>
+					<input type="hidden" id="companyCode"
+						th:value="${#authentication.name.split(':')[0]}">
 
-          <form id="onoff-form" class="needs-validation" novalidate>
-            <!-- 사원 -->
-            <div class="row g-3 align-items-center mb-2">
-              <label class="col-12 col-sm-2 col-form-label"> 사원</label>
-              <div class="col-12 col-sm-10">
-                <div class="input-group">
-                  <input id="onoff-emp" type="text" class="form-control" placeholder="사원명/사번" required>
-                  <button class="btn btn-outline-secondary" type="button" id="onoff-emp-search" title="사원 검색">
-                    🔍
-                  </button>
-                </div>
-                <div class="invalid-feedback">사원을 입력하세요.</div>
-              </div>
-            </div>
+					<!-- 바디 -->
+					<div class="modal-body">
+						<!-- 상단 현재 시각(배지 제거) -->
+						<div class="text-center mb-3">
+							<span id="onoff-now"
+								class="fs-4 fw-bold text-primary align-middle">--:--:--</span>
+						</div>
 
-            <!-- 장소 + 외근 -->
-            <div class="row g-3 align-items-center mb-2">
-              <label class="col-12 col-sm-2 col-form-label"> 장소</label>
-              <div class="col-12 col-sm-7">
-                <input id="onoff-place" type="text" class="form-control" placeholder="근무 장소">
-              </div>
-              <div class="col-12 col-sm-3">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="onoff-outside">
-                  <label class="form-check-label" for="onoff-outside">외근</label>
-                </div>
-              </div>
-            </div>
+						<form id="onoff-form" class="needs-validation" novalidate>
+							<!-- 사원 -->
+							<div class="row g-3 align-items-center mb-2">
+								<label class="col-12 col-sm-2 col-form-label"> 사원</label>
+								<div class="col-12 col-sm-10">
+									<div class="input-group">
+										<input id="onoff-emp" type="text" class="form-control"
+											placeholder="사원명/사번" required>
+										<button class="btn btn-outline-secondary" type="button"
+											id="onoff-emp-search" title="사원 검색">🔍</button>
+									</div>
+									<input type="hidden" id="onoff-empCode" name="empCode">
+									<div class="invalid-feedback">사원을 입력하세요.</div>
+								</div>
+							</div>
 
-            <!-- 날짜/시간 (컴팩트 + 오른쪽 ‘오전 반차’ 들어가게) -->
-            <div class="row g-2 align-items-center mb-2">
-              <label class="col-12 col-sm-2 col-form-label">시간</label>
+							<!-- 장소 + 외근 -->
+							<div class="row g-3 align-items-center mb-2">
+								<label class="col-12 col-sm-2 col-form-label"> 장소</label>
+								<div class="col-12 col-sm-7">
+									<input id="onoff-place" type="text" class="form-control"
+										placeholder="근무 장소">
+								</div>
+								<div class="col-12 col-sm-3">
+									<div class="form-check">
+										<input class="form-check-input" type="checkbox"
+											id="onoff-holiday"> <label class="form-check-label"
+											for="onoff-holiday">휴일</label>
+									</div>
+								</div>
+							</div>
 
-              <div class="col-auto"><input id="onoff-yy" type="text" inputmode="numeric" class="form-control text-center" placeholder="년"  style="width:88px;"></div>
-              <div class="col-auto"><input id="onoff-mm" type="text" inputmode="numeric" class="form-control text-center" placeholder="월"  style="width:60px;"></div>
-              <div class="col-auto"><input id="onoff-dd" type="text" inputmode="numeric" class="form-control text-center" placeholder="일"  style="width:60px;"></div>
+							<!-- 날짜/시간 (컴팩트 + 오른쪽 ‘오전 반차’ 들어가게) -->
+							<div class="row g-2 align-items-center mb-2">
+								<label class="col-12 col-sm-2 col-form-label">시간</label>
 
-              <div class="col-auto">
-				 <button type="button" class="btn btn-outline-secondary" id="btn-onoff-datepick" title="날짜 이동">📅</button>
-				 <input type="text" id="onoff-month-anchor" class="d-none">
-			  </div>
+								<div class="col-auto">
+									<input id="onoff-yy" type="text" inputmode="numeric"
+										class="form-control text-center" placeholder="년"
+										style="width: 88px;">
+								</div>
+								<div class="col-auto">
+									<input id="onoff-mm" type="text" inputmode="numeric"
+										class="form-control text-center" placeholder="월"
+										style="width: 60px;">
+								</div>
+								<div class="col-auto">
+									<input id="onoff-dd" type="text" inputmode="numeric"
+										class="form-control text-center" placeholder="일"
+										style="width: 60px;">
+								</div>
 
-              <div class="col-auto"><input id="onoff-hh" type="text" inputmode="numeric" class="form-control text-center" placeholder="시간" style="width:72px;"></div>
-              <div class="col-auto"><input id="onoff-mi" type="text" inputmode="numeric" class="form-control text-center" placeholder="분"   style="width:60px;"></div>
+								<div class="col-auto">
+									<button type="button" class="btn btn-outline-secondary"
+										id="btn-onoff-datepick" title="날짜 이동">📅</button>
+									<input type="text" id="onoff-month-anchor" class="d-none">
+								</div>
 
-              <div class="col-auto ms-2">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="onoff-amhalf">
-                  <label class="form-check-label" for="onoff-amhalf">오전 반차</label>
-                </div>
-              </div>
-            </div>
+								<div class="col-auto">
+									<input id="onoff-hh" type="text" inputmode="numeric"
+										class="form-control text-center" placeholder="시간"
+										style="width: 72px;">
+								</div>
+								<div class="col-auto">
+									<input id="onoff-mi" type="text" inputmode="numeric"
+										class="form-control text-center" placeholder="분"
+										style="width: 60px;">
+								</div>
+							</div>
 
-            <!-- 사유 -->
-            <div class="row g-3 align-items-center mb-3">
-              <label class="col-12 col-sm-2 col-form-label">사유</label>
-              <div class="col-12 col-sm-10">
-                <input id="onoff-reason" type="text" class="form-control" placeholder="사유를 입력하세요">
-              </div>
-            </div>
+							<!-- 사유 -->
+							<div class="row g-3 align-items-center mb-3">
+								<label class="col-12 col-sm-2 col-form-label">사유</label>
+								<div class="col-12 col-sm-10">
+									<input id="onoff-reason" type="text" class="form-control"
+										placeholder="사유를 입력하세요">
+								</div>
+							</div>
 
-            <!-- 액션 -->
-            <div class="d-grid d-sm-flex justify-content-sm-center">
-              <button type="button" id="btn-onoff-checkin" class="btn btn-primary px-4">출근</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
+							<!-- 액션 -->
+							<div class="d-grid d-sm-flex justify-content-sm-center">
+								<button type="button" id="btn-on" class="btn btn-primary px-4"
+									style="margin-right: 0.2rem;">출근</button>
+								<button type="button" id="btn-off" class="btn btn-danger px-4">퇴근</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
 
-  <!-- 모달 내부 스크립트 -->
-<script th:inline="javascript">
+		<div th:replace="common/modal :: commonModal"></div>
+
+		<!-- 모달 내부 스크립트 -->
+		<script th:inline="javascript">
 (() => {
-  // ---------- helpers ----------
-  const $  = (id) => document.getElementById(id);
-  const pad = (n) => String(n).padStart(2, '0');
+  const modalEl = document.getElementById('OnOffModal');
+  if (!modalEl) return;
 
-  const modalEl = $('OnOffModal');
-  if (!modalEl) return;   // 모달이 없으면 조용히 종료
+  // ===== 성공 시: 모달 닫고 새로고침 =====
+  function closeModalAndReload() {
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalEl.addEventListener('hidden.bs.modal', () => { location.reload(); }, { once: true });
+    inst.hide();
+  }
 
-  // 입력 요소 캐시
-  const el = {
-    clock: $('onoff-now'),
-    yy: $('onoff-yy'),
-    mm: $('onoff-mm'),
-    dd: $('onoff-dd'),
-    hh: $('onoff-hh'),
-    mi: $('onoff-mi'),
-    form: $('onoff-form'),
-    resetBtn: $('btn-save-reset'),
-    dateBtn: modalEl.querySelector('#btn-onoff-datepick'),
-    anchor:  modalEl.querySelector('#onoff-month-anchor'), // 숨은 input
-  };
-
-  // ---------- 시계 ----------
+  // ===== 시계 =====
   let clockTimer = null;
-  const startClock = () => {
-    if (!el.clock) return;
+  function startClock() {
     const tick = () => {
+      const nowEl = document.getElementById('onoff-now');
+      if (!nowEl) return;
       const d = new Date();
       let h = d.getHours();
       const ampm = h < 12 ? '오전' : '오후';
-      h = h % 12 || 12;
-      el.clock.textContent = `${ampm} ${pad(h)}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      h = (h % 12) || 12;
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      nowEl.textContent = `${ampm} ${String(h).padStart(2,'0')}:${mm}:${ss}`;
     };
     tick();
     clockTimer = setInterval(tick, 1000);
-  };
-  const stopClock = () => clockTimer && clearInterval(clockTimer);
+  }
+  function stopClock(){ if (clockTimer) clearInterval(clockTimer); }
 
-  // ---------- 현재 시각으로 입력 채우기 ----------
-  const fillNow = () => {
+  // ===== 현재 시각 입력 채우기 =====
+  function fillNow() {
     const d = new Date();
-    if (el.yy) el.yy.value = d.getFullYear();
-    if (el.mm) el.mm.value = pad(d.getMonth() + 1);
-    if (el.dd) el.dd.value = pad(d.getDate());
-    if (el.hh) el.hh.value = pad(d.getHours());
-    if (el.mi) el.mi.value = pad(d.getMinutes());
-  };
+    const pad2 = n => String(n).padStart(2,'0');
+    const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
+    set('onoff-yy', d.getFullYear());
+    set('onoff-mm', pad2(d.getMonth()+1));
+    set('onoff-dd', pad2(d.getDate()));
+    set('onoff-hh', pad2(d.getHours()));
+    set('onoff-mi', pad2(d.getMinutes()));
+  }
 
-  // ---------- 월/일 선택(Flatpickr) ----------
-  let monthPicker = null;
-  const openMonthPicker = () => {
-    if (!el.dateBtn) return;
+  // ===== 날짜 피커 (일 선택 가능) =====
+  let datePicker = null;
+  function openDatePicker() {
+    const dateBtnEl = modalEl.querySelector('#btn-onoff-datepick');
+    if (!dateBtnEl) return;
 
-    // 숨은 앵커 input이 없으면 생성
-    if (!el.anchor) {
-      el.anchor = document.createElement('input');
-      el.anchor.type = 'text';
-      el.anchor.className = 'd-none';
-      modalEl.appendChild(el.anchor);
+    let anchorEl = modalEl.querySelector('#onoff-month-anchor'); // 기존 id 재사용
+    if (!anchorEl) {
+      anchorEl = document.createElement('input');
+      anchorEl.type = 'text';
+      anchorEl.id = 'onoff-month-anchor';
+      anchorEl.className = 'd-none';
+      modalEl.appendChild(anchorEl);
     }
 
-    if (!monthPicker) {
-      monthPicker = flatpickr(el.anchor, {
+    if (!datePicker) {
+      datePicker = flatpickr(anchorEl, {
         locale: 'ko',
-        clickOpens: false,          // 수동 open
-        appendTo: modalEl,          // 모달 내부에 붙여서 z-index/포지션 문제 방지
-        positionElement: el.dateBtn,
-        // monthSelect 플러그인 쓰면 아래 주석 해제 + 플러그인 리소스 로드 필요
-        // plugins: [new monthSelectPlugin({ shorthand:true, dateFormat:'Y-m', altFormat:'Y년 m월' })],
+        clickOpens: false,
+        appendTo: modalEl,
+        positionElement: dateBtnEl,
+        dateFormat: 'Y-m-d',               // ✅ 날짜 선택
         onChange([d]) {
           if (!d) return;
-          const yy = d.getFullYear(), mm = pad(d.getMonth() + 1), dd = '01';
-          if (el.yy) el.yy.value = yy;
-          if (el.mm) el.mm.value = mm;
-          if (el.dd) el.dd.value = dd;
-          monthPicker.close();
+          const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
+          const pad2 = n => String(n).padStart(2, '0');
+          set('onoff-yy', d.getFullYear());
+          set('onoff-mm', pad2(d.getMonth() + 1));
+          set('onoff-dd', pad2(d.getDate())); // ✅ 더 이상 '01'로 고정하지 않음
+          datePicker.close();
         },
       });
     } else {
-      monthPicker.set('positionElement', el.dateBtn);
+      datePicker.set('positionElement', dateBtnEl);
     }
 
-    // 현재 값 기준으로 기본 날짜 세팅
-    const base = new Date(
-      Number(el.yy?.value) || new Date().getFullYear(),
-      (Number(el.mm?.value) || new Date().getMonth() + 1) - 1,
-      Number(el.dd?.value) || 1
-    );
-    monthPicker.setDate(base, false);
-    monthPicker.open();
-  };
-
-  // ---------- 이벤트 바인딩 ----------
-  // 모달 열릴 때: 시계 시작 + 현재 시각 채우기
-  modalEl.addEventListener('shown.bs.modal', () => {
-    startClock();
-    fillNow();
-  });
-
-  // 모달 닫힐 때: 시계 정지
-  modalEl.addEventListener('hidden.bs.modal', () => {
-    stopClock();
-  });
-
-  // 날짜 버튼 클릭 → 월/일 선택기 열기
-  modalEl.addEventListener('click', (e) => {
-    if (e.target.closest('#btn-onoff-datepick')) openMonthPicker();
-  });
-
-  // 초기화 버튼 → 폼 리셋 + 현재 시각 다시 채우기
-  if (el.resetBtn) {
-    el.resetBtn.addEventListener('click', () => {
-      el.form?.reset();
-      fillNow();
-    });
+    // 현재 입력값 기준으로 캘린더 초기 위치
+    const yy = Number(document.getElementById('onoff-yy')?.value) || new Date().getFullYear();
+    const mm = Number(document.getElementById('onoff-mm')?.value) || (new Date().getMonth() + 1);
+    const dd = Number(document.getElementById('onoff-dd')?.value) || new Date().getDate();
+    const base = new Date(yy, mm - 1, dd);
+    datePicker.setDate(base, false);
+    datePicker.open();
   }
 
-  // 페이지 로드 직후 1회 세팅(모달이 미리 열려있지 않아도 안전)
+  // 모달 표시/숨김
+  modalEl.addEventListener('shown.bs.modal', () => { startClock(); fillNow(); });
+  modalEl.addEventListener('hidden.bs.modal', () => { stopClock(); });
+
+  // 날짜 버튼
+  modalEl.addEventListener('click', (e) => {
+    if (e.target.closest('#btn-onoff-datepick')) openDatePicker();
+  });
+
+  // ===== 사원 선택(돋보기) =====
+  document.getElementById('onoff-emp-search').addEventListener('click', () => {
+    openModal("employee", (selected) => {
+      if (!selected) return;
+      const empInput = document.getElementById('onoff-emp');
+      const empCodeHidden = document.getElementById('onoff-empCode');
+      if (empInput) empInput.value = selected.name;              // 표시용
+      if (empCodeHidden) empCodeHidden.value = selected.empCode; // 전송용
+    });
+  });
+
+  // CSRF
+  const token = document.querySelector('meta[name="_csrf"]')?.content || "";
+
+  // ===== 공통 유효성 & 시간 문자열 생성 =====
+  function buildDateTimeOrThrow() {
+    const yy = document.getElementById('onoff-yy')?.value?.trim();
+    const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
+    const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
+    const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
+    const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
+    if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
+    return { date: `${yy}-${mm}-${dd}`, time: `${hh}:${mi}:00` };
+  }
+
+  // ===== 출근 =====
+  document.getElementById('btn-on').addEventListener('click', async () => {
+    try {
+      const companyCode = document.getElementById('companyCode')?.value;
+      const empCode     = document.getElementById('onoff-empCode')?.value;
+      const place       = document.getElementById('onoff-place')?.value?.trim();
+      const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
+
+      if (!empCode) throw new Error('사원을 선택하세요.');
+      if (!place)   throw new Error('장소를 입력하세요.');
+
+      const { date, time } = buildDateTimeOrThrow();
+      const onTime = `${date}T${time}`;
+
+      const payload = {
+        companyCode,
+        empCode,
+        place,
+        comIs: isHoliday ? 'H' : 'IN',   // 휴일 체크 시 H
+        holiday: isHoliday,              // 백엔드 분기용
+        onTime,
+        note: document.getElementById('onoff-reason')?.value || ''
+      };
+
+      const res = await fetch('/onoff/on', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error((await res.text()) || '출근 등록에 실패했습니다.');
+
+      alert('출근하였습니다.');
+      closeModalAndReload();
+    } catch (err) {
+      console.error(err);
+      alert(err.message || '오류가 발생했습니다.');
+    }
+  });
+
+  // ===== 퇴근 =====
+ // ===== 퇴근 =====
+document.getElementById('btn-off').addEventListener('click', async () => {
+  try {
+    const companyCode = document.getElementById('companyCode')?.value;
+    const empCode     = document.getElementById('onoff-empCode')?.value;
+    const isHoliday   = document.getElementById('onoff-holiday')?.checked === true;
+    if (!empCode) throw new Error('사원을 선택하세요.');
+
+    const yy = document.getElementById('onoff-yy')?.value?.trim();
+    const mm = String(document.getElementById('onoff-mm')?.value || '').padStart(2,'0');
+    const dd = String(document.getElementById('onoff-dd')?.value || '').padStart(2,'0');
+    const hh = String(document.getElementById('onoff-hh')?.value || '').padStart(2,'0');
+    const mi = String(document.getElementById('onoff-mi')?.value || '').padStart(2,'0');
+    if (!yy || !mm || !dd || !hh || !mi) throw new Error('시간(년/월/일/시/분)을 확인하세요.');
+    const offTime = `${yy}-${mm}-${dd}T${hh}:${mi}:00`;
+
+    const token = document.querySelector('meta[name="_csrf"]')?.content || "";
+    const res = await fetch('/onoff/off', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token },
+      body: JSON.stringify({
+        companyCode,
+        empCode,
+        offTime,
+        holiday: isHoliday,
+        comIs: isHoliday ? 'H' : 'IN'
+      })
+    });
+
+    const text = await res.text();
+    let payload; try { payload = JSON.parse(text); } catch { payload = { message: text }; }
+    if (!res.ok) throw new Error(payload?.message || '퇴근 등록 실패');
+
+    const updated = Number(payload?.updated ?? 0);
+
+    // ✅ 코드별 알림
+    if (updated === -1) {
+      alert('오늘 출근 기록이 없어 퇴근을 등록할 수 없습니다.');
+      return;
+    }
+    if (updated === -2) {
+      alert('이미 퇴근 처리된 기록입니다.');
+      return;
+    }
+    if (updated === -3) {
+      alert('퇴근 시간이 출근 시간보다 이릅니다. 시간을 확인하세요.');
+      return;
+    }
+    if (updated <= 0) {
+      alert('출근 기록(미퇴근)이 없어 퇴근을 등록할 수 없습니다.');
+      return;
+    }
+
+    alert('퇴근하였습니다.');
+    // 닫고 새로고침(기존 로직 그대로)
+    const modalEl = document.getElementById('OnOffModal');
+    const inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalEl.addEventListener('hidden.bs.modal', () => { location.reload(); }, { once: true });
+    inst.hide();
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message || '오류가 발생했습니다.');
+  }
+});
+
+
+  // 초기 1회
   fillNow();
 })();
 </script>
-
-</div>
-
-
+	</div>
 </body>
 </html>

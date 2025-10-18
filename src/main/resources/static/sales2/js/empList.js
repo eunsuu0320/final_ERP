@@ -12,7 +12,6 @@ empTable = new Tabulator("#empPlanList-table", {
     ajaxURL: "/api/sales/empPlanList?planYear=2025",
     columns: [
         { title: "사원명", field: "EMPNAME", width: 150 },
-        { title: "계획번호", field: "ESPCODE", width: 150 },
         { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right" },
         { title: "작년 매출액", field: "LASTYEARSALES", hozAlign: "right", formatter: "money" },
         { title: "작년 매입단가", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" },
@@ -31,8 +30,7 @@ planTable = new Tabulator("#plan-table", {
         { title: "상세번호", field: "esdpCode", hozAlign: "center", editor: false },
         { title: "올해 총 매출액", field: "purpSales", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
         { title: "올해 총 영업이익", field: "purpProfitAmt", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
-        { title: "신규 거래처수", field: "newVendCnt", editor: "number" },
-        { title: "재거래율", field: "재거래율", editor: "number" }
+        { title: "신규 거래처수", field: "newVendCnt", editor: "number" }
     ],
     data: [
         { 분기: "1분기" },
@@ -48,7 +46,7 @@ planTable = new Tabulator("#plan-table", {
 document.getElementById("btn-update-sales").addEventListener("click", () => {
     const empCode = document.getElementById("employCode").value;
     if (!empCode) {
-        alert("사원을 먼저 선택해주세요!");
+        alert("사원을 먼저 선택해주세요");
         return;
     }
 

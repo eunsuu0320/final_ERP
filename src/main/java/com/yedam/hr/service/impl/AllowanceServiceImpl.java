@@ -16,7 +16,7 @@ public class AllowanceServiceImpl implements AllowanceService {
 
 	@Override
 	public List<Allowance> findByCompanyCode(String companyCode) {
-		return allowanceRepository.findByCompanyCode(companyCode);
+		return allowanceRepository.findByCompanyCodeOrderByAllId(companyCode);
 	}
 
 	@Override
@@ -30,7 +30,6 @@ public class AllowanceServiceImpl implements AllowanceService {
 		for (String code : codes) {
 			Allowance allowance = allowanceRepository.findByAllIdAndCompanyCode(code, companyCode)
 					.orElseThrow(() -> new RuntimeException("해당 수당 없음: " + code));
-
 			allowance.setAllIs(status); // Y / N
 			allowanceRepository.save(allowance);
 		}

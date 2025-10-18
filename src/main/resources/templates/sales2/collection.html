@@ -2,161 +2,196 @@
 <html xmlns:th="http://www.thymeleaf.org"
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/main}">
-
 <head>
-<!-- ✅ FontAwesome & Tabulator -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+  <!-- ✅ FontAwesome & Tabulator -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
 
-<meta name="_csrf" th:content="${_csrf.token}" />
-<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+  <meta name="_csrf" th:content="${_csrf.token}" />
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
-<style>
-.custom-modal {
-  max-width: 1200px;
-}
+  <style>
+    .custom-modal {
+      max-width: 900px;
+    }
+    .modal-body {
+      padding: 30px 40px;
+    }
+    .modal-content {
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    #resultTable {
+      margin-top: 20px;
+    }
+    .tabulator-header {
+      background: #f8f9fa;
+    }
+    /* 조회 버튼 사이즈 업 */
+	.btn-view-invoices {
+	  padding: 5px 15px;      /* 여백 확대 */
+	  font-size: 0.95rem;     /* 글자 조금 키움 */
+	  line-height: 1.25;
+	  border-width: 2px;      /* 테두리 살짝 두껍게 */
+	}
+	/* 조회 버튼 활성 상태(꽉 찬 파란색) */
+	.btn-view-invoices.active {
+	  color: #fff;
+	  background-color: #0d6efd;
+	  border-color: #0d6efd;
+	}
+	/* 선택된 행을 hover처럼 연한 회색으로 */
+	#sales-table .tabulator-row.row-active {
+	  background-color: #dee2e6 !important; /* 부트스트랩의 gray-200 느낌 */
+	}
+	
+	/* 혹시 셀에 배경색이 따로 입혀져 있으면 행 배경을 따르도록 */
+	#sales-table .tabulator-row.row-active .tabulator-cell {
+	  background-color: transparent !important;
+	}
 
-.modal-body {
-  padding: 30px 40px;
-}
-
-.custom-modal .modal-content {
-  height: 85vh;
-}
-</style>
-
+	
+	
+    
+  </style>
 </head>
 
 <body layout:fragment="content">
 <div id="layoutSidenav_content">
 	<main>
-       <div class="container-fluid px-4">
-           <h1 class="mt-4">수금관리</h1>
+    <div class="container-fluid px-4">
+      <h1 class="mt-4">수금관리</h1>
 
-           <!-- 🔍 검색 + 버튼 영역 -->
-           <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+      <!-- 검색 + 버튼 영역 -->
+      <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
 
-                <!-- 🔎 거래처 검색 -->
-                <div class="input-group" style="width:350px;">
-                    <span class="input-group-text">거래처 검색</span>
-                    <input id="partner" type="text" class="form-control" placeholder="거래처명 입력">
-                    <input type="hidden" id="partnerCode" name="partnerCode">
+        <!-- 거래처 검색 -->
+        <div class="input-group" style="width:350px;">
+          <input id="partnerName" type="text" class="form-control" placeholder="거래처명 입력">
+          <input type="hidden" id="partnerCode" name="partnerCode">
+          <i class="fas fa-search"
+             style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+             onclick="openModal('partner', function(selected) {
+               document.getElementById('partnerCode').value = selected.partnerCode;
+               document.getElementById('partnerName').value = selected.partnerName;
+             })"></i>
+          <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
+        </div>
 
-                    <i class="fas fa-search"
-                       style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer;"
-                       onclick="openModal('partner', function(selected) {
-                           document.getElementById('partnerCode').value = selected.No;
-                           document.getElementById('partnerName').value = selected.name;
-                       })"></i>
-                    <button id="btn-search" class="btn btn-warning" type="button">검색</button>
+        <!-- 버튼 그룹 -->
+        <div class="d-flex gap-2">
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '수금관리')">Excel</button>
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '수금관리')">PDF</button>
+        </div>
+      </div>
+
+      <!-- 메인 Tabulator 테이블 -->
+      <div id="sales-table"></div>
+
+      <div id="total-count" class="mt-2 fw-bold">
+        총 거래처: <span class="text-primary">0건</span>
+      </div>
+	
+	<!-- 청구내역 섹션 (Tabulator) -->
+	<h5 class="mt-4" id="invoice-title">청구내역</h5>
+	<div id="invoice-table" style="height:260px;"></div>
+	      
+	      
+      <!-- 수금 등록 모달 -->
+      <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered custom-modal">
+          <div class="modal-content">
+
+            <div class="modal-header d-flex justify-content-between align-items-center">
+			  <h5 class="modal-
+
+
+ fw-bold" id="insertCollectionModalLabel">수금 등록</h5>
+			  
+			  <div class="d-flex align-items-center gap-2">
+			    <button id="btnSave" class="btn btn-primary">수금등록</button>
+			    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			  </div>
+			</div>
+
+            
+            <div class="modal-body">
+            <input type="hidden" id="outstandingAmt">
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">*수금일자</label>
+                  <input type="date" id="moneyDate" class="form-control" value="2025-10-10">
+                </div>  
+                              
+                <div class="col-md-4">
+                  <label class="form-label">*거래처</label>
+                  <input type="text" id="modalPartnerName" class="form-control" readonly>
                 </div>
-
-                <!-- 📌 버튼 그룹 -->
-                <div class="d-flex gap-2">
-                    <button id="btn-new" class="btn btn-primary">신규</button>
-                    <button id="btn-excel" class="btn btn-secondary">Excel</button>
-                    <button id="btn-pdf" class="btn btn-secondary">PDF</button>
-                </div>
-           </div>
-
-           <!-- 📋 메인 Tabulator 테이블 -->
-           <div id="sales-table"></div>
-
-           <!-- 총 거래처 수 -->
-           <div id="total-count" class="mt-2 fw-bold">
-               총 거래처: <span class="text-primary">0건</span>
-           </div>
-
-           <!-- 💰 수금 등록 모달 -->
-           <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
-             <div class="modal-dialog modal-xxl custom-modal">
-                <div class="modal-content">
-
-
-
-                  <!-- Header -->
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="insertCollectionModalLabel">수금 등록</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-
-                  <!-- Body -->
-                  <div class="modal-body">
-                    <form id="collectionForm">
-                      <div class="container-fluid">
-
-                        <!-- 상단 버튼 -->
-                        <div class="d-flex justify-content-end mb-3">
-                          <button type="button" id="btn-searchInvoice" class="btn btn-outline-secondary me-2">청구서 조회</button>
-                          <button type="button" id="btn-saveCollection" class="btn btn-primary">저장</button>
-                        </div>
-
-                        <!-- 기본정보 영역 -->
-                        <div class="row mb-3">
-                          <div class="col-md-3">
-                            <label class="form-label">수금일자</label>
-                            <div class="d-flex align-items-center">
-                              <select id="year" class="form-select me-1">
-                                <option>2025</option><option>2024</option>
-                              </select>
-                              <select id="month" class="form-select me-1">
-                                <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
-                              </select>
-                              <select id="day" class="form-select me-1">
-                                <option>01</option><option>02</option><option>03</option><option>04</option><option>05</option>
-                              </select>
-                              <i class="fa-regular fa-calendar ms-2"></i>
-                            </div>
-                          </div>
-
-                          <div class="col-md-3">
-                            <label class="form-label">거래처</label>
-                            <input type="text" id="partnerName" class="form-control" placeholder="거래처명 입력">
-                          </div>
-
-                          <div class="col-md-3">
-                            <label class="form-label">담당자</label>
-                            <input type="text" id="manager" class="form-control" placeholder="담당자명 입력">
-                          </div>
-
-                          <div class="col-md-3">
-                            <label class="form-label">결제정보</label>
-                            <div class="input-group">
-                              <input type="text" id="paymentInfo" class="form-control" placeholder="결제 방식 입력">
-                              <button class="btn btn-outline-secondary" type="button" id="btn-searchPayment">
-                                <i class="fa-solid fa-magnifying-glass"></i>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <!-- 청구내역 테이블 -->
-                        <h6 class="mt-4">청구내역</h6>
-                        <div id="invoiceTable"></div>
-
-                      </div>
-                    </form>
-                  </div>
-                  
+                
+                <div class="col-md-4">
+                  <label class="form-label">*담당자</label>
+                  <input type="text" id="managerName" class="form-control" readonly>
                 </div>
               </div>
-           </div>
-       </div>
-    </main>
+              
+			  <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">미수금액</label>
+                  <input type="text" id="outstandingView" class="form-control" readonly>
+                  <input type="hidden" id="outstandingAmt">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">*수금금액</label>
+                  <input type="text" id="collectAmt" class="form-control" placeholder="금액 입력">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">사후공제</label>
+                  <input type="text" id="postDeductionAmt" class="form-control" placeholder="금액 입력">
+                </div>
+              </div>
+                
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">*결제방식</label>
+                  <select id="paymentType" class="form-select">
+                    <option value="">선택</option>
+                    <option value="현금">현금</option>
+                    <option value="계좌이체">계좌이체</option>
+                    <option value="카드">카드</option>
+                  </select>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">비고</label>
+                  <input type="text" id="remarks" class="form-control" placeholder="비고 입력">
+                  <input type="hidden" id="partnerCode" name="partnerCode">
+                </div>
+              </div>
+
+              <!-- 수금 처리 결과 Tabulator -->
+              <h6 class="fw-bold mb-2">수금 처리 결과</h6>
+              <div id="resultTable"></div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
 
-<!-- ✅ 공통 모달 -->
+<!-- 공통 모달 -->
 <div th:replace="common/modal :: commonModal"></div>
 
-<!-- ✅ Tabulator JS -->
+<!-- Tabulator JS -->
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 
-<!-- ✅ Bootstrap (모달 필수) -->
+<!-- Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ✅ 기존 JS -->
+<!-- 별도 JS 파일 -->
 <script th:src="@{/sales2/js/collection.js}"></script>
+
 </body>
 </html>
-
 

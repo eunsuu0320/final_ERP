@@ -12,7 +12,6 @@ import com.yedam.hr.domain.HrHistory;
 @Repository
 public interface HrHistoryRepository extends JpaRepository<HrHistory, Long> {
 
-	@Query("SELECT h FROM HrHistory h JOIN FETCH h.employee e WHERE h.companyCode = :companyCode")
-	List<HrHistory> findByCompanyCode(@Param("companyCode") String companyCode);
+	List<HrHistory> findByCompanyCodeOrderByCreatedAtDesc(@Param("companyCode") String companyCode);
 
 }

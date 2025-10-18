@@ -78,13 +78,13 @@
     <div class="container-fluid px-4">
       <h1 class="mt-4 mb-4">영업이익관리</h1>
 
-      <!-- ✅ 보기 탭 -->
+      <!-- 보기 탭 -->
       <div class="view-buttons">
         <button class="view-btn" id="btnProductView">품목별</button>
         <button class="view-btn active" id="btnEmployeeView">사원별</button>
       </div>
 
-      <!-- ✅ 필터 영역 -->
+      <!-- 필터 영역 -->
       <div class="filter-bar">
         <label>년도 :</label>
         <select id="yearSelect"></select>
@@ -98,19 +98,25 @@
           <option value="4">4분기</option>
         </select>
 
-        <!-- 🔎 사원 검색 -->
-        <label>검색(사원명):</label>
-        <div style="position: relative; display: inline-block;">
-          <input id="searchInput" type="text" placeholder="사원명 입력" style="width:180px; padding-right:30px;">
+        <!-- 사원 검색 -->
+       <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+
+        <!-- 사원 검색 -->
+        <div class="input-group" style="width:350px;">
+          <input id="name" type="text" class="form-control" placeholder="사원명 입력">
+          <input type="hidden" id="empCode" name="empCode">
           <i class="fas fa-search"
-             style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"
-             id="searchIcon"></i>
+             style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+             onclick="openModal('employee', function(selected) {
+               document.getElementById('empCode').value = selected.empCode;
+               document.getElementById('name').value = selected.name;
+             })"></i>
+          <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
         </div>
+       </div>
+     </div>
 
-        <button id="btn-search" type="button">검색</button>
-      </div>
-
-      <!-- ✅ 요약 박스 -->
+      <!-- 요약 박스 -->
       <h3 class="mt-4 mb-4">요약</h3>
       <div class="summary-box">
         <div class="row text-center">
@@ -133,24 +139,24 @@
         </div>
       </div>
 
-      <!-- ✅ 사원별 실적 조회 테이블 -->
+      <!-- 사원별 실적 조회 테이블 -->
       <h3 class="mt-4 mb-4">사원별 실적 조회</h3>
       <div id="sales-table"></div>
     </div>
     
-    <!-- ✅ 사원 상세 모달 -->
+    <!-- 사원 상세 모달 -->
 <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="employeeModalLabel">사원별 판매목록</h5>
+        <h5 class="modal-title" id="employeeModalLabel">판매목록</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="닫기"></button>
       </div>
 
       <div class="modal-body">
-        <!-- ✅ 검색 영역 -->
+        <!-- 검색 영역 -->
         <div class="d-flex align-items-center mb-3">
-          <label class="fw-bold me-2">거래처명:</label>
+          <label class="fw-bold me-2">검색:</label>
           <div style="position: relative; display: inline-block;">
             <input id="modal-searchInput" type="text" placeholder="거래처명 입력" style="width:180px; padding-right:30px;">
             <i class="fas fa-search"
@@ -160,7 +166,7 @@
           <button id="modal-btn-search" class="btn btn-warning btn-sm ms-2">검색</button>
         </div>
 
-        <!-- ✅ 판매 테이블 -->
+        <!-- 판매 테이블 -->
         <div id="employee-sales-table"></div>
       </div>
 
@@ -177,5 +183,7 @@
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script th:src="@{/sales2/js/employeeProfits.js}"></script>
+<!-- 공통 모달 -->
+<div th:replace="common/modal :: commonModal"></div>
 </body>
 </html>

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.yedam.sales2.domain.CollectionEntity;
 import com.yedam.sales2.repository.CollectionRepository;
@@ -28,9 +29,17 @@ public class CollectionServiceImpl implements CollectionService{
 	        return collectionRepository.findReceivableSummary(companyCode);
 	    }
 	    
-	    // 수금등록
+	 // 수금 등록
 	    @Override
-	    public void insertCollection(CollectionEntity dto) {
-	        collectionRepository.save(dto);
+	    @Transactional
+	    public void executeCollectionFifo(String partnerCode, Double paymentAmt,  Double postDeduction, String paymentMethods, String remk, String companyCode) {
+	        collectionRepository.callCollectionFifoProc(partnerCode, paymentAmt, postDeduction, paymentMethods, remk, companyCode);
 	    }
+	    
+	 // 청구서 조회
+	    @Override
+	    public List<com.yedam.sales1.domain.Invoice> getInvoicesByPartnerJpa(String companyCode, String partnerCode) {
+	        return collectionRepository.findInvoicesByPartnerJpa(companyCode, partnerCode);
+	    }
+
 }

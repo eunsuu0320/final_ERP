@@ -33,6 +33,8 @@ public class SystemUser implements Prefixable {
 	private String userCode;
 
 	private String companyCode;
+	
+	@Column(name = "ROLE_CODE")
 	private String roleCode;
 
 	@Column(name = "EMP_CODE")
@@ -47,6 +49,10 @@ public class SystemUser implements Prefixable {
 	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EMP_CODE", insertable = false, updatable = false)
     private Employee employee;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ROLE_CODE", insertable = false, updatable = false)
+    private Role role;
 
 	@Override
 	public String getPrefix() {

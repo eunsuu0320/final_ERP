@@ -1,9 +1,23 @@
 package com.yedam.sales1.domain;
 
-import jakarta.persistence.*;
-import lombok.*;
-
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "PRICE")
@@ -24,8 +38,8 @@ public class Price {
     @Column(name = "PRICE_GROUP_NAME", length = 30)
     private String priceGroupName;
 
-    @Column(name = "PRICE")
-    private Double price;
+    @Column(name = "DISCOUNT_PCT")
+    private Double discountPct;
 
     @Column(name = "PRICE_TYPE", length = 20)
     private String priceType;
@@ -48,6 +62,20 @@ public class Price {
 
     @Column(name = "COMPANY_CODE", length = 20, nullable = false)
     private String companyCode;
+    
+    @Column(name = "START_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date startDate;
+    
+    @Column(name = "END_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date endDate;
+    
+    @OneToMany(mappedBy = "price", fetch = FetchType.LAZY) 
+    private List<PriceDetail> priceDetails = new ArrayList<>();
+
+    
+    
 
     @PrePersist
     public void prePersist() {

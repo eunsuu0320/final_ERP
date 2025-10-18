@@ -27,8 +27,8 @@ public class Dedcut implements Prefixable {
     private String dedName;   // 공제항목
     private String formula;   // 계산식
     private String calcNote;   // 산출방법
-    private String allIs;   // 사용여부
-
+    private String dedIs;   // 사용여부
+    private int mapNum;
 
     @Override
     public String getPrefix() {

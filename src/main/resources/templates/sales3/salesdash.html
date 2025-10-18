@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ko"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+  <meta charset="utf-8"/>
+  <title>영업 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <style>
+    :root{ --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e9edf3; --shadow:0 10px 28px rgba(2,6,23,.08); --radius:14px; }
+    #layoutSidenav_content>main{ padding-top:16px; }
+    .wrap{ padding-top:8px; padding-bottom:24px; }
+
+    .head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#f8fafc; border:1px solid #e2e8f0; font-weight:800; color:#0b1220; }
+
+    .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr); }
+    .card{ background:#fff; color:var(--text); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:18px; }
+    .card h3{ margin:0 0 10px; font-size:16px; font-weight:900; color:#0f172a; }
+
+    .kpi{ display:flex; align-items:center; justify-content:space-between; }
+    .kpi .v{ font-size:28px; font-weight:900 }
+    .kpi .t{ font-weight:800 }
+    .kpi i{ font-size:26px }
+
+    .chart-box{ height:280px; position:relative; }
+    .chart-box canvas{ width:100% !important; height:100% !important; display:block; }
+
+    .table{ width:100%; border-collapse:collapse; margin-top:8px; font-size:14px }
+    .table th,.table td{ padding:10px 12px; border-top:1px dashed #e5e7eb; text-align:left }
+    .table th{ font-weight:900; background:#f9fafb }
+    .right{ text-align:right }
+    .rank{ width:72px; text-align:center; font-weight:900 }
+    .muted{ color:#64748b }
+    .badge{ display:inline-flex; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#1e3a8a; font-weight:800; font-size:12px }
+    .loading{ color:#64748b; font-size:14px }
+    .alert{ border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:12px; display:none; }
+    .alert.show{ display:block; }
+  </style>
+</head>
+
+<body layout:fragment="content">
+<div id="layoutSidenav_content">
+  <main>
+    <div class="container_fluid px-4 wrap">
+
+      <div class="head mt-4 mb-2">
+        <h1 class="mb-0">영업 대시보드</h1>
+        <div class="pill"><i class="bi bi-cloud-check"></i> 실시간 집계</div>
+      </div>
+
+      <div id="apiAlert" class="alert">대시보드 API 응답이 올바르지 않습니다. 서버 로그를 확인해주세요.</div>
+
+      <!-- KPI -->
+      <div class="grid">
+        <div class="card" style="grid-column:span 4;">
+          <div class="kpi">
+            <div>
+              <div class="t">미출하 건수</div>
+              <div class="v" id="kpi-unshipped">-</div>
+            </div>
+            <i class="bi bi-truck"></i>
+          </div>
+        </div>
+        <div class="card" style="grid-column:span 4;">
+          <div class="kpi">
+            <div>
+              <div class="t">회계반영</div>
+              <div class="v" id="kpi-accounted">-</div>
+            </div>
+            <i class="bi bi-journal-check"></i>
+          </div>
+        </div>
+        <div class="card" style="grid-column:span 4;">
+          <div class="kpi">
+            <div>
+              <div class="t">미체결 견적서 건수</div>
+              <div class="v" id="kpi-estimate-open">-</div>
+            </div>
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="grid" style="margin-top:16px">
+        <div class="card" style="grid-column:span 7;">
+          <h3>연도별 영업이익 (최근 5년)</h3>
+          <div class="chart-box"><canvas id="chartYearly"></canvas></div>
+          <div class="muted" id="yearlyInfo"></div>
+        </div>
+        <div class="card" style="grid-column:span 5;">
+          <h3>분기별 영업이익률 (현재 연도)</h3>
+          <div class="chart-box"><canvas id="chartQuarter"></canvas></div>
+          
+        </div>
+      </div>
+
+      <!-- TABLES -->
+      <div class="grid" style="margin-top:16px">
+        <div class="card" style="grid-column:span 7;">
+          <h3>거래처 매출 Top5</h3>
+          <table class="table" id="tblPartners">
+            <thead>
+            <tr><th class="rank">순위</th><th>거래처명</th><th class="right">매출액</th><th class="right">미수금</th></tr>
+            </thead>
+            <tbody><tr><td colspan="4" class="loading">로딩 중…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="card" style="grid-column:span 5;">
+          <h3>영업사원 실적 Top5</h3>
+          <table class="table" id="tblEmployees">
+            <thead>
+            <tr><th class="rank">순위</th><th>사원명</th><th class="right">매출액</th></tr>
+            </thead>
+            <tbody><tr><td colspan="3" class="loading">로딩 중…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Thymeleaf 값 주입: companyCode / currentYear -->
+<script th:inline="javascript">
+  window.SALES3 = {
+    companyCode: /*[[${companyCode}]]*/ 'C001',
+    currentYear: /*[[${currentYear}]]*/ (new Date().getFullYear())
+  };
+</script>
+
+<script>
+  const COMPANY_CODE = (window.SALES3 && window.SALES3.companyCode) || 'C001';
+  const CURRENT_YEAR = (window.SALES3 && window.SALES3.currentYear) || (new Date().getFullYear());
+
+  const fmtWon = n => (Number(n||0)).toLocaleString('ko-KR');
+  const $ = sel => document.querySelector(sel);
+  const safeArr = v => Array.isArray(v) ? v : [];
+
+  /* Chart.js v2 공통 옵션 (메인 레이아웃에서 v2.8.0 로딩 기준) */
+  const commonOptsV2 = {
+    responsive: true,
+    maintainAspectRatio: false,
+    legend: { display: true, labels: { boxWidth: 16 } },
+    tooltips: { enabled: true },
+    scales: {
+      xAxes: [{ ticks: { fontColor: '#111827' } }],
+      yAxes: [{
+        ticks: {
+          fontColor: '#111827',
+          callback: v => v.toLocaleString('ko-KR')
+        }
+      }]
+    }
+  };
+
+  function drawYearly(labels, data){
+    new Chart(document.getElementById('chartYearly').getContext('2d'), {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[{
+          label:'영업이익',
+          data,
+          backgroundColor:'rgba(37,99,235,0.6)',
+          borderColor:'rgba(37,99,235,1)',
+          borderWidth:1,
+          maxBarThickness:42
+        }]
+      },
+      options:Object.assign({}, commonOptsV2, {
+        legend:{ display:false },
+        tooltips:{ callbacks:{ label: t => Number(t.yLabel).toLocaleString('ko-KR') + ' 원' } }
+      })
+    });
+  }
+
+  function drawQuarter(labels, rate, actual, target){
+    var cleanRate = rate.map(function(v){ return Number(v)||0; });
+    var maxOfRate = Math.max.apply(null, cleanRate.concat([0]));
+    var maxRate = Math.max(100, Math.ceil(maxOfRate * 1.2));  // 최소 100%, 살짝 여유
+
+    new Chart(document.getElementById('chartQuarter').getContext('2d'), {
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          { type:'line', label:'영업이익률(%)', data:cleanRate, yAxisID:'y-axis-2',
+            borderColor:'rgba(22,163,74,1)', backgroundColor:'rgba(22,163,74,0.1)',
+            borderWidth:2, pointRadius:3, tension:0.3, fill:false },
+          { type:'bar', label:'실적', data:actual, yAxisID:'y-axis-1',
+            backgroundColor:'rgba(37,99,235,0.5)', borderColor:'rgba(37,99,235,1)',
+            borderWidth:1, maxBarThickness:38 },
+          { type:'bar', label:'목표', data:target, yAxisID:'y-axis-1',
+            backgroundColor:'rgba(241,196,15,0.5)', borderColor:'rgba(241,196,15,1)',
+            borderWidth:1, maxBarThickness:38 }
+        ]
+      },
+      options:Object.assign({}, commonOptsV2, {
+        tooltips:{ callbacks:{
+          label: function(tooltipItem, data){
+            var ds = data.datasets[tooltipItem.datasetIndex];
+            if(ds.type === 'line') return tooltipItem.yLabel + '%';
+            return ds.label + ': ' + Number(tooltipItem.yLabel).toLocaleString('ko-KR') + ' 원';
+          }
+        }},
+        scales:{
+          xAxes: commonOptsV2.scales.xAxes,
+          yAxes: [
+            { id:'y-axis-1', position:'left',
+              ticks:{ fontColor:'#111827', callback:v=>v.toLocaleString('ko-KR') } },
+            { id:'y-axis-2', position:'right', gridLines:{ drawOnChartArea:false },
+              ticks:{ fontColor:'#111827', callback:v=>v+'%', suggestedMin:0, suggestedMax:maxRate } }
+          ]
+        }
+      })
+    });
+  }
+
+  async function loadAll(){
+    const alertBox = $('#apiAlert'); alertBox.classList.remove('show');
+    try{
+      const qs  = new URLSearchParams({ companyCode: COMPANY_CODE }).toString();
+      const qsQ = new URLSearchParams({ companyCode: COMPANY_CODE, year: CURRENT_YEAR }).toString();
+
+      const [mRes, yRes, qRes, pRes, eRes] = await Promise.all([
+        fetch(`/api/sales3/dashboard/metrics?${qs}`),
+        fetch(`/api/sales3/dashboard/yearly-profit?${qs}`),
+        fetch(`/api/sales3/dashboard/quarterly-profit-rate?${qsQ}`),
+        fetch(`/api/sales3/dashboard/top-partners?${qs}`),
+        fetch(`/api/sales3/dashboard/top-employees?${qs}`)
+      ]);
+
+      if(!mRes.ok || !yRes.ok || !qRes.ok || !pRes.ok || !eRes.ok){
+        alertBox.classList.add('show'); return;
+      }
+
+      const metrics   = await mRes.json();
+      const yearly    = safeArr(await yRes.json());
+      const quarter   = safeArr(await qRes.json());
+      const partners  = safeArr(await pRes.json());
+      const employees = safeArr(await eRes.json());
+
+      // KPI
+      $('#kpi-unshipped').textContent     = fmtWon(metrics?.unshippedCount);
+      $('#kpi-accounted').textContent     = fmtWon(metrics?.accountedCount);
+      $('#kpi-estimate-open').textContent = fmtWon(metrics?.openEstimateCount);
+
+      // 연도별
+      const lblY = yearly.map(d=>d.year);
+      const datY = yearly.map(d=>Number(d.amountTotal||0));
+      if(lblY.length){
+        drawYearly(lblY, datY);
+        $('#yearlyInfo').textContent =
+          `현재 연도: ${lblY[lblY.length-1]} | 합계: ${fmtWon(datY.reduce((a,b)=>a+b,0))} 원`;
+      }else{
+        $('#yearlyInfo').textContent = '표시할 데이터가 없습니다.';
+      }
+
+      // 분기별: 레이블 '1분기~4분기', 이익률은 (실적/목표*100)로 재계산
+      const lblQ    = quarter.map(d => `${d.quarter}분기`);
+      const actual  = quarter.map(d => Number(d.actual||0));
+      const target  = quarter.map(d => Number(d.target||0));
+      const rate    = quarter.map((d, i) => {
+        const a = actual[i], t = target[i];
+        if(!t) return 0;
+        // 소수 1자리 (예: 123.4)
+        return Math.round((a * 1000) / t) / 10;
+      });
+
+      if(lblQ.length){ drawQuarter(lblQ, rate, actual, target); }
+
+      // Top5 거래처
+      const tp = $('#tblPartners tbody'); tp.innerHTML='';
+      if(partners.length){
+        partners.forEach(p=>{
+          tp.insertAdjacentHTML('beforeend',
+            `<tr><td class="rank">${p.rank}</td><td>${p.partnerName}</td>
+             <td class="right">${fmtWon(p.sales)}</td><td class="right">${fmtWon(p.uncollected)}</td></tr>`);
+        });
+      } else {
+        tp.innerHTML = `<tr><td colspan="4" class="loading">데이터가 없습니다.</td></tr>`;
+      }
+
+      // Top5 영업사원
+      const te = $('#tblEmployees tbody'); te.innerHTML='';
+      if(employees.length){
+        employees.forEach(e=>{
+          te.insertAdjacentHTML('beforeend',
+            `<tr><td class="rank">${e.rank}</td><td>${e.employeeName}</td>
+             <td class="right">${fmtWon(e.sales)}</td></tr>`);
+        });
+      } else {
+        te.innerHTML = `<tr><td colspan="3" class="loading">데이터가 없습니다.</td></tr>`;
+      }
+
+    }catch(err){
+      console.error(err);
+      $('#apiAlert').classList.add('show');
+    }
+  }
+  document.addEventListener('DOMContentLoaded', loadAll);
+</script>
+</body>
+</html>

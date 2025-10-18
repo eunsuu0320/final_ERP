@@ -1,65 +1,225 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+<meta charset="UTF-8" />
+<title>Header</title>
 </head>
 <body>
 	<div th:fragment="header">
 		<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
 			<!-- Navbar Brand-->
-			<a class="navbar-brand ps-3" href="/">구독핑 이알핑</a>
+			<a class="navbar-brand ps-3" href="/dashboard">구독핑 이알핑</a>
+
 			<!-- Sidebar Toggle-->
 			<button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0"
-				id="sidebarToggle" href="#!">
+				id="sidebarToggle">
 				<i class="fas fa-bars"></i>
 			</button>
-			<!-- Navbar Search-->
+
+			<!-- Spacer -->
 			<form
-				class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
-			</form>
-			<!-- Navbar-->
+				class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0"></form>
+
+			<!-- User Dropdown -->
 			<ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
-				<li class="nav-item dropdown">
-					<a class="nav-link dropdown-toggle" id="navbarDropdown" href="#"
-					   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+				<li class="nav-item dropdown"><a
+					class="nav-link dropdown-toggle" id="navbarDropdown" href="#"
+					role="button" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="fas fa-user fa-fw"></i>
-					</a>
-					<ul class="dropdown-menu dropdown-menu-end"
+				</a> <!-- User Panel -->
+					<ul class="dropdown-menu dropdown-menu-end up-menu p-0"
 						aria-labelledby="navbarDropdown">
-						<li><a class="dropdown-item" href="#!">Settings</a></li>
+						<li class="up-wrap">
+							<div class="up-card">
+								<!-- 아바타 (이니셜) -->
+								<div class="up-avatar"
+									th:text="${#strings.substring(#authentication.name.split(':')[4],0,1)}">U</div>
 
-						<!-- 회사코드 / 아이디 / 사원번호 분리 출력 -->
-						<li>
-						  <span class="dropdown-item-text">
-						    <span th:text="${#authentication.name.split(':')[0]}"></span>
-						  </span>
-						</li>
-						<li>
-						  <span class="dropdown-item-text">
-						    <span th:text="${#authentication.name.split(':')[1]}"></span>
-						  </span>
-						</li>
-						<li>
-						  <span class="dropdown-item-text">
-						    <span th:text="${#authentication.name.split(':')[2]}"></span>
-						  </span>
-						</li>
+								<!-- 메타 -->
+								<div class="up-meta">
+									<div class="up-name"
+										th:text="${#authentication.name.split(':')[4]}">홍길동</div>
+									<div class="up-dept"
+										th:text="${#authentication.name.split(':')[5]}">영업팀</div>
 
-						<li><hr class="dropdown-divider" /></li>
-						<form id="logoutForm" action="/logout" method="post" style="display:none;">
-						  <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-						</form>
-						<li>
-						  <a class="dropdown-item" href="#"
-						     onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
-						    로그아웃
-						  </a>
+									<div class="up-badges">
+										<span class="up-badge">ID: <span
+											th:text="${#authentication.name.split(':')[1]}">admin01</span>
+										</span> <span class="up-badge">사번: <span
+											th:text="${#authentication.name.split(':')[2]}">0001</span>
+										</span>
+									</div>
+								</div>
+							</div>
+
+							<hr class="up-divide" />
+
+							<div class="up-list">
+								<div class="up-item">
+									<span class="up-label">회사코드</span> <span class="up-value"
+										th:text="${#authentication.name.split(':')[0]}">C001</span>
+								</div>
+								<div class="up-item">
+									<span class="up-label">권한</span> <span class="up-value"
+										th:text="${#authentication.name.split(':')[6]}">R002</span>
+								</div>
+							</div>
+
+							<div class="up-actions">
+								<a class="up-btn up-btn--ghost" href="/dashboard">대시보드</a> <a
+									class="up-btn up-btn--primary" href="#"
+									onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
+									로그아웃 </a>
+							</div>
 						</li>
-					</ul>
-				</li>
+					</ul></li>
 			</ul>
+
+			<!-- ▼ Scoped styles: 이 프래그먼트 내 드롭다운만 스타일 적용 -->
+			<style>
+.dropdown-menu.up-menu {
+	min-width: 280px;
+	border: none;
+	border-radius: 10px;
+	padding: 0 !important
+}
+
+.dropdown-menu.up-menu.show {
+	padding: 0 !important
+}
+
+.dropdown-menu.up-menu .up-wrap {
+	padding: 14px
+}
+
+.dropdown-menu.up-menu .up-card {
+	display: grid;
+	grid-template-columns: 56px 1fr;
+	gap: 12px;
+	align-items: center
+}
+
+.dropdown-menu.up-menu .up-avatar {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: linear-gradient(135deg, #4f46e5, #22c55e);
+	color: #fff;
+	font-weight: 800;
+	font-size: 20px;
+	box-shadow: 0 6px 14px rgba(0, 0, 0, .15);
+	flex-shrink: 0
+}
+
+.dropdown-menu.up-menu .up-name {
+	font-weight: 800;
+	font-size: 16px;
+	line-height: 1.15
+}
+
+.dropdown-menu.up-menu .up-dept {
+	color: #6b7280;
+	font-size: 12px;
+	margin-top: 2px
+}
+
+.dropdown-menu.up-menu .up-badges {
+	margin-top: 8px;
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap
+}
+
+.dropdown-menu.up-menu .up-badge {
+	font-size: 11px;
+	padding: 4px 8px;
+	border-radius: 999px;
+	border: 1px solid #e5e7eb;
+	background: #f8fafc;
+	color: #334155
+}
+
+.dropdown-menu.up-menu .up-badge--role {
+	background: #eef2ff;
+	color: #3730a3;
+	border-color: #c7d2fe
+}
+
+.dropdown-menu.up-menu .up-divide {
+	height: 1px;
+	background: #e5e7eb;
+	margin: 12px -14px;
+	border: 0
+}
+
+.dropdown-menu.up-menu .up-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 2px 0
+}
+
+.dropdown-menu.up-menu .up-item {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px
+}
+
+.dropdown-menu.up-menu .up-label {
+	color: #6b7280;
+	font-size: 12px
+}
+
+.dropdown-menu.up-menu .up-value {
+	font-weight: 600;
+	font-size: 13px
+}
+
+.dropdown-menu.up-menu .up-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 10px
+}
+
+.dropdown-menu.up-menu .up-btn {
+	flex: 1;
+	height: 36px;
+	border-radius: 10px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	text-decoration: none
+}
+
+.dropdown-menu.up-menu .up-btn--ghost {
+	border: 1px solid #e5e7eb;
+	background: #fff;
+	color: #111827
+}
+
+.dropdown-menu.up-menu .up-btn--primary {
+	background: #4f46e5;
+	color: #fff;
+	border: 1px solid #4f46e5
+}
+
+@media ( max-width :420px) {
+	.dropdown-menu.up-menu {
+		min-width: 240px
+	}
+}
+</style>
 		</nav>
+
+		<!-- 로그아웃 폼(숨김) -->
+		<form id="logoutForm" action="/logout" method="post"
+			style="display: none;">
+			<input type="hidden" th:name="${_csrf.parameterName}"
+				th:value="${_csrf.token}" />
+		</form>
 	</div>
 </body>
 </html>

@@ -28,9 +28,7 @@ public class VoucherNoServiceImpl implements VoucherNoService {
     }
 
     private static String incFromPrefix(String maxVoucherNoOrNull, String prefix) {
-        if (maxVoucherNoOrNull == null || maxVoucherNoOrNull.isBlank()) {
-            return prefix + "0001";
-        }
+        if (maxVoucherNoOrNull == null || maxVoucherNoOrNull.isBlank()) return prefix + "0001";
         int pos = maxVoucherNoOrNull.indexOf('-');
         String seqPart = (pos >= 0) ? maxVoucherNoOrNull.substring(pos + 1) : "0000";
         int seq = 0;
@@ -38,12 +36,10 @@ public class VoucherNoServiceImpl implements VoucherNoService {
         return prefix + String.format("%04d", seq + 1);
     }
 
-    /** 프리뷰: DB 변경 없음(번호 상승 X). 종류별로 분리된 테이블의 MAX를 기준으로 계산 */
     @Override
     public String previewNext(String kind, LocalDate baseDate) {
         String cc = companyCtx.getCompanyCode();
-        if (cc == null || cc.isBlank())
-            throw new IllegalStateException("회사코드 세션 누락");
+        if (cc == null || cc.isBlank()) throw new IllegalStateException("회사코드 세션 누락");
 
         LocalDate d = (baseDate != null ? baseDate : LocalDate.now());
         String prefix = yymm(d) + "-";
@@ -59,14 +55,23 @@ public class VoucherNoServiceImpl implements VoucherNoService {
         return incFromPrefix(max, prefix);
     }
 
-    /** 예약(확정 발번): 저장 직전에만 호출 — DB에서 경합/중복 안전하게 보장 */
     @Override
     public ReserveRes reserve(String kind, LocalDate baseDate, String userId) {
         String cc = companyCtx.getCompanyCode();
-        if (cc == null || cc.isBlank())
-            throw new IllegalStateException("회사코드 세션 누락");
+        if (cc == null || cc.isBlank()) throw new IllegalStateException("회사코드 세션 누락");
 
         LocalDate d = (baseDate != null ? baseDate : LocalDate.now());
-        return reservationRepo.reserve(cc, kind, d, userId);
+
+        // ★ 프로시저(PR_RESERVE_VOUCHER)는 'SAL/BUY/RCV/PAY' 같은 약어를 기대
+        String procType = switch (String.valueOf(kind).toUpperCase()) {
+            case "SALES"   -> "SAL";
+            case "BUY"     -> "BUY";
+            case "MONEY"   -> "RCV"; // 수금
+            case "PAYMENT" -> "PAY"; // 지급
+            default -> throw new IllegalArgumentException("Unknown voucher kind: " + kind);
+        };
+
+        // repository 내부에서 PR_RESERVE_VOUCHER(p_company_code, p_voucher_type=procType, ...) 호출
+        return reservationRepo.reserve(cc, procType, d, userId);
     }
 }

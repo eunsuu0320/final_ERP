@@ -1,147 +1,279 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/main}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/main}">
 <head>
-  <meta charset="UTF-8" />
-  <title>일반전표 등록</title>
-  <style>
-    /* ===== 레이아웃 ===== */
-    .fixed-wrap{ width:100%; max-width:1600px; margin:0 auto; padding:0 8px 8px; }
-    .toolbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0 10px; }
-    .toolbar h1{ margin:0; font-weight:700; font-size:28px; }
-    .vf-box{ background:#f4f5f7; border-radius:10px; padding:12px 14px 14px; border:1px solid #ddd; }
-    .vf-label{font-weight:600}
-    .vf-hr{border-top:1px dashed #d7d7d7;margin:10px 0 10px}
-    .vf-num{text-align:right}
-    .vf-loading{ opacity:.6 }
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="UTF-8" />
+<style>
+.fixed-wrap {
+	width: 100%;
+	max-width: 1600px;
+	margin: 0 auto;
+	padding: 0 8px 8px;
+}
 
-    .toast-min{position:fixed;right:24px;bottom:24px;background:#333;color:#fff;padding:10px 14px;border-radius:8px;opacity:.95;z-index:2000}
+.toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 6px 0 10px;
+}
 
-    .form-label{ margin-bottom:.25rem; }
-    .row.g-2 > [class^="col"]{ margin-bottom:.4rem; }
-    .gx-tight { --bs-gutter-x: .9rem; }
+.vf-box {
+	background: #f4f5f7;
+	border-radius: 10px;
+	padding: 12px 14px 14px;
+	border: 1px solid #ddd;
+}
 
-    /* ===== 컴팩트 사이즈(세로 공간 절약) ===== */
-    .form-control, .form-select, .btn { height: 36px; padding: .35rem .6rem; font-size: .95rem; border-width: 1.5px; }
-    .input-group .btn{ height:36px; }
-    #vf-voucherNo[readonly]{ background:#fff; }
+.vf-label {
+	font-weight: 600
+}
 
-    /* 상단 툴바 버튼 수직 가운데 정렬 */
-    .toolbar .btn{ display:inline-flex; align-items:center; justify-content:center; height:34px; padding:0 .75rem; font-size:.92rem; }
-  </style>
+.vf-hr {
+	border-top: 1px dashed #d7d7d7;
+	margin: 10px 0 10px
+}
+
+.vf-num {
+	text-align: right
+}
+
+.vf-loading {
+	opacity: .6
+}
+
+.toast-min {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	background: #333;
+	color: #fff;
+	padding: 10px 14px;
+	border-radius: 8px;
+	opacity: .95;
+	z-index: 2000
+}
+
+.form-label {
+	margin-bottom: .25rem;
+}
+
+.row.g-2>[class^="col"] {
+	margin-bottom: .4rem;
+}
+
+.gx-tight {
+	--bs-gutter-x: .9rem;
+}
+
+.form-control, .form-select, .btn {
+	height: 36px;
+	padding: .35rem .6rem;
+	font-size: .95rem;
+	border-width: 1.5px;
+}
+
+.input-group .btn {
+	height: 36px;
+}
+
+#vf-voucherNo[readonly] {
+	background: #fff;
+}
+
+.toolbar .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 34px;
+	padding: 0 .75rem;
+	font-size: .92rem;
+}
+/* 인풋 내부 아이콘 버튼 */
+.input-with-icon {
+	position: relative;
+	display: inline-block;
+	width: 100%;
+}
+
+.input-with-icon .form-control {
+	padding-right: 40px;
+	width: 100%;
+}
+
+.input-with-icon .icon-btn {
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	border: 0;
+	background: transparent;
+	padding: 0;
+	margin: 0;
+	width: 28px;
+	height: 28px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 6px;
+	z-index: 2;
+}
+
+.input-with-icon .icon-btn:focus {
+	outline: 2px solid #86b7fe;
+	outline-offset: 2px;
+}
+
+.input-with-icon .icon-btn .fa-solid {
+	font-size: 16px;
+	color: #6c757d;
+}
+
+.input-with-icon .icon-btn:hover .fa-solid {
+	color: #333;
+}
+</style>
 </head>
 
 <body layout:fragment="content">
-  <div id="layoutSidenav_content">
-    <main>
-      <div class="fixed-wrap">
-        <!-- ===== 상단 툴바 ===== -->
-        <div class="toolbar">
-          <h1 class="mb-0">일반전표 등록</h1>
-          <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" th:href="@{/statements}">목록</a>
-            <button id="btn-reset" type="button" class="btn btn-outline-secondary">초기화</button>
-            <button id="vf-save" type="button" class="btn btn-primary">저장</button>
-          </div>
-        </div>
+	<div id="layoutSidenav_content">
+		<main>
+			<div class="fixed-wrap">
+				<!-- ===== 상단 툴바 ===== -->
+				<div class="toolbar">
+					<h1 class="mb-0">일반전표 등록</h1>
+					<div class="d-flex gap-2">
+						<a class="btn btn-outline-secondary" th:href="@{/statements}">목록</a>
+						<button id="btn-reset" type="button"
+							class="btn btn-outline-secondary">초기화</button>
+						<button id="vf-save" type="button" class="btn btn-primary">저장</button>
+					</div>
+				</div>
 
-        <!-- ===== 본문 ===== -->
-        <div class="vf-box">
-          <div class="row gx-tight g-2 mb-2">
-            <div class="col-lg-6">
-              <label class="form-label vf-label">전표유형</label>
-              <select id="vf-type" class="form-select"></select>
-            </div>
-          </div>
+				<!-- ===== 본문 ===== -->
+				<div class="vf-box">
+					<div class="row gx-tight g-2 mb-2">
+						<div class="col-lg-6">
+							<label class="form-label vf-label">전표유형</label> <select
+								id="vf-type" class="form-select"></select>
+						</div>
+					</div>
 
-          <!-- 상단 폼: 한 줄 2개 -->
-          <div class="row gx-tight g-2">
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-voucherDate">전표일자</label>
-              <input id="vf-voucherDate" type="date" class="form-control">
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">전표번호</label>
-              <input id="vf-voucherNo" type="text" class="form-control" placeholder="자동발번" readonly>
-              <input id="vf-resvId" type="hidden">
-            </div>
+					<!-- 상단 폼: 한 줄 2개 -->
+					<div class="row gx-tight g-2">
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-voucherDate">전표일자</label>
+							<input id="vf-voucherDate" type="date" class="form-control">
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">전표번호</label> <input
+								id="vf-voucherNo" type="text" class="form-control"
+								placeholder="자동발번" readonly> <input id="vf-resvId"
+								type="hidden">
+						</div>
 
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-saleDate">판매일자</label>
-              <input id="vf-saleDate" type="date" class="form-control">
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">담당자</label>
-              <input id="vf-empName" type="text" class="form-control" readonly>
-            </div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-saleDate">판매일자</label>
+							<input id="vf-saleDate" type="date" class="form-control">
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">담당자</label> <input
+								id="vf-empName" type="text" class="form-control" readonly>
+						</div>
 
-            <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
-              <div class="input-group">
-                <input id="vf-saleCode" type="text" class="form-control" placeholder="">
-                <button id="vf-find-saleCode" class="btn btn-outline-secondary" type="button">🔍</button>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <label class="form-label vf-label">거래처</label>
-              <div class="input-group">
-                <input id="vf-partnerName" type="text" class="form-control" placeholder="">
-                <button id="vf-find-partner" class="btn btn-outline-secondary" type="button">🔍</button>
-              </div>
-            </div>
-          </div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
+							<div class="input-with-icon">
+								<input id="vf-saleCode" type="text" class="form-control"
+									placeholder="">
+								<button id="vf-find-saleCode" class="icon-btn" type="button"
+									aria-label="판매/구매코드 찾기">
+									<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+								</button>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<label class="form-label vf-label">거래처</label>
+							<div class="input-with-icon">
+								<input id="vf-partnerName" type="text" class="form-control"
+									placeholder="">
+								<button id="vf-find-partner" class="icon-btn" type="button"
+									aria-label="거래처 찾기">
+									<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+								</button>
+							</div>
+						</div>
 
-          <div class="vf-hr"></div>
+					</div>
 
-          <!-- 하단 폼: 요청대로 각 항목을 한 줄씩 -->
-          <div class="row gx-tight g-2">
-            <div class="col-12">
-              <label class="form-label vf-label">부가세유형</label>
-              <select id="vf-taxType" class="form-select">
-                <option value="TAXABLE">과세(10%)</option>
-                <option value="ZERO">영세(0%)</option>
-                <option value="EXEMPT">면세(0%)</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">공급가액</label>
-              <input id="vf-supply" type="text" class="form-control vf-num" value="0">
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">부가세</label>
-              <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">총 금액</label>
-              <input id="vf-total" type="text" class="form-control vf-num" value="0">
-            </div>
-            <div class="col-12">
-              <label class="form-label vf-label">적요</label>
-              <input id="vf-remark" type="text" class="form-control" placeholder="">
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
+					<div class="vf-hr"></div>
 
-  <!-- 공통 모달(fragment) + 공통 스크립트 -->
-  <div th:replace="~{common/modal :: commonModal}"></div>
-  <script th:src="@{/main/js/modal.js}" defer></script>
+					<!-- 하단 폼 -->
+					<div class="row gx-tight g-2">
+						<div class="col-12">
+							<label class="form-label vf-label">부가세유형</label> <select
+								id="vf-taxType" class="form-select">
+								<option value="TAXABLE">과세(10%)</option>
+								<option value="ZERO">영세(0%)</option>
+								<option value="EXEMPT">면세(0%)</option>
+							</select>
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">공급가액</label> <input
+								id="vf-supply" type="text" class="form-control vf-num" value="0">
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">부가세</label> <input id="vf-vat"
+								type="text" class="form-control vf-num" value="0" readonly>
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">총 금액</label> <input
+								id="vf-total" type="text" class="form-control vf-num" value="0">
+						</div>
+						<div class="col-12">
+							<label class="form-label vf-label">적요</label> <input
+								id="vf-remark" type="text" class="form-control" placeholder="">
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
 
-  <script>
-  /* ===== 스크립트 ===== */
+	<!-- 공통 모달(fragment) + 공통 스크립트 -->
+	<div th:replace="~{common/modal :: commonModal}"></div>
+	<script th:src="@{/main/js/modal.js}" defer></script>
+
+	<script>
   window.addEventListener('DOMContentLoaded', () => {
     const toast=(m,ms=1600)=>{const t=document.createElement('div');t.className='toast-min';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms);};
     const fmt=n=>Number(n||0).toLocaleString();
     const unfmt=s=>Number(String(s||'').replace(/[^\d.-]/g,''))||0;
 
+    // ===== 세액 계산 =====
     const FRACTION={TAXABLE:{num:10,den:100},ZERO:{num:0,den:100},EXEMPT:{num:0,den:100}};
     const norm=t=>{const x=String(t||'').toUpperCase();return (x in FRACTION)?x:'TAXABLE';};
     const fromSupply=(s,t)=>{const {num,den}=FRACTION[norm(t)]; if(num===0) return {supply:s,vat:0,total:s}; const v=Math.round(s*num/den); return {supply:s,vat:v,total:s+v};};
     const fromTotal =(tot,t)=>{const {num,den}=FRACTION[norm(t)]; if(num===0) return {supply:tot,vat:0,total:tot}; const v=Math.round(tot*num/den); return {supply:tot-v,vat:v,total:tot};};
-    const lastCalc={mode:'TOTAL',supply:0,vat:0,total:0,taxType:'TAXABLE'};
+
+    // ===== type 표준화(백엔드 풀네임으로 통일) =====
+    function normalizeLongType(t){
+      const x = String(t||'').toUpperCase();
+      if (['SALES','BUY','MONEY','PAYMENT'].includes(x)) return x;
+      // 혹시 축약형이 들어오면 풀네임으로 보정
+      if (x==='SAL') return 'SALES';
+      if (x==='MNY') return 'MONEY';
+      if (x==='PMT') return 'PAYMENT';
+      return 'SALES';
+    }
+
+    // 누적감소 방지용 guard
+    const lastCalc={mode:'TOTAL',supply:0,vat:0,total:0,taxType:'TAXABLE',prevSupply:0,prevTotal:0};
 
     let currentUserName='';
     fetch('/api/me',{credentials:'same-origin'}).then(r=>r.ok?r.json():{}).then(j=>{
@@ -153,7 +285,7 @@
     async function initVoucherTypes(){
       let ok=false;
       try{
-        const r=await fetch('/api/codes?group=VOUCHER_TYPE',{headers:{'Accept':'application/json'}});
+        const r=await fetch('/api/codes?group=VOUCHER_TYPE',{headers:{'Accept':'application/json'},credentials:'same-origin'});
         if(r.ok){
           const text=await r.text(); const list=text?JSON.parse(text):[]; const items=Array.isArray(list)?list:(list.content||[]);
           if(items.length){
@@ -173,21 +305,25 @@
       PAYMENT:{saleCode:'지급코드',saleDate:'지급일자',partnerModal:'supplier', saveUrl:'/api/statements/payment'},
     };
     function applyTypeLabels(t){
-      const m=labelsByType[t]||labelsByType.SALES;
+      const m=labelsByType[normalizeLongType(t)]||labelsByType.SALES;
       const setTxt = (id, txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;};
       setTxt('lbl-saleCode', m.saleCode);
       setTxt('lbl-saleDate', m.saleDate);
       setTxt('lbl-voucherDate','전표일자');
     }
 
+    // ===== 전표번호 프리뷰/예약 (풀네임 사용) =====
     let _vnoInFlight=false;
     async function fetchPreviewVoucherNo(type,dateStr){
       const $vno=document.getElementById('vf-voucherNo'); const $resv=document.getElementById('vf-resvId');
       if(!$vno || _vnoInFlight) return; _vnoInFlight=true;
       try{
+        const kind = normalizeLongType(type);
         $vno.classList.add('vf-loading'); $vno.value='전표번호 확인중...'; if($resv) $resv.value='';
-        const qs=new URLSearchParams({type,...(dateStr?{date:dateStr}:{})});
-        const res=await fetch(`/api/vouchers/preview?${qs.toString()}`,{method:'GET'});
+        const qs = new URLSearchParams({ type: kind, ...(dateStr ? { date: dateStr } : {}) });
+        const res=await fetch(`/api/vouchers/preview?${qs.toString()}`,{
+          method:'GET', credentials:'same-origin', headers:{'Accept':'application/json'}
+        });
         const text=await res.text();
         if(!res.ok) throw new Error(text||'preview failed');
         const j=text?JSON.parse(text):{};
@@ -197,8 +333,11 @@
     }
 
     async function reserveVoucher(type,dateStr){
-      const qs=new URLSearchParams({type,...(dateStr?{date:dateStr}:{})});
-      const res=await fetch(`/api/vouchers/reserve?${qs.toString()}`,{method:'GET'});
+      const kind = normalizeLongType(type);
+      const qs = new URLSearchParams({ type: kind, ...(dateStr ? { date: dateStr } : {}) });
+      const res=await fetch(`/api/vouchers/reserve?${qs.toString()}`,{
+        method:'GET', credentials:'same-origin', headers:{'Accept':'application/json'}
+      });
       const text=await res.text();
       if(!res.ok) throw new Error(text||'reserve failed');
       const j=text?JSON.parse(text):{};
@@ -206,42 +345,98 @@
       return j;
     }
 
+    // ===== 금액 필드 바인딩 =====
     function bindNumericFields(){
       const $taxSel=document.getElementById('vf-taxType');
       const $supply=document.getElementById('vf-supply');
       const $vat=document.getElementById('vf-vat');
       const $total=document.getElementById('vf-total');
-      const sync=p=>{lastCalc.supply=p.supply;lastCalc.vat=p.vat;lastCalc.total=p.total;lastCalc.taxType=$taxSel.value;
-        $supply.value=fmt(p.supply); $vat.value=fmt(p.vat); $total.value=fmt(p.total);};
-      $supply.addEventListener('input',()=>{const p=fromSupply(unfmt($supply.value),$taxSel.value);lastCalc.mode='SUPPLY';sync(p);});
-      $total .addEventListener('input',()=>{const p=fromTotal(unfmt($total.value),$taxSel.value);lastCalc.mode='TOTAL';sync(p);});
-      $supply.addEventListener('blur', ()=>{const p=fromSupply(unfmt($supply.value),$taxSel.value);lastCalc.mode='SUPPLY';sync(p);});
-      $total .addEventListener('blur', ()=>{const p=fromTotal (unfmt($total.value ),$taxSel.value);lastCalc.mode='TOTAL' ;sync(p);});
-      $taxSel.addEventListener('change',()=>{const p=(lastCalc.mode==='TOTAL')?fromTotal(lastCalc.total,$taxSel.value):fromSupply(lastCalc.supply,$taxSel.value);sync(p);});
-      sync(fromTotal(0,$taxSel.value)); lastCalc.mode='TOTAL';
+
+      const sync=p=>{
+        lastCalc.supply=p.supply; lastCalc.vat=p.vat; lastCalc.total=p.total; lastCalc.taxType=$taxSel.value;
+        $supply.value=fmt(p.supply); $vat.value=fmt(p.vat); $total.value=fmt(p.total);
+      };
+
+      const init = fromTotal(0, $taxSel.value);
+      sync(init);
+      lastCalc.mode='TOTAL';
+      lastCalc.prevSupply = lastCalc.supply;
+      lastCalc.prevTotal  = lastCalc.total;
+
+      $supply.addEventListener('input',()=>{
+        const val = unfmt($supply.value);
+        lastCalc.mode='SUPPLY';
+        sync(fromSupply(val,$taxSel.value));
+      });
+
+      $total.addEventListener('input',()=>{
+        const val = unfmt($total.value);
+        lastCalc.mode='TOTAL';
+        sync(fromTotal(val,$taxSel.value));
+      });
+
+      $supply.addEventListener('blur', ()=>{
+        const val = unfmt($supply.value);
+        if (val !== lastCalc.prevSupply) {
+          lastCalc.mode='SUPPLY';
+          const p = fromSupply(val,$taxSel.value);
+          sync(p);
+          lastCalc.prevSupply = p.supply;
+          lastCalc.prevTotal  = p.total;
+        } else {
+          $supply.value = fmt(lastCalc.prevSupply);
+          $vat.value    = fmt(lastCalc.vat);
+          $total.value  = fmt(lastCalc.prevTotal);
+        }
+      });
+
+      $total.addEventListener('blur', ()=>{
+        const val = unfmt($total.value);
+        if (val !== lastCalc.prevTotal) {
+          lastCalc.mode='TOTAL';
+          const p = fromTotal(val,$taxSel.value);
+          sync(p);
+          lastCalc.prevSupply = p.supply;
+          lastCalc.prevTotal  = p.total;
+        } else {
+          $total.value  = fmt(lastCalc.prevTotal);
+          $vat.value    = fmt(lastCalc.vat);
+          $supply.value = fmt(lastCalc.prevSupply);
+        }
+      });
+
+      $taxSel.addEventListener('change',()=>{
+        const p = (lastCalc.mode==='TOTAL')
+          ? fromTotal(lastCalc.total,$taxSel.value)
+          : fromSupply(lastCalc.supply,$taxSel.value);
+        sync(p);
+        lastCalc.prevSupply = p.supply;
+        lastCalc.prevTotal  = p.total;
+      });
     }
 
-    const $findPartnerBtn=document.getElementById('vf-find-partner');
+    // ===== 선택 모달 =====
     const $partnerName   =document.getElementById('vf-partnerName');
-    const $findSaleBtn   =document.getElementById('vf-find-saleCode');
     const $saleCode      =document.getElementById('vf-saleCode');
     const $saleDate      =document.getElementById('vf-saleDate');
 
     function openPartnerPicker(){
       if (typeof openModal !== 'function'){ toast('검색 모달 스크립트를 찾을 수 없습니다.'); return; }
-      const t = ($type.value||'SALES').toUpperCase();
+      const t = normalizeLongType($type.value||'SALES');
       const modalType = (t==='BUY'||t==='PAYMENT') ? 'supplier' : 'partner';
       openModal(modalType, (row)=>{
-        $partnerName.value = row?.partnerName || row?.supplierName || row?.customerName || row?.clientName || row?.buyerName || row?.correspondent || '';
+        $partnerName.value =
+          row?.partnerName || row?.supplierName || row?.customerName || row?.clientName ||
+          row?.buyerName || row?.correspondent || row?.PARTNER_NAME || '';
       });
     }
 
-    // --- (NEW) 인보이스 피커 (공통 모달이 없으면 fallback 실행) ---
+    // (간이) 인보이스 피커
     async function fallbackInvoicePicker(cb){
       try{
         const q = prompt('청구서 검색어(코드/거래처) 입력 (STATUS=회계반영완료만 조회됨):','');
         const params=new URLSearchParams({status:'회계반영완료', ...(q?{q}:{})});
-        const res = await fetch(`/api/invoices/lookup?`+params.toString(), {headers:{'Accept':'application/json'}});
+        const res = await fetch(`/api/invoices/lookup?`+params.toString(), {headers:{'Accept':'application/json'},credentials:'same-origin'});
         if(!res.ok) throw new Error(await res.text());
         const list = await res.json();
         if(!Array.isArray(list) || list.length===0){ toast('결과가 없습니다'); return; }
@@ -253,46 +448,97 @@
     }
 
     function openCodePicker(){
-      const t = ($type.value||'SALES').toUpperCase();
-      // MONEY일 때는 청구서(INVOICE) 조회로 전환
+      const t = normalizeLongType($type.value||'SALES');
+
+      // ===== MONEY(수금) → 청구서 조회 =====
       if(t==='MONEY'){
-        const onPick = (row)=>{
-          // saleCode 입력란에는 청구서 코드 사용
-          $saleCode.value = row?.invoiceCode || row?.invoice_unique_code || row?.invoiceCode?.trim?.() || '';
-          // 날짜: 청구서 작성일자/수금예정일 중 하나를 기본 반영 (없으면 create_date)
+        const onPick = (row) => {
+          $saleCode.value = row?.invoiceCode || row?.invoice_unique_code || '';
+
           const pickedDate = row?.rcptDate || row?.dmndDate || row?.createDate;
           if (pickedDate){
             const d = new Date(pickedDate);
             $saleDate.value = isNaN(d) ? String(pickedDate).slice(0,10) : d.toISOString().slice(0,10);
           }
-          // 거래처명도 같이 반영
-          const partner = row?.partnerName || row?.partner_name || '';
+
+          const partner = row?.partnerName || row?.partner_name || row?.PARTNER_NAME || '';
           if (partner) $partnerName.value = partner;
+
+          try {
+            const amt = Number(row?.dmndAmt || 0); // 총액
+            const $taxSel = document.getElementById('vf-taxType');
+            if ($taxSel) $taxSel.value = 'TAXABLE';
+            const calc = fromTotal(amt, 'TAXABLE');
+            document.getElementById('vf-total' ).value = fmt(calc.total);
+            document.getElementById('vf-vat'   ).value = fmt(calc.vat);
+            document.getElementById('vf-supply').value = fmt(calc.supply);
+
+            lastCalc.mode='TOTAL';
+            lastCalc.total = calc.total;
+            lastCalc.vat   = calc.vat;
+            lastCalc.supply= calc.supply;
+            lastCalc.taxType = 'TAXABLE';
+            lastCalc.prevSupply = calc.supply;
+            lastCalc.prevTotal  = calc.total;
+          } catch (_) {}
         };
 
         if (typeof openModal === 'function'){
-          // 공통 모달이 'invoice' 타입을 인식하도록 구현되어 있다면 이것을 사용
-          // 모달 내부에서 /api/invoices/lookup?status=회계반영완료 호출하도록 구현되어 있어야 함
-        	openModal('acinvoice', onPick);
+          openModal('acinvoice', onPick);
         }else{
-          // 공통 모달이 없는 경우를 대비한 간이 피커
           fallbackInvoicePicker(onPick);
         }
         return;
       }
 
-      // 그 외 기존 동작
+      // ===== SALES / BUY / PAYMENT → 각 코드 조회 =====
       if (typeof openModal !== 'function'){ toast('검색 모달 스크립트를 찾을 수 없습니다.'); return; }
       const modalType = (t==='BUY'||t==='PAYMENT') ? 'buy' : 'sales';
+
       openModal(modalType, (row)=>{
+        // 코드/거래처/날짜
         $saleCode.value = (t==='BUY'||t==='PAYMENT') ? (row?.buyCode??'') : (row?.salesCode??'');
-        const pickedPartner = row?.partnerName || row?.supplierName || row?.correspondent || row?.customerName || row?.partner || row?.clientName || row?.buyerName || '';
+        const pickedPartner =
+          row?.partnerName || row?.supplierName || row?.correspondent || row?.customerName ||
+          row?.partner || row?.clientName || row?.buyerName || row?.PARTNER_NAME || '';
         if (pickedPartner) $partnerName.value = pickedPartner;
+
         const pickedDate = (t==='BUY'||t==='PAYMENT') ? (row?.purchaseDate || row?.buyDate) : (row?.salesDate);
         if (pickedDate){
           const d = new Date(pickedDate);
           $saleDate.value = isNaN(d) ? String(pickedDate).slice(0,10) : d.toISOString().slice(0,10);
         }
+
+        // 금액 자동계산
+        try {
+          let totalAmt =
+            (t==='BUY'||t==='PAYMENT')
+              ? (row?.amountTotal ?? row?.totalAmount ?? row?.buyTotal ?? 0)
+              : (row?.salesAmount ?? row?.amountTotal ?? row?.totalAmount ?? 0);
+          totalAmt = Number(totalAmt || 0);
+
+          let tax = (row?.taxCode || row?.tax_type || '').toString().toUpperCase();
+          if (!['TAXABLE','ZERO','EXEMPT'].includes(tax)) {
+            const rate = Number(row?.taxRate ?? row?.vatRate ?? 10);
+            tax = (rate === 0) ? 'ZERO' : 'TAXABLE';
+          }
+
+          const $taxSel = document.getElementById('vf-taxType');
+          if ($taxSel) $taxSel.value = tax;
+
+          const calc = fromTotal(totalAmt, tax);
+          document.getElementById('vf-total' ).value = fmt(calc.total);
+          document.getElementById('vf-vat'   ).value = fmt(calc.vat);
+          document.getElementById('vf-supply').value = fmt(calc.supply);
+
+          lastCalc.mode='TOTAL';
+          lastCalc.total = calc.total;
+          lastCalc.vat   = calc.vat;
+          lastCalc.supply= calc.supply;
+          lastCalc.taxType = tax;
+          lastCalc.prevSupply = calc.supply;
+          lastCalc.prevTotal  = calc.total;
+        } catch(_) {}
       });
     }
 
@@ -314,16 +560,21 @@
       initDates();
       const p=fromTotal(0,'TAXABLE');
       setVal('vf-supply', fmt(p.supply)); setVal('vf-vat', fmt(p.vat)); setVal('vf-total', fmt(p.total));
+      lastCalc.mode='TOTAL';
+      lastCalc.supply=p.supply; lastCalc.vat=p.vat; lastCalc.total=p.total; lastCalc.taxType='TAXABLE';
+      lastCalc.prevSupply=p.supply; lastCalc.prevTotal=p.total;
+
       await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
     }
     document.getElementById('btn-reset')?.addEventListener('click', resetForm);
 
+    // ===== 저장 =====
     document.getElementById('vf-save')?.addEventListener('click', async (e)=>{
       e?.preventDefault?.();
       const $btn=e.currentTarget; if($btn.disabled) return;
       const orig=$btn.textContent; $btn.disabled=true; $btn.textContent='저장 중...';
 
-      const t=($type.value||'SALES').toUpperCase();
+      const t=normalizeLongType($type.value||'SALES');
       const map=labelsByType[t]||labelsByType.SALES;
       const voucherDate=document.getElementById('vf-voucherDate').value||null;
 
@@ -346,16 +597,29 @@
         amountTotal:unfmt(document.getElementById('vf-total').value),
         remark:document.getElementById('vf-remark').value||null,
       };
-      if(t==='BUY'||t==='PAYMENT') body.buyCode=document.getElementById('vf-saleCode').value||null;
-      else if(t==='MONEY') body.invoiceCode=document.getElementById('vf-saleCode').value||null; // ← 수금은 청구서코드 기반
-      else body.salesCode=document.getElementById('vf-saleCode').value||null;
+      if(t==='BUY'||t==='PAYMENT'){
+        body.buyCode=document.getElementById('vf-saleCode').value||null;
+      }else if(t==='MONEY'){
+        const v=document.getElementById('vf-saleCode').value||null;
+        body.invoiceCode=v; // 백엔드가 invoiceCode 기대
+        body.moneyCode=v;   // 혹시 moneyCode 받도록 되어있으면 이것도
+      }else{
+        body.salesCode=document.getElementById('vf-saleCode').value||null;
+      }
 
       const url=map.saveUrl;
       const csrfToken=document.querySelector('meta[name="_csrf"]')?.content;
       const csrfHeader=document.querySelector('meta[name="_csrf_header"]')?.content||'X-CSRF-TOKEN';
+      const headers={'Content-Type':'application/json'};
+      if (csrfToken) headers[csrfHeader]=csrfToken;
 
       try{
-        const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',...(csrfToken?{[csrfHeader]:csrfToken}:{})},body:JSON.stringify(body)});
+        const res=await fetch(url,{
+          method:'POST',
+          credentials:'same-origin',
+          headers,
+          body:JSON.stringify(body)
+        });
         const text=await res.text();
         if(res.status===403) throw new Error('403 Forbidden - CSRF 토큰 누락/만료.');
         if(!res.ok) throw new Error(text||'save failed');
@@ -365,6 +629,7 @@
       finally{ $btn.disabled=false; $btn.textContent=orig; }
     });
 
+    // ===== 부트스트랩 =====
     (async function bootstrap(){
       await initVoucherTypes();
       initDates();
@@ -372,10 +637,13 @@
       await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
       bindNumericFields();
 
+      // 전표유형 변경 시 전체 초기화 + 번호 미리보기
       $type.addEventListener('change', async ()=>{
         applyTypeLabels($type.value);
+        await resetForm();
         await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
       });
+
       document.getElementById('vf-voucherDate').addEventListener('change', ()=>
         fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value||'')
       );

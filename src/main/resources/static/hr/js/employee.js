@@ -1,3 +1,48 @@
+// 전역 로딩 오버레이 생성 (body에 1회)
+(function() {
+	if (document.getElementById("global-loading")) return;
+
+	const el = document.createElement("div");
+	el.id = "global-loading";
+	el.className = "loading-overlay d-none"; // 기존 CSS 재사용
+	el.style.position = "fixed";
+	el.style.inset = "0";
+	el.style.zIndex = "2000";
+
+	el.innerHTML = `
+    <div class="text-center" role="status" aria-live="polite">
+      <div class="spinner-border" aria-hidden="true"></div>
+      <div class="mt-2 fw-semibold">로딩 중...</div>
+    </div>
+  `;
+	document.body.appendChild(el);
+})();
+
+// 표시/숨김
+function showGlobalLoading(text) {
+	const el = document.getElementById("global-loading");
+	if (!el) return;
+	if (text) {
+		const label = el.querySelector(".fw-semibold");
+		if (label) label.textContent = text;
+	}
+	el.classList.remove("d-none");
+	document.body.setAttribute("aria-busy", "true");
+}
+function hideGlobalLoading() {
+	const el = document.getElementById("global-loading");
+	if (!el) return;
+	el.classList.add("d-none");
+	document.body.removeAttribute("aria-busy");
+}
+
+// 로딩 토글 함수
+function setHistoryLoading(on) {
+	historyLoadingEl.classList.toggle("d-none", !on);
+	// 로딩 중엔 테이블을 희미하게 (선택)
+	historyTableEl.style.opacity = on ? "0.35" : "1";
+}
+
 const manager = document.getElementById("companyCode").value; // 회사코드 가져오기
 
 async function loadCodeMaps(groups = ["GRP011", "GRP013", "GRP010", "GRP015"]) {
@@ -11,7 +56,7 @@ async function loadCodeMaps(groups = ["GRP011", "GRP013", "GRP010", "GRP015"]) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-	const tableEl = document.getElementById("employee-table");
+	const tableEl = document.getElementById("employee-table"); 0.
 	if (!tableEl) {
 		console.error("#employee-table 엘리먼트를 찾을 수 없습니다.");
 		return;

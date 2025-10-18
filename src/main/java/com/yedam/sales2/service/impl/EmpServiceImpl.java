@@ -12,6 +12,9 @@ import com.yedam.sales2.repository.EsdpPlanRepository;
 import com.yedam.sales2.repository.EspPlanRepository;
 import com.yedam.sales2.service.EmpService;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 public class EmpServiceImpl implements EmpService {
 
@@ -20,6 +23,7 @@ public class EmpServiceImpl implements EmpService {
 	
 	@Autowired
 	EsdpPlanRepository esdpPlanRepository;
+	
 
 	// 사원등록 
 	@Override
@@ -40,5 +44,5 @@ public class EmpServiceImpl implements EmpService {
 	public List<EsdpPlan> findByEspCode(String espCode) {
 		return esdpPlanRepository.findByEspCode(espCode);
 	}
-
+	
 }

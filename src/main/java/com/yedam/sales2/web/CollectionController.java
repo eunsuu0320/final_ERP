@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,30 +38,72 @@ public class CollectionController {
     @GetMapping("/api/receivable/list")
     @ResponseBody
     public List<Map<String, Object>> getReceivableList() {
-        String companyCode = "A001"; // 로그인 사용자 기준으로 나중에 동적 변경 가능
+    	 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String companyCode = auth.getName().split(":")[0]; // 로그인 사용자 기준으로 나중에 동적 변경 가능
         List<Map<String, Object>> list = collectionService.getReceivableSummary(companyCode);
         System.out.println("📊 미수금 조회 결과: " + list);
         return list;
     }
     
     // 수금등록
-    @PostMapping("/api/collection/insertCollectionModal")
+    @PostMapping("/api/collection/insert")
     @ResponseBody
-    public Map<String, Object> insertCollection(@RequestBody CollectionEntity dto) {
+    public Map<String, Object> insertCollection(@RequestBody Map<String, Object> request) {
         Map<String, Object> result = new HashMap<>();
-        try {
-            dto.setMoneyCode(UUID.randomUUID().toString().substring(0,8)); // 수금코드 자동생성
-            dto.setMoneyDate(new Date());  // 수금일자 자동입력
-            dto.setCompanyCode("A001");
 
-            collectionService.insertCollection(dto);
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String companyCode = auth.getName().split(":")[0];
+
+            // JS에서 받은 값 꺼내기
+            String partnerCode = (String) request.get("partnerCode");
+            Double recpt = Double.valueOf(request.get("recpt").toString());
+            Double postDeduction  = Double.valueOf(String.valueOf(request.getOrDefault("postDeduction", 0)));
+            String paymentMethods = (String) request.get("paymentMethods");
+            String remk = (String) request.get("remk");
+            
+            System.out.println("********************** "+recpt);
+            // 프로시저 호출 (FIFO 방식 수금처리)
+            collectionService.executeCollectionFifo(partnerCode, recpt, postDeduction, paymentMethods, remk, companyCode);
 
             result.put("success", true);
+            result.put("message", "수금 처리 완료");
         } catch (Exception e) {
             e.printStackTrace();
             result.put("success", false);
-            result.put("message", e.getMessage());
+            result.put("message", "수금 등록 중 오류 발생: " + e.getMessage());
         }
+
         return result;
     }
+
+ // 로그인 사원명 조회
+    @GetMapping("/api/collection/current-employee")
+    @ResponseBody
+    public Map<String, String> getCurrentEmployee() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // 예: auth.getName() → "A001:emp001" 형태라면
+        String[] userInfo = auth.getName().split(":");
+        String companyCode = userInfo[0];
+        String empName = userInfo.length > 1 ? userInfo[1] : "로그인사용자";
+
+        Map<String, String> result = new HashMap<>();
+        result.put("companyCode", companyCode);
+        result.put("empName", empName);
+        return result;
+    }
+    
+    // 청구서 조회
+    @GetMapping("/api/receivable/invoices")
+    @ResponseBody
+    public List<com.yedam.sales1.domain.Invoice> getInvoicesByPartner(String partnerCode) {
+        if (partnerCode == null || partnerCode.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String companyCode = auth.getName().split(":")[0];
+        return collectionService.getInvoicesByPartnerJpa(companyCode, partnerCode);
+    }
+
+  
 }
