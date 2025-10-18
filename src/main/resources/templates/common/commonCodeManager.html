@@ -1,161 +1,82 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}">
 <head>
 <meta charset="UTF-8">
 <title>공통코드 관리</title>
-<link
-	href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css"
-	rel="stylesheet" />
+<link href="https://unpkg.com/tabulator-tables@5.6.2/dist/css/tabulator.min.css" rel="stylesheet" />
 <style>
-.ccm *, .ccm *::before, .ccm *::after {
-	box-sizing: border-box;
-}
-
-.ccm .ccm-wrap {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 14px;
-}
-
-.ccm .ccm-panel {
-	background: #fff;
-	border: 1px solid #cfcfd4;
-	border-radius: 4px;
-}
-
-.ccm .ccm-panel-title {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 10px 12px;
-	border-bottom: 1px solid #e1e1e6;
-	font-weight: 700;
-}
-
-.ccm .ccm-panel-title .title {
-	font-size: 16px;
-}
-
-.ccm .ccm-panel-title .actions {
-	display: flex;
-	gap: 8px;
-}
-
-.ccm .ccm-panel-body {
-	padding: 10px;
-}
-
-.ccm .ccm-table-holder {
-	height: 420px;
-}
-
-.ccm .tabulator .tabulator-col .tabulator-col-title {
-	white-space: nowrap;
-}
-
-.ccm .tabulator-row.tabulator-selected {
-	background: #dcedff !important;
-}
-
-.ccm .ccm-btn {
-	border: 1px solid #c8c9cf;
-	background: #f7f7fa;
-	height: 32px;
-	padding: 0 12px;
-	border-radius: 6px;
-	cursor: pointer;
-}
-
-.ccm .ccm-btn-primary {
-	background: #6c8dff;
-	color: #fff;
-	border-color: #6c8dff;
-}
-
-.ccm .ccm-btn:hover {
-	filter: brightness(0.98);
-}
+.ccm *, .ccm *::before, .ccm *::after { box-sizing: border-box; }
+.ccm .ccm-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ccm .ccm-panel { background: #fff; border: 1px solid #cfcfd4; border-radius: 4px; }
+.ccm .ccm-panel-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #e1e1e6; font-weight: 700; }
+.ccm .ccm-panel-title .title { font-size: 16px; }
+.ccm .ccm-panel-title .actions { display: flex; gap: 8px; }
+.ccm .ccm-panel-body { padding: 10px; }
+.ccm .ccm-table-holder { height: 420px; }
+.ccm .tabulator .tabulator-col .tabulator-col-title { white-space: nowrap; }
+.ccm .tabulator-row.tabulator-selected { background: #dcedff !important; }
+.ccm .ccm-btn { border: 1px solid #c8c9cf; background: #f7f7fa; height: 32px; padding: 0 12px; border-radius: 6px; cursor: pointer; }
+.ccm .ccm-btn-primary { background: #6c8dff; color: #fff; border-color: #6c8dff; }
+.ccm .ccm-btn:hover { filter: brightness(0.98); }
 /* 로딩/저장 오버레이 */
-.ccm .rel {
-	position: relative;
-}
+.ccm .rel { position: relative; }
+.ccm .overlay { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .6); backdrop-filter: saturate(1.1) blur(1px); font-weight: 700; font-size: 14px; }
+.ccm .overlay.hidden { display: none; }
+.ccm .overlay .bubble { border: 1px solid #cfcfd4; background: #fff; border-radius: 10px; padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.05); }
 
-.ccm .overlay {
-	position: absolute;
-	inset: 0;
-	z-index: 2;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: rgba(255, 255, 255, .6);
-	backdrop-filter: saturate(1.1) blur(1px);
-	font-weight: 700;
-	font-size: 14px;
-}
-
-.ccm .overlay.hidden {
-	display: none;
-}
-
-.ccm .overlay .bubble {
-	border: 1px solid #cfcfd4;
-	background: #fff;
-	border-radius: 10px;
-	padding: 10px 14px;
-	box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
-}
+/* ✅ 중복/빈값 표시(버튼 비활성화는 제거) */
+.ccm .cell-dup   { outline: 2px solid #ff5a5a; background: #fff3f3 !important; }
+.ccm .cell-empty { outline: 2px solid #ff9d00; background: #fff8e6 !important; }
 </style>
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4 ccm">
-				<h1 class="mt-4">공통코드 관리</h1>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4 ccm">
+        <h1 class="mt-4">공통코드 관리</h1>
 
-				<div class="ccm-wrap">
-					<!-- 좌: 공통코드 그룹 -->
-					<section class="ccm-panel">
-						<div class="ccm-panel-title">
-							<span class="title">공통코드 그룹</span>
-							<div class="actions"></div>
-						</div>
-						<div class="ccm-panel-body">
-							<div id="groupTable" class="ccm-table-holder"></div>
-						</div>
-					</section>
+        <div class="ccm-wrap">
+          <!-- 좌: 공통코드 그룹 -->
+          <section class="ccm-panel">
+            <div class="ccm-panel-title">
+              <span class="title">공통코드 그룹</span>
+              <div class="actions"></div>
+            </div>
+            <div class="ccm-panel-body">
+              <div id="groupTable" class="ccm-table-holder"></div>
+            </div>
+          </section>
 
-					<!-- 우: 공통코드 관리 -->
-					<section class="ccm-panel">
-						<div class="ccm-panel-title">
-							<span class="title">공통코드 관리</span>
-							<div class="actions">
-								<button id="btnSave" class="ccm-btn ccm-btn-primary"
-									type="button">저장</button>
-								<button id="btnAdd" class="ccm-btn" type="button">행 추가</button>
-							</div>
-						</div>
-						<div class="ccm-panel-body rel">
-							<div id="codeTable" class="ccm-table-holder"></div>
-							<div id="codeOverlay" class="overlay hidden">
-								<div class="bubble" id="codeOverlayText">로딩 중…</div>
-							</div>
-						</div>
-					</section>
-				</div>
-			</div>
-		</main>
-	</div>
+          <!-- 우: 공통코드 관리 -->
+          <section class="ccm-panel">
+            <div class="ccm-panel-title">
+              <span class="title">공통코드 관리</span>
+              <div class="actions">
+                <button id="btnSave" class="ccm-btn ccm-btn-primary" type="button">저장</button>
+                <button id="btnAdd" class="ccm-btn" type="button">행 추가</button>
+              </div>
+            </div>
+            <div class="ccm-panel-body rel">
+              <div id="codeTable" class="ccm-table-holder"></div>
+              <div id="codeOverlay" class="overlay hidden">
+                <div class="bubble" id="codeOverlayText">로딩 중…</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
 
-	<script
-		src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
-	<script>
+  <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
+  <script>
   // ===== 상태 =====
   let currentGroupId = null;
   const newSet    = new Set(); // 새 행 tempId
   const deleteSet = new Set(); // 삭제할 codeNum
-  let originalByNum = new Map(); // 스냅샷: key=codeNum, val={codeId, codeName}
+  let originalByNum = new Map(); // key=codeNum, val={codeId, codeName, useYn}
 
   const btnSave = document.getElementById("btnSave");
   const btnAdd  = document.getElementById("btnAdd");
@@ -163,20 +84,14 @@
   const codeOverlayText = document.getElementById("codeOverlayText");
 
   function setBusy(isBusy){
+    // 바쁜 동안에만 버튼 잠깐 비활성화
     btnSave.disabled = isBusy;
     btnAdd.disabled  = isBusy;
   }
 
-  function showOverlay(text){
-    if(text) codeOverlayText.textContent = text;
-    codeOverlay.classList.remove("hidden");
-  }
-  function hideOverlay(){
-    codeOverlay.classList.add("hidden");
-  }
+  function showOverlay(text){ if(text) codeOverlayText.textContent = text; codeOverlay.classList.remove("hidden"); }
+  function hideOverlay(){ codeOverlay.classList.add("hidden"); }
 
-  
-  // 모든 에디터 강제 커밋 (저장 직전 호출)
   function commitAllEdits(){
     document.querySelectorAll(
       "#codeTable .tabulator-editing input, #codeTable .tabulator-editing textarea, #codeTable [contenteditable='true']"
@@ -184,7 +99,7 @@
     if (document.activeElement) document.activeElement.blur();
   }
 
-  // ===== 좌측: 그룹 테이블 =====
+  // ===== 그룹 테이블 =====
   const groupTable = new Tabulator("#groupTable", {
     height: "420px",
     layout: "fitColumns",
@@ -214,18 +129,21 @@
     }
   });
 
-  // ===== 우측: 코드 테이블 =====
+  // ===== 코드 테이블 =====
   const codeTable = new Tabulator("#codeTable", {
     height: "420px",
     layout: "fitColumns",
     selectable: true,
     reactiveData: true,
-    // index: "codeNum", // 필요시 사용. 신규행(null) 이슈가 있으면 제거 유지.
     columns: [
       { title: "공통코드 ID",  field: "codeId",   width: 160, editor: "input" },
       { title: "공통코드 명",  field: "codeName", minWidth: 200, editor: "input" },
-      // 숨김필드 보기 원하면 아래 주석 해제
-      // { title: "회사", field: "companyCode", width:120 },
+      { 
+        title: "사용여부", field: "useYn", width: 120, hozAlign: "center",
+        editor: "select",
+        editorParams: { values: { "Y": "사용", "N": "미사용" } },
+        formatter: function(cell){ const v = (cell.getValue() || "Y").toUpperCase(); return v === "N" ? "미사용" : "사용"; }
+      },
     ],
     rowDeleted: function(row){
       const data = row.getData();
@@ -234,132 +152,189 @@
       } else {
         newSet.delete(data.__tempId);
       }
+      refreshValidationState();
     }
   });
 
-  // ===== 그룹별 코드 로드 =====
-  async function loadCodesByGroup(groupId){
-	  if (!groupId) { codeTable.setData([]); return; }
-	
-	  newSet.clear(); deleteSet.clear(); originalByNum.clear();
-	
-	  try{
-	    setBusy(true);
-	    showOverlay("로딩 중…");
-	
-	    const url = `/api/common/codes?groupId=${encodeURIComponent(groupId)}`;
-	    const res = await fetch(url, { headers: { "Accept":"application/json" } });
-	    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-	    const list = await res.json();
-	
-	    const rows = list.map(r => ({
-	      codeNum:   r.codeNum ?? null,
-	      groupId:   r.groupId,
-	      codeId:    r.codeId,
-	      codeName:  r.codeName,
-	      companyCode: r.companyCode,
-	    }));
-	    codeTable.setData(rows);
-	
-	    rows.forEach(r => {
-	      if (r.codeNum != null){
-	        originalByNum.set(r.codeNum, {
-	          codeId: r.codeId ?? "",
-	          codeName: r.codeName ?? ""
-	        });
-	      }
-	    });
-	  }catch(e){
-	    console.error(e);
-	    codeTable.setData([]);
-	    alert("코드 목록을 불러오지 못했습니다.");
-	  }finally{
-	    hideOverlay();
-	    setBusy(false);
-	  }
+  // ✅ 유효성: 중복/빈값 검사 & 표시 (버튼 비활성화는 하지 않음)
+  function normId(v){ return (v ?? "").toString().trim().toUpperCase(); }
+
+  function refreshValidationState(){
+    // reset styles
+    codeTable.getRows().forEach(row => {
+      const cell = row.getCell("codeId");
+      if (cell){
+        cell.getElement().classList.remove("cell-dup", "cell-empty");
+      }
+    });
+
+    const byKey = new Map(); // key=normId(codeId), val=row list
+    let hasEmpty = false;
+
+    codeTable.getRows().forEach(row => {
+      const id = row.getData().codeId ?? "";
+      const n  = normId(id);
+      if (n === "") {
+        hasEmpty = true;
+        const cell = row.getCell("codeId"); if (cell) cell.getElement().classList.add("cell-empty");
+        return;
+      }
+      if (!byKey.has(n)) byKey.set(n, []);
+      byKey.get(n).push(row);
+    });
+
+    let hasDup = false;
+    for (const rows of byKey.values()){
+      if (rows.length > 1){
+        hasDup = true;
+        rows.forEach(row => {
+          const cell = row.getCell("codeId"); if (cell) cell.getElement().classList.add("cell-dup");
+        });
+      }
+    }
+
+    const invalid = hasDup || hasEmpty;
+
+    // 버튼 비활성화는 제거하고, 배너만 표시
+    const banner = document.getElementById("valBanner");
+    if (banner) banner.classList.toggle("show", invalid);
+
+    return { hasDup, hasEmpty, invalid };
   }
 
+  // codeId 편집 시 실시간 검사(하이라이트/배너만 갱신)
+  codeTable.on("cellEdited", function(cell){
+    if (cell.getField() === "codeId"){
+      refreshValidationState();
+    }
+  });
+
+  // ===== 데이터 로드 =====
+  async function loadCodesByGroup(groupId){
+    if (!groupId) { codeTable.setData([]); return; }
+
+    newSet.clear(); deleteSet.clear(); originalByNum.clear();
+
+    try{
+      setBusy(true); showOverlay("로딩 중…");
+
+      const url = `/api/common/codes?groupId=${encodeURIComponent(groupId)}`;
+      const res = await fetch(url, { headers: { "Accept":"application/json" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const list = await res.json();
+
+      const rows = list.map(r => ({
+        codeNum:     r.codeNum ?? null,
+        groupId:     r.groupId,
+        codeId:      r.codeId,
+        codeName:    r.codeName,
+        useYn:      (r.useYn ?? 'Y'),
+        companyCode: r.companyCode,
+      }));
+      codeTable.setData(rows);
+
+      rows.forEach(r => {
+        if (r.codeNum != null){
+          originalByNum.set(r.codeNum, {
+            codeId:   r.codeId ?? "",
+            codeName: r.codeName ?? "",
+            useYn:   (r.useYn ?? "Y")
+          });
+        }
+      });
+    }catch(e){
+      console.error(e);
+      codeTable.setData([]);
+      alert("코드 목록을 불러오지 못했습니다.");
+    }finally{
+      hideOverlay(); setBusy(false);
+      refreshValidationState();
+    }
+  }
 
   // ===== 행 추가 =====
   document.getElementById("btnAdd").addEventListener("click", ()=>{
-    if(!currentGroupId){
-      alert("그룹을 먼저 선택하세요.");
-      return;
-    }
+    if(!currentGroupId){ alert("그룹을 먼저 선택하세요."); return; }
     const tempId = `NEW_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
     const newRow = {
       __tempId: tempId,
       codeNum: null,
       groupId: currentGroupId,
       codeId:  "",
-      codeName:""
+      codeName:"",
+      useYn:  "Y"
     };
     codeTable.addRow(newRow, true);
     newSet.add(tempId);
+    refreshValidationState();
   });
 
-  // ===== 저장(일괄) =====
+  // ===== 저장 =====
   document.getElementById("btnSave").addEventListener("click", async ()=>{
-  if(!currentGroupId){
-    alert("그룹을 먼저 선택하세요.");
-    return;
-  }
+    if(!currentGroupId){ alert("그룹을 먼저 선택하세요."); return; }
 
-  commitAllEdits();
-  const rows = codeTable.getData();
-
-  const createItems = rows
-    .filter(r => newSet.has(r.__tempId))
-    .map(r => ({
-      codeId:   (r.codeId ?? "").trim(),
-      codeName: (r.codeName ?? "").trim()
-    }));
-
-  const updateItems = rows
-    .filter(r => r.codeNum != null && !newSet.has(r.__tempId))
-    .map(r => {
-      const now = {
-        codeId: (r.codeId ?? "").trim(),
-        codeName: (r.codeName ?? "").trim()
-      };
-      const old = originalByNum.get(r.codeNum) || { codeId:"", codeName:"" };
-      const changed = (now.codeId !== old.codeId) || (now.codeName !== old.codeName);
-      return changed ? { codeNum: r.codeNum, codeId: now.codeId, codeName: now.codeName } : null;
-    })
-    .filter(Boolean);
-
-  const deleteIds = Array.from(deleteSet);
-
-  const payload = {
-    groupId: currentGroupId,
-    create:  createItems,
-    update:  updateItems,
-    delete:  deleteIds
-  };
-
-  try{
-    setBusy(true);
-    showOverlay("저장 중…");
-
-    const res = await fetch("/api/common/codes/bulk", {
-      method:"POST",
-      headers: {"Content-Type":"application/json","Accept":"application/json"},
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok){
-      const msg = await res.text().catch(()=> '');
-      throw new Error(msg || "저장 실패");
+    commitAllEdits();
+    const { hasDup, hasEmpty, invalid } = refreshValidationState();
+    if (invalid){
+      if (hasEmpty) alert("공통코드 ID를 입력하세요.");
+      else alert("공통코드 ID가 중복되었습니다.");
+      return; // 버튼은 활성 상태지만, 여기서 저장 중단
     }
-    await loadCodesByGroup(currentGroupId);
-  }catch(e){
-    console.error(e);
-    alert(e.message || "저장 중 오류가 발생했습니다.");
-  }finally{
-    hideOverlay();
-    setBusy(false);
-  }
-});
 
-</script>
+    const rows = codeTable.getData();
+
+    const createItems = rows
+      .filter(r => newSet.has(r.__tempId))
+      .map(r => ({
+        codeId:   (r.codeId ?? "").trim(),
+        codeName: (r.codeName ?? "").trim(),
+        useYn:   ((r.useYn ?? "Y").toString().trim().toUpperCase() === "N" ? "N" : "Y")
+      }));
+
+    const updateItems = rows
+      .filter(r => r.codeNum != null && !newSet.has(r.__tempId))
+      .map(r => {
+        const now = {
+          codeId:   (r.codeId ?? "").trim(),
+          codeName: (r.codeName ?? "").trim(),
+          useYn:   ((r.useYn ?? "Y").toString().trim().toUpperCase() === "N" ? "N" : "Y")
+        };
+        const old = originalByNum.get(r.codeNum) || { codeId:"", codeName:"", useYn:"Y" };
+        const changed = (now.codeId !== old.codeId) || (now.codeName !== old.codeName) || (now.useYn !== (old.useYn || "Y"));
+        return changed ? { codeNum: r.codeNum, ...now } : null;
+      })
+      .filter(Boolean);
+
+    const deleteIds = Array.from(deleteSet);
+
+    const payload = { groupId: currentGroupId, create: createItems, update: updateItems, delete: deleteIds };
+
+    try{
+      setBusy(true); showOverlay("저장 중…");
+
+      const res = await fetch("/api/common/codes/bulk", {
+        method:"POST",
+        headers: {"Content-Type":"application/json","Accept":"application/json"},
+        body: JSON.stringify(payload)
+      });
+
+      if (res.status === 400) { alert("공통코드 ID를 입력하세요."); return; }
+      if (res.status === 409) { alert("공통코드 ID가 중복되었습니다."); return; }
+
+      if(!res.ok){
+        const msg = await res.text().catch(()=> '');
+        throw new Error(msg || "저장 실패");
+      }
+
+      await loadCodesByGroup(currentGroupId);
+    }catch(e){
+      console.error(e);
+      alert(e.message || "저장 중 오류가 발생했습니다.");
+    }finally{
+      hideOverlay(); setBusy(false);
+    }
+  });
+
+  </script>
 </body>
 </html>

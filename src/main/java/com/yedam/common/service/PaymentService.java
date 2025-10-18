@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,10 +24,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private final PaymentRepository paymentRepository;
-    private final SubscriptionRepository subscriptionRepository;
-    private final RoleService roleService;
-
+	@Autowired PaymentRepository paymentRepository;
+	@Autowired SubscriptionRepository subscriptionRepository;
+	@Autowired RoleService roleService;
+    
     /**
      * 회사 업서트(사업자번호 기준) + 신규일 때만 기본 롤 시딩
      */
@@ -196,4 +197,41 @@ public class PaymentService {
     private static String nvl(String a, String b) {
         return (a == null || a.isBlank()) ? b : a;
     }
+
+    // ====== 정책: 동일 사업자번호면 기존 회사 재사용, 없으면 신규 생성 ======
+    public static class EnsureCompanyResult {
+        private final Company company;
+        private final boolean isNew;
+        public EnsureCompanyResult(Company company, boolean isNew) {
+            this.company = company;
+            this.isNew = isNew;
+        }
+        public Company getCompany() { return company; }
+        public boolean isNew() { return isNew; }
+    }
+
+    @Transactional
+    public EnsureCompanyResult ensureCompanyForSubscription(Company req) {
+        Objects.requireNonNull(req, "company is null");
+        if (req.getBizRegNo() == null || req.getBizRegNo().isBlank()) {
+            throw new IllegalArgumentException("사업자등록번호가 없습니다.");
+        }
+        return paymentRepository.findAnyByBizRegNo(req.getBizRegNo())
+                .map(existing -> new EnsureCompanyResult(existing, false))
+                .orElseGet(() -> {
+                    Company entity = new Company();
+                    entity.setCompanyName(req.getCompanyName());
+                    entity.setBizRegNo(req.getBizRegNo());
+                    entity.setCeoName(req.getCeoName());
+                    entity.setRoadAddress(req.getRoadAddress());
+                    entity.setAddressDetail(req.getAddressDetail());
+                    entity.setTel(req.getTel());
+                    entity.setManagerName(req.getManagerName());
+                    entity.setManagerEmail(req.getManagerEmail());
+                    Company saved = paymentRepository.save(entity);
+                    roleService.seedDefaultsForCompany(saved.getCompanyCode());
+                    return new EnsureCompanyResult(saved, true);
+                });
+    }
+
 }

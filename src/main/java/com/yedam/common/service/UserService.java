@@ -7,7 +7,9 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -34,6 +36,13 @@ public class UserService implements UserDetailsService {
     @Autowired JavaMailSender mailSender;
     @Autowired EmployeeRepository employeeRepository;
     @Autowired RoleRepository roleRepository;
+    
+    // ===== 공통: 로그인 회사코드 꺼내기 =====
+    private String currentCompanyCode() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        // Username 형식: "C001:admin01:0001"
+        return auth.getName().split(":")[0];
+    }
     
     // 임시 비밀번호 생성 로직
     private static final String PW_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^*";
@@ -256,7 +265,10 @@ public class UserService implements UserDetailsService {
 	}
     
     private void sendTempPasswordMail(String toEmail, String userId, String tempPw) {
-        if (toEmail == null || toEmail.isBlank()) return;
+        
+    	String companyCode = currentCompanyCode();
+    	
+    	if (toEmail == null || toEmail.isBlank()) return;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
@@ -265,6 +277,7 @@ public class UserService implements UserDetailsService {
         message.setText(
                 "안녕하세요.\n\n" +
                 "다음 정보로 사용자가 생성되었습니다.\n" +
+                "회사코드 : " + companyCode + "\n" +
                 "아이디 : " + userId + "\n" +
                 "임시 비밀번호 : " + tempPw + "\n\n" +
                 "로그인 후 반드시 비밀번호를 변경해주세요."
