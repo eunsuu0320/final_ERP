@@ -16,5 +16,6 @@ public class CodeBulkRequest {
         private Long codeNum;   // update 전용
         private String codeId;
         private String codeName;
+        private String useYn;
     }
 }
