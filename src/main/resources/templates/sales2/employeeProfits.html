@@ -117,7 +117,6 @@
      </div>
 
       <!-- 요약 박스 -->
-      <h3 class="mt-4 mb-4">요약</h3>
       <div class="summary-box">
         <div class="row text-center">
           <div class="col summary-item">
@@ -138,6 +137,10 @@
           </div>
         </div>
       </div>
+      <div class="mt-3 mb-4">
+		  <canvas id="summaryChart" height="120"></canvas>
+		</div>
+		      
 
       <!-- 사원별 실적 조회 테이블 -->
       <h3 class="mt-4 mb-4">사원별 실적 조회</h3>
@@ -182,7 +185,12 @@
 
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- (하단 스크립트들 위쪽 아무 곳에) Chart.js CDN 추가 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <script th:src="@{/sales2/js/employeeProfits.js}"></script>
+
 <!-- 공통 모달 -->
 <div th:replace="common/modal :: commonModal"></div>
 </body>

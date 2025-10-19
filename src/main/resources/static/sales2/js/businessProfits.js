@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			{ title: "품목명", field: "PRODUCTNAME", hozAlign: "center", width: 150 },
 			{
 				title: "판매", columns: [
-					{ title: "수량", field: "QTY", hozAlign: "right", width: 150},
+					{ title: "수량", field: "QTY", hozAlign: "center", width: 100},
 					{ title: "단가", field: "SALEPRICE", hozAlign: "right", formatter: "money", width: 150},
 					{ title: "금액", field: "SALEAMT", hozAlign: "right", formatter: "money" , width: 150},
 				]

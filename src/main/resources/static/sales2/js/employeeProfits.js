@@ -1,5 +1,11 @@
 // /sales2/js/employeeProfits.js
 document.addEventListener("DOMContentLoaded", function () {
+
+  // (옵션) Top5 차트 호출이 남아있을 때 ReferenceError 방지용 no-op
+  function renderTopEmpChart() {}
+
+  let totalAmountMax = 0; // 행별 '합계' 막대 width 계산용 max
+
   // ===============================
   // 📅 최근 5년 드롭다운
   // ===============================
@@ -30,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function getFilterParams() {
     let year = yearSelect?.value ?? "";
     let quarter = quarterSelect?.value ?? "";
-    let keyword = document.getElementById("name")?.value ?? ""; // ← 여기만 포인트
+    let keyword = document.getElementById("name")?.value ?? "";
 
     year = (year || "").toString().trim();
     quarter = (quarter || "").toString().trim();
@@ -57,7 +63,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // 초기 로딩시에도 현재 조건 반영
     ajaxParams: getFilterParams(),
     ajaxURLGenerator: function (url, config, params) {
-      // setData()가 호출될 때마다 최신 getFilterParams()를 사용
       const filters = getFilterParams();
       const qs = new URLSearchParams();
       Object.entries(filters).forEach(([k, v]) => qs.append(k, v));
@@ -67,6 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
       return full;
     },
     ajaxResponse: function (url, params, response) {
+      // (옵션) Top5 차트 호출이 남아있다면 안전
+      renderTopEmpChart(response);
+
       // ✅ 요약 합계 갱신
       let totalSalesCount = 0;
       let totalSupply = 0;
@@ -82,6 +90,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
       }
 
+      // ✅ '합계' 막대그래프용 max 갱신
+      totalAmountMax = Array.isArray(response)
+        ? response.reduce((m, r) => Math.max(m, Number(r.totalAmount || 0)), 0)
+        : 0;
+
       const tCount  = document.getElementById("totalSalesCount");
       const tSupply = document.getElementById("totalSupply");
       const tTax    = document.getElementById("totalTax");
@@ -96,12 +109,55 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     placeholder: "데이터가 없습니다.",
     columns: [
-      { title: "사원코드", field: "empCode", hozAlign: "center", width: 120 },
-      { title: "사원명",   field: "name",    hozAlign: "center", width: 150 },
-      { title: "수량",     field: "salesQty",     hozAlign: "right", width: 120 },
-      { title: "공급가액", field: "salesAmount",  hozAlign: "right", width: 150 },
-      { title: "부가세",   field: "tax",          hozAlign: "right", width: 120 },
-      { title: "합계",     field: "totalAmount",  hozAlign: "right", width: 150 },
+      { title: "사원코드", field: "empCode", hozAlign: "center", width: 200 },
+      { title: "사원명",   field: "name",    hozAlign: "center", width: 200 },
+      { title: "수량",     field: "salesQty",     hozAlign: "center", width: 200 },
+      { title: "공급가액", field: "salesAmount",  hozAlign: "right", formatter: "money",  width: 200 },
+      { title: "부가세",   field: "tax",          hozAlign: "right", formatter: "money", width: 200 },
+      {
+        title: "합계",
+        field: "totalAmount",
+        width: 260,
+        hozAlign: "left", // 그래프 + 숫자 함께 표시
+        // 각 행 셀을 막대그래프로 렌더링
+        formatter: function (cell) {
+          const value = Number(cell.getValue() || 0);
+          const max = totalAmountMax || value || 1; // 0 분모 방지
+          const pct = Math.max(0, Math.min(100, Math.round((value / max) * 100)));
+          const label = value.toLocaleString();
+
+          const html = `
+            <div style="display:flex; align-items:center; gap:8px; width:100%;">
+              <div style="flex:1; height:10px; background:#eee; border-radius:6px; overflow:hidden;">
+                <div style="height:100%; width:${pct}%; background:#86b7fe;"></div>
+              </div>
+              <div style="min-width:90px; text-align:right;">${label}</div>
+            </div>
+          `;
+          const wrap = document.createElement("div");
+          wrap.innerHTML = html;
+          return wrap;
+        },
+
+        // 하단 합계 셀(bottomCalc)도 막대 + 숫자 표시
+        bottomCalc: "sum",
+        bottomCalcFormatter: function (cell) {
+          const sum = Number(cell.getValue() || 0);
+          const label = sum.toLocaleString();
+
+          const html = `
+            <div style="display:flex; align-items:center; gap:8px; width:100%;">
+              <div style="flex:1; height:12px; background:#eee; border-radius:6px; overflow:hidden;">
+                <div style="height:100%; width:100%; background:#86b7fe;"></div>
+              </div>
+              <div style="min-width:100px; text-align:right; font-weight:600;">${label}</div>
+            </div>
+          `;
+          const wrap = document.createElement("div");
+          wrap.innerHTML = html;
+          return wrap;
+        },
+      }, // 🔚 합계 컬럼
     ],
   });
 
@@ -113,7 +169,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // ===============================
   // 🔍 검색 버튼으로만 조회
   // ===============================
-  // 자동 재조회 이벤트(년/분기 change, input keypress 등)는 달지 않음
   document.getElementById("btn-search")?.addEventListener("click", function () {
     console.log("🔎 검색 조건:", getFilterParams());
     table.setData(); // ajaxURLGenerator가 getFilterParams()로 최신 URL 생성
@@ -175,7 +230,7 @@ function openEmployeeModal(emp) {
     ],
   });
 
-  // 모달 안의 검색은 그대로 사용(원하면 버튼만 작동하도록 유지)
+  // 모달 안의 검색은 그대로 사용
   const searchAction = () => {
     const keyword = (document.getElementById("modal-searchInput")?.value || "").trim();
     modalTable.setData("/api/employeeProfits/partners", buildParams({ keyword }));

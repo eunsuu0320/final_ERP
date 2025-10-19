@@ -47,6 +47,20 @@
         min-height: 360px;
       }
     }
+    
+    /* 양쪽 섹션 헤더(제목/드롭박스 라인)의 높이를 동일하게 */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;   /* ← 이 값이 양쪽 헤더의 "세로 높이"를 통일 */
+  margin-bottom: 12px; /* 테이블과 간격도 동일하게 */
+}
+.section-header .form-select-sm {
+  /* 부트스트랩 작은 셀렉트 높이 보정(브라우저별 차이 최소화) */
+  height: calc(1.5em + .5rem + 2px);
+}
+    
   </style>
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -116,23 +130,45 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
             </div>
+            
             <div class="modal-body">
-              <div class="row g-3">
-                <div class="col-12 col-lg-6">
-                  <h5 class="mb-3">작년 영업매출</h5>
-                  <div id="lastYearTable"></div>
-                </div>
-                
-                <div class="col-12 col-lg-6">
-                  <h5 class="mb-3">올해 영업계획 등록</h5>
-                  <div id="thisYearTable"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+
+  <!-- ✅ 상단 한 줄 헤더(좌: 작년, 우: 올해+드롭박스) -->
+  <div class="row g-2 align-items-center mb-2">
+    <div class="col-12 col-lg-6">
+      <div class="section-header">
+        <h5 class="mb-0">작년 영업매출</h5>
+        <div class="ms-auto"></div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="section-header">
+        <h5 class="mb-0">올해 영업계획 등록</h5>
+        <div class="ms-auto">
+          <select id="combo-option" class="form-select form-select-sm" style="width:120px;">
+            <option value="">선택</option>
+            <option>5%</option>
+            <option>10%</option>
+            <option>15%</option>
+          </select>
         </div>
       </div>
+    </div>
+  </div>
 
+  <!-- ✅ 테이블 2개 (헤더 아래에서 시작 라인 일치) -->
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <div id="lastYearTable"></div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div id="thisYearTable"></div>
+    </div>
+  </div>
+
+</div>
+ㄴ
       <!-- 수정 모달 -->
       <div class="modal fade" id="modifySalesModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
