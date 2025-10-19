@@ -63,9 +63,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ajaxParams: { year: 2024 },
     columns: [
       { title: "분기", field: "SALES_QUARTER", hozAlign: "center" },
-      { title: "작년 총 매출액", field: "TOTAL_SALES_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "작년 총 매입단가", field: "TOTAL_COST_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "작년 총 영업이익", field: "TOTAL_PROFIT_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
+      { title: "작년 매출액", field: "TOTAL_SALES_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
+      { title: "작년 매입단가", field: "TOTAL_COST_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
+      { title: "작년 영업이익", field: "TOTAL_PROFIT_AMOUNT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
     ],
   });
 
@@ -77,8 +77,8 @@ document.addEventListener("DOMContentLoaded", function () {
     height: "350px",
     columns: [
       { title: "분기", field: "qtr", hozAlign: "center", editor: false },
-      { title: "올해 총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
-      { title: "올해 총 영업이익", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: moneyFormatter },
+      { title: "총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
+      { title: "총 영업이익", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: moneyFormatter },
       { title: "신규 거래처수", field: "newVendCnt", hozAlign: "center", editor: "number" },
     ],
     data: [
@@ -88,6 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
       { qtr: "4분기", purpSales: "", purpProfitAmt: "", newVendCnt: "" },
     ],
   });
+  
 
   // ================================
   // 📌 수정 모달 테이블
@@ -97,8 +98,8 @@ document.addEventListener("DOMContentLoaded", function () {
     height: "350px",
     columns: [
       { title: "분기", field: "qtr", hozAlign: "center" },
-      { title: "올해 총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
-      { title: "올해 총 영업이익", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: moneyFormatter },
+      { title: "총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
+      { title: "총 영업이익", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: moneyFormatter },
       { title: "신규 거래처수", field: "newVendCnt", hozAlign: "center", editor: "number" },
     ],
   });
@@ -161,27 +162,67 @@ document.addEventListener("DOMContentLoaded", function () {
       .catch(err => { console.error(err); alert("저장 실패: " + err.message); });
   });
 
-  // ================================
-  // 📌 combo-option (존재 시에만)
-  // ================================
-  const combo = document.getElementById("combo-option");
-  if (combo) {
-    combo.addEventListener("change", function () {
-      const percent = parseFloat(this.options[this.selectedIndex].text.replace("%", "")) / 100;
-      const lastYearData = lastYearTable.getData();
-      const newData = lastYearData.map(row => {
-        const lastSales = row.TOTAL_SALES_AMOUNT || 0;
-        const lastProfit = row.TOTAL_PROFIT_AMOUNT || 0;
-        return {
-          qtr: row.SALES_QUARTER + "분기",
-          purpSales: Math.floor(lastSales * (1 + percent)),
-          purpProfitAmt: Math.floor(lastProfit * (1 + percent)),
-          newVendCnt: 0
-        };
-      });
-      thisYearTable.setData(newData);
-    });
+// ================================
+// 📌 combo-option (드롭박스 전용 코드)
+// ================================
+const combo = document.getElementById("combo-option");
+
+// 작년 데이터 로드 여부 플래그
+let lastYearLoaded = false;
+try {
+  // lastYearTable은 이미 위에서 생성됨
+  lastYearTable.on("dataLoaded", () => { lastYearLoaded = true; });
+} catch (e) {
+  // lastYearTable이 없으면 무시
+}
+
+// 퍼센트 적용 함수 (작년 → 올해 계획 자동입력)
+function applyPercentToPlan(percent) {
+  if (!lastYearLoaded) {
+    alert("작년 데이터 로딩 중입니다. 잠시 후 다시 시도하세요.");
+    return;
   }
+  const lastYearData = lastYearTable.getData();
+
+  // 분기 1~4 매칭해서 안전하게 매핑
+  const targetRows = ["1", "2", "3", "4"].map(q => {
+    const src = lastYearData.find(r => String(r.SALES_QUARTER) === q) || {};
+    const lastSales  = Number(src.TOTAL_SALES_AMOUNT  || 0);
+    const lastProfit = Number(src.TOTAL_PROFIT_AMOUNT || 0);
+    return {
+      qtr: `${q}분기`,
+      purpSales: Math.floor(lastSales  * (1 + percent)),
+      purpProfitAmt: Math.floor(lastProfit * (1 + percent)),
+      newVendCnt: 0,
+    };
+  });
+
+  thisYearTable.setData(targetRows);
+}
+
+// 드롭박스 변경 핸들러
+if (combo) {
+  combo.addEventListener("change", function () {
+    const txt = this.options[this.selectedIndex]?.text ?? "";
+    // "5%", "10%", "15%" 같은 형태만 매칭
+    const m = txt.match(/^(\d+(?:\.\d+)?)%$/);
+
+    if (!m) {
+      // 선택 해제 시 초기화
+      thisYearTable.setData([
+        { qtr: "1분기", purpSales: "", purpProfitAmt: "", newVendCnt: "" },
+        { qtr: "2분기", purpSales: "", purpProfitAmt: "", newVendCnt: "" },
+        { qtr: "3분기", purpSales: "", purpProfitAmt: "", newVendCnt: "" },
+        { qtr: "4분기", purpSales: "", purpProfitAmt: "", newVendCnt: "" },
+      ]);
+      return;
+    }
+
+    const percent = parseFloat(m[1]) / 100; // 0.05 / 0.10 / 0.15 ...
+    applyPercentToPlan(percent);
+  });
+}
+
 
   // ================================
   // 📌 초기화 버튼
