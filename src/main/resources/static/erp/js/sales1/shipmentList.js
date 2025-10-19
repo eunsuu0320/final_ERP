@@ -456,6 +456,72 @@ document.addEventListener("DOMContentLoaded", function() {
 	const tableInstance = window.makeTabulator(rows, tabulatorColumns);
 	window.shipmentTableInstance = tableInstance;
 	initTabFiltering();
+	
+	
+	function loadTableData(params = {}) {
+			const queryString = new URLSearchParams(params).toString();
+			const url = `/api/shipment/search?${queryString}`;
+
+			// 로딩 상태 표시
+			if (window.shipmentTableInstance) {
+				// Tabulator의 기본 로딩 애니메이션을 사용하거나, 수동으로 로딩 표시 가능
+			}
+
+			fetch(url)
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('데이터 요청 실패: ' + response.statusText);
+					}
+					return response.json();
+				})
+				.then(data => {
+					console.log("검색 결과 데이터:", data);
+
+					// ★ 3. 검색 결과를 Tabulator에 반영하는 핵심 로직
+					if (window.shipmentTableInstance) {
+						window.shipmentTableInstance.setData(data);
+					}
+				})
+				.catch(error => {
+					console.error('데이터 로딩 중 오류 발생:', error);
+					alert('데이터를 가져오는 데 실패했습니다.');
+
+					// 오류 발생 시 빈 배열로 설정하여 테이블 정리
+					if (window.shipmentTableInstance) {
+						window.shipmentTableInstance.setData([]);
+					}
+				});
+		}
+		
+		// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+		window.filterSearch = function() {
+			const searchParams = getSearchParams('.searchTool');
+
+			console.log("서버로 보낼 검색 조건:", searchParams);
+
+			// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
+			loadTableData(searchParams);
+		}
+
+
+		// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
+		window.resetSearch = function() {
+			// 검색 조건 필드 초기화 로직 (실제 DOM 구조에 맞게 수정 필요)
+			const searchTool = document.querySelector('.searchTool');
+			searchTool.querySelectorAll('input[type=text], select').forEach(el => {
+				if (el.tagName === 'SELECT' && el.choicesInstance) {
+					// Choices.js 인스턴스 초기화
+					el.choicesInstance.setChoiceByValue('');
+				} else {
+					el.value = '';
+				}
+			});
+
+			// 검색 조건 없이 데이터 로딩 함수 호출 (searchVo가 빈 상태로 넘어가 전체 목록 조회)
+			loadTableData({});
+		}
+	
+	
 });
 
 

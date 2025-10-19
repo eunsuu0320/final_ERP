@@ -9,13 +9,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yedam.hr.domain.Employee;
+import com.yedam.sales1.domain.Price;
 import com.yedam.sales1.domain.Shipment;
 
 @Repository
 public interface ShipmentRepository extends
 		JpaRepository<Shipment, String>{
 
-	List<Shipment> findAll();
+	@Query("SELECT p FROM Shipment p "
+			+ "WHERE p.companyCode = :companyCode ")
+	List<Shipment> findAll(@Param("companyCode") String companyCode);
 	
 	@Query("SELECT MAX(p.shipmentCode) FROM Shipment p")
 	String findMaxShipmentCode();
@@ -29,4 +32,10 @@ public interface ShipmentRepository extends
 		    AND e.dept = '333'
 		""")
 	List<Employee> findByCompanyCodeSalesEmployee(String companyCode);
+	
+	
+	@Query("SELECT p FROM Shipment p "
+			+ "WHERE (:#{#searchVo.partnerCode} IS NULL OR p.partnerCode LIKE %:#{#searchVo.partnerCode}%) "
+			+ "AND p.companyCode = :companyCode ")
+	List<Shipment> findByFilter(@Param("searchVo") Shipment searchVo, @Param("companyCode") String companyCode);
 }

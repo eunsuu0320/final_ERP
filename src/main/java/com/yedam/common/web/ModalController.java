@@ -15,6 +15,7 @@ import com.yedam.hr.repository.AttendanceRepository;
 import com.yedam.hr.repository.EmployeeRepository;
 import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.Product;
+import com.yedam.sales1.dto.EstimateModalDto;
 import com.yedam.sales1.dto.PartnerModalDto;
 import com.yedam.sales1.repository.EstimateRepository;
 import com.yedam.sales1.repository.PartnerRepository;
@@ -64,11 +65,31 @@ public class ModalController {
 	}
 
 	@GetMapping("/estimate")
-	public List<Estimate> getEstimates() {
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		String companyCode = auth.getName().split(":")[0];
-		return estimateRepository.findByCompanyCode(companyCode);
+	public List<EstimateModalDto> getEstimates() {
+	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	    String companyCode = auth.getName().split(":")[0];
+
+	    List<Estimate> estimates = estimateRepository.findByCompanyCode(companyCode);
+
+	    return estimates.stream().map(estimate -> {
+	        EstimateModalDto dto = new EstimateModalDto();
+	        dto.setEstimateUniqueCode(estimate.getEstimateUniqueCode().intValue());
+	        dto.setEstimateCode(estimate.getEstimateCode());
+	        dto.setPartnerCode(estimate.getPartnerCode());
+	        dto.setPartnerName(estimate.getPartner() != null ? estimate.getPartner().getPartnerName() : null);
+	        dto.setManager(estimate.getManager());
+	        dto.setManagerName(
+	            estimate.getManagerEmp() != null ? estimate.getManagerEmp().getName() : null 
+	        );
+	        dto.setPostCode(estimate.getPostCode());
+	        dto.setAddress(estimate.getAddress());
+	        dto.setRemarks(estimate.getRemarks());
+	        dto.setTotalAmount(estimate.getTotalAmount());
+	        dto.setDeliveryDate(estimate.getDeliveryDate());
+	        return dto;
+	    }).toList();
 	}
+
 
 	@GetMapping("/salesEmployee")
 	public List<Employee> getSalesEmployee() {

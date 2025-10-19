@@ -1,7 +1,6 @@
 package com.yedam.sales1.domain;
 
 import java.util.Date;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -53,6 +52,9 @@ public class Shipment {
 
     @Column(name = "POST_CODE")
     private Integer postCode;
+
+    @Column(name = "NOW_QUANTITY")
+    private Integer nowQuantity;
 
     @Column(name = "ADDRESS", length = 1000)
     private String address;

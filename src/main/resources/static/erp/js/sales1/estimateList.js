@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const currentStatus = row?.getData()?.진행상태;
 
 		if (currentStatus === status) {
-			console.log(`[견적서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
+			console.log(`[견적서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너킵니다.`);
 			// 현재 상태와 같더라도 Tabulator가 자동으로 리렌더링하지 않으므로 select 값을 되돌립니다.
 			if (selectElement) {
 				selectElement.value = currentStatus;
@@ -133,7 +133,8 @@ document.addEventListener("DOMContentLoaded", function() {
 						window.estimateTableInstance.getRows().find(r => r.getData().견적서코드 === code)?.update({ '진행상태': status });
 					}
 				} else {
-					alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
+					// alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`); // alert() 사용 금지
+					console.error(`상태 변경 실패: ${response.message || '알 수 없는 오류'}`);
 					// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
 					if (selectElement) {
 						selectElement.value = currentStatus;
@@ -142,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			})
 			.catch(err => {
 				console.error("상태 변경 API 호출 실패:", err);
-				alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
+				// alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`); // alert() 사용 금지
 				// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
 				if (selectElement) {
 					selectElement.value = currentStatus;
@@ -152,48 +153,91 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
-	// 폼 전체 초기화
+	// 폼 전체 초기화 (상세 모드에서는 이전 데이터로 복원)
 	window.resetQuote = function() {
 		const form = document.getElementById("quoteForm");
 		if (form) {
-			form.reset();
+			form.reset(); // 견적 기본 정보 초기화
 		}
 
+		// 견적 상세 그리드 초기화
 		if (window.resetItemGrid) {
-			// salesCommon.js에 정의된 함수 호출 가정
+			// salesCommon.js 외부의 전용 그리드 초기화 함수 호출 가정
 			window.resetItemGrid();
 		} else {
-			// console.error("Error: resetItemGrid function is not defined. Check salesCommon.js loading.");
-			// 상세 테이블 내용만 수동 초기화 (예시)
+			// 상세 테이블 내용 수동 초기화
 			const tbody = document.getElementById('itemDetailBody');
 			if (tbody) tbody.innerHTML = '';
-			window.addItemRow(); // 기본 행 1개 추가
-			window.calculateTotal(); // 합계 초기화
+			// 기본 행 추가 (addItemRow가 전역에 정의되어 있다고 가정)
+			if (window.addItemRow) {
+				window.addItemRow();
+			}
+		}
+
+		// 하단 푸터 합계 리셋
+		window.calculateTotal();
+
+		// ✅ [추가] 상세 모드일 경우, 이전 로드된 데이터를 다시 바인딩
+		if (window.lastModalType === 'detail' && window.lastLoadedEstimateData) {
+			console.log("상세 모드: 이전에 불러온 데이터를 다시 바인딩합니다.");
+			bindDataToForm(window.lastLoadedEstimateData, form);
 		}
 
 		console.log("견적 모달 전체 초기화 완료.");
-	}
-
-	// 견적서 상세모달
-	window.showDetailModal = function(modalType) {
-		let modalName = '';
-
-
-		// 모달 열기
-		if (modalType === 'detail') {
-			modalName = '견적서 상세정보'
-
-		} else if (modalType === 'regist') {
-			modalName = '견적서등록'
-			resetQuote();
-		}
-		const modal = new bootstrap.Modal(document.getElementById("newDetailModal"));
-		modal.show();
-		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 	};
 
 
+	// 견적서 상세모달 
+	window.showDetailModal = function(modalType, keyword) {
+		const modalName = modalType === 'detail' ? '견적서 상세정보' : '견적서 등록';
+		const modalEl = document.getElementById("newDetailModal");
+		const modal = new bootstrap.Modal(modalEl);
+		const form = document.getElementById("quoteForm");
 
+		// 모달 열기 시 항상 전체 폼과 그리드를 초기화하여 이전 데이터를 지웁니다.
+
+		// ✅ 항상 이전 데이터 캐시 제거
+		window.lastLoadedEstimateData = null;
+		window.lastModalType = null;
+
+		// ✅ 폼 및 그리드 완전 초기화
+		window.resetQuote();
+		document.getElementById("partnerName").readOnly = true;
+		document.getElementById("partnerModalBtn").disabled = true;
+
+		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
+
+		if (modalType === 'regist') {
+			document.getElementById("partnerName").readOnly = false;
+			document.getElementById("partnerModalBtn").disabled = false;
+		}
+
+
+		if (modalType === 'detail' && keyword) {
+
+			// loadDetailData는 reset된 폼에 새로운 상세 데이터를 채워 넣습니다.
+			loadDetailData('estimate', keyword, form)
+				.then(responseData => {
+					window.lastLoadedEstimateData = responseData;
+					window.lastModalType = modalType;
+				});
+
+
+		}
+		modal.show();
+	};
+
+
+	// 모달 닫힘 이벤트에 초기화 함수 연결
+	const modalEl = document.getElementById("newDetailModal");
+	if (modalEl) {
+		// Bootstrap 모달이 완전히 닫힐 때 발생하는 이벤트
+		modalEl.addEventListener('hidden.bs.modal', function() {
+			// 모달이 닫힐 때 폼 전체 초기화를 실행합니다.
+			window.resetQuote();
+			console.log("모달 닫힘 (hidden.bs.modal): resetQuote 호출 완료.");
+		});
+	}
 
 
 	// estimateList.js (window.saveModal 함수)
@@ -202,7 +246,8 @@ document.addEventListener("DOMContentLoaded", function() {
 		const modalEl = document.getElementById("newDetailModal");
 
 		if (!quoteForm) {
-			alert("저장 오류: 견적 등록 폼을 찾을 수 없습니다.");
+			// alert("저장 오류: 견적 등록 폼을 찾을 수 없습니다."); // alert() 사용 금지
+			console.error("저장 오류: 견적 등록 폼을 찾을 수 없습니다.");
 			return;
 		}
 
@@ -216,7 +261,8 @@ document.addEventListener("DOMContentLoaded", function() {
 		const detailList = collectQuoteDetails();
 
 		if (detailList.length === 0) {
-			alert("견적 상세 내용을 1개 이상 입력해주세요.");
+			// alert("견적 상세 내용을 1개 이상 입력해주세요."); // alert() 사용 금지
+			console.warn("견적 상세 내용을 1개 이상 입력해주세요.");
 			return;
 		}
 
@@ -259,7 +305,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			})
 			.then(data => {
 				console.log("서버 응답 데이터:", data);
-				alert("견적서가 성공적으로 등록되었습니다. ID: " + data.id);
+				// alert("견적서가 성공적으로 등록되었습니다. ID: " + data.id); // alert() 사용 금지
 
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
 				if (modalInstance) modalInstance.hide();
@@ -271,7 +317,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			})
 			.catch(err => {
 				console.error("견적서 등록 실패:", err);
-				alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`)
+				// alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`) // alert() 사용 금지
 			});
 	};
 
@@ -329,9 +375,25 @@ document.addEventListener("DOMContentLoaded", function() {
 					const value = cell.getValue();
 					// 견적서 코드 클릭 시 상세 모달을 열 때, 견적서 코드를 인수로 전달합니다.
 					const rowData = cell.getData();
-					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${rowData.견적서코드}')">${value}</div>`;
+					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${rowData.견적서고유코드}')">${value}</div>`;
 				};
 			}
+
+			if (col === "견적금액합계") {
+				columnDef.formatter = function(cell) {
+					const value = cell.getValue();
+					if (value === null || value === undefined || isNaN(value)) return "-";
+
+					// 천 단위 콤마 + 원 단위 표시
+					return value.toLocaleString('ko-KR') + " 원";
+				};
+
+				// 숫자 정렬 유지 및 우측 정렬 적용
+				columnDef.sorter = "number";
+				columnDef.hozAlign = "right";   // ✅ 오른쪽 정렬
+			}
+
+
 
 			// "진행상태" 컬럼에 HTML Select 요소 적용 (직접 변경 방식)
 			if (col === "진행상태") {
@@ -370,6 +432,78 @@ document.addEventListener("DOMContentLoaded", function() {
 	window.estimateTableInstance = tableInstance;
 
 	initTabFiltering();
+
+
+
+	function loadTableData(params = {}) {
+		const queryString = new URLSearchParams(params).toString();
+		const url = `/api/estimate/search?${queryString}`;
+
+		// 로딩 상태 표시
+		if (window.estimateTableInstance) {
+			// Tabulator의 기본 로딩 애니메이션을 사용하거나, 수동으로 로딩 표시 가능
+		}
+
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('데이터 요청 실패: ' + response.statusText);
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log("검색 결과 데이터:", data);
+
+				// ★ 3. 검색 결과를 Tabulator에 반영하는 핵심 로직
+				if (window.estimateTableInstance) {
+					window.estimateTableInstance.setData(data);
+				}
+			})
+			.catch(error => {
+				console.error('데이터 로딩 중 오류 발생:', error);
+				alert('데이터를 가져오는 데 실패했습니다.');
+
+				// 오류 발생 시 빈 배열로 설정하여 테이블 정리
+				if (window.estimateTableInstance) {
+					window.estimateTableInstance.setData([]);
+				}
+			});
+	}
+	
+	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+	window.filterSearch = function() {
+		const searchParams = getSearchParams('.searchTool');
+
+		console.log("서버로 보낼 검색 조건:", searchParams);
+
+		// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
+		loadTableData(searchParams);
+	}
+
+
+	// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
+	window.resetSearch = function() {
+		// 검색 조건 필드 초기화 로직 (실제 DOM 구조에 맞게 수정 필요)
+		const searchTool = document.querySelector('.searchTool');
+		searchTool.querySelectorAll('input[type=text], select').forEach(el => {
+			if (el.tagName === 'SELECT' && el.choicesInstance) {
+				// Choices.js 인스턴스 초기화
+				el.choicesInstance.setChoiceByValue('');
+			} else {
+				el.value = '';
+			}
+		});
+
+		// 검색 조건 없이 데이터 로딩 함수 호출 (searchVo가 빈 상태로 넘어가 전체 목록 조회)
+		loadTableData({});
+	}
+
+
+	
+
+
+
+
 });
 
 

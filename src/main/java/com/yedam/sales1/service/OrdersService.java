@@ -4,17 +4,20 @@ import java.util.List;
 import java.util.Map;
 
 import com.yedam.sales1.domain.Orders;
+import com.yedam.sales1.dto.OrderModalDTO;
 import com.yedam.sales1.dto.OrderRegistrationDTO;
 
 public interface OrdersService {
-	List<Orders> getAllOrders();
+    List<Orders> getAllOrders();
 
-	Map<String, Object> getTableDataFromOrders(List<Orders> orders);
+    List<Orders> getFilterOrder(Orders searchVo);
 
-	Orders saveOrders(Orders orders);
-	
-	Long registerNewOrders(OrderRegistrationDTO dto);
-	
-	boolean updateOrdersStatus(String orderCode, String status);
+    Map<String, Object> getTableDataFromOrders(List<Orders> orders);
 
+    Long registerNewOrders(OrderRegistrationDTO dto);
+
+    boolean updateOrdersStatus(String orderCode, String status);
+
+    // 상세 모달용 DTO
+    OrderModalDTO getOrderModalByOrderUniqueCode(Long orderUniqueCode);
 }

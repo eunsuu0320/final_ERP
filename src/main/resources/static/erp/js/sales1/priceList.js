@@ -588,6 +588,11 @@ function saveChoosePartner(priceUniqueCode) {
 		});
 }
 
+function showTableLoading(show = true) {
+  const overlay = document.getElementById("loading-overlay");
+  if (overlay) overlay.style.display = show ? "flex" : "none";
+};
+
 
 // --------------------------------------------------------------------------
 // [함수] 품목 설정 저장 (saveChooseProduct) - HTML onclick에서 직접 호출됨
@@ -848,6 +853,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 	// 4. 메인 Tabulator 초기화 및 전역 변수에 할당
 	// --------------------------------------------------------------------------
 	priceTableInstance = makePriceListTabulator(rows, tabulatorColumns);
+	window.priceTableInstance = priceTableInstance; 
 
 
 	// --------------------------------------------------------------------------
@@ -908,5 +914,105 @@ document.addEventListener("DOMContentLoaded", async function() {
 	        }
 	    });
 	});
+	
+	
+	
+	
+	function loadTableData(params = {}) {
+	  const queryString = new URLSearchParams(params).toString();
+	  const url = `/api/price/search?${queryString}`;
+
+	  fetch(url)
+	    .then(response => {
+	      if (!response.ok) {
+	        throw new Error('데이터 요청 실패: ' + response.statusText);
+	      }
+	      return response.json();
+	    })
+		.then(data => {
+		  console.log("검색 결과 데이터:", data);
+
+
+		  if (window.priceTableInstance) {
+		    window.priceTableInstance.setData(mappedData);
+		  }
+		})
+
+	    .catch(error => {
+	      console.error('데이터 로딩 중 오류 발생:', error);
+	      alert('데이터를 가져오는 데 실패했습니다.');
+
+	      // 오류 시 테이블 비움
+	      if (window.priceTableInstance) {
+	        window.priceTableInstance.setData([]);
+	      }
+	    });
+	}
+
+		
+	// ★ 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+	// ✅ 클라이언트 사이드 필터 검색 함수 (서버 요청 없이 Tabulator 데이터에서 필터링)
+	window.filterSearch = function () {
+
+	  // 검색 조건 수집
+	  const groupCode = document.getElementById("priceGroupCodeSearch").value.trim();
+	  const groupName = document.getElementById("priceGroupNameSearch").value.trim();
+	  const validDate = document.getElementById("validDateSearch").value.trim();
+
+	  // Tabulator 필터 조건 배열 생성
+	  const filters = [];
+	  if (groupCode) filters.push({ field: "단가그룹코드", type: "like", value: groupCode });
+	  if (groupName) filters.push({ field: "단가그룹명", type: "like", value: groupName });
+	  if (validDate) {
+	    // 기준일자가 시작일자 이상 AND 종료일자 이하인 데이터만 필터
+	    filters.push({ field: "단가적용시작일", type: "<=", value: validDate });
+	    filters.push({ field: "단가적용종료일", type: ">=", value: validDate });
+	  }
+
+	  // ✅ 전역 Tabulator 인스턴스 직접 참조
+	  const table = window.priceTableInstance;
+
+	  if (table) {
+	    table.clearFilter();     // 기존 필터 제거
+	    table.setFilter(filters); // 새로운 필터 적용
+	    console.log("✅ 클라이언트 필터 적용 완료:", filters);
+	  } else {
+	    console.error("❌ priceTableInstance가 초기화되지 않았습니다.");
+	    alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+	  }
+	};
+
+	// ✅ Tabulator 준비될 때까지 검색 버튼 비활성화 → 이후 자동 활성화
+	document.addEventListener("DOMContentLoaded", function () {
+	  const searchButton = document.querySelector('.btn.btn-warning.me-2.btn-sm');
+	  if (searchButton) {
+	    searchButton.disabled = true;
+
+	    const waitForTable = setInterval(() => {
+	      if (window.priceTableInstance) {
+	        clearInterval(waitForTable);
+	        searchButton.disabled = false;
+	        console.log("✅ Tabulator 준비 완료 — 검색 버튼 활성화됨");
+	      }
+	    }, 300);
+	  }
+	});
+
+
+
+
+
+	// ★ 초기화 버튼 이벤트 핸들러 (전체 목록 보기)
+	window.resetSearch = function() {
+	  const searchTool = document.querySelector('.searchTool');
+	  searchTool.querySelectorAll('input[type=text], input[type=date]').forEach(el => el.value = '');
+
+	  const table = Tabulator.findTable("#priceTable")[0];
+	  if (table) {
+	    table.clearFilter();
+	    console.log("✅ 검색조건 및 필터 초기화 완료");
+	  }
+	};
+
 
 });

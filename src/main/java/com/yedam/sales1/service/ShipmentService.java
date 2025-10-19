@@ -3,6 +3,7 @@ package com.yedam.sales1.service;
 import java.util.List;
 import java.util.Map;
 
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.domain.Shipment;
 import com.yedam.sales1.dto.ShipmentRegistrationDTO; // DTO 임포트 추가
 
@@ -12,6 +13,9 @@ public interface ShipmentService {
 	Map<String, Object> getTableDataFromShipments(List<Shipment> shipments);
 	
 	Shipment saveShipment(Shipment shipments);
+	
+	List<Shipment> getFilterShipment(Shipment searchVo);
+
 	
 
 	String registerNewShipment(ShipmentRegistrationDTO dto); 

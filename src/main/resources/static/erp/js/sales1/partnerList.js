@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	let bankSelectOptions = {}; // 은행 코드 옵션을 저장할 객체
 
+	
+
+	
 	// 탭 전환 (Partner, LoanPrice, Payment)
 	function initTabSwitching() {
 		const tabButtons = document.querySelectorAll('#partnerTab button');
@@ -199,7 +202,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				bootstrap.Modal.getInstance(modalEl).hide();
 
 				// 등록 후 거래처 목록 새로고침 (메인 테이블 새로고침)
-				window.priceTableInstance.redraw();
+				window.partnerTableInstance.redraw();
 			})
 			.catch(err => {
 				console.error("저장실패 : ", err);
@@ -240,7 +243,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	// rows와 columns 변수는 이 파일 외부에 있다고 가정합니다.
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
-	window.priceTableInstance = tableInstance;
+	window.partnerTableInstance = tableInstance;
 
 
 	/**
@@ -271,6 +274,31 @@ document.addEventListener("DOMContentLoaded", function() {
 			newRowCheckbox.checked = false;
 			newRowCheckbox.disabled = true;
 		}
+	}
+	
+	
+	function autoTab(current, nextId, maxLength) {
+		if (current.value.length >= maxLength) {
+			document.getElementById(nextId)?.focus();
+		}
+		if (current.id.startsWith('biz')) updateBusinessNo();
+		if (current.id.startsWith('phone')) updatePhoneNo();
+	}
+
+	function updateBusinessNo() {
+		const biz1 = document.getElementById('biz1').value.trim();
+		const biz2 = document.getElementById('biz2').value.trim();
+		const biz3 = document.getElementById('biz3').value.trim();
+		const fullBizNo = [biz1, biz2, biz3].filter(Boolean).join('-');
+		document.getElementById('businessNo').value = fullBizNo;
+	}
+
+	function updatePhoneNo() {
+		const p1 = document.getElementById('phone1').value.trim();
+		const p2 = document.getElementById('phone2').value.trim();
+		const p3 = document.getElementById('phone3').value.trim();
+		const fullPhone = [p1, p2, p3].filter(Boolean).join('-');
+		document.getElementById('partnerPhone').value = fullPhone;
 	}
 
 	/**
@@ -309,7 +337,68 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+	function loadTableData(params = {}) {
+		const queryString = new URLSearchParams(params).toString();
+		const url = `/api/partner/search?${queryString}`;
 
+		// 로딩 상태 표시
+		if (window.partnerTableInstance) {
+			// Tabulator의 기본 로딩 애니메이션을 사용하거나, 수동으로 로딩 표시 가능
+		}
+
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('데이터 요청 실패: ' + response.statusText);
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log("검색 결과 데이터:", data);
+
+				// ★ 3. 검색 결과를 Tabulator에 반영하는 핵심 로직
+				if (window.partnerTableInstance) {
+					window.partnerTableInstance.setData(data);
+				}
+			})
+			.catch(error => {
+				console.error('데이터 로딩 중 오류 발생:', error);
+				alert('데이터를 가져오는 데 실패했습니다.');
+
+				// 오류 발생 시 빈 배열로 설정하여 테이블 정리
+				if (window.partnerTableInstance) {
+					window.partnerTableInstance.setData([]);
+				}
+			});
+	}
+	
+	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+	window.filterSearch = function() {
+		const searchParams = getSearchParams('.searchTool');
+
+		console.log("서버로 보낼 검색 조건:", searchParams);
+
+		// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
+		loadTableData(searchParams);
+	}
+
+
+	// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
+	window.resetSearch = function() {
+		// 검색 조건 필드 초기화 로직 (실제 DOM 구조에 맞게 수정 필요)
+		const searchTool = document.querySelector('.searchTool');
+		searchTool.querySelectorAll('input[type=text], select').forEach(el => {
+			if (el.tagName === 'SELECT' && el.choicesInstance) {
+				// Choices.js 인스턴스 초기화
+				el.choicesInstance.setChoiceByValue('');
+			} else {
+				el.value = '';
+			}
+		});
+
+		// 검색 조건 없이 데이터 로딩 함수 호출 (searchVo가 빈 상태로 넘어가 전체 목록 조회)
+		loadTableData({});
+	}
 
 
 

@@ -17,7 +17,6 @@
 	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-quartz.css" />
-
 </head>
 <body layout:fragment="content">
 
@@ -28,9 +27,8 @@
 					<h1 class="mt-4">거래처관리</h1>
 				</div>
 
-
+				<!-- 🔍 검색 영역 -->
 				<div class="searchTool d-flex align-items-end mb-3">
-
 					<div class="me-5 d-flex flex-column align-items-start">
 						<label for="partnerNameSearch"
 							class="col-form-label fw-bold text-nowrap">거래처명</label>
@@ -38,23 +36,19 @@
 							<div class="input-group input-group-sm">
 								<input type="text" class="form-control w-auto"
 									placeholder="검색어 입력" id="partnerNameSearch">
-								<button class="btn btn-outline-secondary" type="button"
-									onclick="openSalesModal()">
-									<i class="bi bi-search"></i>
-								</button>
 							</div>
 						</div>
 					</div>
 
-
 					<div class="d-flex">
 						<button class="btn btn-warning me-2 btn-sm"
-							onclick="filterSelect()">검색</button>
-						<button class="btn btn-dark btn-sm" onclick="filterReset()">초기화</button>
+							onclick="filterSearch()">검색</button>
+						<button class="btn btn-dark btn-sm"
+							onclick="filterReset('.searchTool')">초기화</button>
 					</div>
-
 				</div>
 
+				<!-- 상단 버튼 -->
 				<div class="d-flex align-items-center mb-3 justify-content-end">
 					<button class="btn btn-primary me-2"
 						onclick="showDetailModal('regist')">신규</button>
@@ -64,6 +58,7 @@
 					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
 
+				<!-- 컬럼 체크박스 -->
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
@@ -72,11 +67,10 @@
 					</label>
 				</div>
 
-
+				<!-- 테이블 -->
 				<div id="productTable"></div>
 
-
-
+				<!-- 상세 모달 -->
 				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-xl modal-dialog-centered">
@@ -93,36 +87,47 @@
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
+
 							<div>
 								<div class="btn-group btn-type ms-2" role="group"
 									aria-label="type-filter" id="partnerTab">
 									<button type="button" class="btn btn-primary"
 										data-type="PARTNER">거래처</button>
 									<button type="button" class="btn btn-outline-primary"
-										data-type="LOANPRICE">여신/단가</button>
+										data-type="LOANPRICE">여신 / 단가</button>
 									<button type="button" class="btn btn-outline-primary"
 										data-type="PAYMENT">결제정보</button>
 								</div>
 							</div>
+
 							<div class="modal-body">
+
+								<!-- 거래처 탭 -->
 								<div id="tab-partner" class="tab-content">
 									<form id="partnerForm">
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">거래처명*</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">거래처코드</label>
+											<div class="col-sm-9">
+												<input type="text" class="form-control" name="partnerCode" placeholder="자동생성" readonly>
+											</div>
+										</div>
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label" style="width: 120px;">거래처명*</label>
 											<div class="col-sm-9">
 												<input type="text" class="form-control" name="partnerName"
 													placeholder="정확한 상호명으로 입력" required>
 											</div>
 										</div>
+
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">대표자명</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">대표자명</label>
 											<div class="col-sm-9">
 												<input type="text" class="form-control" name="ceoName">
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">거래처유형*</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">거래처유형*</label>
 											<div class="col-sm-9 d-flex align-items-center">
 												<div class="form-check me-3">
 													<input class="form-check-input" type="radio"
@@ -138,7 +143,7 @@
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">담당자</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">담당자</label>
 											<div class="col-sm-9">
 												<div class="input-group">
 													<input type="text" class="form-control" name="manager"
@@ -150,40 +155,59 @@
 											</div>
 										</div>
 
+										<!-- 사업자등록번호 -->
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">사업자등록번호</label>
-											<div class="col-sm-9">
-												<input type="text" class="form-control" name="businessNo">
+											<label class="col-sm-3 col-form-label" style="width: 120px;">사업자등록번호</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<input type="text" class="form-control me-2 text-center"
+													style="width: 80px;" maxlength="3" id="biz1"
+													oninput="autoTab(this, 'biz2', 3)"> <span
+													class="me-2">-</span> <input type="text"
+													class="form-control me-2 text-center" style="width: 50px;"
+													maxlength="2" id="biz2" oninput="autoTab(this, 'biz3', 2)">
+												<span class="me-2">-</span> <input type="text"
+													class="form-control text-center" style="width: 100px;"
+													maxlength="5" id="biz3" oninput="updateBusinessNo()">
+												<input type="hidden" name="businessNo" id="businessNo">
+											</div>
+										</div>
+
+										<!-- 연락처 -->
+										<div class="row mb-3">
+											<label class="col-sm-3 col-form-label" style="width: 120px;">연락처*</label>
+											<div class="col-sm-9 d-flex align-items-center">
+												<input type="text" class="form-control me-2 text-center"
+													style="width: 70px;" maxlength="3" id="phone1"
+													oninput="autoTab(this, 'phone2', 3)"> <span
+													class="me-2">-</span> <input type="text"
+													class="form-control me-2 text-center" style="width: 90px;"
+													maxlength="4" id="phone2"
+													oninput="autoTab(this, 'phone3', 4)"> <span
+													class="me-2">-</span> <input type="text"
+													class="form-control text-center" style="width: 90px;"
+													maxlength="4" id="phone3" oninput="updatePhoneNo()"
+													required> <input type="hidden" name="partnerPhone"
+													id="partnerPhone">
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">연락처*</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">업태</label>
 											<div class="col-sm-9">
-												<input type="text" class="form-control" name="partnerPhone"
-													required>
+												<select class="form-select comboSelect" name="businessType"></select>
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">업태</label>
-											<div class="col-sm-9">
-												<select class="form-select comboSelect" name="businessType">
-												</select>
-											</div>
-										</div>
-
-										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">업종</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">업종</label>
 											<div class="col-sm-9">
 												<select class="form-select comboSelect"
-													name="businessSector">
-												</select>
+													name="businessSector"></select>
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">우편번호</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">우편번호</label>
 											<div class="col-sm-9">
 												<div class="input-group">
 													<input type="text" class="form-control" name="postCode"
@@ -197,7 +221,7 @@
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">주소</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">주소</label>
 											<div class="col-sm-9">
 												<input type="text" class="form-control" name="address"
 													id="address" readonly placeholder="우편번호 검색 시 자동 입력">
@@ -207,13 +231,12 @@
 										<div id="postcodeLayer">
 											<div class="close-btn text-end">
 												<button type="button" class="btn-close"
-													onclick="document.getElementById('postcodeLayer').style.display='none'">
-												</button>
+													onclick="document.getElementById('postcodeLayer').style.display='none'"></button>
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">E-mail</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">E-mail</label>
 											<div class="col-sm-9 d-flex align-items-center">
 												<input type="text"
 													class="form-control email-input me-1 w-50" name="emailId">
@@ -226,7 +249,7 @@
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">비고</label>
+											<label class="col-sm-3 col-form-label" style="width: 120px;">비고</label>
 											<div class="col-sm-9">
 												<textarea class="form-control" name="remarks" rows="3"></textarea>
 											</div>
@@ -234,12 +257,13 @@
 									</form>
 								</div>
 
+								<!-- 여신 / 단가 탭 -->
 								<div id="tab-loanprice" class="tab-content d-none">
 									<form id="loanForm">
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">수금/지급예정일</label>
+											<label class="col-sm-3 col-form-label" style="width: 140px;">수금/지급예정일</label>
 											<div class="col-sm-9 d-flex align-items-center">
-												<div class="**col-6** me-3">
+												<div class="col-6 me-3">
 													<input type="number" class="form-control" name="dueDay"
 														required>
 												</div>
@@ -247,34 +271,29 @@
 											</div>
 										</div>
 
-
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">단가그룹</label>
+											<label class="col-sm-3 col-form-label" style="width: 140px;">단가그룹</label>
 											<div class="col-sm-9 d-flex align-items-center">
-
-												<div class="**col-6** me-3">
+												<div class="col-6 me-3">
 													<div class="input-group">
 														<input type="text" class="form-control"
 															name="salesPriceGroupName">
-														<button class="btn btn-outline-secondary" type="button"
-															onclick="execDaumPostcode()">
+														<button class="btn btn-outline-secondary" type="button">
 															<i class="bi bi-search"></i>
 														</button>
 													</div>
 												</div>
-
-												<div class="**col-2** d-flex align-items-center">
+												<div class="col-2 d-flex align-items-center">
 													<input type="text" class="form-control"
 														name="salesDiscountRate"> <span class="ms-2">%</span>
 												</div>
-
 											</div>
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">여신기간</label>
+											<label class="col-sm-3 col-form-label" style="width: 140px;">여신기간</label>
 											<div class="col-sm-9 d-flex align-items-center">
-												<div class="**col-2** me-2">
+												<div class="col-2 me-2">
 													<input type="number" class="form-control" name="loanPeriod">
 												</div>
 												개월
@@ -282,7 +301,7 @@
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">여신한도</label>
+											<label class="col-sm-3 col-form-label" style="width: 140px;">여신한도</label>
 											<div class="col-sm-9">
 												<div class="col-6 p-0">
 													<input type="number" class="form-control" name="loanLimit">
@@ -291,18 +310,16 @@
 										</div>
 
 										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label">비고</label>
+											<label class="col-sm-3 col-form-label" style="width: 140px;">비고</label>
 											<div class="col-sm-9">
 												<input type="text" class="form-control" name="loanRemarks">
 											</div>
 										</div>
-
 									</form>
 								</div>
 
-
+								<!-- 결제정보 탭 -->
 								<div id="tab-payment" class="tab-content d-none">
-
 									<div class="d-flex justify-content-end mb-3">
 										<button type="button"
 											class="btn btn-sm btn-outline-success me-2"
@@ -355,22 +372,23 @@
 									</div>
 								</div>
 
-
 							</div>
-
-
+							<!-- modal-body -->
 						</div>
 					</div>
 				</div>
+
 			</div>
 		</main>
 	</div>
+
 	<div th:replace="common/modal :: commonModal"></div>
 
 	<script th:inline="javascript">
 		var columns = /*[[${columns}]]*/[];
 		var rows = /*[[${rows}]]*/[];
 	</script>
+
 	<script
 		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 	<script
@@ -381,7 +399,7 @@
 		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 	<script
 		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
 	<script th:src="@{/erp/js/sales1/salesCommon.js}"></script>
 	<script th:src="@{/erp/js/sales1/partnerList.js}"></script>
 </body>
-</html>

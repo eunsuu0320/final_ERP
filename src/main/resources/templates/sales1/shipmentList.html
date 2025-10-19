@@ -53,19 +53,37 @@
 								</div>
 							</div>
 						</div>
+
+
+
 						<div>
-							<label for="partnerCode" class="me-3">거래처</label>
+							<label for="partnerNameSearch" class="me-3">거래처</label>
 							<div class="me-5 d-flex align-items-center">
 								<div class="input-group input-group-sm">
+									<input type="hidden" id="partnerCodeSearch" name="partnerCode">
 									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="partnerName">
+										placeholder="검색어 입력" id="partnerNameSearch">
 									<button class="btn btn-outline-secondary" type="button"
-										onclick="execDaumPostcode()">
+										onclick="openModal('salesPartner', function(selected) {
+                    document.getElementById('partnerNameSearch').value = selected.partnerName;
+                    document.getElementById('partnerCodeSearch').value = selected.partnerCode;
+
+                })">
 										<i class="bi bi-search"></i>
 									</button>
 								</div>
 							</div>
 						</div>
+
+
+
+
+
+
+
+
+
+
 						<div>
 							<label for="productCode" class="me-3">품목</label>
 							<div class="me-5 d-flex align-items-center">
@@ -146,8 +164,6 @@
 										onclick="saveModal()">저장</button>
 									<button type="button" class="btn btn-dark me-3"
 										onclick="resetQuote()">초기화</button>
-									<button type="button" class="btn btn-secondary me-3"
-										onclick="selectOrder()">주문서조회</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"
 										aria-label="Close"></button>
 								</div>
@@ -337,14 +353,13 @@
 									</div>
 								</form>
 
-								<h6 class="mt-4 mb-2 fw-bold">2. 출하항목</h6>
-								<div class="d-flex justify-content-end mb-3">
-									<button type="button"
-										class="btn btn-sm btn-outline-success me-2"
-										onclick="addItemRow()">+ 행 추가</button>
-									<button type="button" class="btn btn-sm btn-outline-danger"
-										onclick="deleteSelectedItemRows()">- 선택 삭제</button>
+								<div
+									class="d-flex justify-content-between align-items-center mt-4 mb-2">
+									<h6 class="fw-bold mb-0">2. 출하항목</h6>
+									<button type="button" class="btn btn-secondary"
+										onclick="selectOrder()">주문서조회</button>
 								</div>
+
 								<div class="table-responsive">
 									<table id="quoteDetailTable"
 										class="table table-bordered table-sm">
@@ -352,10 +367,12 @@
 											<tr>
 												<th style="width: 30px;"></th>
 												<th style="width: 15%;">품목코드*</th>
-												<th style="width: 25%;">품목명</th>
-												<th style="width: 10%;">규격</th>
-												<th style="width: 10%;">창고수량*</th>
-												<th style="width: 10%;">수량*</th>
+												<th style="width: 15%;">품목명</th>
+												<th style="width: 10%;">총수량</th>
+												<th style="width: 10%;">지시완료수량</th>
+												<th style="width: 10%;">미지시수량</th>
+												<th style="width: 10%;">재고</th>
+												<th style="width: 10%;">현지시수량*</th>
 												<th style="width: 10%;">출하지시여부</th>
 												<th style="width: 15%;">비고</th>
 											</tr>
@@ -366,18 +383,23 @@
 													class="form-check-input"></td>
 												<td><input type="text"
 													class="form-select form-select-sm item-input"
-													name="productCode" placeholder="코드"
-													onblur="loadItemDetails(this)"></td>
+													name="productCode" placeholder="코드" readonly></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemName" readonly></td>
+													name="productName" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemSpec" readonly></td>
+													name="totalQuantity" disabled></td>
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="completeQuantity" disabled></td>
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="nonQuantity" disabled></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="warehouseQty" value="0"></td>
+													name="warehouseQty" disabled></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"

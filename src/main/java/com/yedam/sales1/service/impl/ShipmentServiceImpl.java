@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.domain.Partner;
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.domain.Shipment;
 import com.yedam.sales1.domain.ShipmentDetail;
 import com.yedam.sales1.dto.ShipmentRegistrationDTO;
@@ -50,7 +51,15 @@ public class ShipmentServiceImpl implements ShipmentService {
 
     @Override
     public List<Shipment> getAllShipment() {
-        return shipmentRepository.findAll();
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return shipmentRepository.findAll(companyCode);
+    }
+    
+    
+    @Override
+    public List<Shipment> getFilterShipment(Shipment searchVo) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return shipmentRepository.findByFilter(searchVo, companyCode);
     }
 
     @Override
