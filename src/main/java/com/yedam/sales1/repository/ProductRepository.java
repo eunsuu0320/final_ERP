@@ -15,7 +15,10 @@ import com.yedam.sales1.domain.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
-	List<Product> findAll();
+	@Query("SELECT p FROM Product p " 
+			+ "WHERE p.companyCode = :companyCode " 
+			+ "And p.usageStatus = 'Y' ")
+	List<Product> findAll(@Param("companyCode") String companyCode);
 
 	// 회사코드별 사원 조회
 	@Query("""
@@ -28,10 +31,12 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 	String findMaxProductCode();
 
 	@Query("SELECT p FROM Product p "
-			+ "WHERE (:#{#searchVo.productName} IS NULL OR p.productName LIKE %:#{#searchVo.productName}%) "
+			+ "WHERE (:#{#searchVo.productCode} IS NULL OR p.productCode = :#{#searchVo.productCode}) "
+			+ "AND (:#{#searchVo.productName} IS NULL OR p.productName LIKE %:#{#searchVo.productName}%) "
 			+ "AND (:#{#searchVo.productGroup} IS NULL OR p.productGroup = :#{#searchVo.productGroup}) "
-			+ "AND (:#{#searchVo.warehouseCode} IS NULL OR p.warehouseCode = :#{#searchVo.warehouseCode})")
-	List<Product> findByFilter(@Param("searchVo") Product searchVo);
+			+ "AND (:#{#searchVo.warehouseCode} IS NULL OR p.warehouseCode = :#{#searchVo.warehouseCode}) "
+			+ "And p.usageStatus = 'Y' " + "And p.companyCode = :companyCode ")
+	List<Product> findByFilter(@Param("searchVo") Product searchVo, @Param("companyCode") String companyCode);
 
 	Product findByProductCode(String productCode);
 

@@ -27,52 +27,31 @@
 				<div class="searchTool d-flex align-items-center mb-3">
 					<div class="d-flex">
 
-						<div class="me-5">
-							<label for="partnerNameSearch" class="me-3">거래처명</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="hidden" id="partnerCode" name="partnerCode">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="partnerName">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openModal('partner', function(selected) {
-					                    document.getElementById('partnerName').value=selected.partnerName;
-									document.getElementById('partnerCode').value=selected.partnerCode;})">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
+
+
+						<div class="d-flex align-items-end">
+							<div class="me-5 flex-fill">
+								<label for="priceGroupCodeSearch" class="me-3">단가그룹코드</label> <input
+									type="text" class="form-control form-control-sm"
+									placeholder="검색어 입력" id="priceGroupCodeSearch">
+
+							</div>
+
+
+
+							<div class="me-5 flex-fill">
+								<label for="priceGroupNameSearch" class="me-3">단가그룹명</label> <input
+									type="text" class="form-control form-control-sm"
+									placeholder="검색어 입력" id="priceGroupNameSearch">
+							</div>
+
+							<div class="me-5 flex-fill">
+								<label for="validDateSearch" class="me-3">기준일자</label> <input
+									type="date" class="form-control form-control-sm"
+									id="validDateSearch">
 							</div>
 						</div>
 
-
-						<div class="me-5">
-							<label for="productNameSearch" class="me-3">품목명</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="productNameSearch">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</div>
-
-
-						<div class="me-5">
-							<label for="priceGroupSearch" class="me-3">단가그룹</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="priceGroupSearch">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</div>
 
 					</div>
 					<div class="d-flex flex-column align-items-start ms-3">
@@ -115,7 +94,33 @@
 					</label>
 				</div>
 
+ <div id="priceTableContainer" style="position: relative; min-height: 420px;">
 
+      <!-- 회색 불투명 로딩 오버레이 -->
+      <div id="loading-overlay"
+           style="
+             display: none;
+             position: absolute;
+             top: 0;
+             left: 0;
+             width: 100%;
+             height: 100%;
+             background-color: #ffffff;
+             z-index: 10;
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             flex-direction: column;
+             font-family: 'Noto Sans KR', sans-serif;
+             color: #333;
+           ">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+        <p class="mt-3 fw-bold">데이터를 불러오는 중...</p>
+      </div>
+
+      <!-- Tabulator가 붙는 실제 테이블 영역 -->
+      <div id="productTable" style="min-height: 400px; border: 1px solid #dee2e6;"></div>
+    </div>
 
 
 

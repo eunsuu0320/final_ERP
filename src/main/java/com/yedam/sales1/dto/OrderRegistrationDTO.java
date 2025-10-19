@@ -35,5 +35,9 @@ public class OrderRegistrationDTO {
     // 5. OrdersServiceImpl에서 getDetailList() 사용
     private List<OrderDetail> detailList;
     
+    private Integer postCode;
+    private String address;
+    private String payCondition;
+    
     // 이전 DTO에 있던 validPeriod는 주문서 등록 로직에 필요하지 않아 제거했습니다.
 }

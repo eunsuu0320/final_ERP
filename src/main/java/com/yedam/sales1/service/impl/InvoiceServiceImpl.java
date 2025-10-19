@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.yedam.sales1.domain.EstimateDetail;
 import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.domain.InvoiceDetail;
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.InvoiceRegistrationDTO;
 import com.yedam.sales1.repository.EstimateDetailRepository;
 import com.yedam.sales1.repository.InvoiceDetailRepository;
@@ -40,6 +41,13 @@ public class InvoiceServiceImpl implements InvoiceService {
 	public List<Invoice> getAllInvoice() {
 		return invoiceRepository.findAll();
 	}
+	
+	
+	
+    @Override
+    public List<Invoice> getFilterInvoice(Invoice searchVo) {
+        return invoiceRepository.findByFilter(searchVo);
+    }
 
 	@Override
 	public Map<String, Object> getTableDataFromInvoice(List<Invoice> invoices) {

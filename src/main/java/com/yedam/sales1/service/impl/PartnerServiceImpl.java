@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.yedam.sales1.domain.Loan;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Payment;
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.PartnerRegistrationDTO;
 import com.yedam.sales1.repository.LoanRepository;
 import com.yedam.sales1.repository.PartnerPaymentRepository;
@@ -38,9 +39,17 @@ public class PartnerServiceImpl implements PartnerService {
 
 	@Override
 	public List<Partner> getAllPartner() {
-		return partnerRepository.findAll();
+    	String companyCode = getCompanyCodeFromAuthentication();
+		return partnerRepository.findAll(companyCode);
 	}
 
+	
+    @Override
+    public List<Partner> getFilterPartner(Partner searchVo) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return partnerRepository.findByFilter(searchVo, companyCode);
+    }
+	
 	@Override
 	public Map<String, Object> getTableDataFromPartners(List<Partner> partners) {
 		List<Map<String, Object>> rows = new ArrayList<>();

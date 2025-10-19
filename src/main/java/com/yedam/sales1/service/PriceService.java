@@ -11,6 +11,9 @@ import com.yedam.sales1.domain.Product;
 public interface PriceService {
 	List<Price> getAllPrice();
 	
+	List<Price> getFilterPrice(Price searchVo);
+
+	
 	List<Price> getAllPricePartner();
 
 	List<Price> getAllPriceProduct();

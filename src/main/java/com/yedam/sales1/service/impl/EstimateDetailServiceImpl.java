@@ -30,6 +30,11 @@ public class EstimateDetailServiceImpl implements EstimateDetailService {
 		return estimateDetailRepository.save(estimateDetail);
 	}
 
+	@Override
+	public List<EstimateDetail> getEstimateDetailByEstimateUniqueCode(long estimateUniqueCode) {
+        return estimateDetailRepository.findByEstimateUniqueCode(estimateUniqueCode);
+	}
+
 
 
 }

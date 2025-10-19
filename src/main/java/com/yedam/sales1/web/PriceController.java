@@ -1,5 +1,6 @@
 package com.yedam.sales1.web;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -199,5 +200,40 @@ public class PriceController {
 	    
 	    
 	
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@GetMapping("api/price/search")
+	// 반환 타입을 Map 리스트로 변경해야 합니다.
+	public ResponseEntity<List<Map<String, Object>>> getPriceSearch(@ModelAttribute Price searchVo) {
+
+		System.out.println("조회 조건 Price VO: " + searchVo);
+
+		// 1. 기존처럼 필터링된 Product VO 리스트를 가져옵니다. (영문 키)
+		List<Price> prices = priceService.getFilterPrice(searchVo);
+
+		// 2. ★★★ 핵심 수정: 영문 키 리스트를 한글 키 Map으로 변환합니다. ★★★
+		Map<String, Object> tableData = priceService.getTableDataFromPrice(prices);
+
+		// 3. Map에서 Tabulator가 필요로 하는 'rows' (한글 키 리스트)만 추출합니다.
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> rows = (List<Map<String, Object>>) tableData.get("rows");
+
+		if (rows != null && !rows.isEmpty()) {
+			// 4. 한글 키 Map 리스트를 JSON 형태로 반환합니다.
+			return ResponseEntity.ok(rows);
+		} else {
+			// 검색 결과가 없는 경우, 빈 리스트를 JSON 형태로 반환
+			return ResponseEntity.ok(Collections.emptyList());
+		}
 	}
 }

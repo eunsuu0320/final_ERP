@@ -34,17 +34,30 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public List<Price> getAllPrice() {
-        return priceRepository.findAllWithAllRelations();
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return priceRepository.findAllWithAllRelations(companyCode);
+    }
+    
+    
+    @Override
+    public List<Price> getFilterPrice(Price searchVo) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findByFilter(searchVo, companyCode);
     }
 
     @Override
     public List<Price> getAllPricePartner() {
-        return priceRepository.findAllWithPartner();
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findAllWithPartner(companyCode);
     }
 
     @Override
     public List<Price> getAllPriceProduct() {
-        return priceRepository.findAllWithProduct();
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findAllWithProduct(companyCode);
     }
 
     @Override

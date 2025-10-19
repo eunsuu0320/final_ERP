@@ -29,6 +29,20 @@
 
 						<div class="me-5 d-flex flex-column align-items-start"
 							style="width: 200px;">
+							<label for="productCodeSearch"
+								class="col-form-label fw-bold text-nowrap">품목코드</label>
+							<div class="d-flex align-items-center w-100">
+								<div class="input-group input-group-sm w-100">
+									<input type="text" class="form-control" placeholder="검색어 입력"
+										id="productCodeSearch">
+								</div>
+							</div>
+						</div>
+
+
+
+						<div class="me-5 d-flex flex-column align-items-start"
+							style="width: 200px;">
 							<label for="productNameSearch"
 								class="col-form-label fw-bold text-nowrap">품목명</label>
 							<div class="d-flex align-items-center w-100">
@@ -97,7 +111,7 @@
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '품목코드' or col == '품목명' or col == '품목그룹' or col == '규격/단위' or col == '이미지' or col == '창고코드' or col == '비고'}" />
+						th:checked="${col == '품목코드' or col == '품목명' or col == '품목그룹' or col == '규격/단위' or col == '입고단가' or col == '출고단가' or col == '이미지' or col == '창고코드' or col == '비고'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -133,8 +147,6 @@
 										onclick="saveModal()">저장</button>
 									<button type="button" class="btn btn-dark"
 										onclick="resetModal()">초기화</button>
-									<button type="button" class="btn btn-secondary"
-										onclick="getModal()">가져오기</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
@@ -144,7 +156,7 @@
 										<label class="col-sm-3 col-form-label">품목코드</label>
 										<div class="col-sm-9">
 											<input type="text" class="form-control display-code-field"
-												id="displayProductCode" readonly placeholder="자동생성">
+												id="displayProductCode" placeholder="자동생성" disabled>
 											<input type="hidden" name="productCode" id="productCode">
 										</div>
 									</div>
@@ -181,9 +193,19 @@
 										</div>
 									</div>
 									<div class="row mb-3">
-										<label class="col-sm-3 col-form-label">기준단가</label>
+										<label class="col-sm-3 col-form-label">입고단가</label>
 										<div class="col-sm-9">
-											<input type="number" class="form-control" name="price">
+											<input type="text" class="form-control" id="inPriceDisplay"
+												oninput="koKRformatter(this)"> <input type="hidden"
+												id="inPrice" name="inPrice">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label class="col-sm-3 col-form-label">출고단가</label>
+										<div class="col-sm-9">
+											<input type="text" class="form-control" id="outPriceDisplay"
+												oninput="koKRformatter(this)"> <input type="hidden"
+												id="outPrice" name="outPrice">
 										</div>
 									</div>
 									<div class="row mb-3">

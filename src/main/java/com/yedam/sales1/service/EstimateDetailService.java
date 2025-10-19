@@ -8,4 +8,6 @@ public interface EstimateDetailService {
 	List<EstimateDetail> getAllEstimateDetail();
 	
 	EstimateDetail saveEstimateDetail(EstimateDetail estimateDetail);
+	
+	List<EstimateDetail> getEstimateDetailByEstimateUniqueCode(long estimateUniqueCode);
 }

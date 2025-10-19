@@ -7,13 +7,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Price;
 
 @Repository
 public interface PriceRepository extends JpaRepository<Price, Long> {
 
-	List<Price> findAll();
+	@Query("SELECT p FROM Price p "
+		     + "WHERE p.companyCode = :companyCode")
+	List<Price> findAll(@Param("companyCode") String companyCode);
 
 	@Query("SELECT MAX(p.priceGroupCode) FROM Price p")
 	String findMaxPriceGroupCode();
@@ -31,17 +34,17 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
 	@Query("SELECT DISTINCT p FROM Price p " + "LEFT JOIN FETCH p.priceDetails pd " + "LEFT JOIN FETCH pd.product "
 			+ "LEFT JOIN FETCH pd.partner " // 공백 추가
 			+ "ORDER BY p.priceUniqueCode")
-	List<Price> findAllWithAllRelations();
+	List<Price> findAllWithAllRelations(@Param("companyCode") String companyCode);
 
 	@Query("SELECT DISTINCT p FROM Price p " + "JOIN FETCH p.priceDetails pd " + "JOIN FETCH pd.product "
 			+ "LEFT JOIN FETCH pd.partner " // 공백 추가
 			+ "ORDER BY p.priceUniqueCode")
-	List<Price> findAllWithProduct();
+	List<Price> findAllWithProduct(@Param("companyCode") String companyCode);
 
 	@Query("SELECT DISTINCT p FROM Price p " + "JOIN FETCH p.priceDetails pd " + "LEFT JOIN FETCH pd.product "
 			+ "JOIN FETCH pd.partner " // 공백 추가
 			+ "ORDER BY p.priceUniqueCode")
-	List<Price> findAllWithPartner();
+	List<Price> findAllWithPartner(@Param("companyCode") String companyCode);
 
 	@Query("SELECT pd.partnerCode " + "FROM PriceDetail pd " + "INNER JOIN Price p "
 			+ "ON pd.priceUniqueCode = p.priceUniqueCode " + "WHERE pd.partnerCode IS NOT NULL and p.priceUniqueCode = :priceUniqueCode")
@@ -51,5 +54,19 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
 			+ "ON pd.priceUniqueCode = p.priceUniqueCode "
 			+ "WHERE pd.productCode IS NOT NULL and p.priceUniqueCode = :priceUniqueCode")
 	List<String> findProductCodes(@Param("priceUniqueCode") Integer priceUniqueCode);
+	
+	
+	
+	
+	
+	@Query("SELECT p FROM Price p "
+		     + "WHERE (:#{#searchVo.priceGroupCode} IS NULL OR p.priceGroupCode = :#{#searchVo.priceGroupCode}) "
+		     + "AND (:#{#searchVo.priceGroupName} IS NULL OR p.priceGroupName LIKE %:#{#searchVo.priceGroupName}%) "
+		     + "AND (:#{#searchVo.validDate} IS NULL OR "
+		     + "     (:#{#searchVo.validDate} BETWEEN p.startDate AND p.endDate)) "
+		     + "AND p.companyCode = :companyCode")
+		List<Price> findByFilter(@Param("searchVo") Price searchVo, 
+		                         @Param("companyCode") String companyCode);
+
 
 }
