@@ -1,99 +1,98 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-	<!-- 급여정보입력 모달 -->
-	<div th:fragment="salaryModal">
-		<div class="modal fade" id="salaryModal" tabindex="-1"
-			aria-hidden="true">
-			<div class="modal-dialog modal-lg">
-				<div class="modal-content">
+  <!-- 급여정보입력 모달 -->
+  <div th:fragment="salaryModal">
+    <div class="modal fade" id="salaryModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
 
-					<!-- 헤더 -->
-					<div class="modal-header ">
-						<h5 class="modal-title">급여정보입력</h5>
-						<div class="ms-auto d-flex align-items-center">
-							<button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
-							<button type="button" class="btn btn-outline-dark me-2" id="btn-save-reset">초기화</button>
-							<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-						</div>
-					</div>
+          <!-- 헤더 -->
+          <div class="modal-header ">
+            <h5 class="modal-title">급여정보입력</h5>
+            <div class="ms-auto d-flex align-items-center">
+              <button type="button" class="btn btn-primary me-2" id="btn-save-emp">저장</button>
+              <button type="button" class="btn btn-outline-dark me-2" id="btn-save-reset">초기화</button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+          </div>
 
-					<!-- 바디 -->
-					<div class="modal-body">
-						<form id="salaryForm" class="row g-3">
+          <!-- 바디 -->
+          <div class="modal-body">
+            <form id="salaryForm" class="row g-3">
 
-							<!-- 급여대장명칭 -->
-							<div class="col-12">
-								<label class="form-label">명칭</label>
-								<input type="text" class="form-control" name="payName" id="payName" placeholder="급여대장명">
-							</div>
+              <!-- 급여대장명칭 -->
+              <div class="col-12">
+                <label class="form-label">명칭</label>
+                <input type="text" class="form-control" name="payName" id="payName" placeholder="급여대장명">
+              </div>
 
-							<!-- 귀속연월 -->
-							<div class="col-md-4">
-								<label class="form-label">귀속연월</label>
-								<div class="d-flex gap-1">
-									<select class="form-select" name="payYear" id="payYear"></select>
-									<select class="form-select" name="payMonth" id="payMonth"></select>
-								</div>
-							</div>
+              <!-- 지급일 : 내장 달력 -->
+              <div class="col-md-4">
+                <label class="form-label">지급일</label>
+                <input type="date" class="form-control" name="payDate" id="payDate">
+              </div>
 
-							<!-- 지급구분 -->
-							<div class="col-md-4">
-								<label class="form-label">지급구분</label> <select
-									class="form-select" name="payType" id="payType">
-									<option value="1차수">1차수</option>
-									<option value="2차수">2차수</option>
-								</select>
-							</div>
+              <!-- 지급연월 (기존 유지) -->
+              <div class="col-md-4">
+                <label class="form-label">지급연월</label>
+                <div class="d-flex gap-1">
+                  <select class="form-select" name="payYear2" id="payYear2"></select>
+                  <select class="form-select" name="payMonth2" id="payMonth2"></select>
+                </div>
+              </div>
 
-							<!-- 정산기간 -->
-							<div class="col-12">
-								<label class="form-label">정산기간</label>
-								<div class="d-flex gap-2">
-									<select class="form-select" name="startYear" id="startYear"></select>
-									<select class="form-select" name="startMonth" id="startMonth"></select>
-									<select class="form-select" name="startDay" id="startDay"></select>
-									<span class="align-self-center">~</span>
-									<select class="form-select" name="endYear" id="endYear"></select>
-									<select class="form-select" name="endMonth" id="endMonth"></select>
-									<select class="form-select" name="endDay" id="endDay"></select>
-								</div>
-							</div>
+              <!-- 지급구분 -->
+              <div class="col-md-4">
+                <label class="form-label">지급구분</label>
+                <select class="form-select" name="payType" id="payType">
+                  <option value="1차수">1차수</option>
+                  <option value="2차수">2차수</option>
+                </select>
+              </div>
 
-							<!-- 대상기간 -->
-							<div class="col-12">
-								<label class="form-label">대상기간</label>
-								<div class="d-flex gap-2 mt-2">
-									<select class="form-select" name="targetStartYear" id="targetStartYear"></select>
-									<select class="form-select" name="targetStartMonth" id="targetStartMonth"></select>
-									<select class="form-select" name="targetStartDay" id="targetStartDay"></select>
-									<span class="align-self-center">~</span>
-									<select class="form-select" name="targetEndYear" id="targetEndYear"></select>
-									<select class="form-select" name="targetEndMonth" id="targetEndMonth"></select>
-									<select class="form-select" name="targetEndDay" id="targetEndDay"></select>
-								</div>
-							</div>
+              <!-- 정산기간 : 시작/종료 내장 달력 + 숨김 필드 -->
+              <div class="col-12">
+                <label class="form-label">정산기간</label>
+                <div class="d-flex gap-2">
+                  <input type="date" class="form-control" id="settleStartDate" aria-label="정산 시작일">
+                  <span class="align-self-center">~</span>
+                  <input type="date" class="form-control" id="settleEndDate" aria-label="정산 종료일">
+                </div>
+                <!-- 서버 전송용(기존 name 그대로 유지) -->
+                <input type="hidden" name="startYear"  id="startYear">
+                <input type="hidden" name="startMonth" id="startMonth">
+                <input type="hidden" name="startDay"   id="startDay">
+                <input type="hidden" name="endYear"    id="endYear">
+                <input type="hidden" name="endMonth"   id="endMonth">
+                <input type="hidden" name="endDay"     id="endDay">
+              </div>
 
-							<!-- 지급일 -->
-							<div class="col-md-6">
-								<label class="form-label">지급일</label>
-								<input type="date" class="form-control" name="payDate" id="payDate">
-							</div>
+              <!-- 대상기간 : 시작/종료 내장 달력 + 숨김 필드 -->
+              <div class="col-12">
+                <label class="form-label">대상기간</label>
+                <div class="d-flex gap-2 mt-2">
+                  <input type="date" class="form-control" id="targetStartDate" aria-label="대상 시작일">
+                  <span class="align-self-center">~</span>
+                  <input type="date" class="form-control" id="targetEndDate" aria-label="대상 종료일">
+                </div>
+                <!-- 서버 전송용(기존 name 그대로 유지) -->
+                <input type="hidden" name="targetStartYear"  id="targetStartYear">
+                <input type="hidden" name="targetStartMonth" id="targetStartMonth">
+                <input type="hidden" name="targetStartDay"   id="targetStartDay">
+                <input type="hidden" name="targetEndYear"    id="targetEndYear">
+                <input type="hidden" name="targetEndMonth"   id="targetEndMonth">
+                <input type="hidden" name="targetEndDay"     id="targetEndDay">
+              </div>
 
-							<!-- 지급연월 -->
-							<div class="col-md-6">
-								<label class="form-label">지급연월</label>
-								<div class="d-flex gap-1">
-									<select class="form-select" name="payYear2" id="payYear2"></select>
-									<select class="form-select" name="payMonth2" id="payMonth2"></select>
-								</div>
-							</div>
-						</form>
-					</div>
-					<script src="/hr/js/salaryModal.js"></script>
-				</div>
-			</div>
-		</div>
-	</div>
+            </form>
+          </div>
+
+          <!-- 초기화 로직은 외부 파일에서 -->
+          <script src="/hr/js/salaryModal.js"></script>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

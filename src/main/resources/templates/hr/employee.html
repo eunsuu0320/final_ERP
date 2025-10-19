@@ -77,13 +77,19 @@
       }).open();
     };
 
-    // ===== 이력조회 Tabulator =====
+ // ===== 이력조회 Tabulator =====
     const historyTable = new Tabulator("#history-table", {
       layout: "fitColumns",
       pagination: "local",
       paginationSize: 10,
       placeholder: "이력 데이터가 없습니다.",
       movableColumns: true,
+      // ↓ 렌더링 부하 줄이기 옵션
+      virtualDom: true,
+      progressiveRender: true,
+      progressiveRenderSize: 200,
+      progressiveRenderMargin: 200,
+
       columns: [
         { title: "이력", field: "eventType", hozAlign: "center", width: 120 },
         { title: "사원", field: "name", hozAlign: "center", width: 120 },
@@ -107,70 +113,59 @@
     document.getElementById("historyModal")
       .addEventListener("shown.bs.modal", () => historyTable.redraw(true));
 
-    // 공통: companyCode 읽기
     function getCompanyCode() {
       return document.getElementById("companyCode")?.value || "";
     }
 
     async function openHistoryModal(companyCode) {
-    	  const url = `/api/history/${encodeURIComponent(companyCode)}`;
-    	  const historyModalEl = document.getElementById("historyModal");
-    	  const modal = bootstrap.Modal.getOrCreateInstance(historyModalEl);
+      const url = `/api/history/${encodeURIComponent(companyCode)}`; // 기존 엔드포인트
+      const historyModalEl = document.getElementById("historyModal");
+      const modal = bootstrap.Modal.getOrCreateInstance(historyModalEl);
 
-    	  if (!historyModalEl.classList.contains("show")) modal.show();
-    	  setTimeout(() => modal.handleUpdate && modal.handleUpdate(), 0);
+      if (!historyModalEl.classList.contains("show")) modal.show();
+      setTimeout(() => modal.handleUpdate && modal.handleUpdate(), 0);
 
-    	  // 전역 로딩 표시
-    	  showGlobalLoading("이력 불러오는 중...");
+      showGlobalLoading("이력 불러오는 중...");
 
-    	  try {
-    	    const res = await fetch(url, { headers: { "Accept": "application/json" } });
-    	    if (!res.ok) {
-    	      const text = await res.text().catch(() => "");
-    	      console.error("[history] HTTP", res.status, text?.slice(0, 300));
-    	      alert("이력 조회 실패: 서버 오류가 발생했습니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
+      try {
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("[history] HTTP", res.status, text?.slice(0, 300));
+          alert("이력 조회 실패: 서버 오류가 발생했습니다.");
+          await historyTable.setData([]);
+          return;
+        }
 
-    	    const raw = await res.text();
-    	    let payload;
-    	    try { payload = JSON.parse(raw); } catch {
-    	      alert("이력 조회 실패: 응답 형식이 올바르지 않습니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
+        // ✅ 바로 JSON으로
+        const payload = await res.json();
 
-    	    const rows = Array.isArray(payload) ? payload
-    	               : Array.isArray(payload?.data) ? payload.data
-    	               : Array.isArray(payload?.list) ? payload.list
-    	               : Array.isArray(payload?.content) ? payload.content
-    	               : null;
+        const rows = Array.isArray(payload) ? payload
+                   : Array.isArray(payload?.content) ? payload.content
+                   : Array.isArray(payload?.data) ? payload.data
+                   : Array.isArray(payload?.list) ? payload.list
+                   : null;
 
-    	    if (!Array.isArray(rows)) {
-    	      alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
+        if (!Array.isArray(rows)) {
+          alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
+          await historyTable.setData([]);
+          return;
+        }
 
-    	    await historyTable.setData(rows);
-    	  } catch (err) {
-    	    console.error("[history] 예외:", err);
-    	    alert("이력 조회 중 오류가 발생했습니다.");
-    	    await historyTable.setData([]);
-    	  } finally {
-    	    hideGlobalLoading();
-    	    modal.handleUpdate && modal.handleUpdate();
-    	  }
-    	}
+        await historyTable.setData(rows);
+      } catch (err) {
+        console.error("[history] 예외:", err);
+        alert("이력 조회 중 오류가 발생했습니다.");
+        await historyTable.setData([]);
+      } finally {
+        hideGlobalLoading();
+        modal.handleUpdate && modal.handleUpdate();
+      }
+    }
 
-    // 버튼 클릭 → 이력조회
     document.getElementById("btn-history")?.addEventListener("click", () => {
       const cc = getCompanyCode();
-      if (!cc) {
-        alert("회사코드를 찾을 수 없습니다.");
-        return;
-      }
+      if (!cc) { alert("회사코드를 찾을 수 없습니다."); return; }
       openHistoryModal(cc);
     });
   </script>
