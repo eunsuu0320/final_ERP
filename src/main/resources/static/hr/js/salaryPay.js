@@ -52,99 +52,85 @@ document.addEventListener('shown.bs.modal', (e) => {
 
 // 인쇄
 function payPrint() {
-	const meta = document.getElementById('salaryMeta');
-	if (!meta) { alert('라벨 메타가 없습니다.'); return; }
+  const meta = document.getElementById('salaryMeta');
+  if (!meta) { alert('라벨 메타가 없습니다.'); return; }
 
-	// ---------- helpers ----------
-	const num = (v) => Number(v ?? 0) || 0;
-	const money = (n) => Number.isFinite(n = Number(n)) ? n.toLocaleString('ko-KR') : '0';
-	const ymTitle = (ym) => {
-		const m = String(ym || '').match(/^(\d{4})[-./]?(\d{2})/);
-		return m ? `${m[1]}년 ${m[2]}월` : (ym || '');
-	};
-	const normDate = (s) => {
-		if (!s) return '';
-		const t = String(s);
-		// YYYYMMDD -> YYYY-MM-DD
-		if (/^\d{8}$/.test(t)) return `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`;
-		// YYYY[-./]MM[-./]DD or YYYY[-./]MM
-		return t.replace(/[.]/g, '-').replace(/\//g, '-').slice(0, 10);
-	};
-	// dataset 키 접근 (all-01 / all01 / all1 모두 시도)
-	const readMetaLabel = (ds, prefix, i) => {
-		const ii = String(i).padStart(2, '0');
-		return ds[`${prefix}${ii}`] ?? ds[`${prefix}${i}`] ?? '';
-	};
-	const readRowAmt = (ds, prefix, i) => {
-		const ii = String(i).padStart(2, '0');
-		return num(ds[`${prefix}${ii}`] ?? ds[`${prefix}${i}`]);
-	};
+  // ---------- helpers ----------
+  const num = (v) => Number(v ?? 0) || 0;
+  const money = (n) => Number.isFinite(n = Number(n)) ? n.toLocaleString('ko-KR') : '0';
+  const ymTitle = (ym) => {
+    const m = String(ym || '').match(/^(\d{4})[-./]?(\d{2})/);
+    return m ? `${m[1]}년 ${m[2]}월` : (ym || '');
+  };
+  const normDate = (s) => {
+    if (!s) return '';
+    const t = String(s);
+    if (/^\d{8}$/.test(t)) return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)}`;
+    return t.replace(/[.]/g,'-').replace(/\//g,'-').slice(0,10);
+  };
+  const readMetaLabel = (ds, prefix, i) => {
+    const ii = String(i).padStart(2,'0');
+    return ds[`${prefix}${ii}`] ?? ds[`${prefix}${i}`] ?? '';
+  };
+  const readRowAmt = (ds, prefix, i) => {
+    const ii = String(i).padStart(2,'0');
+    return num(ds[`${prefix}${ii}`] ?? ds[`${prefix}${i}`]);
+  };
 
-	// ---------- meta ----------
-	const ds = meta.dataset;
-	const PAY_YM = ds.payYm || '';
-	const PAY_DATE = normDate(ds.payDate);
+  // ---------- meta ----------
+  const ds = meta.dataset;
+  const PAY_YM = ds.payYm || '';
+  const PAY_DATE = normDate(ds.payDate);
+  const ALL_LABELS = {}, DED_LABELS = {};
+  for (let i = 1; i <= 10; i++) {
+    ALL_LABELS[i] = readMetaLabel(ds, 'all', i) || `수당${i}`;
+    DED_LABELS[i] = readMetaLabel(ds, 'ded', i) || `공제${i}`;
+  }
 
-	// 라벨 맵: 1..10
-	const ALL_LABELS = {}, DED_LABELS = {};
-	for (let i = 1; i <= 10; i++) {
-		ALL_LABELS[i] = readMetaLabel(ds, 'all', i) || `수당${i}`;
-		DED_LABELS[i] = readMetaLabel(ds, 'ded', i) || `공제${i}`;
-	}
+  // ---------- rows (selected) ----------
+  const picks = Array.from(document.querySelectorAll('#employeeTable tbody input.pick:checked'));
+  if (picks.length === 0) { alert('인쇄할 사원을 선택하세요.'); return; }
+  picks.sort((a,b)=>String(a.dataset.empno).localeCompare(String(b.dataset.empno),'ko',{numeric:true}));
 
-	// ---------- rows (selected) ----------
-	const picks = Array.from(document.querySelectorAll('#employeeTable tbody input.pick:checked'));
-	if (picks.length === 0) { alert('인쇄할 사원을 선택하세요.'); return; }
+  const slipsHtml = picks.map(cb => {
+    const d = cb.dataset;
+    const empCode = d.empno || '';
+    const name = d.name || '';
+    const dept = d.dept || '';
+    const pos = d.pos || '';
+    const salary   = num(d.salary);
+    const allTotal = num(d.alltotal);
+    const dedTotal = num(d.dedtotal);
+    const netPay   = num(d.netpay);
+    const paySum   = salary + allTotal;
 
-	// 사번 기준 정렬
-	picks.sort((a, b) => String(a.dataset.empno).localeCompare(String(b.dataset.empno), 'ko', { numeric: true }));
+    const aArr = [], gArr = [];
+    for (let i = 1; i <= 10; i++) {
+      const aAmt = readRowAmt(d,'all',i);
+      if (aAmt !== 0) aArr.push({ label: ALL_LABELS[i], amt: aAmt });
+      const gAmt = readRowAmt(d,'ded',i);
+      if (gAmt !== 0) gArr.push({ label: DED_LABELS[i], amt: gAmt });
+    }
+    const max = Math.max(aArr.length, gArr.length);
 
-	const slipsHtml = picks.map(cb => {
-		const d = cb.dataset;
-
-		const empCode = d.empno || '';
-		const name = d.name || '';
-		const dept = d.dept || '';
-		const pos = d.pos || '';
-
-		const salary = num(d.salary);
-		const allTotal = num(d.alltotal);
-		const dedTotal = num(d.dedtotal);
-		const netPay = num(d.netpay);
-		const paySum = salary + allTotal;
-
-		// 수당 / 공제 항목 (0 제외)
-		const aArr = [], gArr = [];
-		for (let i = 1; i <= 10; i++) {
-			const aAmt = readRowAmt(d, 'all', i);
-			if (aAmt !== 0) aArr.push({ label: ALL_LABELS[i], amt: aAmt });
-
-			const gAmt = readRowAmt(d, 'ded', i);
-			if (gAmt !== 0) gArr.push({ label: DED_LABELS[i], amt: gAmt });
-		}
-
-		// 표 본문 행
-		const rows = [];
-		rows.push(`
+    const rows = [];
+    rows.push(`
       <tr>
         <td class="bold tc">기본급</td>
         <td class="tr bold">${money(salary)}</td>
         <td></td><td></td>
       </tr>`);
-
-		const max = Math.max(aArr.length, gArr.length);
-		for (let i = 0; i < max; i++) {
-			const a = aArr[i], g = gArr[i];
-			rows.push(`
+    for (let i=0;i<max;i++){
+      const a=aArr[i], g=gArr[i];
+      rows.push(`
         <tr>
           <td>${a ? (a.label || '수당') : ''}</td>
           <td class="tr">${a ? money(a.amt) : ''}</td>
           <td>${g ? (g.label || '공제') : ''}</td>
           <td class="tr">${g ? money(g.amt) : ''}</td>
         </tr>`);
-		}
-
-		rows.push(`
+    }
+    rows.push(`
       <tr class="sum-row">
         <th class="tc">공제계</th>
         <td class="tr">${money(dedTotal)}</td>
@@ -156,121 +142,109 @@ function payPrint() {
         <td class="tr bold" colspan="3">${money(netPay)}</td>
       </tr>`);
 
-		// 한 명 명세서
-		return `
-    <div class="slip">
-      <div class="slip-header">
-        <div class="title">${ymTitle(PAY_YM)} 급여명세서</div>
-      </div>
-      <table class="meta">
-        <tr>
-          <td class="label">성 명</td><td class="value">${name}</td>
-          <td class="label">부 서</td><td class="value">${dept}</td>
-          <td class="label">직 책</td><td class="value">${pos}</td>
-          <td class="label">사 번</td><td class="value">${empCode}</td>
-          <td class="label">지급일</td><td class="value">${PAY_DATE}</td>
-        </tr>
-      </table>
-      <table class="pay">
-        <thead>
+    return `
+      <div class="slip">
+        <div class="slip-header">
+          <div class="title">${ymTitle(PAY_YM)} 급여명세서</div>
+        </div>
+        <table class="meta">
           <tr>
-            <th class="tc">지급항목</th>
-            <th class="tc" style="width:140px;">지급액</th>
-            <th class="tc">공제항목</th>
-            <th class="tc" style="width:140px;">공제액</th>
+            <td class="label">성 명</td><td class="value">${name}</td>
+            <td class="label">부 서</td><td class="value">${dept}</td>
+            <td class="label">직 책</td><td class="value">${pos}</td>
+            <td class="label">사 번</td><td class="value">${empCode}</td>
+            <td class="label">지급일</td><td class="value">${PAY_DATE}</td>
           </tr>
-        </thead>
-        <tbody>${rows.join('')}</tbody>
-      </table>
-      <div class="footer">
-        <div class="thanks">귀하의 노고에 감사드립니다.</div>
-      </div>
-    </div>`;
-	}).join('');
+        </table>
+        <table class="pay">
+          <thead>
+            <tr>
+              <th class="tc">지급항목</th>
+              <th class="tc fixw">지급액</th>
+              <th class="tc">공제항목</th>
+              <th class="tc fixw">공제액</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+        <div class="footer"><div class="thanks">귀하의 노고에 감사드립니다.</div></div>
+      </div>`;
+  }).join('');
 
-	// ---------- print window ----------
-	const html = `
+  // ---------- print window ----------
+  const html = `
   <!doctype html>
   <html>
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>급여명세서</title>
     <style>
-  @page { size: A4 portrait; margin: 12mm; }
-  * { box-sizing: border-box; }
-  body { font-family: "Malgun Gothic","맑은 고딕",system-ui,-apple-system,Arial,sans-serif; color:#111; margin:0; }
-  .slip { page-break-inside: avoid; margin-bottom: 14mm; }
-  .slip + .slip { page-break-before: always; }
-  .slip-header { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
-  .title { font-weight:800; font-size:20px; letter-spacing:-.5px; border-top:3px solid #000; padding-top:6px; }
-  .meta{
-    width:100%;
-    border:1px solid #000;
-    margin-bottom:6px;
-    font-size:12px;
-    table-layout:fixed;
-    border-collapse:collapse;
-  }
-  .meta td{
-    border:1px solid #000;
-    padding:4px 6px;
-    vertical-align:middle;
-  }
-  .meta .label{ width:60px; color:#333; text-align:center; }
-  .meta .value{ font-weight:600; }
+      /* A4: 210mm. 여백 12mm → 내용폭 186mm 고정 */
+      @page { size: A4 portrait; margin: 12mm; }
+      html, body { margin:0; padding:0; }
+      * { box-sizing:border-box; }
+      body { font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,Arial,sans-serif; color:#111; }
+      .page { width: calc(210mm - 24mm); margin: 0 auto; }
+      .slip { page-break-inside: avoid; margin-bottom: 14mm; }
+      .slip + .slip { page-break-before: always; }
+      .slip-header { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+      .title { font-weight:800; font-size:20px; letter-spacing:-.5px; border-top:3px solid #000; padding-top:6px; }
+      .meta{
+        width:100%; border:1px solid #000; margin-bottom:6px;
+        font-size:12px; table-layout:fixed; border-collapse:collapse;
+      }
+      .meta td{ border:1px solid #000; padding:4px 6px; vertical-align:middle; word-break:break-word; }
+      .meta .label{ width:60px; color:#333; text-align:center; }
+      .meta .value{ font-weight:600; }
 
-  table.pay{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-    border:1px solid #000;
-  }
-  table.pay th,
-  table.pay td{
-    padding:6px 8px;
-    font-size:12px;
-    vertical-align:middle;
-  }
-  table.pay thead th{
-    text-align:center;
-    background:#f2f3f7;
-    border-bottom:1px solid #000;
-  }
-  table.pay thead th + th{ border-left:1px solid #000; }
-  table.pay td{ border-left:1px dotted #9aa0a6; }
-  table.pay td:first-child{ border-left:none; }
-  table.pay tbody tr td,
-  table.pay tbody tr th{ border-bottom:1px dotted #9aa0a6; }
-  table.pay tbody tr:last-child td,
-  table.pay tbody tr:last-child th{ border-bottom:none; }
+      table.pay{
+        width:100%; border-collapse:collapse; table-layout:fixed; border:1px solid #000;
+      }
+      table.pay th, table.pay td{
+        padding:6px 8px; font-size:12px; vertical-align:middle; word-break:break-word;
+      }
+      table.pay thead th{ text-align:center; background:#f2f3f7; border-bottom:1px solid #000; }
+      table.pay thead th + th{ border-left:1px solid #000; }
+      table.pay td{ border-left:1px dotted #9aa0a6; }
+      table.pay td:first-child{ border-left:none; }
+      table.pay tbody tr td, table.pay tbody tr th{ border-bottom:1px dotted #9aa0a6; }
+      table.pay tbody tr:last-child td, table.pay tbody tr:last-child th{ border-bottom:none; }
+      .fixw { width:140px; } /* 숫자열 고정 폭 */
 
-  .tc{ text-align:center; }
-  .tr{ text-align:right; }
-  .bold{ font-weight:700; }
+      .tc{ text-align:center; }
+      .tr{ text-align:right; }
+      .bold{ font-weight:700; }
 
-  .sum-row th,
-  .sum-row td{
-    border-top:1px solid #000 !important;
-    border-bottom:1px solid #000 !important;
-    background:#fafbff;
-    font-weight:700;
-  }
+      .sum-row th, .sum-row td{
+        border-top:1px solid #000 !important;
+        border-bottom:1px solid #000 !important;
+        background:#fafbff; font-weight:700;
+      }
 
-  .footer{ margin-top:6px; font-size:11px; display:flex; align-items:center; }
-  .footer .thanks{ color:#666; }
-  .footer .corp{ margin-left:auto; }
-</style>
+      .footer{ margin-top:6px; font-size:11px; display:flex; align-items:center; }
+      .footer .thanks{ color:#666; }
+      .footer .corp{ margin-left:auto; }
 
+      @media print {
+        body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      }
+    </style>
   </head>
   <body>
-    ${slipsHtml}
-    <script>window.addEventListener('load',()=>window.print());<\/script>
+    <div class="page">
+      ${slipsHtml}
+    </div>
+    <script>
+      window.addEventListener('load',()=>window.print());
+      window.addEventListener('afterprint',()=>window.close && window.close());
+    <\/script>
   </body>
   </html>`;
 
-	const w = window.open('', '_blank');
-	if (!w) { alert('팝업이 차단되었습니다. 허용 후 다시 시도하세요.'); return; }
-	w.document.open(); w.document.write(html); w.document.close();
+  const w = window.open('', '_blank');
+  if (!w) { alert('팝업이 차단되었습니다. 허용 후 다시 시도하세요.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 // 엑셀
