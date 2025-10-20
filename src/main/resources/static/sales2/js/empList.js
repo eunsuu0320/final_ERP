@@ -11,11 +11,11 @@ empTable = new Tabulator("#empPlanList-table", {
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/empPlanList?planYear=2025",
     columns: [
-        { title: "사원명", field: "EMPNAME", width: 150 },
-        { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right" },
-        { title: "작년 매출액", field: "LASTYEARSALES", hozAlign: "right", formatter: "money" },
-        { title: "작년 매입단가", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" },
-        { title: "작년 영업이익", field: "LASTYEARPROFIT", hozAlign: "right", formatter: "money" }
+        { title: "사원명", field: "EMPNAME", width: 150 , widthGrow:0.5},
+        { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right", widthGrow:0.4 },
+        { title: "작년 매출액(원)", field: "LASTYEARSALES", hozAlign: "right", formatter: "money", widthGrow:0.4 },
+        { title: "작년 매입단가(원)", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" , widthGrow:0.4},
+        { title: "작년 영업이익(원)", field: "LASTYEARPROFIT", hozAlign: "right", formatter: "money" , widthGrow:0.4}
     ]
 });
 
@@ -28,8 +28,8 @@ planTable = new Tabulator("#plan-table", {
     columns: [
         { title: "분기", field: "qtr", hozAlign: "center", editor: false },
         { title: "상세번호", field: "esdpCode", hozAlign: "center", editor: false },
-        { title: "올해 총 매출액", field: "purpSales", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
-        { title: "올해 총 영업이익", field: "purpProfitAmt", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
+        { title: "올해 총 매출액(원)", field: "purpSales", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
+        { title: "올해 총 영업이익(원)", field: "purpProfitAmt", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
         { title: "신규 거래처수", field: "newVendCnt", editor: "number" }
     ],
     data: [
