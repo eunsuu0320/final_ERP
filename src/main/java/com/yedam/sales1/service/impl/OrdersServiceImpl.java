@@ -18,7 +18,6 @@ import com.yedam.sales1.domain.OrderDetail;
 import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Product;
-import com.yedam.sales1.dto.OrderDetailDTO;
 import com.yedam.sales1.dto.OrderModalDTO;
 import com.yedam.sales1.dto.OrderRegistrationDTO;
 import com.yedam.sales1.repository.EstimateRepository;
@@ -142,7 +141,7 @@ public class OrdersServiceImpl implements OrdersService {
         String newOrderCode = generateNewOrderCode();
         orders.setOrderCode(newOrderCode);
         orders.setCompanyCode(getCompanyCodeFromAuthentication());
-        orders.setManager(getManagerFromAuthentication());
+        orders.setWriter(getManagerFromAuthentication());
 
         ordersRepository.save(orders);
         Long orderUk = orders.getOrderUniqueCode();
@@ -162,6 +161,7 @@ public class OrdersServiceImpl implements OrdersService {
                     .pctVat(d.getPctVat())
                     .remarks(d.getRemarks())
                     .status("등록")
+                    .nonShipment(d.getQuantity())
                     .build();
             nd.setOrderUniqueCode(orderUk);
             nd.setCompanyCode(orders.getCompanyCode());
@@ -189,15 +189,12 @@ public class OrdersServiceImpl implements OrdersService {
         Date orderDate = dto.getOrderDate() != null
                 ? Date.from(dto.getOrderDate().atStartOfDay(ZoneId.systemDefault()).toInstant())
                 : new Date();
-        Date deliveryDate = dto.getDeliveryDate() != null
-                ? Date.from(dto.getDeliveryDate().atStartOfDay(ZoneId.systemDefault()).toInstant())
-                : null;
 
         return Orders.builder()
                 .partnerCode(dto.getPartnerCode())
                 .estimateUniqueCode(dto.getEstimateUniqueCode())
                 .createDate(orderDate)
-                .deliveryDate(deliveryDate)
+                .deliveryDate(dto.getDeliveryDate())
                 .totalAmount(totalAmount)
                 .manager(dto.getManager())
                 .status("미확인")
@@ -237,15 +234,15 @@ public class OrdersServiceImpl implements OrdersService {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || "anonymousUser".equals(auth.getName())) return "DEFAULT";
         String username = auth.getName();
-        if (username != null && username.contains(":")) return username.trim().split(":")[1].trim();
+        if (username != null && username.contains(":")) return username.trim().split(":")[2].trim();
         return "DEFAULT";
     }
 
-    // ✅ 상세 모달 DTO 생성 (요구사항 5,6)
     @Override
     public OrderModalDTO getOrderModalByOrderUniqueCode(Long orderUniqueCode) {
         Optional<Orders> opt = ordersRepository.findById(orderUniqueCode);
         if (opt.isEmpty()) return null;
+
         Orders o = opt.get();
 
         OrderModalDTO dto = new OrderModalDTO();
@@ -262,38 +259,19 @@ public class OrdersServiceImpl implements OrdersService {
         dto.setAddress(o.getAddress());
         dto.setPayCondition(o.getPayCondition());
 
-        // 견적 코드 매핑
+        // ✅ 견적 코드 매핑
         if (o.getEstimateUniqueCode() != null) {
             Estimate est = estimateRepository.findByEstimateUniqueCode(o.getEstimateUniqueCode());
             if (est != null) dto.setEstimateCode(est.getEstimateCode());
         }
 
+        // ✅ 상세 리스트 그대로 엔티티로 세팅
         List<OrderDetail> details = orderDetailRepository.findByOrderUniqueCode(orderUniqueCode);
-
-     // OrderDetail → OrderDetailDTO 변환
-     List<OrderDetailDTO> detailDTOs = new ArrayList<>();
-     for (OrderDetail d : details) {
-         Product p = productRepository.findById(d.getProductCode()).orElse(null);
-
-         OrderDetailDTO detailDto = new OrderDetailDTO();
-         detailDto.setProductCode(d.getProductCode());
-         detailDto.setProductName(p != null ? p.getProductName() : null);
-         detailDto.setProductSize(p != null ? p.getProductSize() : null);
-         detailDto.setUnit(p != null ? p.getUnit() : null);
-         detailDto.setQuantity(d.getQuantity());
-         detailDto.setPrice(d.getPrice());
-         detailDto.setAmountSupply(d.getAmountSupply());
-         detailDto.setPctVat(d.getPctVat());
-         detailDto.setRemarks(d.getRemarks());
-
-         detailDTOs.add(detailDto);
-     }
-
-     dto.setDetailList(detailDTOs);
-
+        dto.setDetailList(details);   // ⚡️ 이제 타입이 일치하므로 정상 작동
 
         return dto;
     }
+
 
     @Override
     @Transactional

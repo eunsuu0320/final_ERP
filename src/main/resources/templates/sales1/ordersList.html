@@ -99,9 +99,6 @@
 					<div class="d-flex align-items-center">
 						<button class="btn btn-primary me-2"
 							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
 				</div>
 
@@ -157,9 +154,9 @@
 											<div class="input-group input-group-sm"
 												style="max-width: 250px;">
 												<input type="text" class="form-control" placeholder="견적서코드"
-													id="estimateCode" name="estimateCode" disabled> <input
+													id="estimateCode" name="estimateCode" readonly> <input
 													type="hidden" class="form-control"
-													name="estimateUniqueCode" id="estimateUniqueCode" disabled>
+													name="estimateUniqueCode" id="estimateUniqueCode" readonly>
 											</div>
 										</div>
 

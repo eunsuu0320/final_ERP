@@ -56,8 +56,17 @@ public class OrderDetail {
 
     @Transient
     private String productSize;
+    
+    @Transient
+    private Integer completeQuantity; // (quantity - nonShipment)
+
+    @Transient
+    private Integer stock; // 재고 (Product 테이블에서 조회)
 
     @Transient
     private String unit;
+    
+	@Column(name = "NON_SHIPMENT")
+	private Integer nonShipment; 
 
 }

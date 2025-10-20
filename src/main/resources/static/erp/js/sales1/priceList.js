@@ -241,7 +241,6 @@ function renderPartnerTable(selectedPartners = []) {
 		{ title: "거래처명", field: "거래처명" }, // 유동 너비 (남은 공간 모두 채움)
 		{ title: "거래처코드", field: PARTNER_CODE_FIELD, width: 120 }, // 고정 너비
 		{ title: "유형", field: "거래처유형", width: 100 }, // 고정 너비
-		{ title: "등급", field: "등급", width: 80, hozAlign: "center" }, // 고정 너비
 	];
 
 	const instance = new Tabulator(`#${tableContainerId}`, {

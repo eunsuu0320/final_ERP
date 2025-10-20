@@ -3,10 +3,10 @@ package com.yedam.sales1.service;
 import java.util.List;
 import java.util.Map;
 
-import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.Invoice;
-import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.InvoiceRegistrationDTO;
+import com.yedam.sales1.dto.InvoiceResponseDto;
+import com.yedam.sales1.dto.InvoiceSaveRequestDto;
 
 public interface InvoiceService {
 	List<Invoice> getAllInvoice();
@@ -22,5 +22,9 @@ public interface InvoiceService {
 
 	
 	boolean updateInvoiceStatus(String invoiceCode, String status);
+	
+	 void saveInvoice(InvoiceSaveRequestDto dto);
+	
+	InvoiceResponseDto getInvoiceDetail(String invoiceCode);
 
 }

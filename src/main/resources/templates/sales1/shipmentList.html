@@ -29,30 +29,16 @@
 					<div class="d-flex">
 
 						<div>
-							<label for="quoteDate" class="me-3" style="width: 80px;">기준일자</label>
-							<div class="me-5 d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="date" class="form-control form-control-sm"
-										id="quoteDate" name="quoteDate" style="flex-grow: 1;">
-									<span class="mx-2">~</span><input type="date"
-										class="form-control form-control-sm" id="quoteDate"
-										name="quoteDate" style="flex-grow: 1;">
-								</div>
-							</div>
-						</div>
-						<div>
-							<label for="warehouseCode" class="me-3">창고</label>
+							<label for="partnerNameSearch" class="me-3">출하지시서코드</label>
 							<div class="me-5 d-flex align-items-center">
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="warehouseCode">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="execDaumPostcode()">
-										<i class="bi bi-search"></i>
-									</button>
+										placeholder="검색어 입력" id="shipmentCode" name="shipmentCode">
 								</div>
 							</div>
 						</div>
+
+
 
 
 
@@ -75,28 +61,24 @@
 							</div>
 						</div>
 
-
-
-
-
-
-
-
-
-
-						<div>
-							<label for="productCode" class="me-3">품목</label>
+						<div >
+							<label for="warehouseCodeSearch"
+								class="me-3">창고</label>
 							<div class="me-5 d-flex align-items-center">
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="productCode">
+										placeholder="검색어 입력" id="warehouseCodeSearch">
 									<button class="btn btn-outline-secondary" type="button"
-										onclick="execDaumPostcode()">
+										onclick="openModal('commonCode', function(selected) {
+                                        document.getElementById('warehouseCodeSearch').value=selected.codeName;}, 'GRP003')">
 										<i class="bi bi-search"></i>
 									</button>
 								</div>
 							</div>
 						</div>
+
+
+
 					</div>
 
 					<div class="d-flex flex-column align-items-start ms-3">
@@ -118,11 +100,7 @@
 						aria-label="type-filter" id="shipmentTab">
 						<button type="button" class="btn btn-primary" data-type="ALL">전체</button>
 						<button type="button" class="btn btn-outline-primary"
-							data-type="NONSHIPMENT">미지시</button>
-						<button type="button" class="btn btn-outline-primary"
-							data-type="ONCHECKING">결재중</button>
-						<button type="button" class="btn btn-outline-primary"
-							data-type="CHECK">확인</button>
+							data-type="NONCHECK">미확인</button>
 						<button type="button" class="btn btn-outline-primary"
 							data-type="ONSHIPMENT">출하중</button>
 						<button type="button" class="btn btn-outline-primary"
@@ -134,17 +112,14 @@
 					<div class="d-flex align-items-center">
 						<button class="btn btn-primary me-2"
 							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
 						<button class="btn btn-secondary me-2" onclick="insertAc()">회계일괄반영</button>
-						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
 				</div>
 
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '출하지시서코드' or col == '출하예정일자' or col == '거래처명' or col == '창고명' or col == '품목명' or col == '수량합계' or col == '진행상태'}" />
+						th:checked="${col == '출하지시서코드' or col == '출하예정일자' or col == '거래처명' or col == '담당자' or col == '창고명' or col == '품목명' or col == '수량합계' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -170,7 +145,7 @@
 							</div>
 
 							<div class="modal-body">
-								<form id="shipmentForm">
+								<form id="quoteForm">
 
 									<div class="row mb-3 g-3 border-bottom pb-3">
 										<h6 class="mt-4 mb-2 fw-bold">1. 기본정보</h6>
@@ -178,14 +153,14 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="partnerNameModal"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">거래처</label>
+												style="width: 120px;">거래처*</label>
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
 												<input type="hidden" id="partnerCodeModal"
 													name="partnerCode"> <input type="text"
 													class="form-control" placeholder="검색어 입력"
-													id="partnerNameModal">
+													id="partnerNameModal" name="partnerName">
 												<button class="btn btn-outline-secondary" type="button"
 													onclick="openModal('salesPartner', function(selected) {
                 document.getElementById('partnerNameModal').value = selected.partnerName;
@@ -216,7 +191,7 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="partnerPhone"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">거래처 연락처</label>
+												style="width: 120px;">거래처 연락처*</label>
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
@@ -231,7 +206,7 @@
 											<div class="d-flex align-items-center mb-2">
 												<label for="zipcode"
 													class="col-form-label fw-bold text-nowrap"
-													style="width: 120px;">납품장소</label>
+													style="width: 120px;">납품장소*</label>
 
 												<div class="input-group input-group-sm me-2"
 													style="max-width: 400px;">
@@ -261,7 +236,7 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="manager"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">담당자</label>
+												style="width: 120px;">담당자*</label>
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
@@ -284,7 +259,7 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="managerPhone"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">담당자 연락처</label>
+												style="width: 120px;">담당자 연락처*</label>
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
@@ -303,7 +278,7 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="quoteDeliveryDateText"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">출하예정일</label>
+												style="width: 120px;">출하예정일*</label>
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
 												<input type="date" class="form-control form-control-sm"
@@ -316,7 +291,7 @@
 										<div class="col-6 d-flex align-items-center">
 											<label for="warehouse"
 												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">출하창고</label>
+												style="width: 120px;">출하창고*</label>
 											<div class="col-sm-7">
 												<select class="form-select comboSelect form-select-sm"
 													name="warehouse"></select>
@@ -357,7 +332,7 @@
 									class="d-flex justify-content-between align-items-center mt-4 mb-2">
 									<h6 class="fw-bold mb-0">2. 출하항목</h6>
 									<button type="button" class="btn btn-secondary"
-										onclick="selectOrder()">주문서조회</button>
+										onclick="selectOrders()">주문서조회</button>
 								</div>
 
 								<div class="table-responsive">
@@ -381,37 +356,45 @@
 											<tr class="new-item-row bg-light" data-row-id="new">
 												<td class="text-center"><input type="checkbox"
 													class="form-check-input"></td>
-												<td><input type="text"
-													class="form-select form-select-sm item-input"
-													name="productCode" placeholder="코드" readonly></td>
+												<!-- 품목코드 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="productName" disabled></td>
+													name="productCode" id="productCode" placeholder="코드"
+													readonly><input type="hidden"
+													name="orderDetailCode" id="orderDetailCode"></td>
+												<!-- 품목명 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="totalQuantity" disabled></td>
+													name="productName" id="productName" disabled></td>
+												<!-- 총수량 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="completeQuantity" disabled></td>
+													name="quantity" id="quantity" disabled></td>
+												<!-- 지시완료수량 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="nonQuantity" disabled></td>
-
+													name="completeQuantity" id="completeQuantity" disabled></td>
+												<!-- 미지시수량 -->
+												<td><input type="text"
+													class="form-control form-control-sm item-input"
+													name="nonShipment" id="nonShipment" disabled></td>
+												<!-- 재고 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="warehouseQty" disabled></td>
-
+													name="stock" id="stock" disabled></td>
+												<!-- 현지시수량 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="quantity" value="0"></td>
+													name="nowQuantity" id="nowQuantity" value="0"
+													oninput="validateNowQuantity(this)"></td>
+												<!-- 출하지시여부 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="isShipment" value="0" readonly></td>
-
-
+													name="isShipment" id="isShipment" value="0" readonly></td>
+												<!-- 비고 -->
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="remarks"></td>
+													name="remarks" id="remarks"></td>
 											</tr>
 
 										</tbody>
@@ -423,8 +406,6 @@
 						</div>
 					</div>
 				</div>
-
-
 			</div>
 		</main>
 	</div>
@@ -457,5 +438,6 @@
 		src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 	<script th:src="@{/erp/js/sales1/salesCommon.js}"></script>
 	<script th:src="@{/erp/js/sales1/shipmentList.js}"></script>
+	<script th:src="@{/erp/js/sales1/salesModal.js}"></script>
 </body>
 </html>

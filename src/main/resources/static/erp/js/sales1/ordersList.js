@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const orderDataObject = Object.fromEntries(orderData.entries());
 
 		const partnerNameValue = document.getElementById('partnerName').value;
-		const deliveryDateValue = orderDataObject.deliveryDateText;
+		const deliveryDateValue = orderDataObject.deliveryDate;
 		const estimateUniqueCodeValue = orderDataObject.estimateUniqueCode;
 
 		const detailList = collectOrderDetails();

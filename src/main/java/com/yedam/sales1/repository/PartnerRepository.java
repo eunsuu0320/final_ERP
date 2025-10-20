@@ -26,6 +26,7 @@ public interface PartnerRepository extends
 	
 	Partner findByPartnerName(String partnerName);
 	
+
 	
 	
 	@Query("""

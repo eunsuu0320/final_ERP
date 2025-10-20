@@ -37,7 +37,7 @@ window.checkRequired = function(formElement) {
 	for (let label of labels) {
 		const text = label.textContent.trim();
 		if (text.endsWith("*")) {
-			const inputWrapper = label.closest(".row");
+			const inputWrapper = label.closest(".col-6, .row");
 			const input = inputWrapper ? inputWrapper.querySelector("input, select, textarea") : null;
 
 			if (input) {
@@ -365,7 +365,7 @@ function bindDataToForm(data, form) {
 					}
 				}
 			}
-			
+
 			const partnerNameEl = document.getElementById("partnerName");
 			if (partnerNameEl) partnerNameEl.readOnly = true;
 

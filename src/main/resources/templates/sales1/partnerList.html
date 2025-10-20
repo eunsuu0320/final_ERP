@@ -17,6 +17,8 @@
 	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-grid.css" />
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-quartz.css" />
+
+
 </head>
 <body layout:fragment="content">
 
@@ -29,6 +31,28 @@
 
 				<!-- 🔍 검색 영역 -->
 				<div class="searchTool d-flex align-items-end mb-3">
+					<div class="me-5 d-flex flex-column align-items-start">
+						<label for="partnerCodeSearch"
+							class="col-form-label fw-bold text-nowrap">거래처코드</label>
+						<div class="d-flex align-items-center">
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control w-auto"
+									placeholder="검색어 입력" id="partnerCodeSearch">
+							</div>
+						</div>
+					</div>
+
+					<div class="me-5 d-flex flex-column align-items-start">
+						<label for="partnerTypeSearch"
+							class="col-form-label fw-bold text-nowrap">거래처유형</label>
+						<div class="d-flex align-items-center">
+							<div class="input-group input-group-sm">
+								<input type="text" class="form-control w-auto"
+									placeholder="검색어 입력" id="partnerTypeSearch">
+							</div>
+						</div>
+					</div>
+
 					<div class="me-5 d-flex flex-column align-items-start">
 						<label for="partnerNameSearch"
 							class="col-form-label fw-bold text-nowrap">거래처명</label>
@@ -52,17 +76,13 @@
 				<div class="d-flex align-items-center mb-3 justify-content-end">
 					<button class="btn btn-primary me-2"
 						onclick="showDetailModal('regist')">신규</button>
-					<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-					<button class="btn btn-secondary me-2">이력조회</button>
-					<button class="btn btn-secondary me-2">인쇄</button>
-					<button class="btn btn-secondary me-2">Excel</button>
 				</div>
 
 				<!-- 컬럼 체크박스 -->
 				<div class="mb-2">
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '거래처코드' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
+						th:checked="${col == '거래처코드' or col == '사업자번호' or col == '대표자' or col == '업종' or col == '업태' or col == '거래처명' or col == '거래처유형' or col == '전화번호' or col == '이메일' or col == '비고'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
@@ -82,8 +102,6 @@
 										onclick="saveModal()">저장</button>
 									<button type="button" class="btn btn-dark"
 										onclick="resetModal()">초기화</button>
-									<button type="button" class="btn btn-secondary"
-										onclick="getModal()">가져오기</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 								</div>
 							</div>
@@ -92,9 +110,9 @@
 								<div class="btn-group btn-type ms-2" role="group"
 									aria-label="type-filter" id="partnerTab">
 									<button type="button" class="btn btn-primary"
-										data-type="PARTNER">거래처</button>
+										data-type="PARTNER">기본정보</button>
 									<button type="button" class="btn btn-outline-primary"
-										data-type="LOANPRICE">여신 / 단가</button>
+										data-type="LOANPRICE">여신</button>
 									<button type="button" class="btn btn-outline-primary"
 										data-type="PAYMENT">결제정보</button>
 								</div>
@@ -108,7 +126,8 @@
 										<div class="row mb-3">
 											<label class="col-sm-3 col-form-label" style="width: 120px;">거래처코드</label>
 											<div class="col-sm-9">
-												<input type="text" class="form-control" name="partnerCode" placeholder="자동생성" readonly>
+												<input type="text" class="form-control" name="partnerCode"
+													placeholder="자동생성" readonly>
 											</div>
 										</div>
 										<div class="row mb-3">
@@ -248,6 +267,8 @@
 											</div>
 										</div>
 
+
+
 										<div class="row mb-3">
 											<label class="col-sm-3 col-form-label" style="width: 120px;">비고</label>
 											<div class="col-sm-9">
@@ -271,24 +292,6 @@
 											</div>
 										</div>
 
-										<div class="row mb-3">
-											<label class="col-sm-3 col-form-label" style="width: 140px;">단가그룹</label>
-											<div class="col-sm-9 d-flex align-items-center">
-												<div class="col-6 me-3">
-													<div class="input-group">
-														<input type="text" class="form-control"
-															name="salesPriceGroupName">
-														<button class="btn btn-outline-secondary" type="button">
-															<i class="bi bi-search"></i>
-														</button>
-													</div>
-												</div>
-												<div class="col-2 d-flex align-items-center">
-													<input type="text" class="form-control"
-														name="salesDiscountRate"> <span class="ms-2">%</span>
-												</div>
-											</div>
-										</div>
 
 										<div class="row mb-3">
 											<label class="col-sm-3 col-form-label" style="width: 140px;">여신기간</label>
