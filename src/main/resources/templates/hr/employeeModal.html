@@ -214,6 +214,9 @@
 
 	// 모달 열릴 때
 	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
+	  document.getElementById("dept").innerHTML = '';
+	  document.getElementById("position").innerHTML = '';
+	  document.getElementById("grade").innerHTML = '';
 	  resizeCanvas();
 	  signaturePad.clear();
 	  getCode('GRP010', 'position');

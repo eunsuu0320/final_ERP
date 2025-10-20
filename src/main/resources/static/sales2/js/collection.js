@@ -24,18 +24,18 @@ document.addEventListener("DOMContentLoaded", function () {
       return response;
     },
     columns: [
-      { title: "거래처명", field: "CUSTOMERNAME", hozAlign: "center" },
-      { title: "미수금액", field: "TOTALSALES", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "총 수금", field: "TOTALCOLLECTED", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "미수금(잔액)", field: "OUTSTANDING", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 } },
-      { title: "미수건수", field: "INVOICE_COUNT", hozAlign: "center" },
+      { title: "거래처명", field: "CUSTOMERNAME", hozAlign: "center" ,widthGrow:0.3},
+      { title: "미수금액(원)", field: "TOTALSALES", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.3 },
+      { title: "총 수금(원)", field: "TOTALCOLLECTED", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.5 },
+      { title: "미수잔액(원)", field: "OUTSTANDING", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.5 },
+      { title: "미수건수", field: "INVOICE_COUNT", hozAlign: "center", widthGrow:0.5 },
       
       {
   title: "조회",
   field: "VIEW_BTN",
   hozAlign: "center",
   headerSort: false,
-  width: 200,
+  widthGrow:0.5,
   formatter: () => '<button class="btn btn-outline-primary btn-view-invoices js-view-invoices">조회</button>',
   cellClick: (e, cell) => {
     e.stopPropagation();
@@ -200,19 +200,20 @@ async function renderInvoiceTable(rowData) {
     { title:"", field:"_check", width:50, hozAlign:"center", headerSort:false,
       formatter:"rowSelection", titleFormatter:"rowSelection",
       bottomCalc: () => "합계" },
-    { title:"청구번호", field:"INVOICE_CODE", width:140, hozAlign:"center" },
-    { title:"청구일",   field:"DMND_DATE",   width:110, hozAlign:"center" },
-    { title:"품목명",   field:"ITEM_NAME",   minWidth:180 },
+    { title:"청구번호", field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
+    { title:"청구일",   field:"DMND_DATE",   width:110, hozAlign:"center", widthGrow:0.4 },
+    { title:"품목명",   field:"ITEM_NAME",   minWidth:180, widthGrow:0.3 },
     { title:"전체수량", field:"TOTAL_QTY",   width:95, hozAlign:"right", bottomCalc:"sum" },
-    { title:"청구금액", field:"DMND_AMT",    hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum" },
-    { title:"수금금액", field:"COLLECTED",   hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum" },
-    { title:"미수금액", field:"UNRCT_BALN",  hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum" },
+    { title:"청구금액(원)", field:"DMND_AMT",    hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum" , widthGrow:0.5},
+    { title:"수금금액(원)", field:"COLLECTED",   hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum", widthGrow:0.5 },
+    { title:"미수금액(원)", field:"UNRCT_BALN",  hozAlign:"right", formatter:"money", formatterParams:{precision:0}, bottomCalc:"sum", widthGrow:0.5 },
     {
     title:"상태",
     field:"STATUS",
     width:110,
     hozAlign:"center",
     headerFilter:"select",
+    widthGrow:0.6,
     headerFilterParams:{ values: { "": "전체", "진행중":"진행중", "수금완료":"수금완료", "수금대기":"수금대기" } },
     formatter: (cell) => {
       const v = (cell.getValue() || "").trim();
@@ -224,7 +225,7 @@ async function renderInvoiceTable(rowData) {
     }
   },
 
-  { title:"비고", field:"REMK", minWidth:120 }  // ✅ 이제 여기엔 진짜 비고가 들어오게
+  { title:"비고", field:"REMK", minWidth:120 , widthGrow:0.5}  // ✅ 이제 여기엔 진짜 비고가 들어오게
 ];
 
   if (!invoiceTable) {

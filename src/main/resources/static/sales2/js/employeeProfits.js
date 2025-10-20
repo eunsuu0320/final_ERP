@@ -4,7 +4,8 @@ document.addEventListener("DOMContentLoaded", function () {
   // (옵션) Top5 차트 호출이 남아있을 때 ReferenceError 방지용 no-op
   function renderTopEmpChart() {}
 
-  let totalAmountMax = 0; // 행별 '합계' 막대 width 계산용 max
+  // ✅ 막대 비율 계산 기준: "직원들의 총 공급가액 합"
+  let totalSupplyAll = 0;   // (= 모든 사원의 salesAmount 합)
 
   // ===============================
   // 📅 최근 5년 드롭다운
@@ -54,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 📊 Tabulator 테이블
   // ===============================
   const table = new Tabulator("#sales-table", {
-    layout: "fitDataStretch",
+    layout: "fitColumns",
     height: "480px",
     pagination: "local",
     paginationSize: 10,
@@ -75,25 +76,28 @@ document.addEventListener("DOMContentLoaded", function () {
       // (옵션) Top5 차트 호출이 남아있다면 안전
       renderTopEmpChart(response);
 
-      // ✅ 요약 합계 갱신
+      // ✅ 요약 합계 갱신 + totalSupplyAll(총 공급가액) 계산
       let totalSalesCount = 0;
-      let totalSupply = 0;
+      let totalSupply = 0;   // = 공급가액 합
       let totalTax = 0;
       let totalAmount = 0;
 
       if (Array.isArray(response)) {
         response.forEach((r) => {
-          totalSalesCount += Number(r.salesQty || 0);
-          totalSupply     += Number(r.salesAmount || 0);
-          totalTax        += Number(r.tax || 0);
-          totalAmount     += Number(r.totalAmount || 0);
+          const salesQty    = Number(r.salesQty || 0);
+          const salesAmount = Number(r.salesAmount || 0); // 공급가액
+          const tax         = Number(r.tax || 0);
+          const sumAmount   = Number(r.totalAmount || 0); // 공급가액+부가세
+
+          totalSalesCount += salesQty;
+          totalSupply     += salesAmount;
+          totalTax        += tax;
+          totalAmount     += sumAmount;
         });
       }
 
-      // ✅ '합계' 막대그래프용 max 갱신
-      totalAmountMax = Array.isArray(response)
-        ? response.reduce((m, r) => Math.max(m, Number(r.totalAmount || 0)), 0)
-        : 0;
+      // ▶️ 전체 직원의 공급가액 합(비율 분모)
+      totalSupplyAll = totalSupply;
 
       const tCount  = document.getElementById("totalSalesCount");
       const tSupply = document.getElementById("totalSupply");
@@ -105,63 +109,53 @@ document.addEventListener("DOMContentLoaded", function () {
       if (tTax)    tTax.textContent    = totalTax.toLocaleString();
       if (tAmount) tAmount.textContent = totalAmount.toLocaleString();
 
-      return response;
+      return response; // ← 반환 후 렌더링(이 시점에 totalSupplyAll 세팅됨)
     },
     placeholder: "데이터가 없습니다.",
     columns: [
-      { title: "사원코드", field: "empCode", hozAlign: "center", width: 200 },
-      { title: "사원명",   field: "name",    hozAlign: "center", width: 200 },
-      { title: "수량",     field: "salesQty",     hozAlign: "center", width: 200 },
-      { title: "공급가액", field: "salesAmount",  hozAlign: "right", formatter: "money",  width: 200 },
-      { title: "부가세",   field: "tax",          hozAlign: "right", formatter: "money", width: 200 },
-      {
-        title: "합계",
-        field: "totalAmount",
-        width: 260,
-        hozAlign: "left", // 그래프 + 숫자 함께 표시
-        // 각 행 셀을 막대그래프로 렌더링
-        formatter: function (cell) {
-          const value = Number(cell.getValue() || 0);
-          const max = totalAmountMax || value || 1; // 0 분모 방지
-          const pct = Math.max(0, Math.min(100, Math.round((value / max) * 100)));
-          const label = value.toLocaleString();
+      { title: "사원코드",        field: "empCode",     hozAlign: "center", widthGrow:0.3},
+      { title: "사원명",          field: "name",        hozAlign: "center", widthGrow:0.3},
+      { title: "수량",            field: "salesQty",    hozAlign: "center", widthGrow:0.3 },
 
+      // ✅ 숫자 포맷: 소수점 없이 원 단위
+      { title: "공급가액(원)",    field: "salesAmount", hozAlign: "right",
+        formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.3},
+
+      { title: "부가세(원)",      field: "tax",         hozAlign: "right",
+        formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.3},
+
+      {
+        // ✅ 이 칼럼은 “공급가액 기준 점유율 막대 + 금액 표기(원, 소수점 없음)”
+        title: "합계(공급가액 기준)",
+        field: "totalAmount", // 서버 값은 쓰지 않고, salesAmount로 그립니다(부가세 제외).
+        hozAlign: "left",
+        formatter: function (cell) {
+          const row = cell.getRow().getData();
+          const amount = Number(row.salesAmount || 0); // 공급가액
+          const denom  = Number(totalSupplyAll || 0);
+          const pct    = denom > 0 ? Math.round((amount / denom) * 100) : 0;
+
+          const label = amount.toLocaleString(); // 원 단위, 소수점 제거
           const html = `
             <div style="display:flex; align-items:center; gap:8px; width:100%;">
               <div style="flex:1; height:10px; background:#eee; border-radius:6px; overflow:hidden;">
-                <div style="height:100%; width:${pct}%; background:#86b7fe;"></div>
+                <div style="height:100%; width:${Math.min(100, Math.max(0, pct))}%; background:#86b7fe;"></div>
               </div>
-              <div style="min-width:90px; text-align:right;">${label}</div>
+              <div style="min-width:110px; text-align:right;">
+                ${label}원&nbsp;<span style="color:#666;">(${pct}%)</span>
+              </div>
             </div>
           `;
           const wrap = document.createElement("div");
           wrap.innerHTML = html;
           return wrap;
-        },
-
-        // 하단 합계 셀(bottomCalc)도 막대 + 숫자 표시
-        bottomCalc: "sum",
-        bottomCalcFormatter: function (cell) {
-          const sum = Number(cell.getValue() || 0);
-          const label = sum.toLocaleString();
-
-          const html = `
-            <div style="display:flex; align-items:center; gap:8px; width:100%;">
-              <div style="flex:1; height:12px; background:#eee; border-radius:6px; overflow:hidden;">
-                <div style="height:100%; width:100%; background:#86b7fe;"></div>
-              </div>
-              <div style="min-width:100px; text-align:right; font-weight:600;">${label}</div>
-            </div>
-          `;
-          const wrap = document.createElement("div");
-          wrap.innerHTML = html;
-          return wrap;
-        },
-      }, // 🔚 합계 컬럼
+        }
+        // ⛔️ 하단 합계(총합) 행 제거: bottomCalc 관련 설정을 넣지 않습니다.
+      },
     ],
   });
 
-  // ✅ 행 클릭 → 상세 모달 (기존 로직 유지)
+  // ✅ 행 클릭 → 상세 모달
   table.on("rowClick", function (e, row) {
     openEmployeeModal(row.getData());
   });
@@ -176,7 +170,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ===============================
-// 모달: 상세 테이블 (기존 함수 그대로 사용)
+// 모달: 상세 테이블
 // ===============================
 function openEmployeeModal(emp) {
   const modalEl = document.getElementById("employeeModal");
@@ -205,7 +199,7 @@ function openEmployeeModal(emp) {
   };
 
   const modalTable = new Tabulator("#employee-sales-table", {
-    layout: "fitDataStretch",
+    layout: "fitColumns",
     height: "380px",
     pagination: "local",
     paginationSize: 8,
@@ -222,15 +216,16 @@ function openEmployeeModal(emp) {
       alert("서버 에러가 발생했습니다. 콘솔 로그를 확인하세요.");
     },
     columns: [
-      { title: "거래처명", field: "partnerName", hozAlign: "left",  minWidth: 200 },
-      { title: "매출금액", field: "salesAmount", hozAlign: "right", formatter: "money",
-        width: 140, bottomCalc: "sum", bottomCalcFormatter: "money" },
-      { title: "수금금액", field: "collectAmt",  hozAlign: "right", formatter: "money",
-        width: 140, bottomCalc: "sum", bottomCalcFormatter: "money" },
+      { title: "거래처명",     field: "partnerName", hozAlign: "left", widthGrow:1},
+      // ⛔️ 모달 테이블도 하단 합계 제거: bottomCalc 설정 없음
+      { title: "매출금액(원)", field: "salesAmount", hozAlign: "right",
+        formatter: "money", formatterParams: { precision: 0 }, widthGrow:1},
+      { title: "수금금액(원)", field: "collectAmt",  hozAlign: "right",
+        formatter: "money", formatterParams: { precision: 0 }, widthGrow:1},
     ],
   });
 
-  // 모달 안의 검색은 그대로 사용
+  // 모달 안의 검색
   const searchAction = () => {
     const keyword = (document.getElementById("modal-searchInput")?.value || "").trim();
     modalTable.setData("/api/employeeProfits/partners", buildParams({ keyword }));

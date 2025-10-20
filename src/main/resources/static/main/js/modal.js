@@ -20,7 +20,7 @@ const modalConfigs = {
 			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
 			{ title: "거래처명", field: "partnerName", minWidth: 200 },
 			{ title: "연락처", field: "tel", width: 140 },
-			{ title: "담당자", field: "picName", width: 120 }
+			
 
 		],
 		selectable: 1,
@@ -146,10 +146,6 @@ const modalConfigs = {
 			{ title: "판매코드", field: "salesCode", width: 140, hozAlign: "center" },
 			{ title: "품목명", field: "productName", minWidth: 200 },
 			{ title: "거래처", field: "partnerName", minWidth: 160 },
-			{
-				title: "단가", field: "unitPrice", width: 110, hozAlign: "right",
-				formatter: (c) => Number(c.getValue() || 0).toLocaleString()
-			},
 			{
 				title: "판매일자", field: "salesDate", width: 120, hozAlign: "center",
 				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? v : d.toISOString().slice(0, 10); }

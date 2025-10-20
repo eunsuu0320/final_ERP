@@ -66,25 +66,4 @@ public class HrHistorySerivceImpl implements HrHistorySerivce {
         // 4) DTO 변환 (연관 LAZY 접근 금지)
         return list.stream().map(h -> toDto(h, nameMap)).toList();
     }
-
-    @Override
-    public Page<HrHistoryDTO> findByCompanyCode(String companyCode, Pageable pageable) {
-        // 1) 페이지로 일부만 로드
-        Page<HrHistory> page = historyRepository.findByCompanyCodeOrderByCreatedAtDesc(companyCode, pageable);
-        List<HrHistory> content = page.getContent();
-
-        // 2) 필요한 사번 수집 → 벌크 로딩
-        Set<String> codes = new HashSet<>();
-        for (HrHistory h : content) {
-            if (h.getEmpCode() != null) codes.add(h.getEmpCode().trim());
-            if (h.getManager()  != null) codes.add(h.getManager().trim());
-        }
-        Map<String,String> nameMap = buildNameMap(codes);
-
-        // 3) DTO 리스트로 변환
-        List<HrHistoryDTO> dtoList = content.stream().map(h -> toDto(h, nameMap)).toList();
-
-        // 4) Page로 래핑하여 반환
-        return new PageImpl<>(dtoList, pageable, page.getTotalElements());
-    }
 }
