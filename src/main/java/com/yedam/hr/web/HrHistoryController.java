@@ -1,8 +1,8 @@
 package com.yedam.hr.web;
 
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.hr.dto.HrHistoryDTO;
 import com.yedam.hr.service.HrHistorySerivce;
@@ -17,17 +17,9 @@ public class HrHistoryController {
 
     private final HrHistorySerivce hrHistorySerivce;
 
-    // 기존 사용과 호환: page/size 미지정 → 전체 DTO 리스트 반환
-    // page/size 지정 → 페이징된 PageDTO 반환
+    // 회사코드 기준 전체 이력 DTO 리스트 반환
     @GetMapping("/api/history/{companyCode}")
-    public Object getHistoryByCompany(@PathVariable String companyCode,
-                                      @RequestParam(required = false) Integer page,
-                                      @RequestParam(required = false) Integer size) {
-        if (page != null && size != null) {
-            var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-            return hrHistorySerivce.findByCompanyCode(companyCode, pageable);
-        }
-        List<HrHistoryDTO> list = hrHistorySerivce.findByCompanyCode(companyCode);
-        return list;
+    public List<HrHistoryDTO> getHistoryByCompany(@PathVariable String companyCode) {
+        return hrHistorySerivce.findByCompanyCode(companyCode);
     }
 }
