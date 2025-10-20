@@ -50,7 +50,6 @@ function diffToWorkTime(on, off) {
   if (ms <= 0) return "";
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  // 0시간 00분이면 빈칸(이 케이스는 ms<=0에서 걸러짐) — 안전 차원에서 한 번 더 체크
   if (h === 0 && m === 0) return "";
   return `${h}시간 ${pad2(m)}분`;
 }
@@ -70,7 +69,6 @@ function debounce(fn, delay = 300) {
   let t;
   return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); };
 }
-// 사용자가 2025-10-10 / 2025.10.10 / 20251010 등 어떤 형식으로 입력해도 비교용 숫자만 남김
 function normalizeDateKeyword(s = "") {
   return s.replace(/[^\d]/g, ""); // 숫자만
 }
@@ -98,7 +96,7 @@ function initTable() {
         title: "근태일자",
         field: "onTime",
         sorter: "date",
-        sorterParams: { format: "YYYY-MM-DD HH:mm:ss" }, // 대문자 HH 권장
+        sorterParams: { format: "YYYY-MM-DD HH:mm:ss" },
         formatter: cell => fmtDate(cell.getValue()),
         width: 120,
         hozAlign: "center",
@@ -125,19 +123,19 @@ function initTable() {
       },
       {
         title: "근무시간",
-        field: "workTime", // 서버 Double(시간) 값
+        field: "workTime",
         hozAlign: "center",
         formatter: (cell) => {
           const v = cell.getValue();
           const s = fmtHourFromDouble(v);
-          if (s !== null) return s; // null이 아니면(서버값이 있으면) 0이면 "", 양수면 "H시간 MM분"
-          const r = cell.getRow().getData(); // 서버 값이 없으면 on/off로 계산 fallback
+          if (s !== null) return s;
+          const r = cell.getRow().getData();
           return diffToWorkTime(r.onTime, r.offTime) || "";
         },
       },
       {
         title: "야간 근무 시간",
-        field: "nightTime", // 서버 Double(시간) 값
+        field: "nightTime",
         hozAlign: "center",
         formatter: (cell) => {
           const v = cell.getValue();
@@ -149,7 +147,7 @@ function initTable() {
       },
       {
         title: "연장 근무 시간",
-        field: "otTime", // 서버 Double(시간) 값
+        field: "otTime",
         hozAlign: "center",
         formatter: (cell) => {
           const v = cell.getValue();
@@ -161,7 +159,7 @@ function initTable() {
       },
       {
         title: "휴일/특근 근무 시간",
-        field: "holidayTime", // 서버 Double(시간) 값
+        field: "holidayTime",
         hozAlign: "center",
         formatter: (cell) => {
           const v = cell.getValue();
@@ -175,7 +173,6 @@ function initTable() {
     ],
   });
 
-  // 다른 함수에서 쉽게 찾도록 전역 참조도 세팅
   window.commuteTable = commuteTable;
 }
 
@@ -199,17 +196,16 @@ async function loadCommutes() {
   const raw = ct.includes("application/json") ? await res.json() : await res.text();
   const data = Array.isArray(raw) ? raw : (raw && typeof raw === "object" ? [raw] : []);
 
-  // ✅ 서버 값을 그대로 투입(덮어쓰기 없음)
   commuteTable.setData(data);
 }
 
 // 초기 구동
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    EMP_MAP = await loadMapEmployees(); // 사원맵 먼저
+    EMP_MAP = await loadMapEmployees();
   } catch (e) {
     console.error("사원맵 로드 실패:", e);
-    EMP_MAP = {}; // 실패해도 빈 맵으로 진행
+    EMP_MAP = {};
   }
   initTable();
   await loadCommutes();
@@ -225,7 +221,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const mode = $sel?.value || "name";
     const keywordRaw = ($txt?.value || "").trim();
 
-    // 필터 초기화
     commuteTable.clearFilter();
     if (!keywordRaw) return;
 
@@ -239,10 +234,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (mode === "date") {
-      // onTime 기준; 입력은 어떤 형식이든 숫자만 추려서 비교
       const kw = normalizeDateKeyword(keywordRaw);
       commuteTable.setFilter((data) => {
-        const ymd = fmtDate(data.onTime).replace(/[^\d]/g, ""); // 2025/10/10 -> 20251010
+        const ymd = fmtDate(data.onTime).replace(/[^\d]/g, "");
         return ymd.includes(kw);
       });
       return;
@@ -254,7 +248,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $txt?.addEventListener("input", debounce(applySearch, 300));
 });
 
-// ==== 인쇄(선택건만) ====
+// ==== 인쇄 ==== 
 const printBtn = document.getElementById("onoff-print");
 if (printBtn) {
   printBtn.addEventListener("click", () => {
@@ -271,11 +265,10 @@ if (printBtn) {
 
     // 선택건을 표 HTML로 변환
     const rows = selected.map(r => {
-      // workTime(Double 시간) → "H시간 MM분", 0이면 ""
       let wt = "";
       if (r.workTime != null && !isNaN(r.workTime)) {
         const s = fmtHourFromDouble(r.workTime);
-        wt = (s !== null ? s : ""); // 0이면 "" / 양수면 "H시간 MM분"
+        wt = (s !== null ? s : "");
       } else {
         wt = diffToWorkTime(r.onTime, r.offTime) || "";
       }
@@ -344,18 +337,47 @@ if (printBtn) {
       <tbody>${rows}</tbody>
     </table>
   </div>
-  <script>window.addEventListener('load', () => window.print());</script>
 </body>
 </html>`;
 
-    const w = window.open("", "_blank");
-    if (!w) {
-      alert("팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.");
-      return;
+    // 히든 iframe 생성 후 부모에서 print() 호출
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
+
+    const cleanup = () => { try { iframe.remove(); } catch (_) {} };
+    const safetyTimer = setTimeout(cleanup, 15000); // 혹시 onafterprint가 안오는 경우 대비
+
+    const tryPrint = () => {
+      try {
+        const win = iframe.contentWindow;
+        if (!win) { clearTimeout(safetyTimer); cleanup(); return; }
+        // 취소/완료 모두 onafterprint로 정리
+        win.onafterprint = () => { clearTimeout(safetyTimer); cleanup(); };
+        win.addEventListener?.("beforeunload", () => { clearTimeout(safetyTimer); cleanup(); });
+        win.focus();
+        win.print();
+      } catch (_) {
+        clearTimeout(safetyTimer);
+        cleanup();
+      }
+    };
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) {
+      doc.open(); doc.write(html); doc.close();
+      // CSS 로딩 시간 약간 대기 후 호출
+      setTimeout(tryPrint, 120);
+    } else {
+      clearTimeout(safetyTimer);
+      cleanup();
     }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
   });
 }
 
@@ -389,7 +411,7 @@ function mapRowsForExport(rows) {
     let wt = "";
     if (r.workTime != null && !isNaN(r.workTime)) {
       const s = fmtHourFromDouble(r.workTime);
-      wt = (s !== null ? s : ""); // 0이면 ""
+      wt = (s !== null ? s : "");
     } else {
       wt = diffToWorkTime(r.onTime, r.offTime) || "";
     }
@@ -404,7 +426,7 @@ function mapRowsForExport(rows) {
   });
 }
 
-// ✅ 파일명 타임스탬프 (필요 시 사용)
+// ✅ 파일명 타임스탬프
 function nowStamp() {
   const now = new Date();
   return [

@@ -785,29 +785,59 @@
       return `<!doctype html><html><head><meta charset="utf-8"><title>전표 인쇄</title>${css}</head><body>${pages}</body></html>`;
     }
 
-    // 인쇄: Blob URL 로드 완료 후 인쇄 (about:blank/빈화면 방지)
     document.getElementById('btn-print')?.addEventListener('click', () => {
       const selected = mainTable.getSelectedData();
-      if (!selected || selected.length === 0){ toast('인쇄할 전표를 체크박스로 선택하세요.'); return; }
+      if (!selected || selected.length === 0){
+        toast('인쇄할 전표를 체크박스로 선택하세요.');
+        return;
+      }
 
       const html = buildVoucherHTML(selected);
-      const blob = new Blob([html], { type: 'text/html' });
-      const url  = URL.createObjectURL(blob);
 
-      const w = window.open(url, '_blank');
-      if (!w) { toast('팝업이 차단되었습니다. 주소창 왼쪽 아이콘에서 팝업 허용 후 다시 시도하세요.'); URL.revokeObjectURL(url); return; }
+      // 1) 숨김 iframe 생성
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
 
-      const onLoad = () => {
-        try { w.document.title = '전표 인쇄'; } catch(_) {}
-        setTimeout(() => { try { w.focus(); w.print(); } catch(_) {} }, 100);
+      const cleanup = () => {
+        try { iframe.remove(); } catch(_) {}
       };
-      w.addEventListener?.('load', onLoad);
-      setTimeout(onLoad, 400);
 
-      const cleanup = () => { try { URL.revokeObjectURL(url); } catch(_) {} };
-      w.onafterprint = cleanup;
-      w.addEventListener?.('beforeunload', cleanup);
+      const doPrint = () => {
+        try {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        } catch(_) {}
+      };
+
+      // 2) srcdoc 지원 브라우저: 바로 주입
+      iframe.onload = () => setTimeout(doPrint, 50);
+      iframe.srcdoc = html;
+
+      // 3) 일부 브라우저 대비 fallback: document.write
+      setTimeout(() => {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        const empty = !doc || !doc.body || !doc.body.childNodes.length;
+        if (empty) {
+          try {
+            const d = iframe.contentWindow.document;
+            d.open(); d.write(html); d.close();
+            setTimeout(doPrint, 50);
+          } catch(_) {}
+        }
+      }, 120);
+
+      // 4) 인쇄 종료/탭 이동 시 정리
+      iframe.contentWindow.onafterprint = cleanup;
+      iframe.contentWindow.addEventListener?.('beforeunload', cleanup);
     });
+
 
     /* ---------- 전표 등록 모달 ---------- */
     const vfEl    = document.getElementById('voucherFormModal');
