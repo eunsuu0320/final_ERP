@@ -38,6 +38,8 @@
     .loading{ color:#64748b; font-size:14px }
     .alert{ border:1px solid #fecaca; background:#fff1f2; color:#7f1d1d; border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:12px; display:none; }
     .alert.show{ display:block; }
+    
+    .table .right { text-align: right; }
   </style>
 </head>
 
@@ -99,27 +101,47 @@
       </div>
 
       <!-- TABLES -->
-      <div class="grid" style="margin-top:16px">
-        <div class="card" style="grid-column:span 7;">
-          <h3>거래처 매출 Top5</h3>
-          <table class="table" id="tblPartners">
-            <thead>
-            <tr><th class="rank">순위</th><th>거래처명</th><th class="right">매출액</th><th class="right">미수금</th></tr>
-            </thead>
-            <tbody><tr><td colspan="4" class="loading">로딩 중…</td></tr></tbody>
-          </table>
-        </div>
-        <div class="card" style="grid-column:span 5;">
-          <h3>영업사원 실적 Top5</h3>
-          <table class="table" id="tblEmployees">
-            <thead>
-            <tr><th class="rank">순위</th><th>사원명</th><th class="right">매출액</th></tr>
-            </thead>
-            <tbody><tr><td colspan="3" class="loading">로딩 중…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
+		<div class="grid" style="margin-top:16px">
+		  <div class="card" style="grid-column:span 7;">
+		    <h3>거래처 매출 Top5</h3>
+		    <table class="table" id="tblPartners">
+		      <colgroup>
+		        <col style="width:150px">      
+		        <col>                        
+		        <col style="width:200px">     
+		        <col style="width:200px">  
+		      </colgroup>
+		      <thead>
+		      <tr>
+		        <th class="rank">순위</th>
+		        <th>거래처명</th>
+		        <th class="right">매출액</th>
+		        <th class="right">미수금</th>
+		      </tr>
+		      </thead>
+		      <tbody><tr><td colspan="4" class="loading">로딩 중…</td></tr></tbody>
+		    </table>
+		  </div>
+		
+		  <div class="card" style="grid-column:span 5;">
+		    <h3>영업사원 실적 Top5</h3>
+		    <table class="table" id="tblEmployees">
+		      <colgroup>
+		        <col style="width:150px">      
+		        <col>                    
+		        <col style="width:200px">    
+		      </colgroup>
+		      <thead>
+		      <tr>
+		      	<th class="rank">순위</th>
+		        <th>사원명</th>
+		        <th class="right">매출액</th>
+		      </tr>
+		      </thead>
+		      <tbody><tr><td colspan="3" class="loading">로딩 중…</td></tr></tbody>
+		    </table>
+		  </div>
+		</div>
     </div>
   </main>
 </div>
