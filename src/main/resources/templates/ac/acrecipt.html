@@ -334,132 +334,155 @@
     const today = todayStr();
 
     const html = `<!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8">
-<title>거래명세서</title>
-<style>
-  @page{ size:A4; margin:10mm 12mm; }
-  *{ box-sizing:border-box; }
-  body{ font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; color:#000; }
-  .sheet{ width:100%; }
-  .title{ text-align:center; font-size:28px; font-weight:800; letter-spacing:.5px; margin:2px 0 10px; }
+  <html lang="ko"><head><meta charset="UTF-8">
+  <title>거래명세서</title>
+  <style>
+    @page{ size:A4; margin:10mm 12mm; }
+    *{ box-sizing:border-box; }
+    body{ font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; color:#000; }
+    .sheet{ width:100%; }
+    .title{ text-align:center; font-size:28px; font-weight:800; letter-spacing:.5px; margin:2px 0 10px; }
 
-  .top-wrap{ display:grid; grid-template-columns:1.05fr 1fr; gap:8px; }
+    .top-wrap{ display:grid; grid-template-columns:1.05fr 1fr; gap:8px; }
 
-  /* 좌측(거래처 카드) */
-  .left-box{ border:2px solid #000; padding:8px 10px; display:grid; gap:6px; border-radius:8px; }
-  .left-row{ display:grid; grid-template-columns:120px 1fr; gap:0; font-size:13px; }
-  .left-label{ background:#f6f7fb; border:1px solid #000; padding:8px; font-weight:700; border-right:none; border-radius:6px 0 0 6px; }
-  .left-val{ border:1px solid #000; padding:8px; border-left:none; border-radius:0 6px 6px 0; }
+    .left-box{ border:2px solid #000; padding:8px 10px; display:grid; gap:6px; border-radius:8px; }
+    .left-row{ display:grid; grid-template-columns:120px 1fr; gap:0; font-size:13px; }
+    .left-label{ background:#f6f7fb; border:1px solid #000; padding:8px; font-weight:700; border-right:none; border-radius:6px 0 0 6px; }
+    .left-val{ border:1px solid #000; padding:8px; border-left:none; border-radius:0 6px 6px 0; }
 
-  /* 우측(공급자 카드) — 내부선 꽉 채우고 숫자 줄바꿈 방지 */
-  .supplier-card{ border:2px solid #000; border-radius:8px; overflow:hidden; }
-  .supplier-card .card-head{
-    background:#f6f7fb; border-bottom:2px solid #000;
-    padding:8px 12px; font-weight:800; font-size:16px; text-align:center; letter-spacing:.5px;
-  }
-  .supplier-card .card-body table{ width:100%; border-collapse:collapse; }
-  .supplier-card .card-body td{ border:1px solid #000; padding:8px; font-size:13px; }
-  .supplier-card .card-body td.label{ width:120px; background:#fafafa; font-weight:700; }
-  .nowrap{ white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
+    .supplier-card{ border:2px solid #000; border-radius:8px; overflow:hidden; }
+    .supplier-card .card-head{
+      background:#f6f7fb; border-bottom:2px solid #000;
+      padding:8px 12px; font-weight:800; font-size:16px; text-align:center; letter-spacing:.5px;
+    }
+    .supplier-card .card-body table{ width:100%; border-collapse:collapse; }
+    .supplier-card .card-body td{ border:1px solid #000; padding:8px; font-size:13px; }
+    .supplier-card .card-body td.label{ width:120px; background:#fafafa; font-weight:700; }
+    .nowrap{ white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
 
-  .amount-bar{ margin:10px 0 8px; display:grid; grid-template-columns:1fr auto; align-items:center; }
-  .amount-left{ border-top:2px solid #000; border-bottom:2px solid #000; padding:8px 10px; font-weight:800; }
-  .amount-right{ font-weight:800; }
+    .amount-bar{ margin:10px 0 8px; display:grid; grid-template-columns:1fr auto; align-items:center; }
+    .amount-left{ border-top:2px solid #000; border-bottom:2px solid #000; padding:8px 10px; font-weight:800; }
+    .amount-right{ font-weight:800; }
 
-  table.grid{ width:100%; border-collapse:collapse; border-top:2px solid #000; border-bottom:2px solid #000; }
-  .grid th,.grid td{ border:1px solid #000; padding:8px; font-size:13px; text-align:center; }
-  .grid th{ background:#f6f7fb; font-weight:800; }
-  .num{ text-align:right !important; }
+    table.grid{ width:100%; border-collapse:collapse; border-top:2px solid #000; border-bottom:2px solid #000; }
+    .grid th,.grid td{ border:1px solid #000; padding:8px; font-size:13px; text-align:center; }
+    .grid th{ background:#f6f7fb; font-weight:800; }
+    .num{ text-align:right !important; }
 
-  .sum{ width:100%; border-left:2px solid #000; border-right:2px solid #000; border-bottom:2px solid #000; border-top:none; }
-  .sum td{ border-top:1px solid #000; padding:8px; font-weight:800; text-align:center; }
-  .sum .num{ text-align:right !important; }
-</style>
-</head>
-<body>
-  <div class="sheet">
-    <div class="title">거래명세서</div>
+    .sum{ width:100%; border-left:2px solid #000; border-right:2px solid #000; border-bottom:2px solid #000; border-top:none; }
+    .sum td{ border-top:1px solid #000; padding:8px; font-weight:800; text-align:center; }
+    .sum .num{ text-align:right !important; }
+  </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="title">거래명세서</div>
 
-    <div class="top-wrap">
-      <!-- 좌측: 거래처 정보 -->
-      <div class="left-box">
-        <div class="left-row"><div class="left-label">거래처명</div><div class="left-val">${partnerInfo.name}</div></div>
-        <div class="left-row"><div class="left-label">사업자등록번호</div><div class="left-val">${partnerInfo.bizNo}</div></div>
-        <div class="left-row"><div class="left-label">대표자</div><div class="left-val">${partnerInfo.ceo}</div></div>
-        <div class="left-row"><div class="left-label">전화</div><div class="left-val">${partnerInfo.phone}</div></div>
-        <div class="left-row"><div class="left-label">주소</div><div class="left-val">${partnerInfo.addr}</div></div>
-      </div>
+      <div class="top-wrap">
+        <div class="left-box">
+          <div class="left-row"><div class="left-label">거래처명</div><div class="left-val">${partnerInfo.name}</div></div>
+          <div class="left-row"><div class="left-label">사업자등록번호</div><div class="left-val">${partnerInfo.bizNo}</div></div>
+          <div class="left-row"><div class="left-label">대표자</div><div class="left-val">${partnerInfo.ceo}</div></div>
+          <div class="left-row"><div class="left-label">전화</div><div class="left-val">${partnerInfo.phone}</div></div>
+          <div class="left-row"><div class="left-label">주소</div><div class="left-val">${partnerInfo.addr}</div></div>
+        </div>
 
-      <!-- 우측: 공급자 카드형 -->
-      <div class="supplier-card">
-        <div class="card-head">공급자</div>
-        <div class="card-body">
-          <table>
-            <tr>
-              <td class="label">일련번호</td><td class="val nowrap">${today}-1</td>
-              <td class="label">TEL</td><td class="val nowrap">${company.tel}</td>
-            </tr>
-            <tr>
-              <td class="label">사업자등록번호</td><td class="val nowrap">${company.bizNo}</td>
-              <td class="label">성명</td><td class="val">${company.ceo}</td>
-            </tr>
-            <tr>
-              <td class="label">상호</td><td class="val" colspan="3">${company.name}</td>
-            </tr>
-            <tr>
-              <td class="label">주소</td><td class="val" colspan="3">${company.addr}</td>
-            </tr>
-          </table>
+        <div class="supplier-card">
+          <div class="card-head">공급자</div>
+          <div class="card-body">
+            <table>
+              <tr>
+                <td class="label">일련번호</td><td class="val nowrap">${today}-1</td>
+                <td class="label">TEL</td><td class="val nowrap">${company.tel}</td>
+              </tr>
+              <tr>
+                <td class="label">사업자등록번호</td><td class="val nowrap">${company.bizNo}</td>
+                <td class="label">성명</td><td class="val">${company.ceo}</td>
+              </tr>
+              <tr>
+                <td class="label">상호</td><td class="val" colspan="3">${company.name}</td>
+              </tr>
+              <tr>
+                <td class="label">주소</td><td class="val" colspan="3">${company.addr}</td>
+              </tr>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="amount-bar">
-      <div class="amount-left">금&nbsp;&nbsp;액 : ${korAmt}</div>
-      <div class="amount-right">(￦${(total).toLocaleString()})</div>
-    </div>
+      <div class="amount-bar">
+        <div class="amount-left">금&nbsp;&nbsp;액 : ${korAmt}</div>
+        <div class="amount-right">(￦${(total).toLocaleString()})</div>
+      </div>
 
-    <table class="grid">
-      <thead>
+      <table class="grid">
+        <thead>
+          <tr>
+            <th style="width:100px;">일자</th>
+            <th>품목명[규격]</th>
+            <th style="width:120px;">수량</th>
+            <th style="width:110px;">단가</th>
+            <th style="width:130px;">공급가액</th>
+            <th style="width:110px;">부가세</th>
+            <th style="width:120px;">총 금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}${filler}
+        </tbody>
+      </table>
+
+      <table class="sum">
         <tr>
-          <th style="width:100px;">일자</th>
-          <th>품목명[규격]</th>
-          <th style="width:120px;">수량</th>
-          <th style="width:110px;">단가</th>
-          <th style="width:130px;">공급가액</th>
-          <th style="width:110px;">부가세</th>
-          <th style="width:120px;">총 금액</th>
+          <td style="width:80px;">수량</td>
+          <td class="num" style="width:120px;">${sumQty.toLocaleString()}</td>
+          <td style="width:120px;">공급가액</td>
+          <td class="num" style="width:140px;">${totalSupply.toLocaleString()}</td>
+          <td style="width:60px;">VAT</td>
+          <td class="num" style="width:120px;">${totalVat.toLocaleString()}</td>
+          <td style="width:80px;">합계</td>
+          <td class="num" style="width:140px;">${(total).toLocaleString()}</td>
+          <td style="width:80px;">인수</td>
+          <td class="num" style="width:100px;"></td>
         </tr>
-      </thead>
-      <tbody>
-        ${rowsHtml}${filler}
-      </tbody>
-    </table>
+      </table>
+    </div>
+  </body>
+  </html>`;
 
-    <table class="sum">
-      <tr>
-        <td style="width:80px;">수량</td>
-        <td class="num" style="width:120px;">${sumQty.toLocaleString()}</td>
-        <td style="width:120px;">공급가액</td>
-        <td class="num" style="width:140px;">${totalSupply.toLocaleString()}</td>
-        <td style="width:60px;">VAT</td>
-        <td class="num" style="width:120px;">${totalVat.toLocaleString()}</td>
-        <td style="width:80px;">합계</td>
-        <td class="num" style="width:140px;">${(total).toLocaleString()}</td>
-        <td style="width:80px;">인수</td>
-        <td class="num" style="width:100px;"></td>
-      </tr>
-    </table>
-  </div>
-</body>
-</html>`;
+    // 🔄 새 창 없이, 히든 iframe에서 인쇄
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+    document.body.appendChild(iframe);
 
-    const win = window.open('', '_blank', 'width=980,height=1200');
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.onload = () => { setTimeout(()=>{ win.focus(); win.print(); }, 50); };
+    const cleanup = () => { try { iframe.remove(); } catch(_) {} };
+    const safetyTimer = setTimeout(cleanup, 15000); // onafterprint 미발생 대비
+
+    const doPrint = () => {
+      try {
+        const w = iframe.contentWindow;
+        if (!w) { clearTimeout(safetyTimer); cleanup(); return; }
+        w.onafterprint = () => { clearTimeout(safetyTimer); cleanup(); };
+        w.addEventListener?.("beforeunload", () => { clearTimeout(safetyTimer); cleanup(); });
+        // 약간의 렌더링 시간 후 프린트
+        setTimeout(() => { try { w.focus(); w.print(); } catch(_) { cleanup(); } }, 120);
+      } catch(_) {
+        clearTimeout(safetyTimer); cleanup();
+      }
+    };
+
+    // 문서 주입
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (doc) { doc.open(); doc.write(html); doc.close(); doPrint(); }
+    else { clearTimeout(safetyTimer); cleanup(); }
   }
+
 
   async function onPrint(){
     const selected = grid.getSelectedData() || [];
