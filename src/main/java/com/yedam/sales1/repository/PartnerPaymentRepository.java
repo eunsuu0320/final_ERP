@@ -20,5 +20,6 @@ public interface PartnerPaymentRepository extends
 
 	Payment findByPaymentCode(String paymentCode);
 
+    List<Payment> findByPartnerCode(String partnerCode);
 
 }

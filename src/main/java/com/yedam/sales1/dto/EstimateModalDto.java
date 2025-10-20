@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor // 모든 필드를 인수로 받는 생성자
 public class EstimateModalDto {
 	
-	private Integer estimateUniqueCode; // 견적서 식별 코드
+	private Long estimateUniqueCode; // 견적서 식별 코드
 	private String estimateCode; // 견적서코드
     private String partnerCode; // 거래처 코드
     private String partnerName; // 거래처명

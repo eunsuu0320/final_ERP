@@ -13,4 +13,7 @@ public interface LoanService {
 	Loan saveLoan(Loan loan);
 
 	Loan getLoanByLoanCode(String keyword);
+	
+    Loan findLoanDetailByPartner(String partnerCode);
+
 }

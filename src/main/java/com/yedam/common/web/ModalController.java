@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.yedam.hr.domain.Attendance;
@@ -14,10 +15,16 @@ import com.yedam.hr.domain.Employee;
 import com.yedam.hr.repository.AttendanceRepository;
 import com.yedam.hr.repository.EmployeeRepository;
 import com.yedam.sales1.domain.Estimate;
+import com.yedam.sales1.domain.OrderDetail;
+import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.EstimateModalDto;
+import com.yedam.sales1.dto.OrderDetailDTO;
+import com.yedam.sales1.dto.OrderModalDTO;
 import com.yedam.sales1.dto.PartnerModalDto;
 import com.yedam.sales1.repository.EstimateRepository;
+import com.yedam.sales1.repository.OrderDetailRepository;
+import com.yedam.sales1.repository.OrdersRepository;
 import com.yedam.sales1.repository.PartnerRepository;
 import com.yedam.sales1.repository.ProductRepository;
 import com.yedam.sales1.repository.ShipmentRepository;
@@ -38,6 +45,10 @@ public class ModalController {
 	ShipmentRepository shipmentRepository;
 	@Autowired
 	PartnerRepository partnerRepository;
+	@Autowired
+	OrdersRepository orderRepository;
+	@Autowired
+	OrderDetailRepository orderDetailRepository;
 
 	@GetMapping("/employee")
 	public List<Employee> getEmployees() {
@@ -73,7 +84,7 @@ public class ModalController {
 
 	    return estimates.stream().map(estimate -> {
 	        EstimateModalDto dto = new EstimateModalDto();
-	        dto.setEstimateUniqueCode(estimate.getEstimateUniqueCode().intValue());
+	        dto.setEstimateUniqueCode(estimate.getEstimateUniqueCode());
 	        dto.setEstimateCode(estimate.getEstimateCode());
 	        dto.setPartnerCode(estimate.getPartnerCode());
 	        dto.setPartnerName(estimate.getPartner() != null ? estimate.getPartner().getPartnerName() : null);
@@ -89,6 +100,36 @@ public class ModalController {
 	        return dto;
 	    }).toList();
 	}
+	
+	@GetMapping("/order")
+	public List<OrderModalDTO> getOrders(@RequestParam String partnerCode) {
+	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	    String companyCode = auth.getName().split(":")[0];
+
+	    List<Orders> orders = orderRepository.findByCompanyCode(companyCode, partnerCode);
+
+	    return orders.stream().map(order -> {
+	        OrderModalDTO dto = new OrderModalDTO();
+	        dto.setOrderUniqueCode(order.getOrderUniqueCode());
+	        dto.setEstimateUniqueCode(order.getEstimateUniqueCode());
+	        dto.setOrderCode(order.getOrderCode());
+	        dto.setPartnerCode(order.getPartnerCode());
+	        dto.setPartnerName(order.getPartner() != null ? order.getPartner().getPartnerName() : null);
+	        dto.setManager(order.getManager());
+	        dto.setManagerName(order.getManagerEmp() != null ? order.getManagerEmp().getName() : null);
+	        dto.setPostCode(order.getPostCode());
+	        dto.setAddress(order.getAddress());
+	        dto.setRemarks(order.getRemarks());
+	        dto.setTotalAmount(order.getTotalAmount());
+	        dto.setCreateDate(order.getCreateDate());
+	        dto.setDeliveryDate(order.getDeliveryDate());
+	        
+	        List<OrderDetail> details = orderDetailRepository.findByOrderUniqueCode(order.getOrderUniqueCode());
+	        dto.setDetailList(details);
+	        return dto;
+	    }).toList();
+	}
+
 
 
 	@GetMapping("/salesEmployee")

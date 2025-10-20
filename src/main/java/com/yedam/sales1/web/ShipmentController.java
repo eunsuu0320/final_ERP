@@ -1,6 +1,7 @@
 package com.yedam.sales1.web;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,20 +13,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.domain.Shipment;
 import com.yedam.sales1.dto.ShipmentRegistrationDTO;
+import com.yedam.sales1.repository.ShipmentRepository;
 import com.yedam.sales1.service.ShipmentService;
 
 @Controller
 public class ShipmentController {
 
 	private final ShipmentService shipmentService;
+	private final ShipmentRepository shipmentRepository;
 
 	@Autowired
-	public ShipmentController(ShipmentService shipmentService) {
+	public ShipmentController(ShipmentService shipmentService, ShipmentRepository shipmentRepository) {
 		this.shipmentService = shipmentService;
+		this.shipmentRepository = shipmentRepository;
+
 	}
 
 	@GetMapping("shipmentList")
@@ -57,39 +63,68 @@ public class ShipmentController {
 			return ResponseEntity.status(500).body(Map.of("message", "출하 등록 실패", "error", e.getMessage())); // ⭐ 메시지 변경
 		}
 	}
-	
-	
+
+	@GetMapping("api/shipment/getDetail")
+	@ResponseBody
+	public ResponseEntity<?> getShipmentDetail(@RequestParam String keyword) {
+		// keyword = "SHP0005"
+		System.out.println("getDetail keyword: " + keyword);
+
+		Shipment shipment = shipmentRepository.findByShipmentCode(keyword)
+				.orElseThrow(() -> new RuntimeException("출하 정보 없음"));
+
+		return ResponseEntity.ok(shipment);
+	}
+
+	@GetMapping("/api/shipment/completed")
+	public ResponseEntity<List<Map<String, Object>>> getCompletedShipments(@RequestParam String partnerCode) {
+		try {
+			List<Map<String, Object>> shipments = shipmentRepository.findCompletedShipmentsByPartnerMap(partnerCode);
+
+			if (shipments == null || shipments.isEmpty()) {
+				return ResponseEntity.ok(Collections.emptyList());
+			}
+
+			return ResponseEntity.ok(shipments);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(500)
+					.body(Collections.singletonList(Map.of("error", "출하지시서 데이터 조회 중 오류 발생: " + e.getMessage())));
+		}
+	}
+
 	@PostMapping("api/updateShipment")
 	public ResponseEntity<Map<String, Object>> updateShipmentStatus(@RequestBody Map<String, String> request) {
 		try {
 			String shipmentCode = request.get("shipmentCode");
 			String status = request.get("status");
-            
-            // 필수 파라미터 검증
-            if (shipmentCode == null || status == null) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "출하지시서 코드와 상태는 필수입니다."));
-            }
+
+			// 필수 파라미터 검증
+			if (shipmentCode == null || status == null) {
+				return ResponseEntity.badRequest().body(Map.of("success", false, "message", "출하지시서 코드와 상태는 필수입니다."));
+			}
 
 			// Service 계층의 상태 업데이트 메서드 호출 (estimateService에 이 메서드가 정의되어 있어야 합니다.)
 			boolean updated = shipmentService.updateShipmentStatus(shipmentCode, status);
 
 			if (updated) {
-                // 업데이트 성공 시 클라이언트 (JS)가 기대하는 success: true 반환
+				// 업데이트 성공 시 클라이언트 (JS)가 기대하는 success: true 반환
 				return ResponseEntity.ok(Map.of("success", true, "message", "진행 상태가 성공적으로 변경되었습니다."));
 			} else {
-                // Service 단에서 업데이트할 대상을 찾지 못했거나 DB 오류가 발생한 경우
-				return ResponseEntity.status(400).body(Map.of("success", false, "message", "업데이트할 출하지시서를 찾을 수 없거나 DB 처리 중 오류가 발생했습니다."));
+				// Service 단에서 업데이트할 대상을 찾지 못했거나 DB 오류가 발생한 경우
+				return ResponseEntity.status(400)
+						.body(Map.of("success", false, "message", "업데이트할 출하지시서를 찾을 수 없거나 DB 처리 중 오류가 발생했습니다."));
 			}
 
 		} catch (Exception e) {
 			// 예외 발생 시 서버 오류 응답 반환
 			System.err.println("출하지시서 상태 업데이트 중 오류 발생: " + e.getMessage());
-			return ResponseEntity.status(500).body(Map.of("success", false, "message", "서버 내부 오류로 상태 업데이트에 실패했습니다.", "error", e.getMessage()));
+			return ResponseEntity.status(500)
+					.body(Map.of("success", false, "message", "서버 내부 오류로 상태 업데이트에 실패했습니다.", "error", e.getMessage()));
 		}
 	}
-	
-	
-	
+
 	@GetMapping("api/shipment/search")
 	// 반환 타입을 Map 리스트로 변경해야 합니다.
 	public ResponseEntity<List<Map<String, Object>>> getShipmentSearch(@ModelAttribute Shipment searchVo) {

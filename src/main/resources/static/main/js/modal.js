@@ -326,6 +326,25 @@ const modalConfigs = {
 		],
 		selectable: 1,
 	},
+	
+	orders: {
+		url: "/api/modal/order",
+		title: "주문서 검색",
+		columns: [
+			{ title: "주문서코드", field: "orderCode", hozAlign: "center" },
+			{ title: "거래처코드", field: "partnerCode", hozAlign: "center" },
+			{ title: "거래처", field: "partnerName", hozAlign: "center" },
+			{ title: "주문일", field: "createDate", hozAlign: "center" },
+			{ title: "납기일", field: "deliveryDate", hozAlign: "center" },
+			{ title: "배송지 우편번호", field: "postCode", hozAlign: "center" },
+			{ title: "배송지 주소", field: "address", hozAlign: "center" },
+			{ title: "담당자", field: "managerName", hozAlign: "center" },
+			{ title: "비고", field: "remarks", hozAlign: "center" },
+
+
+		],
+		selectable: 1,
+	},
 
 
 

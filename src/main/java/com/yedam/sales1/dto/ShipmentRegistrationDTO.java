@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 public class ShipmentRegistrationDTO {
 
     // 출하 마스터(Shipment)
-    private String shipmentDate;      // 출하예정일자
+    private String deliveryDate;      // 출하예정일자
     private String partnerName;       // 거래처명
     private String partnerCode;       // 거래처코드
     private String warehouse;         // 창고

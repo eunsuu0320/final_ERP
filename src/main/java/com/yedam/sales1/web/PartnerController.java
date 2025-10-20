@@ -10,23 +10,34 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.yedam.sales1.domain.Loan;
 import com.yedam.sales1.domain.Partner;
-import com.yedam.sales1.domain.Price;
+import com.yedam.sales1.domain.Payment;
 import com.yedam.sales1.dto.PartnerRegistrationDTO;
+import com.yedam.sales1.service.LoanService;
 import com.yedam.sales1.service.PartnerService;
+import com.yedam.sales1.service.PaymentService;
 
 @Controller
 public class PartnerController {
 
 	private final PartnerService partnerService;
+	private final LoanService loanService;
+	private final PaymentService paymentService;
+
+
 
 	@Autowired
-	public PartnerController(PartnerService partnerService) {
+	public PartnerController(PartnerService partnerService, PaymentService paymentService, LoanService loanService) {
 		this.partnerService = partnerService;
+		this.paymentService = paymentService;
+		this.loanService = loanService;
+
 	}
 
 	@GetMapping("partnerList")
@@ -89,5 +100,24 @@ public class PartnerController {
 			return ResponseEntity.ok(Collections.emptyList());
 		}
 	}
+	
+	
+	
+    // 거래처 상세 조회
+    @GetMapping("api/partner/detail/{partnerCode}")
+    public Partner getPartnerDetail(@PathVariable String partnerCode) {
+        return partnerService.findPartnerDetail(partnerCode);
+    }
+    
+    // 여신(단가) 상세 조회
+    @GetMapping("api/loan/detail/{partnerCode}")
+    public Loan getLoanDetail(@PathVariable String partnerCode) {
+        return loanService.findLoanDetailByPartner(partnerCode);
+    }
 
+    // 결제정보 상세조회
+    @GetMapping("api/payment/detail/{partnerCode}")
+    public List<Payment> getPaymentDetail(@PathVariable String partnerCode) {
+        return paymentService.findPaymentsByPartnerCode(partnerCode);
+    }
 }

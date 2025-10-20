@@ -21,4 +21,6 @@ public interface PartnerService {
 	Partner getPartnerByPartnerCode(String keyword);
 
 	Partner saveFullPartnerData(PartnerRegistrationDTO partnerData);
+	
+    Partner findPartnerDetail(String partnerCode);
 }

@@ -5,12 +5,10 @@ window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
 document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값.
-	const defaultVisible = ["출하지시서코드", "출하예정일자", "거래처명", "창고명", "품목명", "수량합계", "진행상태"];
+	const defaultVisible = ["출하지시서코드", "출하예정일자", "거래처명", "창고명", "품목명", "수량합계", "담당자", "진행상태"];
 
 	const STATUS_MAP = {
-		"미지시": { label: "미지시" },
-		"결재중": { label: "결재중" },
-		"확인": { label: "확인" },
+		"미확인": { label: "미확인" },
 		"출하중": { label: "출하중" },
 		"출하완료": { label: "출하완료" },
 		"회계반영완료": { label: "회계반영완료" }
@@ -58,14 +56,8 @@ document.addEventListener("DOMContentLoaded", function() {
 				// 'ALL' 탭은 모든 필터를 지웁니다.
 				table.clearFilter();
 				return;
-			case 'NONSHIPMENT':
-				filterValue = "미지시";
-				break;
-			case 'ONCHECKING':
-				filterValue = "결재중";
-				break;
-			case 'CHECK':
-				filterValue = "확인";
+			case 'NONCHECK':
+				filterValue = "미확인";
 				break;
 			case 'ONSHIPMENT':
 				filterValue = "출하중";
@@ -88,6 +80,40 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+
+	// 출하지시서 모달 내 '주문서조회' 버튼 클릭 시
+	window.selectOrders = function() {
+		const partnerCode = document.getElementById('partnerCodeModal').value;
+		const form = document.getElementById('quoteForm');
+
+		if (!partnerCode) {
+			alert("먼저 거래처를 선택하세요.");
+			return;
+		}
+
+		openSalesModal(function(selected) {
+			// ✅ 기본정보 (주소 등) 바인딩
+			document.getElementById('postCode').value = selected.postCode || '';
+			document.getElementById('address').value = selected.address || '';
+
+			// ✅ 주문코드
+			const orderCode = selected.orderCode;
+			console.log("선택한 주문서:", orderCode);
+
+			const orderUniqueCode = selected.orderUniqueCode;
+
+			// ✅ 공통함수로 상세 데이터 로딩 (자동 폼 & 테이블 바인딩)
+			loadDetailData('orders', orderUniqueCode, form)
+				.then(responseData => {
+					console.log("주문서 상세 데이터 수신:", responseData);
+					window.lastLoadedOrderData = responseData; // 디버깅용
+				})
+				.catch(err => {
+					console.error("주문서 상세 불러오기 실패:", err);
+					alert("주문서 정보를 불러오지 못했습니다.");
+				});
+		}, partnerCode);
+	};
 
 
 
@@ -165,7 +191,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	// 폼 전체 초기화 (견적서 폼 대신 출하 폼을 초기화)
 	window.resetQuote = function() {
-		const form = document.getElementById("shipmentForm"); // 출하 폼 ID 사용
+		const form = document.getElementById("quoteForm"); // 출하 폼 ID 사용
 		if (form) {
 			form.reset();
 		}
@@ -195,9 +221,12 @@ document.addEventListener("DOMContentLoaded", function() {
 		const modalName = modalType === 'detail' ? '출하지시서 상세정보' : '출하지시서 등록';
 		const modalEl = document.getElementById("newDetailModal");
 		const modal = new bootstrap.Modal(modalEl);
-		const form = document.getElementById("shipmentForm");
+		const form = document.getElementById("quoteForm");
 
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
+
+		window.lastLoadedEstimateData = null;
+		window.lastModalType = null;
 
 		form.reset();
 
@@ -230,46 +259,44 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 출하 마스터 + 상세 등록 로직 (saveModal)
 	// ====================================================================
 	window.saveModal = function() {
-		const shipmentForm = document.getElementById("shipmentForm");
+		const quoteForm = document.getElementById("quoteForm");
 		const modalEl = document.getElementById("newDetailModal");
 
-		if (!shipmentForm) {
+		if (!quoteForm) {
 			alert("저장 오류: 출하 등록 폼을 찾을 수 없습니다.");
 			return;
 		}
 
-		// 1. Shipment 기본 정보 유효성 검사 (공통함수 checkRequired 사용)
-		if (!window.checkRequired(shipmentForm)) {
-			return;
-		}
+		// 1️⃣ 필수 항목 체크
+		if (!window.checkRequired(quoteForm)) return;
 
-		// 2. Shipment 상세 정보 수집 (유효성 검사는 collectShipmentDetails에서 처리)
+		// 2️⃣ 상세 항목 수집
 		const detailList = collectShipmentDetails();
-
 		if (detailList.length === 0) {
 			alert("출하 상세 항목을 1개 이상 입력해주세요.");
 			return;
 		}
 
-		// 3. 최종 페이로드 구성
-		const shipmentData = new FormData(shipmentForm);
-		const shipmentDataObject = Object.fromEntries(shipmentData.entries());
+		// 3️⃣ 폼 데이터 수집
+		const formData = new FormData(quoteForm);
+		const formObj = Object.fromEntries(formData.entries());
 
+		// ✅ 4️⃣ DTO와 필드명 정확히 일치시킨 최종 Payload
 		const finalPayload = {
-			shipmentDate: shipmentDataObject.quoteDate,
-			partnerCode: shipmentDataObject.partnerCode || '',
-			partnerName: shipmentDataObject.partnerName,
-			warehouse: shipmentDataObject.warehouse || '',
-			manager: shipmentDataObject.manager || '',
-			postCode: shipmentDataObject.zipcode || '',
-			address: shipmentDataObject.address || '',
-			remarks: shipmentDataObject.remarks || '',
-			detailList: detailList
+			deliveryDate: formObj.deliveryDateText || null,     // ✅ 출하예정일자
+			partnerCode: formObj.partnerCode || '',             // ✅ 거래처코드
+			partnerName: formObj.partnerName || '',        // ✅ 거래처명
+			warehouse: formObj.warehouse || null,               // ✅ 창고
+			manager: formObj.empCode || '',                     // ✅ 담당자코드
+			postCode: formObj.postCode || null,                 // ✅ 우편번호
+			address: formObj.address || '',                     // ✅ 주소
+			remarks: formObj.remarks || '',                     // ✅ 비고
+			detailList: detailList                              // ✅ 상세항목
 		};
 
 		console.log("전송할 최종 출하 데이터:", finalPayload);
 
-		// 4. 서버에 API 호출
+		// 5️⃣ 서버 전송
 		fetch("/api/registShipment", {
 			method: "POST",
 			headers: {
@@ -277,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				[document.querySelector('meta[name="_csrf_header"]').content]:
 					document.querySelector('meta[name="_csrf"]').content
 			},
-			body: JSON.stringify(finalPayload),
+			body: JSON.stringify(finalPayload)
 		})
 			.then(res => {
 				if (!res.ok) {
@@ -291,29 +318,74 @@ document.addEventListener("DOMContentLoaded", function() {
 				console.log("서버 응답 데이터:", data);
 				alert("출하 지시가 성공적으로 등록되었습니다. 코드: " + data.id);
 
+				// 모달 닫기 및 초기화
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
 				if (modalInstance) modalInstance.hide();
 
-				// 등록 성공 후, 등록 행을 초기화합니다. (clearInputRowValues 호출)
 				const tbody = document.getElementById('itemDetailBody');
-				const newRowTemplate = tbody ? tbody.querySelector('tr.new-item-row') : null;
+				const newRowTemplate = tbody?.querySelector('tr.new-item-row');
 				if (newRowTemplate && window.clearInputRowValues) {
 					window.clearInputRowValues(newRowTemplate);
-
-					// 초기화 후 합계 재계산
-					if (window.calculateTotal) {
-						window.calculateTotal();
-					}
+					if (window.calculateTotal) window.calculateTotal();
 				}
-
-				// 테이블 데이터 리로드 로직 추가 
-				// window.shipmentTableInstance.setData("/api/shipmentList");
 			})
 			.catch(err => {
 				console.error("출하 등록 실패:", err);
-				alert(`등록에 실패했습니다. 상세 내용은 콘솔(F12)을 확인하세요. 오류: ${err.message}`)
+				alert(`등록에 실패했습니다. 오류: ${err.message}`);
 			});
 	};
+
+
+
+
+	// ✅ 출하지시수량 입력 유효성 검사 (반복행 대응)
+	window.validateNowQuantity = function(input) {
+		// 현재 입력 중인 행 찾기
+		const row = input.closest("tr");
+		if (!row) return;
+
+		// 같은 행의 stock, nonShipment 값 읽기
+		const stock = parseFloat(row.querySelector("[name='stock']")?.value || 0);
+		const nonShipment = parseFloat(row.querySelector("[name='nonShipment']")?.value || 0);
+		const entered = parseFloat(input.value || 0);
+
+		// 초과 여부 검사
+		if (entered > stock || entered > nonShipment) {
+			showToast("재고, 미지시수량을 초과합니다.");
+			input.value = Math.min(stock, nonShipment); // 두 값 중 더 작은 값으로 되돌림
+		}
+	}
+
+	// ✅ 토스트 알림 (공통)
+	window.showToast = function(message) {
+		const existingToast = document.getElementById("toastMessage");
+		if (existingToast) existingToast.remove();
+
+		const toast = document.createElement("div");
+		toast.id = "toastMessage";
+		toast.textContent = message;
+		toast.style.position = "fixed";
+		toast.style.bottom = "40px";
+		toast.style.left = "50%";
+		toast.style.transform = "translateX(-50%)";
+		toast.style.background = "rgba(0, 0, 0, 0.8)";
+		toast.style.color = "white";
+		toast.style.padding = "10px 20px";
+		toast.style.borderRadius = "8px";
+		toast.style.fontSize = "14px";
+		toast.style.zIndex = "9999";
+		toast.style.transition = "opacity 0.5s ease";
+
+		document.body.appendChild(toast);
+
+		setTimeout(() => {
+			toast.style.opacity = "0";
+			setTimeout(() => toast.remove(), 500);
+		}, 1500);
+	}
+
+
+
 
 
 	// ====================================================================
@@ -327,39 +399,50 @@ document.addEventListener("DOMContentLoaded", function() {
 		const tbody = document.getElementById('itemDetailBody');
 		if (!tbody) return detailList;
 
-		// cleanValue를 전역에서 가져와 사용
 		const cleanValue = window.cleanValue;
 		let isRowValid = true;
 
 		// 실제 데이터 행만 순회 (템플릿 행 제외)
 		tbody.querySelectorAll('tr:not(.new-item-row)').forEach(row => {
+			const nowQtyInput = row.querySelector('input[name="nowQuantity"]');
+			const nowQuantity = cleanValue(nowQtyInput?.value || 0);
 
-			// 데이터 행에 대해서 유효성 검사 수행 (공통 함수 checkRowRequired 호출)
+			// ✅ nowQuantity가 0 이하이거나 빈 값이면 이 행은 저장 대상에서 제외
+			if (!nowQuantity || nowQuantity <= 0) return;
+
+			// ✅ 필수 항목 유효성 검사
 			const validationResult = window.checkRowRequired(row);
-
 			if (!validationResult.isValid) {
 				alert(`[${row.rowIndex}번째 행] ${validationResult.missingFieldName}은(는) 필수 입력 항목입니다.`);
 				isRowValid = false;
 				return;
 			}
 
-			// HTML input name 속성에 맞춰서 데이터 구성
-			const productCode = row.querySelector('input[name="productCode"]').value || '';
-			const quantity = cleanValue(row.querySelector('input[name="quantity"]').value); // cleanValue 사용
-			const remarks = row.querySelector('input[name="remarks"]').value || '';
+			// ✅ HTML name 속성에 맞춰 데이터 구성
+			const productCode = row.querySelector('input[name="productCode"]')?.value || '';
+			const productName = row.querySelector('input[name="productName"]')?.value || '';
+			const stock = cleanValue(row.querySelector('input[name="stock"]')?.value || 0);
+			const remarks = row.querySelector('input[name="remarks"]')?.value || '';
+			const orderDetailCode = row.querySelector('input[name="orderDetailCode"]')?.value || '';
+			const totalQuantity = cleanValue(row.querySelector('input[name="quantity"]')?.value || 0);
+			const nonShipment = totalQuantity - nowQuantity;
 
 			detailList.push({
+				orderDetailCode: orderDetailCode,
 				productCode: productCode,
-				quantity: quantity,
+				productName: productName,
+				nowQuantity: nowQuantity,
+				nonShipment: nonShipment,
+				stock: stock,
 				remarks: remarks,
 			});
 		});
 
-		// 유효성 검사 실패 시 빈 배열 반환
 		if (!isRowValid) return [];
-
 		return detailList;
 	}
+
+
 
 
 	// ====================================================================
@@ -456,72 +539,72 @@ document.addEventListener("DOMContentLoaded", function() {
 	const tableInstance = window.makeTabulator(rows, tabulatorColumns);
 	window.shipmentTableInstance = tableInstance;
 	initTabFiltering();
-	
-	
+
+
 	function loadTableData(params = {}) {
-			const queryString = new URLSearchParams(params).toString();
-			const url = `/api/shipment/search?${queryString}`;
+		const queryString = new URLSearchParams(params).toString();
+		const url = `/api/shipment/search?${queryString}`;
 
-			// 로딩 상태 표시
-			if (window.shipmentTableInstance) {
-				// Tabulator의 기본 로딩 애니메이션을 사용하거나, 수동으로 로딩 표시 가능
-			}
-
-			fetch(url)
-				.then(response => {
-					if (!response.ok) {
-						throw new Error('데이터 요청 실패: ' + response.statusText);
-					}
-					return response.json();
-				})
-				.then(data => {
-					console.log("검색 결과 데이터:", data);
-
-					// ★ 3. 검색 결과를 Tabulator에 반영하는 핵심 로직
-					if (window.shipmentTableInstance) {
-						window.shipmentTableInstance.setData(data);
-					}
-				})
-				.catch(error => {
-					console.error('데이터 로딩 중 오류 발생:', error);
-					alert('데이터를 가져오는 데 실패했습니다.');
-
-					// 오류 발생 시 빈 배열로 설정하여 테이블 정리
-					if (window.shipmentTableInstance) {
-						window.shipmentTableInstance.setData([]);
-					}
-				});
-		}
-		
-		// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
-		window.filterSearch = function() {
-			const searchParams = getSearchParams('.searchTool');
-
-			console.log("서버로 보낼 검색 조건:", searchParams);
-
-			// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
-			loadTableData(searchParams);
+		// 로딩 상태 표시
+		if (window.shipmentTableInstance) {
+			// Tabulator의 기본 로딩 애니메이션을 사용하거나, 수동으로 로딩 표시 가능
 		}
 
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('데이터 요청 실패: ' + response.statusText);
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log("검색 결과 데이터:", data);
 
-		// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
-		window.resetSearch = function() {
-			// 검색 조건 필드 초기화 로직 (실제 DOM 구조에 맞게 수정 필요)
-			const searchTool = document.querySelector('.searchTool');
-			searchTool.querySelectorAll('input[type=text], select').forEach(el => {
-				if (el.tagName === 'SELECT' && el.choicesInstance) {
-					// Choices.js 인스턴스 초기화
-					el.choicesInstance.setChoiceByValue('');
-				} else {
-					el.value = '';
+				// ★ 3. 검색 결과를 Tabulator에 반영하는 핵심 로직
+				if (window.shipmentTableInstance) {
+					window.shipmentTableInstance.setData(data);
+				}
+			})
+			.catch(error => {
+				console.error('데이터 로딩 중 오류 발생:', error);
+				alert('데이터를 가져오는 데 실패했습니다.');
+
+				// 오류 발생 시 빈 배열로 설정하여 테이블 정리
+				if (window.shipmentTableInstance) {
+					window.shipmentTableInstance.setData([]);
 				}
 			});
+	}
 
-			// 검색 조건 없이 데이터 로딩 함수 호출 (searchVo가 빈 상태로 넘어가 전체 목록 조회)
-			loadTableData({});
-		}
-	
-	
+	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+	window.filterSearch = function() {
+		const searchParams = getSearchParams('.searchTool');
+
+		console.log("서버로 보낼 검색 조건:", searchParams);
+
+		// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
+		loadTableData(searchParams);
+	}
+
+
+	// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
+	window.resetSearch = function() {
+		// 검색 조건 필드 초기화 로직 (실제 DOM 구조에 맞게 수정 필요)
+		const searchTool = document.querySelector('.searchTool');
+		searchTool.querySelectorAll('input[type=text], select').forEach(el => {
+			if (el.tagName === 'SELECT' && el.choicesInstance) {
+				// Choices.js 인스턴스 초기화
+				el.choicesInstance.setChoiceByValue('');
+			} else {
+				el.value = '';
+			}
+		});
+
+		// 검색 조건 없이 데이터 로딩 함수 호출 (searchVo가 빈 상태로 넘어가 전체 목록 조회)
+		loadTableData({});
+	}
+
+
 });
 
 

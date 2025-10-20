@@ -231,12 +231,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				visible: defaultVisible.includes(col)
 			};
 
-			if (col === "거래처코드") {
-				columnDef.formatter = function(cell) {
-					const value = cell.getValue();
-					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${value}')">${value}</div>`;
-				};
-			}
 			return columnDef;
 		}).filter(c => c !== null)
 	];

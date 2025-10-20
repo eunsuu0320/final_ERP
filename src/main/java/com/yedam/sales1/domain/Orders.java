@@ -39,6 +39,9 @@ public class Orders {
 
     @Column(name = "MANAGER", length = 20, nullable = false)
     private String manager;
+    
+    @Column(name = "WRITER", length = 20, nullable = false)
+    private String writer;
 
     @Column(name = "STATUS", length = 20)
     private String status;
@@ -67,8 +70,7 @@ public class Orders {
 	@Column(name = "PAY_CONDITION", length = 1000)
 	private String payCondition;
 	
-	@Column(name = "NON_SHIPMENT")
-	private Integer nonShipment; 
+
 
     // 거래처 연관 (복합키)
     @ManyToOne(fetch = FetchType.LAZY)

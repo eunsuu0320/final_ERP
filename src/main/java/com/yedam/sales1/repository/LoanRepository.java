@@ -19,5 +19,7 @@ public interface LoanRepository extends
 
 	Loan findByLoanCode(String loanCode);
 	
+    Loan findByPartnerCode(String partnerCode);
+
 
 }

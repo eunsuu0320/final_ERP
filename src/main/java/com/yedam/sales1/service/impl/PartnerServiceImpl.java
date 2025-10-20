@@ -234,4 +234,10 @@ public class PartnerServiceImpl implements PartnerService {
 		}
 		return String.format("%s%04d", prefix, newNum);
 	}
+
+	@Override
+	public Partner findPartnerDetail(String partnerCode) {
+        return partnerRepository.findByPartnerCode(partnerCode);
+
+	}
 }
