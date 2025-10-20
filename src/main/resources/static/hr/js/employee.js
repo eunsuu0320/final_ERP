@@ -348,84 +348,158 @@ document.addEventListener("DOMContentLoaded", async () => {
 		});
 	}
 
+	
 	// 인쇄
-	const printBtn = document.querySelector(".btn-secondary");
-	if (printBtn) {
-		printBtn.addEventListener("click", () => {
-			const selected = table.getSelectedData();
-			if (selected.length === 0) { alert("인쇄할 사원을 선택하세요."); return; }
+	(function attachPrintHandler(){
+	  const printBtn = document.querySelector(".btn-secondary");
+	  if (!printBtn) return;
+	
+	  // iframe 인쇄 유틸
+	  function printHTMLViaIframe(html) {
+		  const iframe = document.createElement("iframe");
+		  iframe.style.position = "fixed";
+		  iframe.style.right = "0";
+		  iframe.style.bottom = "0";
+		  iframe.style.width = "0";
+		  iframe.style.height = "0";
+		  iframe.style.border = "0";
+		  iframe.style.visibility = "hidden";
+		  document.body.appendChild(iframe);
+		
+		  let cleaned = false;
+		
+		  const cleanup = () => {
+		    if (cleaned) return;
+		    cleaned = true;
+		    try { iframe.remove(); } catch(_) {}
+		    try { window.removeEventListener("focus", onFocus, true); } catch(_) {}
+		    try { window.removeEventListener("afterprint", onAfterPrint, true); } catch(_) {}
+		    hideGlobalLoading?.();
+		  };
+		
+		  // 부모창에서도 인쇄 완료/취소 감지
+		  const onAfterPrint = () => cleanup();
+		  const onFocus = () => {
+		    // 프린트 다이얼로그가 닫히면 포커스가 돌아옴
+		    setTimeout(cleanup, 50);
+		  };
+		
+		  window.addEventListener("afterprint", onAfterPrint, true);
+		  window.addEventListener("focus", onFocus, true);
+		
+		  // 최후 수단(어떤 이벤트도 안 올 때)
+		  const hardTimeout = setTimeout(() => cleanup(), 15000);
+		
+		  const doPrint = () => {
+		    try {
+		      // iframe 내부에도 afterprint 훅(지원 브라우저용)
+		      const cw = iframe.contentWindow;
+		      cw?.addEventListener?.("afterprint", cleanup, { once: true });
+		      setTimeout(() => {
+		        try {
+		          cw?.focus();
+		          cw?.print();
+		        } catch(_) {}
+		      }, 80);
+		    } catch(_) {
+		      cleanup();
+		    }
+		  };
+		
+		  iframe.onload = () => doPrint();
+		  iframe.srcdoc = html;
+		
+		  // srcdoc 미지원 대비
+		  setTimeout(() => {
+		    try {
+		      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+		      const empty = !doc || !doc.body || !doc.body.childNodes.length;
+		      if (empty) {
+		        const d = iframe.contentWindow.document;
+		        d.open(); d.write(html); d.close();
+		        doPrint();
+		      }
+		    } catch(_) {
+		      cleanup();
+		    }
+		  }, 150);
+		}
 
-			const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
-			const rows = selected.map(emp => `
-      <tr>
-        <td>${emp.empCode ?? ""}</td>
-        <td>${emp.name ?? ""}</td>
-        <td>${toName("GRP011", emp.dept)}</td>
-        <td>${toName("GRP013", emp.grade)}</td>
-        <td>${toName("GRP010", emp.position)}</td>
-        <td>${emp.phone ?? ""}</td>
-        <td>${emp.email ?? ""}</td>
-        <td>${emp.hireDate ?? ""}</td>
-      </tr>`).join("");
-
-			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
-			const count = selected.length;
-
-			const html = `
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>선택된 사원 목록</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    @page { size: A4 portrait; margin: 8mm; }
-    html, body { height: 100%; }
-    body { margin: 0; font-size: 12px; }
-    .print-wrap { width: 100%; padding: 0; }
-    .print-header { text-align: center; margin: 0 0 8px 0; }
-    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
-    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
-    table.print th, table.print td {
-      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
-    }
-    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
-    tbody tr:nth-child(even) td { background: #fcfcfc; }
-    thead { display: table-header-group; }
-    tfoot { display: table-footer-group; }
-    tr { page-break-inside: avoid; }
-    col.empcode{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
-    col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
-  </style>
-</head>
-<body>
-  <div class="print-wrap">
-    <div class="print-header"><h3 class="m-0">선택된 사원 목록</h3></div>
-    <div class="meta"><div>총 <strong>${count}</strong>명</div><div>생성일시: ${now}</div></div>
-    <table class="print">
-      <colgroup>
-        <col class="empcode"><col class="name"><col class="dept"><col class="grade">
-        <col class="position"><col class="phone"><col class="email"><col class="hire">
-      </colgroup>
-      <thead>
-        <tr>
-          <th>사원번호</th><th>성명</th><th>부서명</th><th>직급</th>
-          <th>직책</th><th>전화번호</th><th>Email</th><th>입사일자</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>
-  <script>window.addEventListener('load', () => window.print());</script>
-</body>
-</html>`;
-
-			const w = window.open("", "_blank");
-			if (!w) { alert("팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요."); return; }
-			w.document.open();
-			w.document.write(html);
-			w.document.close();
-		});
-	}
+	  printBtn.addEventListener("click", () => {
+	    const selected = table.getSelectedData();
+	    if (!selected || selected.length === 0) {
+	      alert("인쇄할 사원을 선택하세요."); 
+	      return;
+	    }
+	
+	    const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
+	    const rows = selected.map(emp => `
+	      <tr>
+	        <td>${emp.empCode ?? ""}</td>
+	        <td>${emp.name ?? ""}</td>
+	        <td>${toName("GRP011", emp.dept)}</td>
+	        <td>${toName("GRP013", emp.grade)}</td>
+	        <td>${toName("GRP010", emp.position)}</td>
+	        <td>${emp.phone ?? ""}</td>
+	        <td>${emp.email ?? ""}</td>
+	        <td>${emp.hireDate ?? ""}</td>
+	      </tr>
+	    `).join("");
+	
+	    const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+	    const count = selected.length;
+	
+	    const html = `
+	<!doctype html>
+	<html>
+	<head>
+	  <meta charset="utf-8">
+	  <title>선택된 사원 목록</title>
+	  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	  <style>
+	    @page { size: A4 portrait; margin: 8mm; }
+	    html, body { height: 100%; }
+	    body { margin: 0; font-size: 12px; }
+	    .print-wrap { width: 100%; padding: 0; }
+	    .print-header { text-align: center; margin: 0 0 8px 0; }
+	    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
+	    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
+	    table.print th, table.print td {
+	      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
+	      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
+	    }
+	    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
+	    tbody tr:nth-child(even) td { background: #fcfcfc; }
+	    thead { display: table-header-group; }
+	    tfoot { display: table-footer-group; }
+	    tr { page-break-inside: avoid; }
+	    col.empcode{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
+	    col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
+	  </style>
+	</head>
+	<body>
+	  <div class="print-wrap">
+	    <div class="print-header"><h3 class="m-0">선택된 사원 목록</h3></div>
+	    <div class="meta"><div>총 <strong>${count}</strong>명</div><div>생성일시: ${now}</div></div>
+	    <table class="print">
+	      <colgroup>
+	        <col class="empcode"><col class="name"><col class="dept"><col class="grade">
+	        <col class="position"><col class="phone"><col class="email"><col class="hire">
+	      </colgroup>
+	      <thead>
+	        <tr>
+	          <th>사원번호</th><th>성명</th><th>부서명</th><th>직급</th>
+	          <th>직책</th><th>전화번호</th><th>Email</th><th>입사일자</th>
+	        </tr>
+	      </thead>
+	      <tbody>${rows}</tbody>
+	    </table>
+	  </div>
+	</body>
+	</html>`;
+	
+	    showGlobalLoading?.("인쇄물 생성 중...");
+	    printHTMLViaIframe(html);
+	  });
+	})();
 });

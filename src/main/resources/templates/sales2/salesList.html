@@ -24,9 +24,7 @@
     }
 
     /* 테이블 래퍼: 좁을 땐 가로 스크롤 허용 */
-    .table-wrapper {
-      overflow-x: auto;
-    }
+    .table-wrapper { overflow-x: auto; }
 
     /* 유의사항 사이드 카드 */
     .side-card {
@@ -43,11 +41,9 @@
 
     /* 좁은 화면에서 테이블 높이 조금 더 줄여줌 */
     @media (max-width: 992px) {
-      .tabulator {
-        min-height: 360px;
-      }
+      .tabulator { min-height: 360px; }
     }
-    
+
     /* 양쪽 섹션 헤더(제목/드롭박스 라인)의 높이를 동일하게 */
     .section-header {
       display: flex;
@@ -57,7 +53,6 @@
       margin-bottom: 12px; /* 테이블과 간격도 동일하게 */
     }
     .section-header .form-select-sm {
-      /* 부트스트랩 작은 셀렉트 높이 보정(브라우저별 차이 최소화) */
       height: calc(1.5em + .5rem + 2px);
     }
   </style>
@@ -71,7 +66,7 @@
     <div class="container-fluid px-4">
       <h1 class="mt-4">영업계획목록</h1>
 
-      <!-- ✅ 반응형 그리드: lg 이상에선 9:3, md에선 8:4, sm에선 12:12(세로 스택) -->
+      <!-- ✅ 반응형 그리드: lg 이상에선 9:3, md에선 8:4, sm에선 12:12 -->
       <div class="row g-3 align-items-start">
         <!-- 테이블 영역 -->
         <div class="col-12 col-md-8 col-lg-9 order-1">
@@ -102,14 +97,10 @@
             </div>
 
             <div>
-              <strong class="d-block mb-2">여신초과 거래처</strong>
+              <strong class="d-block mb-2">여신기간 초과 거래처</strong>
               <table class="table table-borderless mb-0">
-                <tbody>
-                <tr><td>거래처 f</td></tr>
-                <tr><td>-</td></tr>
-                <tr><td>-</td></tr>
-                <tr><td>-</td></tr>
-                <tr><td>-</td></tr>
+                <tbody id="credit-over-body">
+                  <tr><td class="text-muted">로딩 중…</td></tr>
                 </tbody>
               </table>
             </div>
@@ -129,7 +120,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
             </div>
-            
+
             <div class="modal-body">
               <!-- ✅ 상단 한 줄 헤더(좌: 작년, 우: 올해+드롭박스) -->
               <div class="row g-2 align-items-center mb-2">
@@ -195,6 +186,71 @@
 
 <!-- Tabulator JS -->
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+
+<!-- 여신기간 초과 Top5 로더 -->
+<script>
+  (function(){
+    const fmtDate = (d) => {
+      if(!d) return '-';
+      const dt = new Date(d);
+      if (isNaN(dt.getTime())) return '-';
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth()+1).padStart(2,'0');
+      const day = String(dt.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    };
+
+    function fmtDays(n){
+      const v = Number(n||0);
+      return v > 0 ? `초과 ${v}일` : `D-${Math.abs(v)}`;
+    }
+
+    async function loadCreditTermOverPartners(){
+      const body = document.getElementById('credit-over-body');
+      if(!body) return;
+      body.innerHTML = '<tr><td class="text-muted">로딩 중…</td></tr>';
+
+      try{
+        const token  = document.querySelector('meta[name="_csrf"]')?.content;
+        const header = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        // ✅ 컨트롤러가 인증에서 companyCode를 추출하므로 companyCode 파라미터 제거
+        const url = `/api/sales2/credit-term-over-partners?limit=5`;
+        const headers = header && token ? { [header]: token } : {};
+        const res = await fetch(url, { headers });
+
+        if(!res.ok) throw new Error('API error');
+
+        const rows = await res.json();
+        if(!rows || rows.length === 0){
+          body.innerHTML = '<tr><td class="text-muted">-</td></tr>';
+          return;
+        }
+
+        body.innerHTML = '';
+        rows.forEach(r => {
+          body.insertAdjacentHTML('beforeend', `
+            <tr>
+              <td>
+                <div class="d-flex justify-content-between">
+                  <strong>${r.partnerName ?? r.partnerCode}</strong>
+                  <span class="text-danger fw-semibold">${fmtDays(r.overdueDays)}</span>
+                </div>
+                <div class="small text-muted">기간 ${fmtDate(r.loanStartDate)} ~ ${fmtDate(r.loanEndDate)}</div>
+              </td>
+            </tr>
+          `);
+        });
+      }catch(e){
+        console.error(e);
+        body.innerHTML = '<tr><td class="text-danger">불러오기에 실패했습니다</td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadCreditTermOverPartners);
+  })();
+</script>
+
 <!-- 기존 JS 파일 -->
 <script th:src="@{/sales2/js/salesList.js}"></script>
 </body>
