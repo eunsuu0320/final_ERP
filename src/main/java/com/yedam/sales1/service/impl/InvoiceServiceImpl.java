@@ -70,7 +70,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 row.put("청구금액", invoice.getDmndAmt());
                 row.put("수금일자", invoice.getRecptDate());
                 row.put("거래처명", invoice.getPartnerName());
-                row.put("담당자", invoice.getManager());
+                row.put("담당자", invoice.getManagerEmp().getName());
                 row.put("진행상태", invoice.getStatus());
                 rows.add(row);
             }

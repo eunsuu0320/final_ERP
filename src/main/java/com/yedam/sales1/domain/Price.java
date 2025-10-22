@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -82,6 +84,7 @@ public class Price {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date validDate;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "price", fetch = FetchType.LAZY) 
     private List<PriceDetail> priceDetails = new ArrayList<>();
 

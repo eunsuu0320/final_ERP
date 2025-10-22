@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.dto.InvoiceResponseDto;
@@ -50,16 +51,16 @@ public class InvoiceController {
 
 	// 품목 등록
 	@PostMapping("api/registInvoice")
-    public ResponseEntity<?> saveInvoice(@RequestBody InvoiceSaveRequestDto dto) {
-        invoiceService.saveInvoice(dto);
-        return ResponseEntity.ok("등록 완료");
-    }
-	
-    @GetMapping("api/getDetailInvoice/{invoiceCode}")
-    public ResponseEntity<InvoiceResponseDto> getInvoiceDetail(@PathVariable String invoiceCode) {
-        InvoiceResponseDto result = invoiceService.getInvoiceDetail(invoiceCode);
-        return ResponseEntity.ok(result);
-    }
+	public ResponseEntity<?> saveInvoice(@RequestBody InvoiceSaveRequestDto dto) {
+		invoiceService.saveInvoice(dto);
+		return ResponseEntity.ok("등록 완료");
+	}
+
+	@GetMapping("api/getDetailInvoice/{invoiceCode}")
+	public ResponseEntity<InvoiceResponseDto> getInvoiceDetail(@PathVariable String invoiceCode) {
+		InvoiceResponseDto result = invoiceService.getInvoiceDetail(invoiceCode);
+		return ResponseEntity.ok(result);
+	}
 
 	@PostMapping("api/updateInvoice")
 	public ResponseEntity<Map<String, Object>> updateInvoiceStatus(@RequestBody Map<String, String> request) {
@@ -92,8 +93,6 @@ public class InvoiceController {
 		}
 	}
 
-
-
 	/**
 	 * ✅ 각 출하지시서별 금액 계산 API shipment_detail × order_detail.price 로 공급가액 계산 부가세 10% 및
 	 * 총액까지 반환
@@ -121,6 +120,17 @@ public class InvoiceController {
 			e.printStackTrace();
 			return ResponseEntity.status(500).body(Map.of("error", "금액 계산 오류: " + e.getMessage()));
 		}
+	}
+
+	@PostMapping("/api/updateInvoiceStatus")
+	@ResponseBody
+	public ResponseEntity<?> updateInvoiceStatus(@RequestBody List<Map<String, Object>> invoices) {
+		for (Map<String, Object> invoice : invoices) {
+			String code = (String) invoice.get("invoiceCode");
+			String status = (String) invoice.get("status");
+			invoiceService.updateInvoiceStatus(code, status);
+		}
+		return ResponseEntity.ok().build();
 	}
 
 }

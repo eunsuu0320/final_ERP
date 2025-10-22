@@ -110,12 +110,19 @@ function generateTabulatorColumns(visibleFields, tabType) {
 
 		// ⭐ 수정된 부분: 'ALL' 탭일 때만 단가그룹코드에 링크 및 스타일 적용
 		if (col === "단가그룹코드") {
+			def.formatter = cell => {
+				const val = cell.getValue();
+				return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${val}')">${val}</div>`;
+			};
+
+			/*
 			if (tabType === 'ALL') {
 				def.formatter = cell => {
 					const val = cell.getValue();
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${val}')">${val}</div>`;
 				};
 			}
+			*/
 			// 'PRODUCT' 또는 'PARTNER' 탭일 경우 formatter를 정의하지 않아 기본 텍스트로 표시됩니다.
 		}
 
@@ -147,6 +154,8 @@ function generateTabulatorColumns(visibleFields, tabType) {
 			def.width = 120;
 			def.hozAlign = "center";
 		}
+		
+		
 
 		dynamicColumns.push(def);
 	});
@@ -158,51 +167,51 @@ function generateTabulatorColumns(visibleFields, tabType) {
 // [함수] 모달 테이블 검색 처리 (filterModalTable) - 전역
 // --------------------------------------------------------------------------
 function filterModalTable(event) {
-    const button = event.currentTarget;
-    // 클릭된 버튼에서 가장 가까운 .input-group을 찾습니다.
-    const inputGroup = button.closest('.input-group');
-    if (!inputGroup) return console.error("Could not find input-group for search button.");
+	const button = event.currentTarget;
+	// 클릭된 버튼에서 가장 가까운 .input-group을 찾습니다.
+	const inputGroup = button.closest('.input-group');
+	if (!inputGroup) return console.error("Could not find input-group for search button.");
 
-    // .input-group 내에서 검색 텍스트를 가져옵니다.
-    const searchInput = inputGroup.querySelector('input[type="text"]');
-    const searchValue = searchInput ? searchInput.value.trim() : '';
+	// .input-group 내에서 검색 텍스트를 가져옵니다.
+	const searchInput = inputGroup.querySelector('input[type="text"]');
+	const searchValue = searchInput ? searchInput.value.trim() : '';
 
-    // 버튼이 속한 모달 요소를 찾습니다.
-    const modalEl = button.closest('.modal');
-    if (!modalEl) return console.error("Could not find parent modal for search button.");
+	// 버튼이 속한 모달 요소를 찾습니다.
+	const modalEl = button.closest('.modal');
+	if (!modalEl) return console.error("Could not find parent modal for search button.");
 
-    let tableInstance = null;
-    let searchField = '';
+	let tableInstance = null;
+	let searchField = '';
 
-    // 모달 ID를 기반으로 테이블 인스턴스와 검색 필드를 결정합니다.
-    if (modalEl.id === 'choosePartnerModal') {
-        tableInstance = window.partnerTableInstance;
-        if (searchInput.id === 'partnerName') searchField = '거래처명';
-        else if (searchInput.id === 'partnerLevelNameDisplay') searchField = '등급';
-    } else if (modalEl.id === 'chooseProductModal') {
-        tableInstance = window.productTableInstance;
-        if (searchInput.id === 'productNameSearch') searchField = '품목명';
-        else if (searchInput.id === 'productGroupNameDisplay') searchField = '품목그룹';
-    }
+	// 모달 ID를 기반으로 테이블 인스턴스와 검색 필드를 결정합니다.
+	if (modalEl.id === 'choosePartnerModal') {
+		tableInstance = window.partnerTableInstance;
+		if (searchInput.id === 'partnerName') searchField = '거래처명';
+		else if (searchInput.id === 'partnerLevelNameDisplay') searchField = '등급';
+	} else if (modalEl.id === 'chooseProductModal') {
+		tableInstance = window.productTableInstance;
+		if (searchInput.id === 'productNameSearch') searchField = '품목명';
+		else if (searchInput.id === 'productGroupNameDisplay') searchField = '품목그룹';
+	}
 
-    if (!tableInstance) return console.warn("Tabulator instance is not yet available for this modal.");
-    if (!searchField) return console.error("Could not determine the search field for filtering.");
+	if (!tableInstance) return console.warn("Tabulator instance is not yet available for this modal.");
+	if (!searchField) return console.error("Could not determine the search field for filtering.");
 
-    console.log(`🔍 모달 테이블 필터링 시작: [${searchField}] = "${searchValue}"`);
+	console.log(`🔍 모달 테이블 필터링 시작: [${searchField}] = "${searchValue}"`);
 
-    // Tabulator setFilter를 사용하여 화면 단에서 필터링을 적용합니다.
-    // 검색어가 있을 경우 필터 적용, 없을 경우 필터 클리어
-    if (searchValue) {
-        // 'like' 오퍼레이터는 부분 일치(contains) 검색을 수행합니다.
-        tableInstance.setFilter(searchField, 'like', searchValue);
-    } else {
-        // 검색어가 비어 있을 경우 해당 필드에 대한 필터만 제거합니다.
-        // 현재는 단일 필터만 가정하므로 clearFilter()를 사용합니다.
-        tableInstance.clearFilter(); 
-    }
+	// Tabulator setFilter를 사용하여 화면 단에서 필터링을 적용합니다.
+	// 검색어가 있을 경우 필터 적용, 없을 경우 필터 클리어
+	if (searchValue) {
+		// 'like' 오퍼레이터는 부분 일치(contains) 검색을 수행합니다.
+		tableInstance.setFilter(searchField, 'like', searchValue);
+	} else {
+		// 검색어가 비어 있을 경우 해당 필드에 대한 필터만 제거합니다.
+		// 현재는 단일 필터만 가정하므로 clearFilter()를 사용합니다.
+		tableInstance.clearFilter();
+	}
 
-    // 필터링 후, 선택된 항목을 상단에 두는 정렬을 다시 적용합니다.
-    tableInstance.setSort([{ field: "_sorter", dir: "asc" }]);
+	// 필터링 후, 선택된 항목을 상단에 두는 정렬을 다시 적용합니다.
+	tableInstance.setSort([{ field: "_sorter", dir: "asc" }]);
 }
 
 
@@ -246,14 +255,14 @@ function renderPartnerTable(selectedPartners = []) {
 	const instance = new Tabulator(`#${tableContainerId}`, {
 		data: formattedData,
 		// ⭐ 변경: 존재하는 컬럼들로 테이블을 꽉 채우기 위해 fitColumns 사용
-		layout: "fitColumns", 
+		layout: "fitColumns",
 		height: "320px",
 		index: PARTNER_CODE_FIELD,
 		selectable: true,
 		initialSort: [{ field: "_sorter", dir: "asc" }],
 		columns,
 		// 검색 결과가 없을 때 메시지 표시
-		placeholder: "검색된 데이터가 없습니다.", 
+		placeholder: "검색된 데이터가 없습니다.",
 	});
 
 	instance.on("renderComplete", () => {
@@ -311,7 +320,7 @@ function renderProductTable(selectedProducts = []) {
 	const instance = new Tabulator(`#${tableContainerId}`, {
 		data: formattedData,
 		// ⭐ 변경: 존재하는 컬럼들로 테이블을 꽉 채우기 위해 fitColumns 사용
-		layout: "fitColumns", 
+		layout: "fitColumns",
 		height: "320px",
 		index: PRODUCT_CODE_FIELD,
 		selectable: true,
@@ -588,8 +597,8 @@ function saveChoosePartner(priceUniqueCode) {
 }
 
 function showTableLoading(show = true) {
-  const overlay = document.getElementById("loading-overlay");
-  if (overlay) overlay.style.display = show ? "flex" : "none";
+	const overlay = document.getElementById("loading-overlay");
+	if (overlay) overlay.style.display = show ? "flex" : "none";
 };
 
 
@@ -852,7 +861,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 	// 4. 메인 Tabulator 초기화 및 전역 변수에 할당
 	// --------------------------------------------------------------------------
 	priceTableInstance = makePriceListTabulator(rows, tabulatorColumns);
-	window.priceTableInstance = priceTableInstance; 
+	window.priceTableInstance = priceTableInstance;
 
 
 	// --------------------------------------------------------------------------
@@ -875,126 +884,126 @@ document.addEventListener("DOMContentLoaded", async function() {
 	if (productModalElement) {
 		productModalElement.addEventListener('hidden.bs.modal', resetChooseProduct);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	// 7. 모달 검색/초기화 버튼 이벤트 리스너 설정
 	// --------------------------------------------------------------------------
 	const searchButtons = document.querySelectorAll('.modalSearchBtn');
 	searchButtons.forEach(button => {
-	    button.addEventListener('click', filterModalTable);
+		button.addEventListener('click', filterModalTable);
 	});
-	
+
 	// '.resetModalSearch' 버튼 클릭 시, '.modalSearchCondition' 입력 필드 초기화
 	const resetButtons = document.querySelectorAll('.resetModalSearch');
 	resetButtons.forEach(button => {
-	    button.addEventListener('click', (event) => {
-	        const modalEl = event.currentTarget.closest('.modal');
-	        if (!modalEl) return;
-	
+		button.addEventListener('click', (event) => {
+			const modalEl = event.currentTarget.closest('.modal');
+			if (!modalEl) return;
+
 			// 1. modalSearchCondition 클래스를 가진 모든 input의 값을 초기화합니다.
 			const searchInputs = modalEl.querySelectorAll('.modalSearchCondition');
 			searchInputs.forEach(input => {
 				input.value = '';
 			});
 
-	        let tableInstance = null;
-	
-	        if (modalEl.id === 'choosePartnerModal') {
-	            tableInstance = window.partnerTableInstance;
-	        } else if (modalEl.id === 'chooseProductModal') {
-	            tableInstance = window.productTableInstance;
-	        }
-	
-	        if (tableInstance) {
-	            tableInstance.clearFilter();
-	            // 필터 초기화 후, 선택된 항목을 상단에 두는 정렬을 다시 적용
-	            tableInstance.setSort([{ field: "_sorter", dir: "asc" }]);
-	            console.log("✅ 모달 검색 조건 및 필터 초기화 완료.");
-	        }
-	    });
+			let tableInstance = null;
+
+			if (modalEl.id === 'choosePartnerModal') {
+				tableInstance = window.partnerTableInstance;
+			} else if (modalEl.id === 'chooseProductModal') {
+				tableInstance = window.productTableInstance;
+			}
+
+			if (tableInstance) {
+				tableInstance.clearFilter();
+				// 필터 초기화 후, 선택된 항목을 상단에 두는 정렬을 다시 적용
+				tableInstance.setSort([{ field: "_sorter", dir: "asc" }]);
+				console.log("✅ 모달 검색 조건 및 필터 초기화 완료.");
+			}
+		});
 	});
-	
-	
-	
-	
+
+
+
+
 	function loadTableData(params = {}) {
-	  const queryString = new URLSearchParams(params).toString();
-	  const url = `/api/price/search?${queryString}`;
+		const queryString = new URLSearchParams(params).toString();
+		const url = `/api/price/search?${queryString}`;
 
-	  fetch(url)
-	    .then(response => {
-	      if (!response.ok) {
-	        throw new Error('데이터 요청 실패: ' + response.statusText);
-	      }
-	      return response.json();
-	    })
-		.then(data => {
-		  console.log("검색 결과 데이터:", data);
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('데이터 요청 실패: ' + response.statusText);
+				}
+				return response.json();
+			})
+			.then(data => {
+				console.log("검색 결과 데이터:", data);
 
 
-		  if (window.priceTableInstance) {
-		    window.priceTableInstance.setData(mappedData);
-		  }
-		})
+				if (window.priceTableInstance) {
+					window.priceTableInstance.setData(mappedData);
+				}
+			})
 
-	    .catch(error => {
-	      console.error('데이터 로딩 중 오류 발생:', error);
-	      alert('데이터를 가져오는 데 실패했습니다.');
+			.catch(error => {
+				console.error('데이터 로딩 중 오류 발생:', error);
+				alert('데이터를 가져오는 데 실패했습니다.');
 
-	      // 오류 시 테이블 비움
-	      if (window.priceTableInstance) {
-	        window.priceTableInstance.setData([]);
-	      }
-	    });
+				// 오류 시 테이블 비움
+				if (window.priceTableInstance) {
+					window.priceTableInstance.setData([]);
+				}
+			});
 	}
 
-		
+
 	// ★ 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
 	// ✅ 클라이언트 사이드 필터 검색 함수 (서버 요청 없이 Tabulator 데이터에서 필터링)
-	window.filterSearch = function () {
+	window.filterSearch = function() {
 
-	  // 검색 조건 수집
-	  const groupCode = document.getElementById("priceGroupCodeSearch").value.trim();
-	  const groupName = document.getElementById("priceGroupNameSearch").value.trim();
-	  const validDate = document.getElementById("validDateSearch").value.trim();
+		// 검색 조건 수집
+		const groupCode = document.getElementById("priceGroupCodeSearch").value.trim();
+		const groupName = document.getElementById("priceGroupNameSearch").value.trim();
+		const validDate = document.getElementById("validDateSearch").value.trim();
 
-	  // Tabulator 필터 조건 배열 생성
-	  const filters = [];
-	  if (groupCode) filters.push({ field: "단가그룹코드", type: "like", value: groupCode });
-	  if (groupName) filters.push({ field: "단가그룹명", type: "like", value: groupName });
-	  if (validDate) {
-	    // 기준일자가 시작일자 이상 AND 종료일자 이하인 데이터만 필터
-	    filters.push({ field: "단가적용시작일", type: "<=", value: validDate });
-	    filters.push({ field: "단가적용종료일", type: ">=", value: validDate });
-	  }
+		// Tabulator 필터 조건 배열 생성
+		const filters = [];
+		if (groupCode) filters.push({ field: "단가그룹코드", type: "like", value: groupCode });
+		if (groupName) filters.push({ field: "단가그룹명", type: "like", value: groupName });
+		if (validDate) {
+			// 기준일자가 시작일자 이상 AND 종료일자 이하인 데이터만 필터
+			filters.push({ field: "단가적용시작일", type: "<=", value: validDate });
+			filters.push({ field: "단가적용종료일", type: ">=", value: validDate });
+		}
 
-	  // ✅ 전역 Tabulator 인스턴스 직접 참조
-	  const table = window.priceTableInstance;
+		// ✅ 전역 Tabulator 인스턴스 직접 참조
+		const table = window.priceTableInstance;
 
-	  if (table) {
-	    table.clearFilter();     // 기존 필터 제거
-	    table.setFilter(filters); // 새로운 필터 적용
-	    console.log("✅ 클라이언트 필터 적용 완료:", filters);
-	  } else {
-	    console.error("❌ priceTableInstance가 초기화되지 않았습니다.");
-	    alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
-	  }
+		if (table) {
+			table.clearFilter();     // 기존 필터 제거
+			table.setFilter(filters); // 새로운 필터 적용
+			console.log("✅ 클라이언트 필터 적용 완료:", filters);
+		} else {
+			console.error("❌ priceTableInstance가 초기화되지 않았습니다.");
+			alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+		}
 	};
 
 	// ✅ Tabulator 준비될 때까지 검색 버튼 비활성화 → 이후 자동 활성화
-	document.addEventListener("DOMContentLoaded", function () {
-	  const searchButton = document.querySelector('.btn.btn-warning.me-2.btn-sm');
-	  if (searchButton) {
-	    searchButton.disabled = true;
+	document.addEventListener("DOMContentLoaded", function() {
+		const searchButton = document.querySelector('.btn.btn-warning.me-2.btn-sm');
+		if (searchButton) {
+			searchButton.disabled = true;
 
-	    const waitForTable = setInterval(() => {
-	      if (window.priceTableInstance) {
-	        clearInterval(waitForTable);
-	        searchButton.disabled = false;
-	        console.log("✅ Tabulator 준비 완료 — 검색 버튼 활성화됨");
-	      }
-	    }, 300);
-	  }
+			const waitForTable = setInterval(() => {
+				if (window.priceTableInstance) {
+					clearInterval(waitForTable);
+					searchButton.disabled = false;
+					console.log("✅ Tabulator 준비 완료 — 검색 버튼 활성화됨");
+				}
+			}, 300);
+		}
 	});
 
 
@@ -1003,14 +1012,14 @@ document.addEventListener("DOMContentLoaded", async function() {
 
 	// ★ 초기화 버튼 이벤트 핸들러 (전체 목록 보기)
 	window.resetSearch = function() {
-	  const searchTool = document.querySelector('.searchTool');
-	  searchTool.querySelectorAll('input[type=text], input[type=date]').forEach(el => el.value = '');
+		const searchTool = document.querySelector('.searchTool');
+		searchTool.querySelectorAll('input[type=text], input[type=date]').forEach(el => el.value = '');
 
-	  const table = Tabulator.findTable("#priceTable")[0];
-	  if (table) {
-	    table.clearFilter();
-	    console.log("✅ 검색조건 및 필터 초기화 완료");
-	  }
+		const table = Tabulator.findTable("#priceTable")[0];
+		if (table) {
+			table.clearFilter();
+			console.log("✅ 검색조건 및 필터 초기화 완료");
+		}
 	};
 
 
