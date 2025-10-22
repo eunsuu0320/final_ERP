@@ -15,10 +15,8 @@ import java.util.Date;
 public class Invoice {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "INVOICE_SEQ" 
-	)
-	@SequenceGenerator(name = "INVOICE_SEQ", sequenceName = "INVOICE_UNIQUE_CODE_SEQ",
-			allocationSize = 1)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "INVOICE_SEQ")
+	@SequenceGenerator(name = "INVOICE_SEQ", sequenceName = "INVOICE_UNIQUE_CODE_SEQ", allocationSize = 1)
 	@Column(name = "INVOICE_UNIQUE_CODE", length = 20, nullable = false)
 	private Long invoiceUniqueCode;
 
@@ -67,6 +65,11 @@ public class Invoice {
 
 	@Column(name = "PARTNER_NAME", length = 30, nullable = false)
 	private String partnerName;
+
+	// 담당자 사원 연관 (사원 테이블의 PK가 EMP_CODE라고 가정)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "MANAGER", referencedColumnName = "EMP_CODE", insertable = false, updatable = false)
+	private com.yedam.hr.domain.Employee managerEmp;
 
 	@PrePersist
 	public void prePersist() {

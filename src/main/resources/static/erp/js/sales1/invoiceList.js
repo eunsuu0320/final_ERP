@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-	const defaultVisible = ["청구서코드", "등록일자", "청구일자", "청구금액", "수금일자", "거래처명", "진행상태"];
+	const defaultVisible = ["청구서코드", "등록일자", "청구일자", "청구금액", "수금일자", "거래처명", "담당자", "진행상태"];
 
 	const STATUS_MAP = {
 		"미청구": { label: "미청구" },
@@ -61,6 +61,55 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 		table.setFilter(filterField, "=", filterValue);
 	}
+
+
+	window.filterSearch = function() {
+		// 🔍 검색 조건 수집 (널 안전 처리 포함)
+		const partnerName = document.getElementById("partnerName")?.value.trim() || "";
+		const quoteDateSearch1 = document.getElementById("quoteDateSearch1")?.value.trim() || "";
+		const quoteDateSearch2 = document.getElementById("quoteDateSearch2")?.value.trim() || "";
+		const managerSearch = document.getElementById("managerSearch")?.value.trim() || "";
+
+		// 🔧 기본 필터 조건 배열
+		const filters = [];
+		if (partnerName) filters.push({ field: "거래처명", type: "like", value: partnerName });
+		if (managerSearch) filters.push({ field: "담당자", type: "like", value: managerSearch });
+
+		// ✅ 전역 Tabulator 인스턴스 참조
+		const table = window.invoiceTableInstance;
+
+		if (table && typeof table.setFilter === "function") {
+			table.clearFilter(); // 기존 필터 제거
+
+			// 기본 필터 먼저 적용
+			table.setFilter(filters);
+
+			// ✅ 등록일자(quoteDateSearch1 ~ quoteDateSearch2) 범위 필터 추가
+			if (quoteDateSearch1 || quoteDateSearch2) {
+				table.addFilter((data) => {
+					const dateStr = data["등록일자"];
+					if (!dateStr) return false; // 등록일자가 없는 데이터는 제외
+
+					const cellDate = new Date(dateStr);
+					const startDate = quoteDateSearch1 ? new Date(quoteDateSearch1) : null;
+					const endDate = quoteDateSearch2 ? new Date(quoteDateSearch2) : null;
+
+					// 날짜 비교
+					if (startDate && cellDate < startDate) return false;
+					if (endDate && cellDate > endDate) return false;
+					return true;
+				});
+			}
+
+			console.log("✅ 클라이언트 필터 적용 완료:", filters, quoteDateSearch1, quoteDateSearch2);
+		} else {
+			console.error("❌ invoiceTable이 초기화되지 않았거나 Tabulator 인스턴스가 아닙니다.", table);
+			alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+		}
+	};
+
+
+
 
 	// ===========================================================
 	// ✅ 모달 열기 (등록 / 상세)
@@ -260,6 +309,75 @@ document.addEventListener("DOMContentLoaded", function() {
 		if (btn) btn.onclick = loadShipmentDetailsForInvoice;
 	});
 
+
+
+
+	// ===========================================================
+	// ✅ 회계 일괄반영
+	// ===========================================================
+	window.insertAc = async function() {
+		const table = window.invoiceTableInstance;
+		if (!table) {
+			alert("테이블이 아직 준비되지 않았습니다.");
+			return;
+		}
+
+		// ✅ 선택된 행 데이터 가져오기
+		const selectedRows = table.getSelectedData();
+		if (selectedRows.length === 0) {
+			return alert("회계반영할 청구서를 선택하세요.");
+		}
+
+		// ✅ '수금완료' 상태인 건만 필터링
+		const eligibleRows = selectedRows.filter(row => row.진행상태 === "수금완료");
+		if (eligibleRows.length === 0) {
+			return alert("선택된 청구서 중 '수금완료' 상태인 건만 회계반영할 수 있습니다.");
+		}
+
+		// ✅ 사용자 확인
+		if (!confirm(`선택된 ${eligibleRows.length}건의 청구서를 회계반영완료로 변경하시겠습니까?`)) {
+			return;
+		}
+
+		try {
+			// ✅ 서버 반영 (일괄 업데이트)
+			const updatePayload = eligibleRows.map(row => ({
+				invoiceCode: row.청구서코드,
+				status: "회계반영완료"
+			}));
+
+			const res = await fetch("/api/updateInvoiceStatus", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					[document.querySelector('meta[name="_csrf_header"]').content]:
+						document.querySelector('meta[name="_csrf"]').content,
+				},
+				body: JSON.stringify(updatePayload)
+			});
+
+			if (!res.ok) throw new Error("서버 업데이트 실패");
+			alert("회계반영이 완료되었습니다.");
+
+			// ✅ 클라이언트 테이블 상태 갱신
+			eligibleRows.forEach(row => {
+				const rowComponent = table.getRow(row.청구서코드);
+				if (rowComponent) {
+					row.진행상태 = "회계반영완료";
+					rowComponent.update({ 진행상태: "회계반영완료" });
+				}
+			});
+
+			table.redraw(true);
+		} catch (err) {
+			console.error("🚨 회계반영 오류:", err);
+			alert("회계반영 처리 중 오류가 발생했습니다.");
+		}
+	};
+
+
+
+
 	// ===========================================================
 	// ✅ 청구서 저장
 	// ===========================================================
@@ -353,6 +471,16 @@ document.addEventListener("DOMContentLoaded", function() {
 							style="font-size:.75rem; padding:.25rem .5rem; height:auto; min-width:90px;">
 							${options}</select>`;
 				};
+			}
+
+			if (col === "청구금액") {
+				def.formatter = function(cell) {
+					const v = cell.getValue();
+					if (v === null || v === undefined || isNaN(v)) return "-";
+					return Number(v).toLocaleString('ko-KR') + " 원"; // 요구사항 10 포맷
+				};
+				def.sorter = "number";
+				def.hozAlign = "right";
 			}
 			return def;
 		}),

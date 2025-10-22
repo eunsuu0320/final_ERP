@@ -111,9 +111,13 @@ public class PriceController {
 	@GetMapping("api/price/getDetail")
 	public ResponseEntity<Price> getPrice(@RequestParam String keyword) {
 		System.out.println("controller 확인");
-		System.out.println("조회 priceGroupCode: " + keyword);
+		System.out.println("조회 PriceGroupCode: " + keyword);
 
 		Price price = priceService.getPriceByPriceGroupCode(keyword);
+		System.out.println("============================================================");
+		System.out.println("price 상세정보 조회 결과");
+
+
 		if (price != null) {
 			return ResponseEntity.ok(price);
 		} else {
@@ -140,34 +144,30 @@ public class PriceController {
 	// =========================================================================
 	@PostMapping("/api/price/savePartners")
 	public ResponseEntity<?> registPartner(@RequestBody Map<String, Object> payload) {
-	    System.out.println("==============================================================");
-	    System.out.println("payload: " + payload);
+		System.out.println("==============================================================");
+		System.out.println("payload: " + payload);
 
-	    Integer priceCode = null;
-	    try {
-	        priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
-	    } catch (Exception e) {
-	        System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
-	        e.printStackTrace(); // 🔥 상세 원인 출력
-	        return ResponseEntity.badRequest()
-	                .body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
-	    }
+		Integer priceCode = null;
+		try {
+			priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
+		} catch (Exception e) {
+			System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
+			e.printStackTrace(); // 🔥 상세 원인 출력
+			return ResponseEntity.badRequest().body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
+		}
 
-	    @SuppressWarnings("unchecked")
-	    List<String> partnerCodes = (List<String>) payload.get("partnerCodes");
+		@SuppressWarnings("unchecked")
+		List<String> partnerCodes = (List<String>) payload.get("partnerCodes");
 
-	    try {
-	        PriceDetail saved = priceService.savePriceDetailPartner(priceCode, partnerCodes);
-	        return ResponseEntity.ok(saved);
-	    } catch (Exception e) {
-	        e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body("서버 처리 중 오류 발생: " + e.getMessage());
-	    }
+		try {
+			PriceDetail saved = priceService.savePriceDetailPartner(priceCode, partnerCodes);
+			return ResponseEntity.ok(saved);
+		} catch (Exception e) {
+			e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 처리 중 오류 발생: " + e.getMessage());
+		}
 	}
 
-	
-	
 	// =========================================================================
 	// 품목 설정 저장 (saveProducts)
 	// =========================================================================
@@ -175,43 +175,27 @@ public class PriceController {
 	// @RequestBody Map을 사용하여 JSON 본문을 전체 맵으로 받습니다.
 	public ResponseEntity<?> registProduct(@RequestBody Map<String, Object> payload) {
 		Integer priceCode = null;
-	    try {
-	        priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
-	    } catch (Exception e) {
-	        System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
-	        e.printStackTrace(); // 🔥 상세 원인 출력
-	        return ResponseEntity.badRequest()
-	                .body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
-	    }
-		
-	    @SuppressWarnings("unchecked")
-	    List<String> productCodes = (List<String>) payload.get("productCodes");
-		
-		
-	    try {
-	        PriceDetail saved = priceService.savePriceDetailProduct(priceCode, productCodes);
-	        return ResponseEntity.ok(saved);
-	    } catch (Exception e) {
-	        e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-	                             .body("서버 처리 중 오류 발생: " + e.getMessage());
-	    }
-	    
-	    
-	    
-	
+		try {
+			priceCode = Integer.parseInt(payload.get("priceUniqueCode").toString()); // ✅ 문자열 안전 변환
+		} catch (Exception e) {
+			System.err.println("❌ priceUniqueCode 변환 실패: " + payload.get("priceUniqueCode"));
+			e.printStackTrace(); // 🔥 상세 원인 출력
+			return ResponseEntity.badRequest().body("잘못된 priceUniqueCode 값입니다: " + payload.get("priceUniqueCode"));
+		}
+
+		@SuppressWarnings("unchecked")
+		List<String> productCodes = (List<String>) payload.get("productCodes");
+
+		try {
+			PriceDetail saved = priceService.savePriceDetailProduct(priceCode, productCodes);
+			return ResponseEntity.ok(saved);
+		} catch (Exception e) {
+			e.printStackTrace(); // 🔥 콘솔에 상세 원인 출력
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("서버 처리 중 오류 발생: " + e.getMessage());
+		}
+
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	@GetMapping("api/price/search")
 	// 반환 타입을 Map 리스트로 변경해야 합니다.
 	public ResponseEntity<List<Map<String, Object>>> getPriceSearch(@ModelAttribute Price searchVo) {

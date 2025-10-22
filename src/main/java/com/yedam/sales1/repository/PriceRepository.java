@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Price;
+import com.yedam.sales1.domain.Product;
 
 @Repository
 public interface PriceRepository extends JpaRepository<Price, Long> {
@@ -25,11 +26,12 @@ public interface PriceRepository extends JpaRepository<Price, Long> {
 	Long findMaxPriceUniqueCode();
 
 	
-	@Query("SELECT p FROM Price p " + 
-			"WHERE p.isCurrentVersion= 'Y' " +
+	@Query("select p from Price p " +
+			"where p.priceGroupCode = :priceGroupCode " +
 			"AND p.companyCode = :companyCode " +
-			"AND p.priceGroupCode = :priceGroupCode")
+			"AND p.isCurrentVersion = 'Y' ")
 	Price findByPriceGroupCode(@Param("priceGroupCode") String priceGroupCode, @Param("companyCode") String companyCode);
+	
 
 	@Query("SELECT DISTINCT p FROM Price p " + "LEFT JOIN FETCH p.priceDetails pd " + "LEFT JOIN FETCH pd.product "
 			+ "LEFT JOIN FETCH pd.partner " // 공백 추가

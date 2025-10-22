@@ -531,6 +531,18 @@ document.addEventListener("DOMContentLoaded", function() {
 				};
 			}
 
+
+
+			if (col === "수량합계") {
+				columnDef.formatter = function(cell) {
+					const v = cell.getValue();
+					if (v === null || v === undefined || isNaN(v)) return "-";
+					return Number(v).toLocaleString('ko-KR') + " 개";
+				};
+				columnDef.sorter = "number";
+				columnDef.hozAlign = "right";
+			}
+
 			return columnDef;
 		}).filter(c => c !== null)
 	];
@@ -577,14 +589,33 @@ document.addEventListener("DOMContentLoaded", function() {
 	}
 
 	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+	// 출하지시서 테이블 필터
 	window.filterSearch = function() {
-		const searchParams = getSearchParams('.searchTool');
+		// 🔍 검색 조건 수집
+		const clientName = document.getElementById("partnerNameSearch").value.trim();
+		const shipmentNo = document.getElementById("shipmentCode").value.trim();
+		const warehouseCode = document.getElementById("warehouseCodeSearch").value.trim();
 
-		console.log("서버로 보낼 검색 조건:", searchParams);
+		// 🔧 Tabulator 필터 조건 배열
+		const filters = [];
+		if (clientName) filters.push({ field: "거래처명", type: "like", value: clientName });
+		if (shipmentNo) filters.push({ field: "출하지시서코드", type: "like", value: shipmentNo });
+		if (warehouseCode) filters.push({ field: "창고명", type: "like", value: warehouseCode });
 
-		// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
-		loadTableData(searchParams);
-	}
+		// ✅ 전역 Tabulator 인스턴스 참조
+		const table = window.shipmentTableInstance;
+
+		if (table && typeof table.setFilter === "function") {
+			table.clearFilter();      // 기존 필터 제거
+			table.setFilter(filters); // 새로운 필터 적용
+			console.log("✅ 클라이언트 필터 적용 완료:", filters);
+		} else {
+			console.error("❌ shipmentTable이 초기화되지 않았거나 Tabulator 인스턴스가 아닙니다.", table);
+			alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+		}
+	};
+
+
 
 
 	// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)

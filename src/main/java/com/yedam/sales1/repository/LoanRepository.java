@@ -18,6 +18,11 @@ public interface LoanRepository extends JpaRepository<Loan, Long>{
 
 
     Loan findByLoanCode(String loanCode);
+    
+    @Query("SELECT MAX(l.loanCode) FROM Loan l")
+    String findMaxLoanCode();
+    
+    Loan findByPartnerCode(String partnerCode);
 
     /**
      * 네이티브 인터페이스 프로젝션
@@ -60,4 +65,6 @@ public interface LoanRepository extends JpaRepository<Loan, Long>{
     interface LoanOverdueWithNameView extends LoanOverdueView {
         String getPartnerName();
     }
+    
+
 }

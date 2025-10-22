@@ -336,12 +336,19 @@ function bindDataToForm(data, form) {
 		displayElement.value = "";
 	}
 
-	// --- [1] 마스터 데이터 바인딩 ---
 	for (const key in data) {
 		if (data.hasOwnProperty(key) && key !== 'detailList') {
 			const elements = form.querySelectorAll(`[name="${key}"]`);
 			if (elements.length > 0) {
-				const value = data[key] === null ? '' : String(data[key]);
+				let value = data[key] === null ? '' : data[key];
+
+				// discountPct 처리
+				if (key === 'discountPct' && value !== '') {
+					value = Number(value) * 100; // 서버 값 × 100
+					value = value.toFixed(2); // 소수점 2자리로 제한 (필요시)
+				}
+
+				value = String(value);
 
 				if (elements[0].type === 'radio' || elements[0].type === 'checkbox') {
 					elements.forEach(element => {
@@ -371,11 +378,9 @@ function bindDataToForm(data, form) {
 
 			const partnerModalBtn = document.getElementById("partnerModalBtn");
 			if (partnerModalBtn) partnerModalBtn.disabled = true;
-
-
-
 		}
 	}
+
 
 	// --- [2] 디테일 데이터(detailList) 바인딩 ---
 	if (data.detailList && Array.isArray(data.detailList) && data.detailList.length > 0) {
@@ -487,7 +492,6 @@ function loadDetailData(domain, keyword, form) {
 		})
 		.then(data => {
 			console.log("상세 품목 정보 수신:", data);
-
 			// ✅ 폼에 데이터 바인딩
 			bindDataToForm(data, form);
 
@@ -496,6 +500,7 @@ function loadDetailData(domain, keyword, form) {
 		})
 		.catch(err => {
 			console.error("상세 정보 로딩 실패:", err);
+
 			alert(`상세 정보를 불러오는 데 실패했습니다: ${err.message}`);
 			throw err; // 에러를 상위로 전달 (필요 시 catch 가능)
 		});
