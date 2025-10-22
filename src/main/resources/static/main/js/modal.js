@@ -323,12 +323,7 @@ const modalConfigs = {
 		selectable: 1,
 	},
 
-
-
-
 };
-
-
 
 
 let table; // Tabulator 인스턴스 전역 변수
