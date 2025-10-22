@@ -21,7 +21,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
 	@Query("SELECT i FROM Invoice i WHERE i.invoiceCode = :invoiceCode ")
 	Optional<Invoice> findByInvoiceCode(@Param("invoiceCode") String invoiceCode);
-	
+
 	
 	@Query("SELECT p FROM Invoice p ")
 	List<Invoice> findByFilter(@Param("searchVo") Invoice searchVo);

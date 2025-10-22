@@ -33,13 +33,11 @@
 
 							<div>
 								<div class="input-group input-group-sm">
-									<input type="hidden" id="partnerCodeSearch" name="partnerCode">
 									<input type="text" class="form-control" placeholder="검색어 입력"
-										id="partnerNameSearch" style="width: 150px;">
+										id="partnerNameSearch"  name="partnerNameSearch"  style="width: 150px;">
 									<button class="btn btn-outline-secondary" type="button"
 										onclick="openModal('salesPartner', function(selected) {
                     document.getElementById('partnerNameSearch').value = selected.partnerName;
-                    document.getElementById('partnerCodeSearch').value = selected.partnerCode;
 
                 })">
 										<i class="bi bi-search"></i>
@@ -54,9 +52,12 @@
 							<div>
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control" placeholder="검색어 입력"
-										id="managerSearch" style="width: 150px;">
+										id="managerSearch" name="managerSearch" style="width: 150px;">
 									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
+										onclick="openModal('salesEmployee', function(selected) {
+						                    document.getElementById('managerSearch').value = selected.name;
+
+					                })">
 										<i class="bi bi-search"></i>
 									</button>
 								</div>
@@ -64,14 +65,15 @@
 						</div>
 
 						<div class="me-5">
-							<label for="startDate" class="form-label fw-bold">유효기간</label>
+							<label for="quoteDateSearch" class="form-label fw-bold">유효기간</label>
 
 							<div class="d-flex align-items-center">
 								<input type="date" class="form-control form-control-sm"
-									id="startDate" name="startDate" style="width: 130px;">
-								<span class="mx-2">~</span> <input type="date"
-									class="form-control form-control-sm" id="endDate"
-									name="endDate" style="width: 130px;">
+									id="quoteDateSearch1" name="quoteDateSearch"
+									style="width: 130px;"> <span class="mx-2">~</span> <input
+									type="date" class="form-control form-control-sm"
+									id="quoteDateSearch2" name="quoteDateSearch"
+									style="width: 130px;">
 							</div>
 						</div>
 

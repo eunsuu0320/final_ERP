@@ -189,7 +189,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	// === 메인 Tabulator ===
 	let tabulatorColumns = [
 		{
-			formatter: "rowSelection", titleFormatter: "rowSelection",
+			title: "No",           // 컬럼 제목
+			formatter: "rownum",
 			hozAlign: "center", headerHozAlign: "center",
 			headerSort: false, width: 50, frozen: true
 		},

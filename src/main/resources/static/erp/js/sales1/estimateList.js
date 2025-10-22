@@ -353,8 +353,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 견적서리스트 테이블 컬럼에 대한 정의
 	let tabulatorColumns = [
 		{
-			formatter: "rowSelection",
-			titleFormatter: "rowSelection",
+			title: "No",           // 컬럼 제목
+			formatter: "rownum",
 			hozAlign: "center",
 			headerHozAlign: "center",
 			headerSort: false,
@@ -469,16 +469,41 @@ document.addEventListener("DOMContentLoaded", function() {
 				}
 			});
 	}
-	
-	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
+
+
+
 	window.filterSearch = function() {
-		const searchParams = getSearchParams('.searchTool');
+		const table = window.estimateTableInstance;
+		if (!table) return;
 
-		console.log("서버로 보낼 검색 조건:", searchParams);
+		const partner = document.getElementById('partnerNameSearch')?.value || '';
+		const manager = document.getElementById('managerSearch')?.value || '';
+		const startDate = document.getElementById('quoteDateSearch1')?.value.trim() || '';
+		const endDate = document.getElementById('quoteDateSearch2')?.value.trim() || '';
 
-		// 검색 조건이 있는 상태로 데이터 로딩 함수 호출
-		loadTableData(searchParams);
-	}
+
+		table.clearFilter(true); // 기존 필터 초기화
+
+		// 함수형 필터 (Tabulator 전체 필터링)
+		table.setFilter((data) => {
+			// 등록일자 비교
+			if (startDate || endDate) {
+				const cellDate = new Date(data['등록일자']);
+				const sOk = !startDate || cellDate >= new Date(startDate);
+				const eOk = !endDate || cellDate <= new Date(endDate);
+				if (!sOk || !eOk) return false;
+			}
+
+			// 담당자
+			if (manager && !String(data['담당자'] || '').includes(manager)) return false;
+			// 거래처명
+			if (partner && !String(data['거래처명'] || '').includes(partner)) return false;
+
+			return true;
+		});
+	};
+
+
 
 
 	// ★ 4. 초기화 버튼 이벤트 핸들러 (전체 목록 조회)
@@ -499,7 +524,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	}
 
 
-	
+
 
 
 

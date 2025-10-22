@@ -291,4 +291,16 @@ public class ShipmentServiceImpl implements ShipmentService {
 		}
 		return "DEFAULT";
 	}
+
+	@Override
+	public boolean updateShipmentStatusSales(String shipmentCode, String status) {
+		log.info("Updating status for Invoice Code: {} -> {}", shipmentCode, status);
+
+		return shipmentRepository.findByShipmentCode(shipmentCode).map(ship -> {
+			ship.setStatus(status);
+			// 💡 해결책: 엔티티의 변경 사항을 DB에 반영하기 위해 save() 메서드 호출
+			shipmentRepository.save(ship);
+			return true;
+		}).orElse(false);
+	}
 }

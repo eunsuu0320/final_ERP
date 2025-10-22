@@ -66,7 +66,6 @@ public class PartnerServiceImpl implements PartnerService {
 			columns.add("업태");
 			columns.add("이메일");
 			columns.add("담당자");
-			columns.add("사용여부");
 			columns.add("비고");
 
 			for (Partner partner : partners) {
@@ -80,8 +79,7 @@ public class PartnerServiceImpl implements PartnerService {
 				row.put("업종", partner.getBusinessSector());
 				row.put("업태", partner.getBusinessType());
 				row.put("이메일", partner.getEmail());
-				row.put("담당자", partner.getManager());
-				row.put("사용여부", partner.getUsageStatus());
+				row.put("담당자", partner.getManagerEmp().getName());
 				row.put("비고", partner.getRemarks());
 				rows.add(row);
 			}

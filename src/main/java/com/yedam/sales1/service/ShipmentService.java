@@ -22,5 +22,10 @@ public interface ShipmentService {
 	
 	
 	boolean updateShipmentStatus(String shipmentCode, String status);
+	
+	boolean updateShipmentStatusSales(String shipmentCode, String status);
+
+	
+	
 
 }

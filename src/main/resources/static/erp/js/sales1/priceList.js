@@ -303,8 +303,8 @@ function renderProductTable(selectedProducts = []) {
 
 	const columns = [
 		{
-			formatter: "rowSelection",
-			titleFormatter: "rowSelection",
+			title: "No",           // 컬럼 제목
+			formatter: "rownum",
 			hozAlign: "center",
 			headerHozAlign: "center",
 			width: 50, // 고정 너비 (체크박스)
