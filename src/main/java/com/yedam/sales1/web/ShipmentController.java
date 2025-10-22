@@ -149,5 +149,18 @@ public class ShipmentController {
 			return ResponseEntity.ok(Collections.emptyList());
 		}
 	}
+	
+	
+	@PostMapping("/api/updateShipmentStatus")
+	@ResponseBody
+	public ResponseEntity<?> updateShipmentStatus(@RequestBody List<Map<String, Object>> shipments) {
+	    for (Map<String, Object> s : shipments) {
+	        String code = (String) s.get("shipmentCode");
+	        String status = (String) s.get("status");
+	        shipmentService.updateShipmentStatusSales(code, status);
+	    }
+	    return ResponseEntity.ok(Map.of("success", true));
+	}
+
 
 }

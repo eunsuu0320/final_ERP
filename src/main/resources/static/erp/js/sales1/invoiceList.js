@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
 		"수금완료": { label: "수금완료" },
-		"회계반영완료": { label: "회계반영완료" },
+
 	};
 
 	const cleanValue = (v) => (v ? Number(String(v).replace(/,/g, "")) : 0);
@@ -376,6 +376,73 @@ document.addEventListener("DOMContentLoaded", function() {
 	};
 
 
+	window.updateStatusAPI = function(code, status, selectElement) {
+		const row = window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code);
+		// API 호출 전 현재 상태를 저장합니다.
+		const currentStatus = row?.getData()?.진행상태;
+
+		if (currentStatus === status) {
+			console.log(`[출하지시서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
+			// 현재 상태와 같더라도 Tabulator가 자동으로 리렌더링하지 않으므로 select 값을 되돌립니다.
+			if (selectElement) {
+				selectElement.value = currentStatus;
+			}
+			return;
+		}
+
+		// 로딩 상태 등으로 임시 UI 변경을 원할 경우 여기에 로직을 추가할 수 있습니다.
+
+		const url = "/api/updateInvoice";
+		const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+		const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+
+		const data = {
+			invoiceCode: code, // 서버에 보낼 견적서 코드
+			status: status
+		};
+
+		fetch(url, {
+			method: "POST",
+			headers: {
+				'Content-Type': 'application/json',
+				[csrfHeader]: csrfToken
+			},
+			body: JSON.stringify(data)
+		})
+			.then(res => {
+				if (!res.ok) {
+					// HTTP 상태 코드가 200번대가 아니면 오류 처리
+					return res.json().then(error => {
+						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+					});
+				}
+				return res.json();
+			})
+			.then(response => {
+				if (response.success) { // 서버 응답에 'success: true'가 있다고 가정
+					// Tabulator 행 데이터 업데이트 (화면 새로고침 없이)
+					if (window.invoiceTableInstance) {
+						// 고유 견적서 코드를 기반으로 행을 찾아 '진행상태' 필드를 업데이트합니다.
+						// 이 업데이트는 자동으로 Tabulator 셀의 formatter를 다시 호출합니다.
+						window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code)?.update({ '진행상태': status });
+					}
+				} else {
+					alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
+					// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
+					if (selectElement) {
+						selectElement.value = currentStatus;
+					}
+				}
+			})
+			.catch(err => {
+				console.error("상태 변경 API 호출 실패:", err);
+				alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
+				// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
+				if (selectElement) {
+					selectElement.value = currentStatus;
+				}
+			});
+	}
 
 
 	// ===========================================================
@@ -459,29 +526,53 @@ document.addEventListener("DOMContentLoaded", function() {
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${code}')">${cell.getValue()}</div>`;
 				};
 			}
+			// "진행상태" 컬럼에 HTML Select 요소 적용 (직접 변경 방식)
 			if (col === "진행상태") {
-				def.formatter = (cell) => {
-					const value = cell.getValue();
-					const code = cell.getData().청구서코드;
-					const options = Object.keys(STATUS_MAP)
-						.map((k) => `<option value="${k}" ${k === value ? "selected" : ""}>${STATUS_MAP[k].label}</option>`)
-						.join("");
-					return `<select class="form-select form-select-sm"
-							onchange="updateStatusAPI('${code}', this.value, this)"
-							style="font-size:.75rem; padding:.25rem .5rem; height:auto; min-width:90px;">
-							${options}</select>`;
+				def.field = "진행상태";
+				def.formatter = function(cell) {
+					const value = cell.getValue(); // 현재 상태 값
+					const rowData = cell.getData();
+					const code = rowData.청구서코드;
+
+					// 만약 진행상태가 "판매완료"라면 select 대신 input으로 표시
+					if (value === "회계반영완료") {
+						return `
+		<input type="text" 
+			class="form-control form-control-sm text-center bg-light" 
+			value="${value}" 
+			readonly 
+			style="font-size:0.75rem; height:auto; min-width:90px; cursor: no-drop;">
+	`;
+					}
+
+					// 나머지 상태는 select로 표시
+					const options = Object.keys(STATUS_MAP).map(key => {
+						const itemInfo = STATUS_MAP[key];
+						const isSelected = key === value ? 'selected' : '';
+						return `<option value="${key}" ${isSelected}>${itemInfo.label}</option>`;
+					}).join('');
+
+					return `
+			<select class="form-select form-select-sm" 
+					onchange="updateStatusAPI('${code}', this.value, this)"
+					style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
+				${options}
+			</select>
+		`;
 				};
 			}
 
 			if (col === "청구금액") {
+				def.title = "청구금액 (원)"; // 컬럼명 변경
 				def.formatter = function(cell) {
 					const v = cell.getValue();
 					if (v === null || v === undefined || isNaN(v)) return "-";
-					return Number(v).toLocaleString('ko-KR') + " 원"; // 요구사항 10 포맷
+					return Number(v).toLocaleString('ko-KR');
 				};
 				def.sorter = "number";
 				def.hozAlign = "right";
 			}
+
 			return def;
 		}),
 	];
