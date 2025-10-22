@@ -11,11 +11,12 @@ empTable = new Tabulator("#empPlanList-table", {
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/empPlanList?planYear=2025",
     columns: [
-        { title: "사원명", field: "EMPNAME", width: 150 , widthGrow:0.5},
-        { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "right", widthGrow:0.4 },
-        { title: "작년 매출액(원)", field: "LASTYEARSALES", hozAlign: "right", formatter: "money", widthGrow:0.4 },
-        { title: "작년 매입단가(원)", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" , widthGrow:0.4},
-        { title: "작년 영업이익(원)", field: "LASTYEARPROFIT", hozAlign: "right", formatter: "money" , widthGrow:0.4}
+        { title: "사원명", field: "EMPNAME", width: 150 , widthGrow:0.3},
+        { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "center", widthGrow:0.3 },
+        // ▼ 소수점 제거(.00 제거)
+        { title: "작년 매출액(원)", field: "LASTYEARSALES", hozAlign: "right", formatter: "money", formatterParams: { thousand: ",", precision: 0 }, widthGrow:0.4 },
+        { title: "작년 매입단가(원)", field: "LASTYEARCOST", hozAlign: "right", formatter: "money" , formatterParams: { thousand: ",", precision: 0 }, widthGrow:0.4},
+        { title: "작년 영업이익(원)", field: "LASTYEARPROFIT", hozAlign: "right", formatter: "money" , formatterParams: { thousand: ",", precision: 0 }, widthGrow:0.4}
     ]
 });
 
@@ -26,10 +27,9 @@ planTable = new Tabulator("#plan-table", {
     layout: "fitColumns",
     reactiveData: true,
     columns: [
-        { title: "분기", field: "qtr", hozAlign: "center", editor: false },
-        { title: "상세번호", field: "esdpCode", hozAlign: "center", editor: false },
-        { title: "올해 총 매출액(원)", field: "purpSales", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
-        { title: "올해 총 영업이익(원)", field: "purpProfitAmt", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0, symbol: "₩" } },
+        { title: "분기", field: "qtr", hozAlign: "center", editor: false, widthGrow:0.4 },
+        { title: "올해 총 매출액(원)", field: "purpSales", hozAlign: "right", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0} },
+        { title: "올해 총 영업이익(원)", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0} },
         { title: "신규 거래처수", field: "newVendCnt", editor: "number" }
     ],
     data: [
@@ -110,7 +110,8 @@ empTable.on("rowClick", function (e, row) {
 
     // hidden input 값 세팅
     document.getElementById("employCode").value = data.EMP_CODE;
-    document.getElementById("employeeName").value = data.EMPNAME;
+    // ▼ 자동 입력 제거: 검색 인풋에 이름 넣지 않음
+    // document.getElementById("employeeName").value = data.EMPNAME;
 	document.getElementById("espCode").value = data.ESPCODE;
 	
     // 오른쪽 제목 업데이트
@@ -170,11 +171,3 @@ empTable.on("rowClick", function (e, row) {
         alert("계획 테이블이 초기화되었습니다!");
     });
 });
-
-// ================================
-// 📌 금액 Formatter (₩ 추가)
-// ================================
-function moneyFormatter(cell) {
-    let value = cell.getValue();
-    return value ? "₩" + Number(value).toLocaleString() : "₩0";
-}
