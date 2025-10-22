@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <title>Side</title>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <style>
   :root{
     --grad1:#6e72fc; --grad2:#ad1deb; --grad3:#00d4ff;
@@ -14,23 +16,67 @@
 
   /* ===== Modern Sidenav (가벼운 톤) ===== */
   #layoutSidenav_nav{ background:var(--surface); border-right:1px solid var(--border) }
-  .sb-sidenav.sidenav-modern{
-    color:var(--text);
-  }
+  .sb-sidenav.sidenav-modern{ color:var(--text) }
   .sidenav-modern .sb-sidenav-menu{ padding-top:.35rem }
+
+  /* === 핵심 변경: 아이콘/라벨/화살표 3열 그리드 === */
   .sidenav-modern .nav .nav-link{
-    display:flex; align-items:center; gap:.6rem;
-    color:#d7dae3; padding:.55rem .95rem; border-radius:10px; margin:.15rem .5rem;
+    display: grid !important;
+    grid-template-columns: 1.6rem 1fr 1rem; /* 아이콘 / 라벨 / 화살표 */
+    align-items: center;
+    gap: .6rem;
+    color:#d7dae3;
+    padding:.55rem .95rem;
+    border-radius:10px;
+    margin:.15rem .5rem;
     transition:background .15s ease,color .15s ease;
+    position: relative; /* active gradient bar용 */
   }
   .sidenav-modern .nav .nav-link:hover{ background:var(--hover); color:#fff }
-  .sidenav-modern .nav .nav-link .sb-nav-link-icon{ width:1.2rem; text-align:center; color:#c7cfe2 }
+
+  /* 아이콘 셀: 고정 박스 + 중앙정렬 */
+  .sidenav-modern .nav .nav-link .sb-nav-link-icon{
+    width: 1.25rem;
+    height: 1.25rem;
+    display: inline-grid;
+    place-items: center;
+    color:#c7cfe2;
+    justify-self: center;
+  }
+  /* 폰트어썸 글리프 폭 고정 */
+  .sidenav-modern .nav .nav-link .sb-nav-link-icon i{
+    width: 1.25em;
+    text-align: center;
+    line-height: 1;
+  }
+
+  /* 화살표는 그리드 오른쪽 칸 */
+  .sidenav-modern .sb-sidenav-collapse-arrow{
+    justify-self: end;
+    width: 1rem;
+    color:#c7cfe2;
+    transition:transform .15s ease,color .15s ease;
+    margin-left: 0 !important; /* 예전 auto 제거 */
+  }
+  /* Collapse 화살표 회전 */
+  .sidenav-modern .nav-link[aria-expanded="true"] .sb-sidenav-collapse-arrow{
+    transform:rotate(90deg); color:#fff
+  }
+
+  /* Active 상태 */
   .sidenav-modern .nav .nav-link.active{
     background:var(--active);
     color:#ffffff;
     box-shadow: inset 0 0 0 1px var(--border);
   }
   .sidenav-modern .nav .nav-link.active .sb-nav-link-icon{ color:#b3c2ff }
+
+  /* Active gradient bar (왼쪽 얇은 바) */
+  .sidenav-modern .nav .nav-link.active::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background:linear-gradient(180deg,var(--grad3),var(--grad1));
+    border-radius:0 3px 3px 0;
+  }
 
   /* 섹션 라벨 */
   .sidenav-section{
@@ -39,35 +85,28 @@
     padding:.6rem .95rem .15rem; margin-top:.35rem;
   }
 
-  /* Collapse 화살표 회전 */
-  .sidenav-modern .sb-sidenav-collapse-arrow{ margin-left:auto; transition:transform .15s ease; color:#c7cfe2 }
-  .sidenav-modern .nav-link[aria-expanded="true"] .sb-sidenav-collapse-arrow{ transform:rotate(90deg); color:#fff }
-
-  /* Nested menu */
+  /* Nested menu(중첩 메뉴)는 텍스트만이므로 block 유지 */
   .sidenav-modern .sb-sidenav-menu-nested .nav-link{
+    display:block !important;
     padding-left:2.1rem;
     font-size:.95rem;
+    color:#d7dae3;
+    margin:.05rem .5rem;
+    border-radius:8px;
   }
+  .sidenav-modern .sb-sidenav-menu-nested .nav-link:hover{ background:var(--hover); color:#fff }
 
   /* Footer */
   .sidenav-modern .sb-sidenav-footer{
-    background: #0b0f1a;
+    background:#0b0f1a;
     border-top:1px solid var(--border);
-    color: var(--muted);
+    color:var(--muted);
   }
 
   /* 얇은 스크롤바 (웹킷) */
   #layoutSidenav_nav ::-webkit-scrollbar{ width:8px }
   #layoutSidenav_nav ::-webkit-scrollbar-thumb{ background:#2a2e40; border-radius:8px }
   #layoutSidenav_nav ::-webkit-scrollbar-track{ background:transparent }
-
-  /* Active gradient bar (왼쪽 얇은 바) */
-  .sidenav-modern .nav .nav-link.active::before{
-    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
-    background:linear-gradient(180deg,var(--grad3),var(--grad1));
-    border-radius:0 3px 3px 0;
-  }
-  .sidenav-modern .nav .nav-link{ position:relative }
 </style>
 </head>
 <body>
@@ -78,10 +117,10 @@
       <div class="sb-sidenav-menu">
         <div class="nav">
 
-		  <!-- 공통 -->
+          <!-- 공통 -->
           <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
              data-bs-target="#collapseLayoutss" aria-expanded="false" aria-controls="collapseLayoutss">
-            <div class="sb-nav-link-icon"><i class="fas fa-layer-group"></i></div>
+            <div class="sb-nav-link-icon"><i class="fas fa-layer-group fa-fw"></i></div>
             공통
             <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-right"></i></div>
           </a>
@@ -92,36 +131,36 @@
               <a class="nav-link" href="/commonCodeManager">공통코드 관리</a>
             </nav>
           </div>
-          
-		  <!-- 영업 -->
+
+          <!-- 영업 -->
           <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
              data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
-            <div class="sb-nav-link-icon"><i class="fas fa-briefcase"></i></div>
+            <div class="sb-nav-link-icon"><i class="fas fa-briefcase fa-fw"></i></div>
             영업
             <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-right"></i></div>
           </a>
           <div class="collapse" id="collapseLayouts" data-bs-parent="#sidenavAccordion">
             <nav class="sb-sidenav-menu-nested nav">
-                  <a class="nav-link" href="productList">품목관리</a>
-                  <a class="nav-link" href="partnerList">거래처관리</a>
-                  <a class="nav-link" href="priceList">단가관리</a>
-                  <a class="nav-link" href="estimateList">견적서</a>
-                  <a class="nav-link" href="ordersList">주문서</a>
-                  <a class="nav-link" href="shipmentList">출하지시서</a>
-                  <a class="nav-link" href="invoiceList">청구서</a>
-              
-                  <a class="nav-link" href="sales3/salesdash">영업 대시보드</a>
-                  <a class="nav-link" href="salesList">영업계획목록</a>
-                  <a class="nav-link" href="empList">사원영업계획목록</a>
-                  <a class="nav-link" href="collection">수금관리</a>
-                  <a class="nav-link" href="businessProfits">영업이익관리</a>
+              <a class="nav-link" href="productList">품목관리</a>
+              <a class="nav-link" href="partnerList">거래처관리</a>
+              <a class="nav-link" href="priceList">단가관리</a>
+              <a class="nav-link" href="estimateList">견적서</a>
+              <a class="nav-link" href="ordersList">주문서</a>
+              <a class="nav-link" href="shipmentList">출하지시서</a>
+              <a class="nav-link" href="invoiceList">청구서</a>
+
+              <a class="nav-link" href="sales3/salesdash">영업 대시보드</a>
+              <a class="nav-link" href="salesList">영업계획목록</a>
+              <a class="nav-link" href="empList">사원영업계획목록</a>
+              <a class="nav-link" href="collection">수금관리</a>
+              <a class="nav-link" href="businessProfits">영업이익관리</a>
             </nav>
           </div>
-		  
-		  <!-- 인사 -->
+
+          <!-- 인사 -->
           <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
              data-bs-target="#collapseLayout_hr" aria-expanded="false" aria-controls="collapseLayout_hr">
-            <div class="sb-nav-link-icon"><i class="fas fa-user-friends"></i></div>
+            <div class="sb-nav-link-icon"><i class="fas fa-user-friends fa-fw"></i></div>
             인사
             <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-right"></i></div>
           </a>
@@ -135,10 +174,10 @@
             </nav>
           </div>
 
-		  <!-- 회계 -->
+          <!-- 회계 -->
           <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
              data-bs-target="#collapsePages_acc" aria-expanded="false" aria-controls="collapsePages_acc">
-            <div class="sb-nav-link-icon"><i class="fas fa-calculator"></i></div>
+            <div class="sb-nav-link-icon"><i class="fas fa-calculator fa-fw"></i></div>
             회계
             <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-right"></i></div>
           </a>
@@ -162,8 +201,8 @@
 
         </div>
       </div>
-	  
-	  <!-- 사이드/푸터 -->
+
+      <!-- 사이드/푸터 -->
       <div class="sb-sidenav-footer">
         <div class="small">1조 파이팅</div>
       </div>
