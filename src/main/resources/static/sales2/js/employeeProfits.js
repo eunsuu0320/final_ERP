@@ -52,13 +52,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // ===============================
-  // 📊 Tabulator 테이블
+  // 📊 Tabulator 테이블 (사원 목록) — 페이지네이션 추가
   // ===============================
   const table = new Tabulator("#sales-table", {
     layout: "fitColumns",
     height: "480px",
+
+    // ✅ 페이지네이션 옵션 (local)
     pagination: "local",
-    paginationSize: 10,
+    paginationSize: 10,                       // 기본 10개
+    paginationCounter: "rows",                // "1-10 of 128" 형태 카운터 표시
+
     ajaxURL: "/api/employeeProfits/list",
     ajaxConfig: "GET",
     // 초기 로딩시에도 현재 조건 반영
@@ -170,7 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ===============================
-// 모달: 상세 테이블
+// 모달: 상세 테이블 (페이지네이션 추가)
 // ===============================
 function openEmployeeModal(emp) {
   const modalEl = document.getElementById("employeeModal");
@@ -201,8 +205,12 @@ function openEmployeeModal(emp) {
   const modalTable = new Tabulator("#employee-sales-table", {
     layout: "fitColumns",
     height: "380px",
+
+    // ✅ 페이지네이션 옵션 (local)
     pagination: "local",
     paginationSize: 8,
+    paginationCounter: "rows",
+
     placeholder: "판매 데이터가 없습니다.",
     ajaxURL: "/api/employeeProfits/partners",
     ajaxConfig: "GET",

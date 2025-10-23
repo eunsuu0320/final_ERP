@@ -1,5 +1,6 @@
 // /sales2/js/collection.js
 
+let collectionTable
 // ===== 오버레이 스타일 주입(한 번) =====
 (function injectInvoiceOverlayCSS(){
   if (document.getElementById("invoice-overlay-style")) return;
@@ -32,8 +33,6 @@
 function ensureInvoiceOverlayHost(){
   const host = document.getElementById("invoice-table");
   if (!host) return null;
-
-  // 이미 만들어둔 오버레이가 있으면 재사용
   let overlay = host.querySelector(".invoice-loading-overlay");
   if (!overlay){
     overlay = document.createElement("div");
@@ -71,7 +70,7 @@ function hideInvoiceOverlay(){
 
 document.addEventListener("DOMContentLoaded", function () {
   // ===============================
-  // 📌 테이블 생성
+  // 📌 테이블 생성 (수금 그리드)
   // ===============================
   const salesTableEl = document.getElementById("sales-table");
   if (!salesTableEl) {
@@ -80,12 +79,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 전역으로 접근 가능하게
+  
   window.table = new Tabulator(salesTableEl, {
     layout: "fitColumns",
     height: "350px",
     selectable: true,
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/receivable/list",
+    pagination: "local",
+    paginationSize: 10,
+    paginationCounter: "rows",
+
     selectablePersistence: true,
     ajaxResponse: function (url, params, response) {
       const el = document.querySelector("#total-count span");
@@ -126,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ✅ 생성 직후 안전한 지역 참조
   const table = window.table;
-
+collectionTable = window.table;
   // 테이블 로드 후 제목 초기화
   table.on("dataLoaded", function () {
     updateInvoiceTitle(null);
@@ -181,15 +185,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ===============================
   // 🔁 추가: 문서 전역 Fallback 클릭(보호장치)
-  //  - 어떤 이유로 salesTableEl 리스너가 못 받는 경우에도 실행
   // ===============================
   document.addEventListener("click", async function (e) {
-    // 조회 버튼은 제외
     if (e.target.closest('.js-view-invoices')) return;
-
     const rowEl = e.target.closest("#sales-table .tabulator-row");
     if (!rowEl) return;
-
     try {
       const row = table.rowManager.activeRows.find(r => r.element === rowEl);
       const data = row ? row.getData() : null;
@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (err) {
       console.warn("document fallback 처리 중 오류:", err);
     }
-  }, true); // capture 단계에서 먼저 받기
+  }, true);
 
   // 모달 닫히면 강조 해제
   document.getElementById("insertCollectionModal")?.addEventListener("hidden.bs.modal", () => {
@@ -247,7 +247,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // ===============================
-  // (B) 청구내역 테이블 렌더러
+  // (B) 청구내역 테이블 렌더러 (✅ 로컬 페이징 추가)
   // ===============================
   window.invoiceTable = null;
 
@@ -257,10 +257,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const partnerCode = rowData?.PARTNER_CODE || rowData?.partnerCode || "";
 
-    // ⬇️ 조회 시작: 로딩 오버레이 ON
     showInvoiceLoading();
     try {
-      const data = await fetchInvoices(partnerCode); // ✅ 실데이터 호출
+      const data = await fetchInvoices(partnerCode);
 
       const columns = [
         { title:"청구번호",    field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
@@ -295,6 +294,11 @@ document.addEventListener("DOMContentLoaded", function () {
           columns,
           columnDefaults:{ headerHozAlign:"center" },
           index:"INVOICE_UNIQUE_CODE",
+
+          // ✅ 청구내역도 로컬 페이징(드롭박스 없이)
+          pagination: "local",
+          paginationSize: 8,
+          paginationCounter: "rows",
         });
       } else {
         window.invoiceTable.setColumns(columns);
@@ -303,11 +307,9 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } catch (err) {
       console.error("청구내역 로드 오류:", err);
-      // ⬇️ 에러 표시
       showInvoiceError("청구내역을 불러오는 중 오류가 발생했습니다.");
-      return; // 여기서 종료
+      return;
     } finally {
-      // ⬇️ 정상/에러 모두에서 로딩 오버레이 정리 (에러면 위에서 메시지 남김)
       hideInvoiceOverlay();
     }
   }
@@ -316,7 +318,6 @@ document.addEventListener("DOMContentLoaded", function () {
   // 📌 모달 열기
   // ===============================
   window.openCollectionModal = async function (rowData) {
-    // (사전 클린업) 혹시 남아있는 모달/백드롭/바디 상태 정리
     try {
       document.querySelectorAll('.modal.show').forEach(m => {
         const inst = bootstrap.Modal.getInstance(m);
@@ -331,7 +332,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const modalRoot = document.getElementById("insertCollectionModal");
     if (!modalRoot) return;
 
-    // 거래처/잔액 세팅
     document.getElementById("modalPartnerName").value = rowData?.CUSTOMERNAME || "";
     const modalPartnerCodeEl = document.querySelector("#insertCollectionModal #partnerCode");
     if (modalPartnerCodeEl) modalPartnerCodeEl.value = rowData?.PARTNER_CODE || "";
@@ -342,7 +342,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (outstandingHidden) outstandingHidden.value = rawOutstanding;
     if (outstandingView)   outstandingView.value   = formatNumber(String(rawOutstanding));
 
-    // 담당자 세팅
     let empName = "";
     try {
       const res = await fetch("/api/collection/current-employee");
@@ -355,17 +354,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     document.getElementById("managerName").value = empName || "로그인사용자";
 
-    // 금액 입력 초기화
     const collectAmtInput     = document.getElementById("collectAmt");
     const postDeductionInput  = document.getElementById("postDeductionAmt");
     if (collectAmtInput) collectAmtInput.value = "";
     if (postDeductionInput) postDeductionInput.value = "";
 
-    // 모달 표시
     const modal = new bootstrap.Modal(modalRoot);
     modal.show();
-
-    // 표시 직후 레이아웃 안정화
     setTimeout(safeRedrawAll, 0);
   };
 
@@ -472,7 +467,6 @@ function ensureSalesTableVisible() {
 document.addEventListener('shown.bs.modal', function () {
   ensureSalesTableVisible();
   safeRedrawAll();
-
   try {
     const st = document.getElementById('sales-table');
     if (st) {
@@ -485,14 +479,12 @@ document.addEventListener('shown.bs.modal', function () {
 document.addEventListener('hidden.bs.modal', function () {
   ensureSalesTableVisible();
   safeRedrawAll();
-
   try {
     document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
     document.body.classList.remove('modal-open');
     document.body.style.removeProperty('padding-right');
     document.body.style.removeProperty('overflow');
   } catch (_) {}
-
   try {
     const st = document.getElementById('sales-table');
     if (st) {
@@ -511,7 +503,6 @@ document.addEventListener('click', (e) => {
     leftoverBackdrop.remove();
     document.body.style.removeProperty('padding-right');
     document.body.style.removeProperty('overflow');
-
     const st = document.getElementById('sales-table');
     if (st) {
       st.style.position = 'relative';
@@ -520,3 +511,5 @@ document.addEventListener('click', (e) => {
     }
   }
 }, true);
+
+
