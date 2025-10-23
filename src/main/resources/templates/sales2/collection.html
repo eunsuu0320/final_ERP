@@ -79,8 +79,8 @@
 
         <!-- 버튼 그룹 -->
         <div class="d-flex gap-2">
-           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '수금관리')">Excel</button>
-           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '수금관리')">PDF</button>
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(collectionTable, '수금관리')">Excel</button>
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(collectionTable, '수금관리')">PDF</button>
         </div>
       </div>
 
@@ -167,7 +167,6 @@
               </div>
 
               <!-- 수금 처리 결과 Tabulator -->
-              <h6 class="fw-bold mb-2">수금 처리 결과</h6>
               <div id="resultTable"></div>
 
             </div>

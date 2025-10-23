@@ -291,8 +291,8 @@ const modalConfigs = {
 		url: "/api/modal/productCode",
 		title: "품목 검색",
 		columns: [
-			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
-			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
+			{ title: "품목코드", field: "productCode", hozAlign: "center" },
+			{ title: "품목명", field: "productName", hozAlign: "center" },
 		],
 		selectable: 1,
 	},
