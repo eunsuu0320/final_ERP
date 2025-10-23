@@ -75,6 +75,23 @@
     .tabulator .tabulator-header .tabulator-col{
       text-align:center;
     }
+
+    /* 간단한 invalid 표시 (테두리만) */
+    .is-invalid{border-color:#dc3545 !important}
+
+    /* ★ invalid 느낌표 아이콘 제거 & 패딩 보정 (돋보기 겹침 방지) */
+    .form-control.is-invalid,
+    .was-validated .form-control:invalid,
+    .form-select.is-invalid,
+    .was-validated .form-select:invalid{
+      background-image: none !important;   /* 느낌표 아이콘 제거 */
+      padding-right: .75rem !important;     /* 기본 패딩 복원 */
+    }
+    /* input-with-icon에서는 돋보기 공간 유지 */
+    .input-with-icon .form-control.is-invalid,
+    .input-with-icon .was-validated .form-control:invalid{
+      padding-right: 40px !important;
+    }
   </style>
 </head>
 
@@ -119,7 +136,6 @@
 
         <!-- 검색 바 -->
         <div class="d-flex align-items-end flex-wrap gap-3 mb-2">
-          <!-- 거래처명 -->
           <div class="top-field-wrap">
             <label class="form-label" for="partnerName">거래처명</label>
             <div class="input-with-icon top-field">
@@ -130,7 +146,6 @@
             </div>
           </div>
 
-          <!-- 전표번호 -->
           <div class="top-field-wrap">
             <label class="form-label" for="voucherNo">전표번호</label>
             <div class="input-with-icon top-field">
@@ -286,7 +301,6 @@
     const fmt   = n => Number(n||0).toLocaleString();
     const unfmt = s => Number(String(s||'').replace(/[^\d.-]/g,''))||0;
 
-    // ★ 로컬 타임존 기준 YYYY-MM-DD 포맷터 (UTC slice 하루 밀림 방지)
     function ymdLocal(d){
       const tz = d.getTimezoneOffset() * 60000;
       return new Date(d.getTime() - tz).toISOString().slice(0,10);
@@ -334,67 +348,69 @@
     /* ---------- 세션 사용자 "이름"만 추출 ---------- */
     function extractDisplayName(me){
       try{
-        // 0) 문자열로 넘어오면 객체로 감싸기
         if (typeof me === 'string') me = { raw: me };
 
-        // 1) 구조화 필드들에서 우선 추출
         const directCandidates = [
           me?.employeeName, me?.realName, me?.displayName, me?.name,
           me?.user?.name, me?.profile?.name, me?.principal?.name,
-          me?.account?.name, me?.raw
+          me?.account?.name, me?.raw, me?.username, me?.userId, me?.employeeCode
         ].filter(Boolean).map(String);
 
-        // 2) 각 후보에서 토큰 분리
         const tokens = [];
         const pushTokens = (s)=>{
           String(s).split(/[|:,/>\-]+/).forEach(t=>{
-            const trimmed = t.trim();
+            const trimmed = t.replace(/\(.*?\)|\[.*?]|<.*?>/g,'').trim();
             if (trimmed) tokens.push(trimmed);
           });
         };
         directCandidates.forEach(pushTokens);
 
-        // 3) 필터링 규칙
         const BAD_KEYWORDS = ['관리자','admin','ADMIN','ROLE','권한','팀','부','과장','차장','대리','사원','user','영업','개발','기획','재무','인사'];
-        const isBad = (t)=> BAD_KEYWORDS.some(k=>t.includes(k));
+        const CODE_REGEXES = [
+          /^[A-Z]{1}\d{3,}$/u,
+          /^EMP\d{2,}$/u,
+          /^[A-Z0-9_-]{3,20}$/u
+        ];
+        const isBad = (t)=> BAD_KEYWORDS.some(k=>t.includes(k)) || CODE_REGEXES.some(r=>r.test(t));
+
         const isKoreanName = (t)=> /^[가-힣]{2,4}$/.test(t);
         const isEnglishName = (t)=> /^[A-Za-z][A-Za-z .'-]{1,39}$/.test(t) && !/\d/.test(t);
 
-        // 3-1) 한글 이름(2~4자) 우선
         const kor = tokens.find(t=>isKoreanName(t) && !isBad(t));
         if (kor) return kor;
 
-        // 3-2) 공백 포함 영어/혼합 이름
         const eng = tokens.find(t=>isEnglishName(t) && !isBad(t));
         if (eng) return eng;
 
-        // 3-3) 괄호 안 부가정보 제거 후 다시 한글 이름 시도
-        for (const t of tokens){
-          const clean = t.replace(/\(.*?\)|\[.*?]|<.*?>/g,'').trim();
-          if (isKoreanName(clean) && !isBad(clean)) return clean;
-        }
-
-        // 3-4) 최후: 길이 2~10, 키워드 없는 토큰
         const lax = tokens.find(t=>!isBad(t) && t.length>=2 && t.length<=10);
-        if (lax) return lax;
-
-        // 실패 시 빈문자열
-        return '';
+        return lax || '';
       }catch(_){ return ''; }
+    }
+
+    function looksLikeCode(s){
+      const v=String(s||'').trim();
+      return /^[A-Z]{1}\d{3,}$/.test(v) || /^EMP\d{2,}$/.test(v);
     }
 
     let currentUserName='';
     fetch('/api/me',{credentials:'same-origin'})
       .then(async r=>{
-        // 서버가 text/json 섞여도 안전하게 처리
         const ct=(r.headers.get('content-type')||'').toLowerCase();
         if (ct.includes('application/json')) return r.json();
         return r.text().then(txt=>({ raw: txt }));
       })
       .then(j=>{
-        currentUserName = extractDisplayName(j) || '';
+        const name = extractDisplayName(j) || '';
+        currentUserName = name;
+
+        const $empInput = document.getElementById('vf-empName');
+        if ($empInput) {
+          if (!$empInput.value || looksLikeCode($empInput.value)) {
+            if (name) $empInput.value = name;
+          }
+        }
       })
-      .catch(()=>{});
+      .catch(()=>{ /* no-op */ });
 
     /* ---------- 목록 테이블 ---------- */
     let currentType='ALL';
@@ -447,31 +463,6 @@
         const el = document.getElementById(`count-${k}`);
         if (el) el.textContent = (totals[k] ?? 0).toLocaleString();
       });
-    }
-
-    async function refreshTypeCounts(){
-      const base = paramsFor();
-      const TYPES = ['ALL','SALES','BUY','MONEY','PAYMENT'];
-
-      async function fetchCount(type){
-        const q = new URLSearchParams({
-          ...base,
-          page: 0,
-          size: 1,
-        });
-        q.set('type', type);
-        q.append('sort','voucherNo,desc');
-
-        try{
-          const js = await fetchPageJson(`/api/statements?${q.toString()}`);
-          return deriveTotalCount(js);
-        }catch(_){ return 0; }
-      }
-
-      const totals = { ALL:0, SALES:0, BUY:0, MONEY:0, PAYMENT:0 };
-      const results = await Promise.all(TYPES.map(fetchCount));
-      TYPES.forEach((t,i)=> totals[t] = results[i] || 0);
-      setTypeBadges(totals);
     }
 
     let allSelected=false;
@@ -573,16 +564,15 @@
       } finally { hideLoading();  refreshTypeCounts(); }
     }
 
-    // ★ 초기 조회 시 '최근 1년' 범위 자동 세팅 (서버/템플릿이 비워둔 경우에만)
     (function setInitialOneYearRange(){
       const $from = document.getElementById('fromDate');
       const $to   = document.getElementById('toDate');
       if (!$from || !$to) return;
-      if ($from.value || $to.value) return; // 이미 값이 있으면 그대로 둠
+      if ($from.value || $to.value) return;
 
       const today = new Date();
       const from  = new Date(today);
-      from.setFullYear(from.getFullYear() - 1); // 같은 월/일의 전년도
+      from.setFullYear(from.getFullYear() - 1);
 
       $from.value = ymdLocal(from);
       $to.value   = ymdLocal(today);
@@ -675,9 +665,7 @@
       const css = `
         <style>
           @page { size: A4; margin: 12mm; }
-          @media print {
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
           body { font-family: 'Malgun Gothic', system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif; color:#222; }
           .page { page-break-after: always; }
           .title { text-align:center; font-size:28px; font-weight:700; letter-spacing:4px; margin-bottom:8px; }
@@ -749,9 +737,7 @@
             <td class="r">${x.credit?fmt(x.credit):''}</td>
           </tr>`
         )).join('');
-        const empty = Array.from({length:Math.max(0,7 - lines.length)}).map(()=>(
-          `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`
-        )).join('');
+        const empty = Array.from({length:Math.max(0,7 - lines.length)}).map(()=>(`<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`)).join('');
 
         return `
           <div class="page">
@@ -794,7 +780,6 @@
 
       const html = buildVoucherHTML(selected);
 
-      // 1) 숨김 iframe 생성
       const iframe = document.createElement('iframe');
       iframe.style.position = 'fixed';
       iframe.style.right = '0';
@@ -805,22 +790,12 @@
       iframe.style.visibility = 'hidden';
       document.body.appendChild(iframe);
 
-      const cleanup = () => {
-        try { iframe.remove(); } catch(_) {}
-      };
+      const cleanup = () => { try { iframe.remove(); } catch(_) {} };
+      const doPrint = () => { try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(_) {} };
 
-      const doPrint = () => {
-        try {
-          iframe.contentWindow.focus();
-          iframe.contentWindow.print();
-        } catch(_) {}
-      };
-
-      // 2) srcdoc 지원 브라우저: 바로 주입
       iframe.onload = () => setTimeout(doPrint, 50);
       iframe.srcdoc = html;
 
-      // 3) 일부 브라우저 대비 fallback: document.write
       setTimeout(() => {
         const doc = iframe.contentDocument || iframe.contentWindow?.document;
         const empty = !doc || !doc.body || !doc.body.childNodes.length;
@@ -833,7 +808,6 @@
         }
       }, 120);
 
-      // 4) 인쇄 종료/탭 이동 시 정리
       iframe.contentWindow.onafterprint = cleanup;
       iframe.contentWindow.addEventListener?.('beforeunload', cleanup);
     });
@@ -997,7 +971,13 @@
       fetchNextVoucherNo(type, today);
 
       if($saleCode) $saleCode.value=''; if($partner) $partner.value=''; if($remark) $remark.value='';
-      if($emp) $emp.value=(typeof currentUserName==='string'?currentUserName:'');
+      if($emp){
+        if (currentUserName) {
+          if (!$emp.value || looksLikeCode($emp.value)) $emp.value = currentUserName;
+        } else {
+          if (looksLikeCode($emp.value)) $emp.value = '';
+        }
+      }
       if($taxSel) $taxSel.value='TAXABLE';
 
       vfBindings = rewireNumericFields();
@@ -1047,20 +1027,105 @@
     }
     /* ---------- 전표 등록 모달 끝 ---------- */
 
+    // ★ 유효성 검사 (VAT 제외)
+    function clearInvalid(...els){
+      els.forEach(el=>{
+        el?.classList?.remove('is-invalid');
+        el?.removeAttribute?.('aria-invalid');
+        el?.removeAttribute?.('data-error');
+      });
+    }
+    function markInvalid(el, msg){
+      if(!el) return;
+      el.classList.add('is-invalid');
+      el.setAttribute('aria-invalid','true');
+      if(msg) el.setAttribute('data-error', msg);
+    }
+    function validateForm(){
+      const errs = [];
+      const $voucherDate = document.getElementById('vf-voucherDate');
+      const $saleDate    = document.getElementById('vf-saleDate');
+      const $partner     = document.getElementById('vf-partnerName');
+      const $saleCode    = document.getElementById('vf-saleCode');
+      const $typeBtn     = document.getElementById('vf-title');
+      const $supply      = document.getElementById('vf-supply');
+      const $total       = document.getElementById('vf-total');
+      const $taxType     = document.getElementById('vf-taxType');
+
+      clearInvalid($voucherDate,$saleDate,$partner,$saleCode,$supply,$total,$taxType);
+
+      const titleTxt = ($typeBtn?.textContent||'').toUpperCase();
+      const isBuy = titleTxt.includes('매입'); // 저장 로직의 isBuy 판별과 동일
+
+      // 1) 날짜 필수
+      if (!($voucherDate?.value)) { errs.push({el:$voucherDate, msg:'전표일자를 입력하세요.'}); }
+      if (!($saleDate?.value))    { errs.push({el:$saleDate,    msg:(isBuy?'구매일자':'판매일자')+'를 입력하세요.'}); }
+
+      // 2) 거래처 필수
+      if (!($partner?.value?.trim())) { errs.push({el:$partner, msg:'거래처를 선택하세요.'}); }
+
+      // 3) 코드 필수 (매출/매입 모두)
+      if (!($saleCode?.value?.trim())) {
+        errs.push({el:$saleCode, msg:(isBuy?'구매코드':'판매코드')+'를 선택하세요.'});
+      }
+
+      // 4) 금액 검증 (★ VAT 제외: 공급가액/총액 중 하나만 양수면 통과)
+      const supplyVal = unfmt($supply?.value);
+      const totalVal  = unfmt($total?.value);
+      const validAmount = (Number.isFinite(supplyVal) && supplyVal>0) || (Number.isFinite(totalVal) && totalVal>0);
+      if (!validAmount) {
+        errs.push({el:$supply, msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+        errs.push({el:$total,  msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+      }
+
+      // 5) 부가세유형 값 유효 (포맷만 확인)
+      const taxVal = ($taxType?.value||'').toUpperCase();
+      if (!['TAXABLE','ZERO','EXEMPT'].includes(taxVal)) {
+        errs.push({el:$taxType, msg:'부가세유형이 올바르지 않습니다.'});
+      }
+
+      if (errs.length){
+        // 첫 에러에 포커스, 표시
+        errs.forEach(e=>markInvalid(e.el, e.msg));
+        const first = errs[0];
+        first?.el?.focus?.();
+        toast('입력값을 확인하세요: ' + (first?.msg||'필수항목 누락'));
+        return false;
+      }
+      return true;
+    }
+
+    // 입력 시 invalid 해제
+    ['vf-voucherDate','vf-saleDate','vf-partnerName','vf-saleCode','vf-supply','vf-total','vf-taxType']
+      .forEach(id=>{
+        const el = document.getElementById(id);
+        el?.addEventListener('input', ()=>clearInvalid(el));
+        el?.addEventListener('change', ()=>clearInvalid(el));
+      });
+
     // 저장 버튼
     const $saveBtn = document.getElementById('vf-save');
     $saveBtn?.addEventListener('click', async () => {
+      // ★ 저장 전 유효성 검사 (VAT 제외)
+      if (!validateForm()) return;
+
       const isBuy = document.getElementById('vf-title').textContent.includes('매입');
+
+      // ★ 담당자 이름 값 확보
+      const empNameInput = document.getElementById('vf-empName')?.value || '';
+      const employeeName = currentUserName || empNameInput || null;
+
       const body = isBuy
         ? {
             reservationId: (document.getElementById('vf-resvId')?.value || null),
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             buyCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
-            employee: document.getElementById('vf-empName').value || null,
+            employee: employeeName,
+            employeeName: employeeName,
             taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
             amountSupply: unfmt(document.getElementById('vf-supply').value),
-            amountVat:    unfmt(document.getElementById('vf-vat').value),
+            amountVat:    unfmt(document.getElementById('vf-vat').value),   // 존재하지만 검증은 안 함
             amountTotal:  unfmt(document.getElementById('vf-total').value),
             remark: document.getElementById('vf-remark').value || null,
           }
@@ -1069,10 +1134,11 @@
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             salesCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
-            employee: document.getElementById('vf-empName').value || null,
+            employee: employeeName,
+            employeeName: employeeName,
             taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
             amountSupply: unfmt(document.getElementById('vf-supply').value),
-            amountVat:    unfmt(document.getElementById('vf-vat').value),
+            amountVat:    unfmt(document.getElementById('vf-vat').value),   // 존재하지만 검증은 안 함
             amountTotal:  unfmt(document.getElementById('vf-total').value),
             remark: document.getElementById('vf-remark').value || null,
           };
