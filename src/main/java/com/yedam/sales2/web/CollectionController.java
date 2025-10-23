@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales2.domain.CollectionEntity;
 import com.yedam.sales2.service.CollectionService;
 
@@ -29,6 +30,7 @@ public class CollectionController {
     private CollectionService collectionService;
 
     // 수금관리 메인 HTML
+    @ScreenPerm(screen = "SAL_RCPT", action=ScreenPerm.Action.READ)
     @GetMapping("collection")
     public String collection() {
         return "sales2/collection";
@@ -46,6 +48,7 @@ public class CollectionController {
     }
     
     // 수금등록
+    @ScreenPerm(screen = "SAL_RCPT", action=ScreenPerm.Action.CREATE)
     @PostMapping("/api/collection/insert")
     @ResponseBody
     public Map<String, Object> insertCollection(@RequestBody Map<String, Object> request) {

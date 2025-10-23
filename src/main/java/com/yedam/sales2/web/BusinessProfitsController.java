@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales2.repository.BusinessProfitsRepository;
 import com.yedam.sales2.service.BusinessProfitsService;
 import com.yedam.sales2.service.EmployeeProfitsService;
@@ -30,6 +31,7 @@ public class BusinessProfitsController {
     private BusinessProfitsRepository repository;
 
     // 영업이익조회 HTML
+    @ScreenPerm(screen = "SAL_PROFIT", action=ScreenPerm.Action.READ)
     @GetMapping("businessProfits")
     public String businessProfits() {
         return "sales2/businessProfits";

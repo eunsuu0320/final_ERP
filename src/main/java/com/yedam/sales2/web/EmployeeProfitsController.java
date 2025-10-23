@@ -26,7 +26,7 @@ public class EmployeeProfitsController {
 
 	 @Autowired
 	    private EmployeeProfitsService service;
-
+	 
 	    @ResponseBody
 	    @GetMapping("/list")
 	    public List<Map<String, Object>> getEmployeeProfitsList(
