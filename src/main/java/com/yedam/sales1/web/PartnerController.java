@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.Loan;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Payment;
@@ -40,6 +41,8 @@ public class PartnerController {
 
 	}
 
+	
+	@ScreenPerm(screen = "SAL_CUST", action = ScreenPerm.Action.READ)
 	@GetMapping("partnerList")
 	public String partnerList(Model model) {
 		List<Partner> partners = partnerService.getAllPartner();
@@ -67,6 +70,7 @@ public class PartnerController {
 	}
 
 	// 품목 등록
+	@ScreenPerm(screen = "SAL_CUST", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registFullPartner")
 	public ResponseEntity<Partner> registFullPartner(@RequestBody PartnerRegistrationDTO partnerData) {
 		System.out.println(partnerData);

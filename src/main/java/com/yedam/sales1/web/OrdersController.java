@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.OrderDetail;
 import com.yedam.sales1.domain.Orders;
 import com.yedam.sales1.domain.Product;
@@ -37,6 +38,7 @@ public class OrdersController {
 		this.orderDetailRepository = orderDetailRepository;
 	}
 
+	@ScreenPerm(screen = "SAL_ORDER", action = ScreenPerm.Action.READ)
 	@GetMapping("ordersList")
 	public String ordersList(Model model) {
 		List<Orders> orders = ordersService.getAllOrders();
@@ -47,6 +49,7 @@ public class OrdersController {
 		return "sales1/ordersList";
 	}
 
+	@ScreenPerm(screen = "SAL_ORDER", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registOrders")
 	public ResponseEntity<Map<String, Object>> registOrder(@RequestBody OrderRegistrationDTO dto) {
 		try {
@@ -58,6 +61,7 @@ public class OrdersController {
 		}
 	}
 
+	@ScreenPerm(screen = "SAL_ORDER", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("api/updateOrders")
 	public ResponseEntity<Map<String, Object>> updateOrdersStatus(@RequestBody Map<String, String> request) {
 		try {
