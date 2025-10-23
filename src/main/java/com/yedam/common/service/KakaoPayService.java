@@ -28,7 +28,7 @@ public class KakaoPayService {
     private static final String ADMIN_KEY = "3c4d225c4cfafacf87d4c8cce4342a24"; // 환경변수/설정파일로 분리 권장
 
     // 환경/프로파일별로 분기하세요. 지금은 로컬 기준.
-    private static final String BASE_URL = "https://www.thesolv.shop";
+    private static final String BASE_URL = "http://www.thesolv.shop";
 
     public KakaoReadyResponse kakaoPayReady(PayRequest payRequest) {
         HttpHeaders headers = new HttpHeaders();
@@ -49,12 +49,6 @@ public class KakaoPayService {
         params.add("approval_url", BASE_URL + "/pay/kakao/success" + orderQS);
         params.add("cancel_url",   BASE_URL + "/pay/kakao/cancel"  + orderQS);
         params.add("fail_url",     BASE_URL + "/pay/kakao/fail"    + orderQS);
-        
-        String approval = BASE_URL + "/pay/kakao/success" + orderQS;
-        String cancel   = BASE_URL + "/pay/kakao/cancel"   + orderQS;
-        String fail     = BASE_URL + "/pay/kakao/fail"     + orderQS;
-
-        System.out.println("[KAKAO READY URLS] " + approval + " | " + cancel + " | " + fail);
         
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         KakaoReadyResponse response = restTemplate.postForObject(
