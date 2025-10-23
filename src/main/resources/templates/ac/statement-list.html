@@ -468,6 +468,25 @@
     let allSelected=false;
     let lastSorters = [{ field:'voucherNo', dir:'desc' }];
 
+    let lastAllRows = [];  // 전체(ALL) 기준으로 마지막 조회 데이터 유지
+
+    function groupCounts(rows){
+      const totals = { ALL: 0, SALES: 0, BUY: 0, MONEY: 0, PAYMENT: 0 };
+      if (!Array.isArray(rows)) return totals;
+      totals.ALL = rows.length;
+      for (const r of rows) {
+        const t = String(r?.type || '').toUpperCase();
+        if (t in totals) totals[t] += 1;
+      }
+      return totals;
+    }
+
+    function refreshTypeCounts(){
+      // 마지막 ALL 데이터로 칩 갱신
+      const totals = groupCounts(lastAllRows);
+      setTypeBadges(totals);
+    }
+    
     const mainTable=new Tabulator("#employee-table",{
       layout:"fitColumns",
       pagination:true, paginationMode:"local",
@@ -507,76 +526,81 @@
 
     mainTable.on("tableBuilt",()=>requestAnimationFrame(()=>mainTable.redraw(true)));
     window.addEventListener('resize',()=>mainTable.redraw(true));
-
+	
     const FETCH_PAGE_SIZE = 500;
+    
+    
     async function loadAllData(){
-      showLoading();
-      try{
-        const base=paramsFor();
+    	  showLoading();
+    	  try{
+    	    const base=paramsFor();
 
-        const qs1=new URLSearchParams({...base, page:0, size:FETCH_PAGE_SIZE});
-        qs1.append('sort','voucherNo,desc');
-        const first=await fetchPageJson(`/api/statements?${qs1.toString()}`);
+    	    // ★ 집계/배지용으로는 항상 ALL 기준으로 불러오도록 type 제거
+    	    const { type: _ignored, ...baseNoType } = base;
 
-        const firstRows = Array.isArray(first) ? first : (first.content ?? []);
-        const totalPages = Array.isArray(first) ? 1 : Math.max(1, first.totalPages ?? 1);
-        const sizeUsed   = Array.isArray(first) ? firstRows.length : (first.size ?? FETCH_PAGE_SIZE);
+    	    const qs1=new URLSearchParams({...baseNoType, page:0, size:FETCH_PAGE_SIZE});
+    	    qs1.append('sort','voucherNo,desc');
+    	    const first=await fetchPageJson(`/api/statements?${qs1.toString()}`);
 
-        let all=[...firstRows];
+    	    const firstRows = Array.isArray(first) ? first : (first.content ?? []);
+    	    const totalPages = Array.isArray(first) ? 1 : Math.max(1, first.totalPages ?? 1);
+    	    const sizeUsed   = Array.isArray(first) ? firstRows.length : (first.size ?? FETCH_PAGE_SIZE);
 
-        for(let p=1; p<totalPages; p++){
-          const qsp=new URLSearchParams({...base, page:p, size:sizeUsed});
-          qsp.append('sort','voucherNo,desc');
-          const js=await fetchPageJson(`/api/statements?${qsp.toString()}`);
-          const rows = Array.isArray(js) ? js : (js.content ?? []);
-          all = all.concat(rows);
-        }
+    	    let all=[...firstRows];
 
-        if (lastSorters && lastSorters.length){
-          const s = lastSorters[0];
-          if (s.field === 'voucherNo'){
-            all.sort((a,b)=> {
-              const cmp = compareVoucherAsc(a.voucherNo, b.voucherNo);
-              return s.dir === 'asc' ? cmp : -cmp;
-            });
-          } else {
-            all.sort((a,b)=>{
-              const av=a[s.field], bv=b[s.field];
-              if (typeof av === 'number' && typeof bv === 'number') return s.dir==='asc' ? av-bv : bv-av;
-              return s.dir==='asc' ? String(av??'').localeCompare(String(bv??'')) : String(bv??'').localeCompare(String(av??'')); 
-            });
-          }
-        } else {
-          all.sort((a,b)=> -compareVoucherAsc(a.voucherNo, b.voucherNo));
-        }
+    	    for(let p=1; p<totalPages; p++){
+    	      const qsp=new URLSearchParams({...baseNoType, page:p, size:sizeUsed});
+    	      qsp.append('sort','voucherNo,desc');
+    	      const js=await fetchPageJson(`/api/statements?${qsp.toString()}`);
+    	      const rows = Array.isArray(js) ? js : (js.content ?? []);
+    	      all = all.concat(rows);
+    	    }
 
-        await mainTable.setData(all);
+    	    // 정렬 유지
+    	    if (lastSorters && lastSorters.length){
+    	      const s = lastSorters[0];
+    	      if (s.field === 'voucherNo'){
+    	        all.sort((a,b)=> {
+    	          const cmp = compareVoucherAsc(a.voucherNo, b.voucherNo);
+    	          return s.dir === 'asc' ? cmp : -cmp;
+    	        });
+    	      } else {
+    	        all.sort((a,b)=>{
+    	          const av=a[s.field], bv=b[s.field];
+    	          if (typeof av === 'number' && typeof bv === 'number') return s.dir==='asc' ? av-bv : bv-av;
+    	          return s.dir==='asc' ? String(av??'').localeCompare(String(bv??'')) : String(bv??'').localeCompare(String(av??'')); 
+    	        });
+    	      }
+    	    } else {
+    	      all.sort((a,b)=> -compareVoucherAsc(a.voucherNo, b.voucherNo));
+    	    }
 
-        if (lastSorters && lastSorters.length){
-          mainTable.setSort(lastSorters.map(s => ({ column:s.field, dir:s.dir })));
-        } else {
-          mainTable.setSort([{column:'voucherNo', dir:'desc'}]);
-        }
-        mainTable.setPage(1);
-      } catch(e){
-        console.error(e);
-        toast('데이터 로드 실패: ' + (e.message||''));
-      } finally { hideLoading();  refreshTypeCounts(); }
-    }
+    	    // ★ 전체 데이터 저장(배지 계산용)
+    	    lastAllRows = all;
 
-    (function setInitialOneYearRange(){
-      const $from = document.getElementById('fromDate');
-      const $to   = document.getElementById('toDate');
-      if (!$from || !$to) return;
-      if ($from.value || $to.value) return;
+    	    // ★ 현재 탭 필터링 후 테이블 반영
+    	    const visible = (currentType==='ALL') ? all : all.filter(r => String(r.type||'').toUpperCase() === currentType);
+    	    await mainTable.setData(visible);
 
-      const today = new Date();
-      const from  = new Date(today);
-      from.setFullYear(from.getFullYear() - 1);
+    	    if (lastSorters && lastSorters.length){
+    	      mainTable.setSort(lastSorters.map(s => ({ column:s.field, dir:s.dir })));
+    	    } else {
+    	      mainTable.setSort([{column:'voucherNo', dir:'desc'}]);
+    	    }
+    	    mainTable.setPage(1);
 
-      $from.value = ymdLocal(from);
-      $to.value   = ymdLocal(today);
-    })();
+    	    // ★ 칩 배지 갱신
+    	    refreshTypeCounts();
+
+    	  } catch(e){
+    	    console.error(e);
+    	    toast('데이터 로드 실패: ' + (e.message||''));
+    	  } finally {
+    	    hideLoading();
+    	  }
+    	}
+
+    
 
     loadAllData();
 

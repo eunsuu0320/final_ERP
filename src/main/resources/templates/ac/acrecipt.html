@@ -316,30 +316,34 @@
       const qtyWithUnit = `${Number(r.qty||0).toLocaleString()}${r.unit ? ' ' + r.unit : ''}`;
       return `
         <tr>
-          <td class="c">${dt}</td>
-          <td class="c">${(r.productName||'')}</td>
-          <td class="c">${qtyWithUnit}</td>
-          <td class="num">${unitPrice.toLocaleString()}</td>
-          <td class="num">${(+r.amountSupply||0).toLocaleString()}</td>
-          <td class="num">${(+r.amountVat||0).toLocaleString()}</td>
-          <td class="num">${((+r.amountTotal || ((+r.amountSupply||0)+(+r.amountVat||0)))).toLocaleString()}</td>
+          <td class="c nowrap">${dt}</td>
+          <td class="desc">${(r.productName||'')}</td>
+          <td class="qty nowrap">${qtyWithUnit}</td>
+          <td class="num nowrap">${unitPrice.toLocaleString()}</td>
+          <td class="num nowrap">${(+r.amountSupply||0).toLocaleString()}</td>
+          <td class="num nowrap">${(+r.amountVat||0).toLocaleString()}</td>
+          <td class="num nowrap">${((+r.amountTotal || ((+r.amountSupply||0)+(+r.amountVat||0)))).toLocaleString()}</td>
         </tr>`;
     }).join('');
 
     const filler = Array(Math.max(0, 9 - rowsForOnePartner.length)).fill(
-      '<tr><td>&nbsp;</td><td></td><td></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>'
+      '<tr><td>&nbsp;</td><td class="desc"></td><td class="qty"></td><td class="num"></td><td class="num"></td><td class="num"></td><td class="num"></td></tr>'
     ).join('');
 
     const korAmt = numberToKoreanFormal(total).replace(/원$/, '원 정');
     const today = todayStr();
 
+    // === 인쇄용 HTML/CSS (줄바꿈 방지 보강) ===
     const html = `<!DOCTYPE html>
   <html lang="ko"><head><meta charset="UTF-8">
   <title>거래명세서</title>
   <style>
     @page{ size:A4; margin:10mm 12mm; }
     *{ box-sizing:border-box; }
-    body{ font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif; color:#000; }
+    body{
+      font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+      color:#000; word-break:keep-all; overflow-wrap:normal;
+    }
     .sheet{ width:100%; }
     .title{ text-align:center; font-size:28px; font-weight:800; letter-spacing:.5px; margin:2px 0 10px; }
 
@@ -358,19 +362,38 @@
     .supplier-card .card-body table{ width:100%; border-collapse:collapse; }
     .supplier-card .card-body td{ border:1px solid #000; padding:8px; font-size:13px; }
     .supplier-card .card-body td.label{ width:120px; background:#fafafa; font-weight:700; }
-    .nowrap{ white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
+    .nowrap{ white-space:nowrap; }
 
     .amount-bar{ margin:10px 0 8px; display:grid; grid-template-columns:1fr auto; align-items:center; }
     .amount-left{ border-top:2px solid #000; border-bottom:2px solid #000; padding:8px 10px; font-weight:800; }
     .amount-right{ font-weight:800; }
 
-    table.grid{ width:100%; border-collapse:collapse; border-top:2px solid #000; border-bottom:2px solid #000; }
+    /* === 테이블: 줄바꿈 방지, 말줄임, 고정폭 === */
+    table.grid{
+      width:100%; border-collapse:collapse; border-top:2px solid #000; border-bottom:2px solid #000;
+      table-layout: fixed;   /* 고정 레이아웃 */
+    }
     .grid th,.grid td{ border:1px solid #000; padding:8px; font-size:13px; text-align:center; }
-    .grid th{ background:#f6f7fb; font-weight:800; }
-    .num{ text-align:right !important; }
+    .grid th{ background:#f6f7fb; font-weight:800; white-space:nowrap; }
 
-    .sum{ width:100%; border-left:2px solid #000; border-right:2px solid #000; border-bottom:2px solid #000; border-top:none; }
-    .sum td{ border-top:1px solid #000; padding:8px; font-weight:800; text-align:center; }
+    /* 칼럼 폭 (A4 폭 기준 fine-tuning) */
+    .col-date   { width:100px; }
+    .col-desc   { width:auto; }        /* 가변 */
+    .col-qty    { width:120px; }
+    .col-price  { width:110px; }
+    .col-supply { width:130px; }
+    .col-vat    { width:110px; }
+    .col-total  { width:120px; }
+
+    .num{ text-align:right !important; white-space:nowrap; }
+    .qty{ white-space:nowrap; text-align:center; }
+    .desc{
+      text-align:left; padding-left:10px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; word-break:keep-all; overflow-wrap:normal;
+    }
+
+    .sum{ width:100%; border-left:2px solid #000; border-right:2px solid #000; border-bottom:2px solid #000; border-top:none; table-layout:fixed; }
+    .sum td{ border-top:1px solid #000; padding:8px; font-weight:800; text-align:center; white-space:nowrap; }
     .sum .num{ text-align:right !important; }
   </style>
   </head>
@@ -416,15 +439,24 @@
       </div>
 
       <table class="grid">
+        <colgroup>
+          <col class="col-date" />
+          <col class="col-desc" />
+          <col class="col-qty" />
+          <col class="col-price" />
+          <col class="col-supply" />
+          <col class="col-vat" />
+          <col class="col-total" />
+        </colgroup>
         <thead>
           <tr>
-            <th style="width:100px;">일자</th>
+            <th>일자</th>
             <th>품목명[규격]</th>
-            <th style="width:120px;">수량</th>
-            <th style="width:110px;">단가</th>
-            <th style="width:130px;">공급가액</th>
-            <th style="width:110px;">부가세</th>
-            <th style="width:120px;">총 금액</th>
+            <th>수량</th>
+            <th>단가</th>
+            <th>공급가액</th>
+            <th>부가세</th>
+            <th>총 금액</th>
           </tr>
         </thead>
         <tbody>
@@ -470,14 +502,12 @@
         if (!w) { clearTimeout(safetyTimer); cleanup(); return; }
         w.onafterprint = () => { clearTimeout(safetyTimer); cleanup(); };
         w.addEventListener?.("beforeunload", () => { clearTimeout(safetyTimer); cleanup(); });
-        // 약간의 렌더링 시간 후 프린트
         setTimeout(() => { try { w.focus(); w.print(); } catch(_) { cleanup(); } }, 120);
       } catch(_) {
         clearTimeout(safetyTimer); cleanup();
       }
     };
 
-    // 문서 주입
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (doc) { doc.open(); doc.write(html); doc.close(); doPrint(); }
     else { clearTimeout(safetyTimer); cleanup(); }
