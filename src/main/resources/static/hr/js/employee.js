@@ -56,7 +56,7 @@ async function loadCodeMaps(groups = ["GRP011", "GRP013", "GRP010", "GRP015"]) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-	const tableEl = document.getElementById("employee-table"); 0.
+	const tableEl = document.getElementById("employee-table");
 	if (!tableEl) {
 		console.error("#employee-table 엘리먼트를 찾을 수 없습니다.");
 		return;
@@ -310,7 +310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	});
 
 	// ===== 검색 =====
-	const FIELD_MAP = { empCode: "empCode", name: "name", dept: "dept" };
+	const FIELD_MAP = { empCode: "empCode", name: "name", dept: "deptCode.codeName" };
 	function debounce(fn, delay = 250) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), delay); }; }
 
 	function applySearch() {
@@ -321,15 +321,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 		table.clearFilter();
 		if (!keyword) return;
 
-		if (field === "dept") {
-			const kw = keyword.toLowerCase();
-			table.setFilter((data) => {
-				const code = (data.dept || "").toString().toLowerCase();
-				const name = (CODE.DEPT?.[data.dept] || "").toString().toLowerCase();
-				return code.includes(kw) || name.includes(kw);
-			});
-			return;
-		}
 		table.setFilter(field, "like", keyword);
 	}
 
@@ -348,92 +339,92 @@ document.addEventListener("DOMContentLoaded", async () => {
 		});
 	}
 
-	
+
 	// 인쇄
-	(function attachPrintHandler(){
-	  const printBtn = document.querySelector(".btn-secondary");
-	  if (!printBtn) return;
-	
-	  // iframe 인쇄 유틸
-	  function printHTMLViaIframe(html) {
-		  const iframe = document.createElement("iframe");
-		  iframe.style.position = "fixed";
-		  iframe.style.right = "0";
-		  iframe.style.bottom = "0";
-		  iframe.style.width = "0";
-		  iframe.style.height = "0";
-		  iframe.style.border = "0";
-		  iframe.style.visibility = "hidden";
-		  document.body.appendChild(iframe);
-		
-		  let cleaned = false;
-		
-		  const cleanup = () => {
-		    if (cleaned) return;
-		    cleaned = true;
-		    try { iframe.remove(); } catch(_) {}
-		    try { window.removeEventListener("focus", onFocus, true); } catch(_) {}
-		    try { window.removeEventListener("afterprint", onAfterPrint, true); } catch(_) {}
-		    hideGlobalLoading?.();
-		  };
-		
-		  // 부모창에서도 인쇄 완료/취소 감지
-		  const onAfterPrint = () => cleanup();
-		  const onFocus = () => {
-		    // 프린트 다이얼로그가 닫히면 포커스가 돌아옴
-		    setTimeout(cleanup, 50);
-		  };
-		
-		  window.addEventListener("afterprint", onAfterPrint, true);
-		  window.addEventListener("focus", onFocus, true);
-		
-		  // 최후 수단(어떤 이벤트도 안 올 때)
-		  const hardTimeout = setTimeout(() => cleanup(), 15000);
-		
-		  const doPrint = () => {
-		    try {
-		      // iframe 내부에도 afterprint 훅(지원 브라우저용)
-		      const cw = iframe.contentWindow;
-		      cw?.addEventListener?.("afterprint", cleanup, { once: true });
-		      setTimeout(() => {
-		        try {
-		          cw?.focus();
-		          cw?.print();
-		        } catch(_) {}
-		      }, 80);
-		    } catch(_) {
-		      cleanup();
-		    }
-		  };
-		
-		  iframe.onload = () => doPrint();
-		  iframe.srcdoc = html;
-		
-		  // srcdoc 미지원 대비
-		  setTimeout(() => {
-		    try {
-		      const doc = iframe.contentDocument || iframe.contentWindow?.document;
-		      const empty = !doc || !doc.body || !doc.body.childNodes.length;
-		      if (empty) {
-		        const d = iframe.contentWindow.document;
-		        d.open(); d.write(html); d.close();
-		        doPrint();
-		      }
-		    } catch(_) {
-		      cleanup();
-		    }
-		  }, 150);
+	(function attachPrintHandler() {
+		const printBtn = document.querySelector(".btn-secondary");
+		if (!printBtn) return;
+
+		// iframe 인쇄 유틸
+		function printHTMLViaIframe(html) {
+			const iframe = document.createElement("iframe");
+			iframe.style.position = "fixed";
+			iframe.style.right = "0";
+			iframe.style.bottom = "0";
+			iframe.style.width = "0";
+			iframe.style.height = "0";
+			iframe.style.border = "0";
+			iframe.style.visibility = "hidden";
+			document.body.appendChild(iframe);
+
+			let cleaned = false;
+
+			const cleanup = () => {
+				if (cleaned) return;
+				cleaned = true;
+				try { iframe.remove(); } catch (_) { }
+				try { window.removeEventListener("focus", onFocus, true); } catch (_) { }
+				try { window.removeEventListener("afterprint", onAfterPrint, true); } catch (_) { }
+				hideGlobalLoading?.();
+			};
+
+			// 부모창에서도 인쇄 완료/취소 감지
+			const onAfterPrint = () => cleanup();
+			const onFocus = () => {
+				// 프린트 다이얼로그가 닫히면 포커스가 돌아옴
+				setTimeout(cleanup, 50);
+			};
+
+			window.addEventListener("afterprint", onAfterPrint, true);
+			window.addEventListener("focus", onFocus, true);
+
+			// 최후 수단(어떤 이벤트도 안 올 때)
+			const hardTimeout = setTimeout(() => cleanup(), 15000);
+
+			const doPrint = () => {
+				try {
+					// iframe 내부에도 afterprint 훅(지원 브라우저용)
+					const cw = iframe.contentWindow;
+					cw?.addEventListener?.("afterprint", cleanup, { once: true });
+					setTimeout(() => {
+						try {
+							cw?.focus();
+							cw?.print();
+						} catch (_) { }
+					}, 80);
+				} catch (_) {
+					cleanup();
+				}
+			};
+
+			iframe.onload = () => doPrint();
+			iframe.srcdoc = html;
+
+			// srcdoc 미지원 대비
+			setTimeout(() => {
+				try {
+					const doc = iframe.contentDocument || iframe.contentWindow?.document;
+					const empty = !doc || !doc.body || !doc.body.childNodes.length;
+					if (empty) {
+						const d = iframe.contentWindow.document;
+						d.open(); d.write(html); d.close();
+						doPrint();
+					}
+				} catch (_) {
+					cleanup();
+				}
+			}, 150);
 		}
 
-	  printBtn.addEventListener("click", () => {
-	    const selected = table.getSelectedData();
-	    if (!selected || selected.length === 0) {
-	      alert("인쇄할 사원을 선택하세요."); 
-	      return;
-	    }
-	
-	    const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
-	    const rows = selected.map(emp => `
+		printBtn.addEventListener("click", () => {
+			const selected = table.getSelectedData();
+			if (!selected || selected.length === 0) {
+				alert("인쇄할 사원을 선택하세요.");
+				return;
+			}
+
+			const toName = (group, code) => (CODE?.[group]?.[code] ?? code) || "";
+			const rows = selected.map(emp => `
 	      <tr>
 	        <td>${emp.empCode ?? ""}</td>
 	        <td>${emp.name ?? ""}</td>
@@ -445,11 +436,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 	        <td>${emp.hireDate ?? ""}</td>
 	      </tr>
 	    `).join("");
-	
-	    const now = new Date().toISOString().slice(0, 16).replace("T", " ");
-	    const count = selected.length;
-	
-	    const html = `
+
+			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+			const count = selected.length;
+
+			const html = `
 	<!doctype html>
 	<html>
 	<head>
@@ -497,9 +488,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 	  </div>
 	</body>
 	</html>`;
-	
-	    showGlobalLoading?.("인쇄물 생성 중...");
-	    printHTMLViaIframe(html);
-	  });
+
+			showGlobalLoading?.("인쇄물 생성 중...");
+			printHTMLViaIframe(html);
+		});
 	})();
 });
