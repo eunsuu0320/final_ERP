@@ -49,11 +49,10 @@
 	#sales-table .tabulator-row.row-active .tabulator-cell {
 	  background-color: transparent !important;
 	}
-
+	#sales-table { pointer-events: auto; }
 	
-	
-    
   </style>
+  
 </head>
 
 <body layout:fragment="content">
@@ -116,11 +115,11 @@
 
             
             <div class="modal-body">
-            <input type="hidden" id="outstandingAmt">
+            <input type="hidden" id="outstandingDate">
               <div class="row mb-3">
                 <div class="col-md-4">
                   <label class="form-label">*수금일자</label>
-                  <input type="date" id="moneyDate" class="form-control" value="2025-10-10">
+                  <input type="date" id="moneyDate" class="form-control" th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" />
                 </div>  
                               
                 <div class="col-md-4">
