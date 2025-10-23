@@ -30,7 +30,7 @@ public class SecurityConfig {
                                "/erp/**", "/hr/**", "/main/**",
                                "/subscription",
                                "/api/**", "/ac/**", "/sales2/**",
-                               "/pay/**", "/pay/kakao/**", "/pay/naver/**",
+                               "/pay/**", "/pay/kakao/**", "/pay/naver/**", "/pay/toss/**",
                                "/success", "/error",
                                "/forbidden" // forbidden 화면은 공개
               ).permitAll()
