@@ -34,7 +34,8 @@
 							<div>
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control" placeholder="검색어 입력"
-										id="partnerNameSearch"  name="partnerNameSearch"  style="width: 150px;">
+										id="partnerNameSearch" name="partnerNameSearch"
+										style="width: 150px;">
 									<button class="btn btn-outline-secondary" type="button"
 										onclick="openModal('salesPartner', function(selected) {
                     document.getElementById('partnerNameSearch').value = selected.partnerName;
@@ -114,7 +115,10 @@
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" th:if="${col != '견적서고유코드'}"
+					<!-- 🔹 전체 선택 체크박스 추가 -->
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> <label th:each="col : ${columns}" th:if="${col != '견적서고유코드'}"
 						class="me-2"> <input type="checkbox" class="colCheckbox"
 						th:value="${col}"
 						th:checked="${col == '견적서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '유효기간' or col == '견적금액합계' or col == '담당자' or col == '진행상태'}" />

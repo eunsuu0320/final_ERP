@@ -59,7 +59,7 @@ public class EstimateServiceImpl implements EstimateService {
 	    List<Map<String, Object>> rows = new ArrayList<>();
 	    List<String> columns = List.of(
 	        "견적서고유코드", "견적서코드", "등록일자", "거래처명",
-	        "품목명", "유효기간", "견적금액합계", "담당자", "진행상태"
+	        "품목명", "유효기간", "견적금액합계", "담당자", "비고", "진행상태"
 	    );
 
 	    for (Estimate estimate : estimates) {
@@ -87,6 +87,7 @@ public class EstimateServiceImpl implements EstimateService {
 	        row.put("유효기간", estimate.getExpiryDate());
 	        row.put("견적금액합계", estimate.getTotalAmount());
 	        row.put("담당자", estimate.getManagerEmp().getName());
+	        row.put("비고", estimate.getRemarks());
 	        row.put("진행상태", estimate.getStatus());
 	        rows.add(row);
 	    }

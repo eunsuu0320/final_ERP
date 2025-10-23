@@ -86,6 +86,11 @@
 				</div>
 
 				<div class="mb-2">
+
+					<!-- 🔹 전체 선택 체크박스 추가 -->
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> 
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" id="colCheckbox" class="colCheckbox"
 						th:value="${col}" th:checked="false" /> <span th:text="${col}"></span>
@@ -195,15 +200,15 @@
 									<div class="row mb-3">
 										<label for="startPriceDate" class="col-sm-3 col-form-label">단가적용시작일</label>
 										<div class="col-sm-9">
-											<input type="date" class="form-control"
-												id="startPriceDate" name="startDate" style="max-width: 300px;">
+											<input type="date" class="form-control" id="startPriceDate"
+												name="startDate" style="max-width: 300px;">
 										</div>
 									</div>
 									<div class="row mb-3">
 										<label for="endPriceDate" class="col-sm-3 col-form-label">단가적용종료일</label>
 										<div class="col-sm-9">
-											<input type="date" class="form-control"
-												id="endPriceDate" name="endDate"  style="max-width: 300px;">
+											<input type="date" class="form-control" id="endPriceDate"
+												name="endDate" style="max-width: 300px;">
 										</div>
 									</div>
 
@@ -254,20 +259,7 @@
 										</div>
 									</div>
 
-									<!-- 등급 검색 (col-md-4) -->
-									<div class="col-md-4 mb-3">
-										<label for="partnerLevelSearch" class="form-label me-3">등급</label>
-										<div class="d-flex align-items-center">
-											<div class="input-group input-group-sm">
-												<input type="text" class="form-control modalSearchCondition"
-													placeholder="검색어 입력" id="partnerLevelNameDisplay">
-												<button class="btn btn-outline-secondary modalSearchBtn"
-													type="button">
-													<i class="bi bi-search"></i>
-												</button>
-											</div>
-										</div>
-									</div>
+
 
 									<!-- 검색초기화 버튼 (col-md-4, 수직 정렬을 위해 d-flex align-items-end 적용) -->
 									<div class="col-md-4 mb-3 d-flex align-items-end">

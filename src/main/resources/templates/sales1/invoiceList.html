@@ -115,7 +115,10 @@
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" class="me-2"> <input
+					<!-- 🔹 전체 선택 체크박스 추가 -->
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" checked/> <span>전체</span>
+					</label> <label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
 						th:checked="${col == '청구서코드' or col == '등록일자' or col == '청구일자'  or col == '담당자' or col == '청구금액' or col == '수금일자' or col == '거래처명' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
@@ -251,7 +254,7 @@
 											<tr class="table-warning fw-bold">
 												<td colspan="3" class="text-end">합계</td>
 												<td class="text-end" id="totalQty">0 개</td>
-												<td class="text-end" ></td>
+												<td class="text-end"></td>
 												<td class="text-end"></td>
 												<td class="text-end"></td>
 

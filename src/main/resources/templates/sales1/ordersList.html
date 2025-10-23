@@ -103,7 +103,9 @@
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" th:if="${col != '주문서고유코드'}"
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> <label th:each="col : ${columns}" th:if="${col != '주문서고유코드'}"
 						class="me-2"> <input type="checkbox" class="colCheckbox"
 						th:value="${col}"
 						th:checked="${col == '주문서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '납기일자' or col == '주문금액합계' or col == '담당자' or col == '진행상태'}" />

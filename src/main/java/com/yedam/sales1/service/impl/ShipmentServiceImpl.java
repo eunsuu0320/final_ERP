@@ -22,6 +22,8 @@ import com.yedam.sales1.repository.ShipmentDetailRepository;
 import com.yedam.sales1.repository.ShipmentRepository;
 import com.yedam.sales1.service.ShipmentService;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j; // Slf4j 임포트 추가
 
@@ -36,6 +38,10 @@ public class ShipmentServiceImpl implements ShipmentService {
 	private final PartnerRepository partnerRepository;
 	private final OrderDetailRepository orderDetailRepository;
 
+	
+	@PersistenceContext
+    private EntityManager entityManager;
+	
 	@Autowired
 	public ShipmentServiceImpl(ShipmentRepository shipmentRepository, ShipmentDetailRepository shipmentDetailRepository,
 			PartnerRepository partnerRepository, OrderDetailRepository orderDetailRepository) {
@@ -116,23 +122,31 @@ public class ShipmentServiceImpl implements ShipmentService {
 	@Override
 	@Transactional
 	public boolean updateShipmentStatus(String shipmentCode, String status) {
-		log.info("Updating status for shipmentCode Code: {} to Status: {}", shipmentCode, status);
+		log.info("Updating status for shipmentCode: {} to Status: {}", shipmentCode, status);
 
-		// 1. EstimateCode로 견적서 엔티티를 조회합니다.
+		// 1️⃣ 출하지시서 조회
 		Optional<Shipment> optionalShipment = shipmentRepository.findByShipmentCode(shipmentCode);
 
 		if (optionalShipment.isEmpty()) {
 			log.warn("Update failed: Shipment not found for code {}", shipmentCode);
-			return false; // 견적서가 없으면 실패
+			return false;
 		}
 
 		Shipment shipment = optionalShipment.get();
 
-		// 2. 상태를 업데이트합니다.
+		// 2️⃣ 중복 엔티티 진단 로그 추가
+		log.debug("Shipment 객체 해시코드: {}", System.identityHashCode(shipment));
+		log.debug("EntityManager contains shipment? {}", entityManager.contains(shipment));
+
+		Shipment existing = entityManager.find(Shipment.class, shipmentCode);
+		if (existing != null && existing != shipment) {
+			log.error("⚠ 동일 ID의 서로 다른 Shipment 인스턴스가 존재합니다! " + "(Duplicate identifier possible: {})", shipmentCode);
+		}
+
+		// 3️⃣ 상태 업데이트
 		shipment.setStatus(status);
 
-		// 3. 변경 사항을 저장합니다. (Transactional 어노테이션 덕분에 save 호출 없이도 플러시될 수 있지만, 명시적으로 호출하는
-		// 것이 안전합니다.)
+		// 4️⃣ 변경 저장 (UPDATE)
 		shipmentRepository.save(shipment);
 
 		log.info("Shipment {} status successfully updated to {}", shipmentCode, status);
