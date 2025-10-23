@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales2.domain.EsdpPlan;
 import com.yedam.sales2.domain.EspPlan;
 import com.yedam.sales2.domain.PlanRequestDTO;
@@ -29,12 +30,14 @@ public class EmpPlanController {
 	@Autowired
 	 private SalesService salesService;
 
+	@ScreenPerm(screen = "SAL_PLAN_EMP", action=ScreenPerm.Action.READ)
 	// 사원별 영업계획 HTML
 	@GetMapping("empList")
 	public String empList() {
 		return "sales2/empList";
 	}
 	
+	@ScreenPerm(screen = "SAL_PLAN_EMP", action=ScreenPerm.Action.CREATE)
 	// 등록 (AJAX로 호출)
     @PostMapping("/api/sales/insertEmpPlan")
     @ResponseBody
@@ -44,6 +47,7 @@ public class EmpPlanController {
     
     
  // 사원별 세부계획 등록 (분기별 여러 건)
+	@ScreenPerm(screen = "SAL_PLAN_EMP", action=ScreenPerm.Action.CREATE)
     @PostMapping("/api/sales/insertPlanWithDetails")
     @ResponseBody
     public String insertPlanWithDetails(@RequestBody PlanRequestDTO request) {

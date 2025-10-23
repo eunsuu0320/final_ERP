@@ -23,12 +23,12 @@
       padding: 12px;
     }
 
-    /* 테이블 래퍼: 좁을 땐 가로 스크롤 허	용 */
+    /* 테이블 래퍼: 좁을 땐 가로 스크롤 허 용 */
     .table-wrapper { overflow-x: auto; }
 
-    /* 유의사항 사이드 카드 */
+    /* ✅ 사이드 카드 — 배경색을 더 진하게 변경 */
     .side-card {
-      background: #f8f9fa;
+      background: #e9ecef; /* 기존 #f8f9fa → 더 진한 회색 */
       border-radius: .5rem;
       padding: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.05);
@@ -84,28 +84,31 @@
           </div>
         </div>
 
-        <!-- 유의사항 영역 -->
+        <!-- ✅ 유의사항 영역: 카드 2개로 분리 + 배경 진하게 -->
         <div class="col-12 col-md-4 col-lg-3 order-2">
-          <div class="side-card">
-            <h5 class="text-danger fw-bold mb-3">유의사항</h5>
+          <div class="d-flex flex-column gap-3">
 
-            <div class="mb-4">
-              <strong class="d-block mb-2">미수금 상위 5 거래처</strong>
+            <!-- 카드 1: 미수금 Top5 -->
+            <div class="side-card">
+              <h5 class="text-danger fw-bold mb-3">미수금 상위 5 거래처</h5>
               <table class="table table-borderless mb-0">
                 <tbody id="top-ar-body"></tbody>
               </table>
             </div>
 
-            <div>
-              <strong class="d-block mb-2">여신기간 초과 거래처</strong>
+            <!-- 카드 2: 여신기간 초과 Top5 -->
+            <div class="side-card">
+              <h5 class="text-danger fw-bold mb-3">여신기간 초과 거래처</h5>
               <table class="table table-borderless mb-0">
                 <tbody id="credit-over-body">
                   <tr><td class="text-muted">로딩 중…</td></tr>
                 </tbody>
               </table>
             </div>
+
           </div>
         </div>
+        <!-- /유의사항 영역 -->
       </div>
 
       <!-- 등록 모달 -->

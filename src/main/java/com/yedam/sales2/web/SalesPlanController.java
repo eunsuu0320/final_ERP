@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.repository.LoanRepository;
 import com.yedam.sales1.repository.LoanRepository.LoanOverdueWithNameView;
 import com.yedam.sales2.domain.DSalesPlan;
@@ -39,6 +40,7 @@ public class SalesPlanController {
 	private LoanRepository loanRepository;
 
 	// 영업계획목록 html
+	@ScreenPerm(screen = "SAL_PLAN_LIST", action=ScreenPerm.Action.READ)
 	@GetMapping("salesList")
 	public String salesList() {
 		return "sales2/salesList";
@@ -65,6 +67,7 @@ public class SalesPlanController {
 		return salesService.findLastYearSalesData();
 	}
 
+	@ScreenPerm(screen = "SAL_PLAN_LIST", action=ScreenPerm.Action.CREATE)
 	// 📌 신규 등록: Repository를 직접 사용하지 않고 Service 레이어로 위임
 	@PostMapping("/api/sales/insert")
 	@ResponseBody // 결과를 JSON 문자열로 반환
@@ -106,7 +109,9 @@ public class SalesPlanController {
 		return salesService.getSalesPlanDetail(year);
 	}
 
+	
 	// 수정 (PUT)
+	@ScreenPerm(screen = "SAL_PLAN_LIST", action=ScreenPerm.Action.UPDATE)
 	@PutMapping("/api/sales/update")
 	@ResponseBody
 	public String updateSalesPlan(@RequestBody List<DSalesPlan> detailList) {
@@ -149,6 +154,7 @@ public class SalesPlanController {
 		return salesService.getTopOutstanding(companyCode, limit);
 	}
 
+	// 여신초과 TOP5
 	@GetMapping(value = "/api/sales2/credit-term-over-partners", produces = "application/json")
 	@ResponseBody
 	public List<LoanOverdueWithNameView> termOverPartners(@RequestParam(defaultValue = "5") int limit) {
