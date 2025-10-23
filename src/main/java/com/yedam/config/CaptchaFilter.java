@@ -16,7 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class CaptchaFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY = "6LdsS9MrAAAAAFxBOrnhIZNFvWLS05AahOl5TfCI";
+    private static final String SECRET_KEY = "6Lfw0_MrAAAAACqsBkua4AYnzE7Gdi6-OHvuRDMu";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
