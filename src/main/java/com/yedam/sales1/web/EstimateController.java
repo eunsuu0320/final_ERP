@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.hr.domain.Employee;
 import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.EstimateDetail;
@@ -36,6 +37,7 @@ public class EstimateController {
 
 	}
 
+	@ScreenPerm(screen = "SAL_QUOTE", action = ScreenPerm.Action.READ)
 	@GetMapping("estimateList")
 	public String estimateList(Model model) {
 		List<Estimate> estimate = estimateService.getAllEstimate();
@@ -48,6 +50,7 @@ public class EstimateController {
 		return "sales1/estimateList";
 	}
 
+	@ScreenPerm(screen = "SAL_QUOTE", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registEstimate")
 	public ResponseEntity<Map<String, Object>> registEstimate(@RequestBody EstimateRegistrationDTO dto) {
 		try {
@@ -116,6 +119,7 @@ public class EstimateController {
 		return ResponseEntity.ok(dto);
 	}
 
+	@ScreenPerm(screen = "SAL_QUOTE", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("api/updateEstimate")
 	public ResponseEntity<Map<String, Object>> updateEstimateStatus(@RequestBody Map<String, String> request) {
 		try {

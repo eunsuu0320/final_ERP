@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Price;
 import com.yedam.sales1.domain.PriceDetail;
@@ -38,6 +39,7 @@ public class PriceController {
 		this.productService = productService;
 	}
 
+	@ScreenPerm(screen = "SAL_PRICE", action = ScreenPerm.Action.UPDATE)
 	@GetMapping("priceList")
 	public String priceList(Model model) {
 		List<Price> prices = priceService.getAllPrice();
@@ -126,6 +128,7 @@ public class PriceController {
 	}
 
 	// 품목 등록
+	@ScreenPerm(screen = "SAL_PRICE", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registPrice")
 	public ResponseEntity<Price> registPrice(@ModelAttribute Price price) {
 		Price saved = priceService.savePrice(price);
@@ -171,6 +174,7 @@ public class PriceController {
 	// =========================================================================
 	// 품목 설정 저장 (saveProducts)
 	// =========================================================================
+	@ScreenPerm(screen = "SAL_PRICE", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("/api/price/saveProducts")
 	// @RequestBody Map을 사용하여 JSON 본문을 전체 맵으로 받습니다.
 	public ResponseEntity<?> registProduct(@RequestBody Map<String, Object> payload) {

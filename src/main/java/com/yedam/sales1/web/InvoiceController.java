@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.dto.InvoiceResponseDto;
 import com.yedam.sales1.dto.InvoiceSaveRequestDto;
@@ -37,6 +38,7 @@ public class InvoiceController {
 		this.shipmentRepository = shipmentRepository;
 	}
 
+	@ScreenPerm(screen = "SAL_BILL", action = ScreenPerm.Action.READ)
 	@GetMapping("invoiceList")
 	public String invoiceList(Model model) {
 		List<Invoice> invoice = invoiceService.getAllInvoice();
@@ -50,6 +52,7 @@ public class InvoiceController {
 	}
 
 	// 품목 등록
+	@ScreenPerm(screen = "SAL_BILL", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registInvoice")
 	public ResponseEntity<?> saveInvoice(@RequestBody InvoiceSaveRequestDto dto) {
 		invoiceService.saveInvoice(dto);
@@ -62,6 +65,7 @@ public class InvoiceController {
 		return ResponseEntity.ok(result);
 	}
 
+	@ScreenPerm(screen = "SAL_BILL", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("api/updateInvoice")
 	public ResponseEntity<Map<String, Object>> updateInvoiceStatus(@RequestBody Map<String, String> request) {
 		try {
@@ -122,6 +126,7 @@ public class InvoiceController {
 		}
 	}
 
+	@ScreenPerm(screen = "SAL_BILL", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("/api/updateInvoiceStatus")
 	@ResponseBody
 	public ResponseEntity<?> updateInvoiceStatus(@RequestBody List<Map<String, Object>> invoices) {

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.Shipment;
 import com.yedam.sales1.dto.ShipmentRegistrationDTO;
 import com.yedam.sales1.repository.ShipmentRepository;
@@ -34,6 +35,7 @@ public class ShipmentController {
 
 	}
 
+	@ScreenPerm(screen = "SAL_SHIP", action =  ScreenPerm.Action.READ )
 	@GetMapping("shipmentList")
 	public String shipmentList(Model model) {
 		List<Shipment> shipments = shipmentService.getAllShipment();
@@ -46,6 +48,7 @@ public class ShipmentController {
 		return "sales1/shipmentList";
 	}
 
+	@ScreenPerm(screen = "SAL_SHIP", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registShipment")
 	public ResponseEntity<Map<String, Object>> registShipment(@RequestBody ShipmentRegistrationDTO dto) {
 		try {
@@ -64,6 +67,7 @@ public class ShipmentController {
 		}
 	}
 
+
 	@GetMapping("api/shipment/getDetail")
 	@ResponseBody
 	public ResponseEntity<?> getShipmentDetail(@RequestParam String keyword) {
@@ -75,6 +79,7 @@ public class ShipmentController {
 
 		return ResponseEntity.ok(shipment);
 	}
+
 
 	@GetMapping("/api/shipment/completed")
 	public ResponseEntity<List<Map<String, Object>>> getCompletedShipments(@RequestParam String partnerCode) {
@@ -94,6 +99,7 @@ public class ShipmentController {
 		}
 	}
 
+	@ScreenPerm(screen = "SAL_SHIP", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("api/updateShipment")
 	public ResponseEntity<Map<String, Object>> updateShipmentStatus(@RequestBody Map<String, String> request) {
 		try {
@@ -125,6 +131,7 @@ public class ShipmentController {
 		}
 	}
 
+
 	@GetMapping("api/shipment/search")
 	// 반환 타입을 Map 리스트로 변경해야 합니다.
 	public ResponseEntity<List<Map<String, Object>>> getShipmentSearch(@ModelAttribute Shipment searchVo) {
@@ -150,7 +157,7 @@ public class ShipmentController {
 		}
 	}
 	
-	
+	@ScreenPerm(screen = "SAL_SHIP", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("/api/updateShipmentStatus")
 	@ResponseBody
 	public ResponseEntity<?> updateShipmentStatus(@RequestBody List<Map<String, Object>> shipments) {
