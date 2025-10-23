@@ -111,6 +111,14 @@
   font-size: 28px !important;
 }
 
+/* ⬇️ 추가: 차트 빈 상태 오버레이 */
+#chartEmpty{
+  position:absolute; inset:0;
+  display:none;               /* 기본은 숨김 */
+  align-items:center; justify-content:center;
+  font-weight:600; color:#6b7280;
+  background: rgba(255,255,255,0.6);
+}
 </style>
 </head>
 
@@ -163,7 +171,6 @@
               <div class="t">총 판매수량</div>
               <div class="v" id="kpi-unshipped">-</div>
             </div>
-            <!-- ⬇️ 품목별의 기존 아이콘 유지 -->
             <i class="bi bi-box-seam"></i>
           </div>
         </div>
@@ -173,7 +180,6 @@
               <div class="t">총 공급가액</div>
               <div class="v" id="kpi-accounted">-</div>
             </div>
-            <!-- ⬇️ 사원별 페이지와 동일하게 (초록) -->
             <i class="fas fa-coins" style="color:#22c55e;"></i>
           </div>
         </div>
@@ -183,7 +189,6 @@
               <div class="t">총 합계금액</div>
               <div class="v" id="kpi-estimate-open">-</div>
             </div>
-            <!-- ⬇️ 사원별 페이지와 동일하게 (파랑) -->
             <i class="fas fa-file-invoice-dollar" style="color:#0ea5e9;"></i>
           </div>
         </div>
@@ -197,7 +202,11 @@
 
         <div class="chart-panel">
           <h6 class="mb-2">분기별 이익률 TOP 차트</h6>
-          <div class="chart-wrap"><canvas id="profitChart"></canvas></div>
+          <div class="chart-wrap">
+            <canvas id="profitChart"></canvas>
+            <!-- ⬇️ 추가: 빈 상태 메시지 -->
+            <div id="chartEmpty">데이터가 없습니다.</div>
+          </div>
         </div>
       </div>
     </div>

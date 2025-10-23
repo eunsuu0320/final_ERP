@@ -187,6 +187,28 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   })();
 
+  /* =========================================
+   *  ⬇️ 추가: 차트 빈 상태 제어 헬퍼 (기능 추가만, 기존 로직 손댐 없음)
+   * ========================================= */
+  function clearChart(){
+    const ch = window.__profitChart;
+    if (!ch) return;
+    ch.data.labels = [];
+    ch.data.datasets = [];
+    ch.update();
+  }
+
+  function setChartEmptyState(isEmpty){
+    const emptyEl = document.getElementById("chartEmpty");
+    if (!emptyEl) return;
+    if (isEmpty){
+      emptyEl.style.display = "flex"; // 보이기
+      clearChart();                   // 이전 데이터 지우기
+    } else {
+      emptyEl.style.display = "none"; // 숨기기
+    }
+  }
+
   /* =========================================================
    *  🔁 차트 조회: 년도만 vs 분기 선택(직전 4개 분기) 로직 반영
    * ========================================================= */
@@ -200,9 +222,18 @@ document.addEventListener("DOMContentLoaded", function() {
       const res = await fetch(`/api/sales/profit-by-quarter-smart?${qs.toString()}`, { method:"GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const rows = await res.json();
+
+      // ✅ 추가: 조회 결과 없으면 차트도 "데이터 없음"
+      if (!rows || !rows.length){
+        setChartEmptyState(true);
+        return;
+      }
+      setChartEmptyState(false);
       renderQuarterTop5Chart(rows);
     } catch(e) {
       console.error("[chart] 조회 실패:", e);
+      // 에러 시에도 빈 상태로
+      setChartEmptyState(true);
     }
   }
 
@@ -210,7 +241,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
   function renderQuarterTop5Chart(raw){
     const data = Array.isArray(raw) ? raw : [];
-    if (!data.length || !window.__profitChart) return;
+    if (!window.__profitChart){
+      // 차트 아직 생성 안 됐으면 다음 틱에 다시 시도
+      setTimeout(()=>renderQuarterTop5Chart(raw), 0);
+      return;
+    }
+
+    // ✅ 추가: 데이터가 비면 빈 상태로
+    if (!data.length){
+      setChartEmptyState(true);
+      return;
+    }
 
     const rows = data.map(r => ({
       year: Number(r.YEAR ?? r.year),
@@ -218,6 +259,12 @@ document.addEventListener("DOMContentLoaded", function() {
       product: r.PRODUCTNAME ?? r.productname ?? r.productName ?? "-",
       rate: Number(r.PROFITRATE ?? r.profitrate ?? r.profitRate ?? 0)
     })).filter(r => r.year && r.q >=1 && r.q <=4);
+
+    // ✅ 추가: 필터 후에도 없으면 빈 상태
+    if (!rows.length){
+      setChartEmptyState(true);
+      return;
+    }
 
     const key = r => `${r.year}-${r.q}`;
     const sorted = rows.slice().sort((a,b)=> a.year!==b.year ? a.year-b.year : a.q-b.q);
@@ -240,6 +287,12 @@ document.addEventListener("DOMContentLoaded", function() {
       .sort((a,b)=> b.avg - a.avg)
       .slice(0,5)
       .map(x=>x.product);
+
+    // ✅ 추가: 탑 제품이 한 개도 없으면 빈 상태
+    if (!topProducts.length){
+      setChartEmptyState(true);
+      return;
+    }
 
     const cell = new Map();
     for (const r of rows){
@@ -271,6 +324,9 @@ document.addEventListener("DOMContentLoaded", function() {
     ch.data.labels = labelsKey.map(k => labelMap.get(k));
     ch.data.datasets = datasets;
     ch.update();
+
+    // ✅ 정상 데이터가 있으므로 오버레이 숨김
+    setChartEmptyState(false);
   }
 
   // 초기 차트 로드

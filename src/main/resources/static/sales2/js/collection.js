@@ -1,5 +1,74 @@
 // /sales2/js/collection.js
 
+// ===== 오버레이 스타일 주입(한 번) =====
+(function injectInvoiceOverlayCSS(){
+  if (document.getElementById("invoice-overlay-style")) return;
+  const css = `
+    #invoice-table{ position:relative; }
+    #invoice-table .invoice-loading-overlay{
+      position:absolute; inset:0;
+      display:none; align-items:center; justify-content:center;
+      backdrop-filter: blur(1px);
+      background: rgba(255,255,255,0.6);
+      z-index: 3;
+    }
+    #invoice-table .invoice-loading-overlay .overlay-inner{
+      display:flex; flex-direction:column; align-items:center; gap:10px;
+      padding: 10px 16px; border-radius:10px;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+    #invoice-table .invoice-loading-overlay .overlay-text{ font-weight:600; color:#334155; }
+    #invoice-table .invoice-loading-overlay.is-error .overlay-inner{ background:#fff0f0; }
+    #invoice-table .invoice-loading-overlay.is-error .overlay-text{ color:#b91c1c; }
+  `;
+  const style = document.createElement("style");
+  style.id = "invoice-overlay-style";
+  style.textContent = css;
+  document.head.appendChild(style);
+})();
+
+// ===== 로딩/오버레이 유틸 =====
+function ensureInvoiceOverlayHost(){
+  const host = document.getElementById("invoice-table");
+  if (!host) return null;
+
+  // 이미 만들어둔 오버레이가 있으면 재사용
+  let overlay = host.querySelector(".invoice-loading-overlay");
+  if (!overlay){
+    overlay = document.createElement("div");
+    overlay.className = "invoice-loading-overlay";
+    overlay.innerHTML = `
+      <div class="overlay-inner">
+        <div class="spinner-border" role="status" aria-label="loading"></div>
+        <div class="overlay-text">로딩중…</div>
+      </div>`;
+    host.style.position = host.style.position || "relative";
+    host.appendChild(overlay);
+  }
+  return overlay;
+}
+function showInvoiceLoading(){
+  const overlay = ensureInvoiceOverlayHost();
+  if (!overlay) return;
+  overlay.classList.remove("is-error");
+  overlay.querySelector(".overlay-text").textContent = "로딩중…";
+  overlay.style.display = "flex";
+}
+function showInvoiceError(msg){
+  const overlay = ensureInvoiceOverlayHost();
+  if (!overlay) return;
+  overlay.classList.add("is-error");
+  overlay.querySelector(".overlay-text").textContent = msg || "불러오는 중 오류가 발생했습니다.";
+  overlay.style.display = "flex";
+}
+function hideInvoiceOverlay(){
+  const host = document.getElementById("invoice-table");
+  if (!host) return;
+  const overlay = host.querySelector(".invoice-loading-overlay");
+  if (overlay) overlay.style.display = "none";
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   // ===============================
   // 📌 테이블 생성
@@ -187,46 +256,59 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!el) return;
 
     const partnerCode = rowData?.PARTNER_CODE || rowData?.partnerCode || "";
-    const data = await fetchInvoices(partnerCode);
 
-    const columns = [
-      { title:"청구번호",    field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
-      { title:"청구일",      field:"DMND_DATE",   width:110, hozAlign:"center", widthGrow:0.4 },
-      { title:"품목명",      field:"ITEM_NAME",   minWidth:180, widthGrow:0.3 },
-      { title:"전체수량",    field:"TOTAL_QTY",   width:95, hozAlign:"right" },
-      { title:"청구금액(원)", field:"DMND_AMT",   hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
-      { title:"수금금액(원)", field:"COLLECTED",  hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
-      { title:"미수금액(원)", field:"UNRCT_BALN", hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
-      {
-        title:"상태", field:"STATUS", width:110, hozAlign:"center", widthGrow:0.6,
-        headerFilter:"select",
-        headerFilterParams:{ values: { "": "전체", "진행중":"진행중", "수금완료":"수금완료", "수금대기":"수금대기" } },
-        formatter: (cell) => {
-          const v = (cell.getValue() || "").trim();
-          const cls =
-            v === "수금완료" ? "bg-success" :
-            v === "진행중"   ? "bg-warning" :
-            v === "수금대기" ? "bg-secondary" : "bg-light text-dark";
-          return `<span class="badge ${cls}">${v || "-"}</span>`;
-        }
-      },
-      { title:"비고", field:"REMK", minWidth:120 , widthGrow:0.5}
-    ];
+    // ⬇️ 조회 시작: 로딩 오버레이 ON
+    showInvoiceLoading();
+    try {
+      const data = await fetchInvoices(partnerCode); // ✅ 실데이터 호출
 
-    if (!window.invoiceTable) {
-      window.invoiceTable = new Tabulator(el, {
-        layout:"fitColumns",
-        height:"260px",
-        placeholder:"청구내역이 없습니다.",
-        data,
-        columns,
-        columnDefaults:{ headerHozAlign:"center" },
-        index:"INVOICE_UNIQUE_CODE",
-      });
-    } else {
-      window.invoiceTable.setColumns(columns);
-      window.invoiceTable.replaceData(data);
-      window.invoiceTable.redraw(true);
+      const columns = [
+        { title:"청구번호",    field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
+        { title:"청구일",      field:"DMND_DATE",   width:110, hozAlign:"center", widthGrow:0.4 },
+        { title:"품목명",      field:"ITEM_NAME",   minWidth:180, widthGrow:0.3 },
+        { title:"전체수량",    field:"TOTAL_QTY",   width:95, hozAlign:"right" },
+        { title:"청구금액(원)", field:"DMND_AMT",   hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
+        { title:"수금금액(원)", field:"COLLECTED",  hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
+        { title:"미수금액(원)", field:"UNRCT_BALN", hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
+        {
+          title:"상태", field:"STATUS", width:110, hozAlign:"center", widthGrow:0.6,
+          headerFilter:"select",
+          headerFilterParams:{ values: { "": "전체", "진행중":"진행중", "수금완료":"수금완료", "수금대기":"수금대기" } },
+          formatter: (cell) => {
+            const v = (cell.getValue() || "").trim();
+            const cls =
+              v === "수금완료" ? "bg-success" :
+              v === "진행중"   ? "bg-warning" :
+              v === "수금대기" ? "bg-secondary" : "bg-light text-dark";
+            return `<span class="badge ${cls}">${v || "-"}</span>`;
+          }
+        },
+        { title:"비고", field:"REMK", minWidth:120 , widthGrow:0.5}
+      ];
+
+      if (!window.invoiceTable) {
+        window.invoiceTable = new Tabulator(el, {
+          layout:"fitColumns",
+          height:"260px",
+          placeholder:"청구내역이 없습니다.",
+          data,
+          columns,
+          columnDefaults:{ headerHozAlign:"center" },
+          index:"INVOICE_UNIQUE_CODE",
+        });
+      } else {
+        window.invoiceTable.setColumns(columns);
+        window.invoiceTable.replaceData(data);
+        window.invoiceTable.redraw(true);
+      }
+    } catch (err) {
+      console.error("청구내역 로드 오류:", err);
+      // ⬇️ 에러 표시
+      showInvoiceError("청구내역을 불러오는 중 오류가 발생했습니다.");
+      return; // 여기서 종료
+    } finally {
+      // ⬇️ 정상/에러 모두에서 로딩 오버레이 정리 (에러면 위에서 메시지 남김)
+      hideInvoiceOverlay();
     }
   }
 
