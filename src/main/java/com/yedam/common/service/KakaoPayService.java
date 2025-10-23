@@ -28,7 +28,7 @@ public class KakaoPayService {
     private static final String ADMIN_KEY = "3c4d225c4cfafacf87d4c8cce4342a24"; // 환경변수/설정파일로 분리 권장
 
     // 환경/프로파일별로 분기하세요. 지금은 로컬 기준.
-    private static final String BASE_URL = "https://thesolv.shop";
+    private static final String BASE_URL = "https://www.thesolv.shop";
 
     public KakaoReadyResponse kakaoPayReady(PayRequest payRequest) {
         HttpHeaders headers = new HttpHeaders();
