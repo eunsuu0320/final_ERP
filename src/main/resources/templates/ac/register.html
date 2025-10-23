@@ -21,6 +21,7 @@
 .input-group .btn { height: 36px; }
 #vf-voucherNo[readonly] { background: #fff; }
 .toolbar .btn { display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 .75rem; font-size: .92rem; }
+
 /* 인풋 내부 아이콘 버튼 */
 .input-with-icon { position: relative; display: inline-block; width: 100%; }
 .input-with-icon .form-control { padding-right: 40px; width: 100%; }
@@ -28,6 +29,17 @@
 .input-with-icon .icon-btn:focus { outline: 2px solid #86b7fe; outline-offset: 2px; }
 .input-with-icon .icon-btn .fa-solid { font-size: 16px; color: #6c757d; }
 .input-with-icon .icon-btn:hover .fa-solid { color: #333; }
+
+/* === invalid 표시: 배경 느낌표 제거 + 돋보기와 겹침 방지 === */
+.is-invalid{ border-color:#dc3545 !important; }
+.form-control.is-invalid,
+.was-validated .form-control:invalid,
+.form-select.is-invalid,
+.was-validated .form-select:invalid{
+  background-image:none !important;     /* 부트스트랩 느낌표 아이콘 제거 */
+  padding-right:.75rem !important;      /* 기본 우측 여백 */
+}
+.input-with-icon .form-control.is-invalid{ padding-right:40px !important; } /* 돋보기 유지 */
 </style>
 </head>
 
@@ -139,51 +151,61 @@
     const fmt   = n => Number(n||0).toLocaleString();
     const unfmt = s => Number(String(s||'').replace(/[^\d.-]/g,''))||0;
 
-    // ===== 세션 사용자 "이름만" 추출 =====
+    /* ===== 세션 사용자 "이름만" 추출 (코드 토큰 제거 강화) ===== */
+    function looksLikeCode(s){
+      const v=String(s||'').trim();
+      return /^[A-Z]{1}\d{3,}$/.test(v)         // C001, E1234
+          || /^EMP\d{2,}$/.test(v)             // EMP001
+          || /^[A-Z0-9_-]{3,20}$/.test(v);     // 코드스러운 토큰
+    }
     function extractDisplayName(me){
       try{
         if (typeof me === 'string') me = { raw: me };
-        const directCandidates = [
+
+        const direct = [
           me?.employeeName, me?.realName, me?.displayName, me?.name,
           me?.user?.name, me?.profile?.name, me?.principal?.name,
-          me?.account?.name, me?.raw
+          me?.account?.name, me?.username, me?.employeeCode, me?.raw
         ].filter(Boolean).map(String);
 
         const tokens = [];
         const pushTokens = (s)=>{
-          String(s).split(/[|:,/>\-]+/).forEach(t=>{
-            const x=t.trim(); if(x) tokens.push(x);
-          });
+          String(s)
+            .replace(/\(.*?\)|\[.*?]|<.*?>/g,'')   // 괄호 내용 제거
+            .split(/[|:,/>\-]+/)                   // 구분자 분리
+            .forEach(t=>{
+              const x=t.trim();
+              if (x) tokens.push(x);
+            });
         };
-        directCandidates.forEach(pushTokens);
+        direct.forEach(pushTokens);
 
         const BAD = ['관리자','admin','ADMIN','ROLE','권한','팀','부','과장','차장','대리','사원','user','영업','개발','기획','재무','인사'];
-        const isBad = t => BAD.some(k=>t.includes(k));
+        const isBad = t => BAD.some(k=>t.includes(k)) || looksLikeCode(t);
         const isKo  = t => /^[가-힣]{2,4}$/.test(t);
         const isEn  = t => /^[A-Za-z][A-Za-z .'-]{1,39}$/.test(t) && !/\d/.test(t);
 
+        // 1) 한글 이름 우선
         const kor = tokens.find(t=>isKo(t) && !isBad(t));
         if (kor) return kor;
 
+        // 2) 영어 이름
         const eng = tokens.find(t=>isEn(t) && !isBad(t));
         if (eng) return eng;
 
-        for (const t of tokens){
-          const clean = t.replace(/\(.*?\)|\[.*?]|<.*?>/g,'').trim();
-          if (isKo(clean) && !isBad(clean)) return clean;
-        }
+        // 3) 최후: 길이 2~10, 코드/직급 키워드 제외
         const lax = tokens.find(t=>!isBad(t) && t.length>=2 && t.length<=10);
         return lax || '';
       }catch(_){ return ''; }
     }
 
-    // ===== 세액 계산 =====
+    /* ===== 세액 계산 ===== */
     const FRACTION={TAXABLE:{num:10,den:100},ZERO:{num:0,den:100},EXEMPT:{num:0,den:100}};
     const norm=t=>{const x=String(t||'').toUpperCase();return (x in FRACTION)?x:'TAXABLE';};
     const fromSupply=(s,t)=>{const {num,den}=FRACTION[norm(t)]; if(num===0) return {supply:s,vat:0,total:s}; const v=Math.round(s*num/den); return {supply:s,vat:v,total:s+v};};
     const fromTotal =(tot,t)=>{const {num,den}=FRACTION[norm(t)]; if(num===0) return {supply:tot,vat:0,total:tot}; const v=Math.round(tot*num/den); return {supply:tot-v,vat:v,total:tot};};
 
-    // ===== type 표준화(백엔드 풀네임으로 통일) =====
+    /* ===== type 표준화 ===== */
     function normalizeLongType(t){
       const x = String(t||'').toUpperCase();
       if (['SALES','BUY','MONEY','PAYMENT'].includes(x)) return x;
@@ -193,10 +215,9 @@
       return 'SALES';
     }
 
-    // 누적감소 방지용 guard
     const lastCalc={mode:'TOTAL',supply:0,vat:0,total:0,taxType:'TAXABLE',prevSupply:0,prevTotal:0};
 
-    // ===== 세션에서 사원 "이름만" 세팅 =====
+    /* ===== 세션에서 사원 "이름만" 세팅 ===== */
     let currentUserName = '';
     fetch('/api/me',{credentials:'same-origin'})
       .then(async r=>{
@@ -205,12 +226,18 @@
         const txt = await r.text(); return { raw: txt };
       })
       .then(j=>{
-        currentUserName = extractDisplayName(j) || '';
+        const name = extractDisplayName(j) || '';
+        currentUserName = name;
+
         const $e=document.getElementById('vf-empName');
-        if($e) $e.value=currentUserName;
+        if($e){
+          // 값이 없거나 코드처럼 보이면 이름으로 교체
+          if (!$e.value || looksLikeCode($e.value)) $e.value = name || $e.value || '';
+        }
       })
       .catch(()=>{});
 
+    /* ===== 전표유형 + 라벨 ===== */
     const $type=document.getElementById('vf-type');
     const typeFallback=[{code:'SALES',name:'매출'},{code:'BUY',name:'매입'},{code:'MONEY',name:'수금'},{code:'PAYMENT',name:'지급'}];
     async function initVoucherTypes(){
@@ -243,7 +270,7 @@
       setTxt('lbl-voucherDate','전표일자');
     }
 
-    // ===== 전표번호 프리뷰/예약 (풀네임 사용) =====
+    /* ===== 전표번호 프리뷰/예약 ===== */
     let _vnoInFlight=false;
     async function fetchPreviewVoucherNo(type,dateStr){
       const $vno=document.getElementById('vf-voucherNo'); const $resv=document.getElementById('vf-resvId');
@@ -270,13 +297,13 @@
         method:'GET', credentials:'same-origin', headers:{'Accept':'application/json'}
       });
       const text=await res.text();
-      if(!res.ok) throw new Error(text||'reserve failed');
+      if(!res.ok) throw new Error('reserve failed');
       const j=text?JSON.parse(text):{};
       if(!j.reservationId||!j.voucherNo) throw new Error('예약 실패(필드누락)');
       return j;
     }
 
-    // ===== 금액 필드 바인딩 =====
+    /* ===== 금액 필드 바인딩 ===== */
     function bindNumericFields(){
       const $taxSel=document.getElementById('vf-taxType');
       const $supply=document.getElementById('vf-supply');
@@ -346,7 +373,7 @@
       });
     }
 
-    // ===== 선택 모달 =====
+    /* ===== 선택 모달 ===== */
     const $partnerName = document.getElementById('vf-partnerName');
     const $saleCode    = document.getElementById('vf-saleCode');
     const $saleDate    = document.getElementById('vf-saleDate');
@@ -362,7 +389,6 @@
       });
     }
 
-    // (간이) 인보이스 피커
     async function fallbackInvoicePicker(cb){
       try{
         const q = prompt('청구서 검색어(코드/거래처) 입력 (STATUS=회계반영완료만 조회됨):','');
@@ -381,22 +407,19 @@
     function openCodePicker(){
       const t = normalizeLongType($type.value||'SALES');
 
-      // ===== MONEY(수금) → 청구서 조회 =====
       if(t==='MONEY'){
         const onPick = (row) => {
           $saleCode.value = row?.invoiceCode || row?.invoice_unique_code || '';
-
           const pickedDate = row?.rcptDate || row?.dmndDate || row?.createDate;
           if (pickedDate){
             const d = new Date(pickedDate);
             $saleDate.value = isNaN(d) ? String(pickedDate).slice(0,10) : d.toISOString().slice(0,10);
           }
-
           const partner = row?.partnerName || row?.partner_name || row?.PARTNER_NAME || '';
           if (partner) $partnerName.value = partner;
 
           try {
-            const amt = Number(row?.dmndAmt || 0); // 총액
+            const amt = Number(row?.dmndAmt || 0);
             const $taxSel = document.getElementById('vf-taxType');
             if ($taxSel) $taxSel.value = 'TAXABLE';
             const calc = fromTotal(amt, 'TAXABLE');
@@ -422,12 +445,10 @@
         return;
       }
 
-      // ===== SALES / BUY / PAYMENT → 각 코드 조회 =====
       if (typeof openModal !== 'function'){ toast('검색 모달 스크립트를 찾을 수 없습니다.'); return; }
       const modalType = (t==='BUY'||t==='PAYMENT') ? 'buy' : 'sales';
 
       openModal(modalType, (row)=>{
-        // 코드/거래처/날짜
         $saleCode.value = (t==='BUY'||t==='PAYMENT') ? (row?.buyCode??'') : (row?.salesCode??'');
         const pickedPartner =
           row?.partnerName || row?.supplierName || row?.correspondent || row?.customerName ||
@@ -440,7 +461,6 @@
           $saleDate.value = isNaN(d) ? String(pickedDate).slice(0,10) : d.toISOString().slice(0,10);
         }
 
-        // 금액 자동계산
         try {
           let totalAmt =
             (t==='BUY'||t==='PAYMENT')
@@ -484,9 +504,81 @@
       setVal('vf-saleDate',    t);
     }
 
+    /* ===== 유효성 검사 추가 ===== */
+    function clearInvalid(...els){
+      els.forEach(el=>{
+        el?.classList?.remove('is-invalid');
+        el?.removeAttribute?.('aria-invalid');
+        el?.removeAttribute?.('data-error');
+      });
+    }
+    function markInvalid(el,msg){
+      if(!el) return;
+      el.classList.add('is-invalid');
+      el.setAttribute('aria-invalid','true');
+      if(msg) el.setAttribute('data-error', msg);
+    }
+    function validateForm(){
+      const errs=[];
+      const $typeEl   = document.getElementById('vf-type');
+      const $vDate    = document.getElementById('vf-voucherDate');
+      const $sDate    = document.getElementById('vf-saleDate');
+      const $partner  = document.getElementById('vf-partnerName');
+      const $code     = document.getElementById('vf-saleCode');
+      const $supply   = document.getElementById('vf-supply');
+      const $total    = document.getElementById('vf-total');
+      const $tax      = document.getElementById('vf-taxType');
+
+      clearInvalid($typeEl,$vDate,$sDate,$partner,$code,$supply,$total,$tax);
+
+      const kind = normalizeLongType($typeEl?.value||'SALES');
+
+      // 필수 값
+      if(!$typeEl?.value) errs.push({el:$typeEl, msg:'전표유형을 선택하세요.'});
+      if(!$vDate?.value)  errs.push({el:$vDate,  msg:'전표일자를 입력하세요.'});
+      if(!$sDate?.value)  errs.push({el:$sDate,  msg:({SALES:'판매일자',BUY:'구매일자',MONEY:'수금일자',PAYMENT:'지급일자'}[kind])+'를 입력하세요.'});
+      if(!($partner?.value||'').trim()) errs.push({el:$partner, msg:'거래처를 선택하세요.'});
+      if(!($code?.value||'').trim())    errs.push({el:$code,    msg:({SALES:'판매코드',BUY:'구매코드',MONEY:'수금코드',PAYMENT:'지급코드'}[kind])+'를 선택하세요.'});
+
+      // 금액: 공급가액 또는 총금액 중 하나는 0보다 커야 함
+      const supplyVal = unfmt($supply?.value);
+      const totalVal  = unfmt($total?.value);
+      if(!(supplyVal>0 || totalVal>0)){
+        errs.push({el:$supply, msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+        errs.push({el:$total,  msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+      }
+
+      // 부가세유형 유효성
+      const taxVal = ($tax?.value||'').toUpperCase();
+      if(!['TAXABLE','ZERO','EXEMPT'].includes(taxVal)){
+        errs.push({el:$tax, msg:'부가세유형이 올바르지 않습니다.'});
+      }
+
+      if(errs.length){
+        errs.forEach(e=>markInvalid(e.el,e.msg));
+        (errs[0]?.el)?.focus?.();
+        toast('입력값을 확인하세요: ' + (errs[0]?.msg||'필수항목 누락'));
+        return false;
+      }
+      return true;
+    }
+
+    // 입력/변경 시 invalid 해제
+    ['vf-type','vf-voucherDate','vf-saleDate','vf-partnerName','vf-saleCode','vf-supply','vf-total','vf-taxType']
+      .forEach(id=>{
+        const el=document.getElementById(id);
+        el?.addEventListener('input', ()=>clearInvalid(el));
+        el?.addEventListener('change', ()=>clearInvalid(el));
+      });
+
     async function resetForm(){
       setVal('vf-saleCode',''); setVal('vf-partnerName','');
-      setVal('vf-empName', (typeof currentUserName==='string'?currentUserName:'')); setVal('vf-remark','');
+      // 담당자: 현재 값이 비었거나 코드처럼 보이면 세션 이름으로 교체
+      const $emp = document.getElementById('vf-empName');
+      if ($emp) {
+        if (!$emp.value || looksLikeCode($emp.value)) $emp.value = (typeof currentUserName==='string' && currentUserName) ? currentUserName : ($emp.value||'');
+      }
+      setVal('vf-remark','');
       setVal('vf-taxType','TAXABLE'); setVal('vf-resvId','');
       initDates();
       const p=fromTotal(0,'TAXABLE');
@@ -496,16 +588,26 @@
       lastCalc.prevSupply=p.supply; lastCalc.prevTotal=p.total;
 
       await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
+
+      // invalid 모두 제거
+      clearInvalid(document.getElementById('vf-type'),document.getElementById('vf-voucherDate'),
+                   document.getElementById('vf-saleDate'),document.getElementById('vf-partnerName'),
+                   document.getElementById('vf-saleCode'),document.getElementById('vf-supply'),
+                   document.getElementById('vf-total'),document.getElementById('vf-taxType'));
     }
     document.getElementById('btn-reset')?.addEventListener('click', resetForm);
 
-    // ===== 저장 =====
+    /* ===== 저장 ===== */
     document.getElementById('vf-save')?.addEventListener('click', async (e)=>{
       e?.preventDefault?.();
+
+      // ▶ 저장 전 유효성 검사 추가 (기존 기능 유지)
+      if (!validateForm()) return;
+
       const $btn=e.currentTarget; if($btn.disabled) return;
       const orig=$btn.textContent; $btn.disabled=true; $btn.textContent='저장 중...';
 
-      const t=normalizeLongType($type.value||'SALES');
+      const t=normalizeLongType(document.getElementById('vf-type').value||'SALES');
       const map=labelsByType[t]||labelsByType.SALES;
       const voucherDate=document.getElementById('vf-voucherDate').value||null;
 
@@ -517,11 +619,14 @@
         toast('예약 실패: '+(err.message||'')); $btn.disabled=false; $btn.textContent=orig; return;
       }
 
+      // 담당자 이름으로 저장 (기존 필드명 사용)
+      const empName = document.getElementById('vf-empName')?.value || '';
+
       const body={
         reservationId:document.getElementById('vf-resvId')?.value||null,
         voucherDate,
         partnerName:document.getElementById('vf-partnerName').value||null,
-        employee:document.getElementById('vf-empName').value||null,
+        employee: empName || null,
         taxCode:document.getElementById('vf-taxType').value||'TAXABLE',
         amountSupply:unfmt(document.getElementById('vf-supply').value),
         amountVat:unfmt(document.getElementById('vf-vat').value),
@@ -532,8 +637,8 @@
         body.buyCode=document.getElementById('vf-saleCode').value||null;
       }else if(t==='MONEY'){
         const v=document.getElementById('vf-saleCode').value||null;
-        body.invoiceCode=v; // 백엔드가 invoiceCode 기대
-        body.moneyCode=v;   // 혹시 moneyCode 받도록 되어있으면 이것도
+        body.invoiceCode=v;  // invoiceCode로도 전달
+        body.moneyCode=v;    // 백엔드가 moneyCode를 본다면 호환
       }else{
         body.salesCode=document.getElementById('vf-saleCode').value||null;
       }
@@ -560,23 +665,27 @@
       finally{ $btn.disabled=false; $btn.textContent=orig; }
     });
 
-    // ===== 부트스트랩 =====
+    /* ===== 부트스트랩 ===== */
     (async function bootstrap(){
       await initVoucherTypes();
+      const $typeEl=document.getElementById('vf-type');
+      const setVal=(id,val)=>{const el=document.getElementById(id); if(el) el.value=val;};
+      const todayStr=()=> new Date().toISOString().slice(0,10);
+      const initDates=()=>{ const t=todayStr(); setVal('vf-voucherDate',t); setVal('vf-saleDate',t); };
       initDates();
-      applyTypeLabels($type.value);
-      await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
+      applyTypeLabels($typeEl.value);
+      await fetchPreviewVoucherNo($typeEl.value, document.getElementById('vf-voucherDate').value);
       bindNumericFields();
 
-      // 전표유형 변경 시 전체 초기화 + 번호 미리보기
-      $type.addEventListener('change', async ()=>{
-        applyTypeLabels($type.value);
+      // 유형 변경 시 초기화 + 번호 미리보기
+      $typeEl.addEventListener('change', async ()=>{
+        applyTypeLabels($typeEl.value);
         await resetForm();
-        await fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value);
+        await fetchPreviewVoucherNo($typeEl.value, document.getElementById('vf-voucherDate').value);
       });
 
       document.getElementById('vf-voucherDate').addEventListener('change', ()=>
-        fetchPreviewVoucherNo($type.value, document.getElementById('vf-voucherDate').value||'')
+        fetchPreviewVoucherNo($typeEl.value, document.getElementById('vf-voucherDate').value||'')
       );
     })();
   });
