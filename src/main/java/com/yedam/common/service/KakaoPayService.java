@@ -49,7 +49,13 @@ public class KakaoPayService {
         params.add("approval_url", BASE_URL + "/pay/kakao/success" + orderQS);
         params.add("cancel_url",   BASE_URL + "/pay/kakao/cancel"  + orderQS);
         params.add("fail_url",     BASE_URL + "/pay/kakao/fail"    + orderQS);
+        
+        String approval = BASE_URL + "/pay/kakao/success" + orderQS;
+        String cancel   = BASE_URL + "/pay/kakao/cancel"   + orderQS;
+        String fail     = BASE_URL + "/pay/kakao/fail"     + orderQS;
 
+        System.out.println("[KAKAO READY URLS] " + approval + " | " + cancel + " | " + fail);
+        
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         KakaoReadyResponse response = restTemplate.postForObject(
                 HOST + "/v1/payment/ready", request, KakaoReadyResponse.class);
