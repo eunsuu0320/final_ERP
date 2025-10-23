@@ -2,405 +2,416 @@ const manager = document.getElementById("companyCode").value; // 회사코드 �
 
 // 공통코드 불러오기
 async function loadCommonCode(groupName) {
-  const res = await fetch(`/api/modal/commonCode?commonGroup=${groupName}`);
-  const list = await res.json();
-  return Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
+	const res = await fetch(`/api/modal/commonCode?commonGroup=${groupName}`);
+	const list = await res.json();
+	return Object.fromEntries(list.map(it => [it.codeId, it.codeName]));
 }
 
 // 사원 목록 불러오기 (사원 근태 조회 이름 변경 위함)
 async function loadMapEmployees() {
-  const res = await fetch(`/employees?companyCode=${manager}`);
-  const list = await res.json();
-  return Object.fromEntries(list.map(it => [it.empCode, it.name]));
+	const res = await fetch(`/employees?companyCode=${manager}`);
+	const list = await res.json();
+	return Object.fromEntries(list.map(it => [it.empCode, it.name]));
 }
 
 // 근태 목록 불러오기 (사원 근태 조회 이름 변경 위함)
 async function loadMapAttendances() {
-  const res = await fetch(`/attendance?companyCode=${manager}`);
-  const list = await res.json();
-  return Object.fromEntries(list.map(it => [it.attId, it.attType]));
+	const res = await fetch(`/attendance?companyCode=${manager}`);
+	const list = await res.json();
+	return Object.fromEntries(list.map(it => [it.attId, it.attType]));
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-  const USE_YN = await loadCommonCode("GRP007");
+	const USE_YN = await loadCommonCode("GRP007");
 
-  // 근태 항목
-  const attendanceTable = new Tabulator(document.getElementById("att-table"), {
-    layout: "fitColumns",
-    pagination: "local",
-    paginationSize: 20,
-    selectable: true,
-    columns: [
-      {
-        title: "선택",
-        formatter: "rowSelection",
-        titleFormatter: "rowSelection",
-        headerSort: false,
-        width: 44,
-        hozAlign: "center",
-        headerHozAlign: "center",
-      },
-      { title: "근태코드", field: "attId", editor: false },
-      { title: "근태유형", field: "attType", editor: "input" },
-      {
-        title: "사용여부",
-        field: "attIs",
-        hozAlign: "center",
-        editor: "list",
-        editorParams: {
-          // 키는 저장값(Y/N), 값은 표시 라벨
-          values: { "Y": "사용함", "N": "사용안함" }
-        },
-        formatter: function(cell) {
-          var v = cell.getValue();
-          var sz = "13px";
-          var pad = "0.35em 0.6em";
-          if (v === "Y" || v === "y" || v === "사용함") {
-            return '<span class="badge bg-success" style="font-size:' + sz + ';padding:' + pad + ';">사용함</span>';
-          }
-          return '<span class="badge bg-danger" style="font-size:' + sz + ';padding:' + pad + ';">사용안함</span>';
-        },
-        // 혹시 '사용함/사용안함' 문자열이 들어올 때 Y/N로 정규화
-        mutatorEdit: function(value) {
-          if (value === "사용함") return "Y";
-          if (value === "사용안함") return "N";
-          return (value ?? "").toString().toUpperCase();
-        },
-        accessorDownload: function(value) {
-          return value === "Y" ? "사용함" : "사용안함";
-        }
-      },
-      { title: "비고", field: "note", editor: "input" },
-    ],
-  });
+	// 근태 항목
+	const attendanceTable = new Tabulator(document.getElementById("att-table"), {
+		layout: "fitColumns",
+		pagination: "local",
+		paginationSize: 20,
+		selectable: true,
+		columns: [
+			{
+				title: "선택",
+				formatter: "rowSelection",
+				titleFormatter: "rowSelection",
+				headerSort: false,
+				width: 44,
+				hozAlign: "center",
+				headerHozAlign: "center",
+			},
+			{ title: "근태코드", field: "attId", editor: false },
+			{ title: "근태유형", field: "attType", editor: "input" },
+			{
+				title: "사용여부",
+				field: "attIs",
+				hozAlign: "center",
+				editor: "list",
+				editorParams: {
+					// 키는 저장값(Y/N), 값은 표시 라벨
+					values: { "Y": "사용함", "N": "사용안함" }
+				},
+				formatter: function(cell) {
+					var v = cell.getValue();
+					var sz = "13px";
+					var pad = "0.35em 0.6em";
+					if (v === "Y" || v === "y" || v === "사용함") {
+						return '<span class="badge bg-success" style="font-size:' + sz + ';padding:' + pad + ';">사용함</span>';
+					}
+					return '<span class="badge bg-danger" style="font-size:' + sz + ';padding:' + pad + ';">사용안함</span>';
+				},
+				// 혹시 '사용함/사용안함' 문자열이 들어올 때 Y/N로 정규화
+				mutatorEdit: function(value) {
+					if (value === "사용함") return "Y";
+					if (value === "사용안함") return "N";
+					return (value ?? "").toString().toUpperCase();
+				},
+				accessorDownload: function(value) {
+					return value === "Y" ? "사용함" : "사용안함";
+				}
+			},
+			{ title: "비고", field: "note", editor: "input" },
+		],
+	});
 
-  // 데이터 로드 함수
-  async function loadAttendances() {
-    const res = await fetch(`/attendance?companyCode=${manager}`);
-    const data = await res.json();
-    attendanceTable.setData([...data, { companyCode: manager }]);
-  }
+	// 데이터 로드 함수
+	async function loadAttendances() {
+		const res = await fetch(`/attendance?companyCode=${manager}`);
+		const data = await res.json();
+		attendanceTable.setData([...data, { companyCode: manager }]);
+	}
 
-  const token = document.querySelector('meta[name="_csrf"]').content;
+	const token = document.querySelector('meta[name="_csrf"]').content;
 
-  // 저장 button
-  document.getElementById("att-save").addEventListener("click", async () => {
-    const rows = attendanceTable.getData(); // Tabulator 같은 데서 데이터 가져온다고 가정
-    console.log("보낼 데이터:", rows);
+	// 저장 button
+	document.getElementById("att-save").addEventListener("click", async () => {
+		const rows = attendanceTable.getData(); // Tabulator 같은 데서 데이터 가져온다고 가정
+		console.log("보낼 데이터:", rows);
 
-    try {
-      const res = await fetch(`/attendance/saveAll?companyCode=${manager}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": token
-        },
-        body: JSON.stringify(rows)
-      });
+		try {
+			const res = await fetch(`/attendance/saveAll?companyCode=${manager}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": token
+				},
+				body: JSON.stringify(rows)
+			});
 
-      const result = await res.text();
-      if (result === "success") {
-        alert("근태 항목 저장을 완료하였습니다.");
-        loadAttendances();
-      } else {
-        alert("근태 항목 저장을 실패하였습니다. 잠시 후 다시 시도해 주세요.");
-      }
-    } catch (err) {
-      alert("서버에 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요.");
-      console.error(err);
-    }
-  });
+			const result = await res.text();
+			if (result === "success") {
+				alert("근태 항목 저장을 완료하였습니다.");
+				loadAttendances();
+			} else {
+				alert("근태 항목 저장을 실패하였습니다. 잠시 후 다시 시도해 주세요.");
+			}
+		} catch (err) {
+			alert("서버에 오류가 발생하였습니다. 잠시 후 다시 시도해 주세요.");
+			console.error(err);
+		}
+	});
 
-  // 상태 변경 공통 함수
-  async function updateStatus(url, codes, status, successMsg, failMsg, reloadFn) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": token   // 스프링 시큐리티 CSRF 쓰면 필요
-        },
-        body: JSON.stringify({ codes, status }) // codes와 status를 JSON으로 넘김
-      });
+	// 상태 변경 공통 함수
+	async function updateStatus(url, codes, status, successMsg, failMsg, reloadFn) {
+		try {
+			const res = await fetch(url, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": token   // 스프링 시큐리티 CSRF 쓰면 필요
+				},
+				body: JSON.stringify({ codes, status }) // codes와 status를 JSON으로 넘김
+			});
 
-      if (res.ok) {
-        alert(successMsg);
-        if (typeof reloadFn === "function") reloadFn(manager); // 성공 후 테이블 리로드
-      } else {
-        alert(failMsg);
-      }
-    } catch (err) {
-      console.error("updateStatus 오류:", err);
-      alert("서버 오류가 발생했습니다.");
-    }
-  }
+			if (res.ok) {
+				alert(successMsg);
+				if (typeof reloadFn === "function") reloadFn(manager); // 성공 후 테이블 리로드
+			} else {
+				alert(failMsg);
+			}
+		} catch (err) {
+			console.error("updateStatus 오류:", err);
+			alert("서버 오류가 발생했습니다.");
+		}
+	}
 
 
-  // 사용중단 버튼
-  document.getElementById("att-stop").addEventListener("click", async () => {
-    const codes = attendanceTable.getSelectedData().map(r => r.attId);
-    if (codes.length) {
-      await updateStatus(
-        `/attendance/updateStatus?companyCode=${manager}`,
-        codes,
-        "N",
-        "사용중단이 완료되었습니다.",
-        "사용중단에 실패하였습니다. 잠시 후 다시 시도해주세요.",
-        loadAttendances
-      );
-    }
-  });
+	// 사용중단 버튼
+	document.getElementById("att-stop").addEventListener("click", async () => {
+		const codes = attendanceTable.getSelectedData().map(r => r.attId);
+		if (codes.length) {
+			await updateStatus(
+				`/attendance/updateStatus?companyCode=${manager}`,
+				codes,
+				"N",
+				"사용중단이 완료되었습니다.",
+				"사용중단에 실패하였습니다. 잠시 후 다시 시도해주세요.",
+				loadAttendances
+			);
+		}
+	});
 
-  // 재사용 버튼
-  document.getElementById("att-reStart").addEventListener("click", async () => {
-    const codes = attendanceTable.getSelectedData().map(r => r.attId);
-    if (codes.length) {
-      await updateStatus(
-        `/attendance/updateStatus?companyCode=${manager}`,
-        codes,
-        "Y",
-        "재사용이 완료되었습니다.",
-        "사용중단에 실패하였습니다. 잠시 후 다시 시도해주세요.",
-        loadAttendances
-      );
-    }
-  });
+	// 재사용 버튼
+	document.getElementById("att-reStart").addEventListener("click", async () => {
+		const codes = attendanceTable.getSelectedData().map(r => r.attId);
+		if (codes.length) {
+			await updateStatus(
+				`/attendance/updateStatus?companyCode=${manager}`,
+				codes,
+				"Y",
+				"재사용이 완료되었습니다.",
+				"사용중단에 실패하였습니다. 잠시 후 다시 시도해주세요.",
+				loadAttendances
+			);
+		}
+	});
 
-  // 공통코드 휴가
-  const HOLY = await loadCommonCode("GRP008");
+	// 공통코드 휴가
+	const HOLY = await loadCommonCode("GRP008");
 
-  // 사원 근태 등록
-  const empAttInsertTable = new Tabulator(document.getElementById("empAttInsert-table"), {
-    layout: "fitColumns",
-    pagination: "local",
-    paginationSize: 20,
-    columns: [
-      {
-        title: "근태일자",
-        field: "workDate",
-        editor: "date",   // 달력 에디터
-        editorParams: {
-          format: "yyyy-MM-dd",  // 날짜 형식
-        },
-        hozAlign: "center"
-      },
-      { title: "사원", field: "name" },  // 화면엔 이름
-      { title: "사원코드", field: "empCode", visible: false }, // DB용 (숨김)
-      { title: "근태", field: "attType" },
-      { title: "근태코드", field: "attId", visible: false },
-      {
-        title: "휴가여부",
-        field: "holyIs",
-        editor: "list",
-        editorParams: { values: Object.keys(HOLY).map(code => ({ value: code, label: HOLY[code] })) },
-        formatter: (cell) => HOLY[cell.getValue()] ?? cell.getValue(), // 화면엔 라벨 표시
-      },
-      { title: "근태시간", field: "workTime", editor: "input" },
-      { title: "비고", field: "note", editor: "textarea" }
-    ],
-    data: [{ companyCode: manager }]
-  });
+	// 사원 근태 등록
+	const empAttInsertTable = new Tabulator(document.getElementById("empAttInsert-table"), {
+		layout: "fitColumns",
+		pagination: "local",
+		paginationSize: 20,
+		columns: [
+			{
+				title: "근태일자",
+				field: "workDate",
+				editor: "date",   // 달력 에디터
+				editorParams: {
+					format: "yyyy-MM-dd",  // 날짜 형식
+				},
+				hozAlign: "center"
+			},
+			{ title: "사원", field: "name" },  // 화면엔 이름
+			{ title: "사원코드", field: "empCode", visible: false }, // DB용 (숨김)
+			{ title: "근태", field: "attType" },
+			{ title: "근태코드", field: "attId", visible: false },
+			{
+				title: "휴가여부",
+				field: "holyIs",
+				editor: "list",
+				editorParams: { values: Object.keys(HOLY).map(code => ({ value: code, label: HOLY[code] })) },
+				formatter: (cell) => HOLY[cell.getValue()] ?? cell.getValue(), // 화면엔 라벨 표시
+			},
+			{ title: "근태시간", field: "workTime", editor: "input" },
+			{ title: "비고", field: "note", editor: "textarea" }
+		],
+		data: [{ companyCode: manager }]
+	});
 
-  // 셀 더블클릭 이벤트 등록
-  empAttInsertTable.on("cellDblClick", function(e, cell) {
-    const field = cell.getField();
-    const row = cell.getRow();
+	// 셀 더블클릭 이벤트 등록
+	empAttInsertTable.on("cellDblClick", function(e, cell) {
+		const field = cell.getField();
+		const row = cell.getRow();
 
-    if (field === "name") {
-      // 사원 선택 모달 열기
-      openModal("employee", (selected) => {
-        row.update({
-          empCode: selected.empCode, // DB 코드
-          name: selected.name        // 화면 표시
-        });
-      });
-    } else if (field === "attType") {
-      // 근태코드 선택 모달 열기
-      openModal("attendance", (selected) => {
-        console.log("선택된 근태:", selected);
-        row.update({
-          attId: selected.attId,     // DB 코드
-          attType: selected.attType  // 화면 표시
-        });
-      });
-    }
-  });
+		if (field === "name") {
+			// 사원 선택 모달 열기
+			openModal("employee", (selected) => {
+				row.update({
+					empCode: selected.empCode, // DB 코드
+					name: selected.name        // 화면 표시
+				});
+			});
+		} else if (field === "attType") {
+			// 근태코드 선택 모달 열기
+			openModal("attendance", (selected) => {
+				console.log("선택된 근태:", selected);
+				row.update({
+					attId: selected.attId,     // DB 코드
+					attType: selected.attType  // 화면 표시
+				});
+			});
+		}
+	});
 
-  // 등록 버튼 클릭 이벤트
-  document.getElementById("empAtt-insert-save").addEventListener("click", async () => {
-    try {
-      // 1. 테이블 데이터 가져오기
-      const rows = empAttInsertTable.getData();
+	// 등록 버튼 클릭 이벤트
+	document.getElementById("empAtt-insert-save").addEventListener("click", async () => {
+		try {
+			// 1. 테이블 데이터 가져오기
+			const rows = empAttInsertTable.getData();
 
-      if (!rows || rows.length === 0) {
-        alert("저장할 데이터가 없습니다.");
-        return;
-      }
+			if (!rows || rows.length === 0) {
+				alert("저장할 데이터가 없습니다.");
+				return;
+			}
 
-      // 2) 행 단위 검증 (필수값 및 형식)
-      const errors = [];
-      const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+			// 2) 행 단위 검증 (필수값 및 형식)
+			const errors = [];
+			const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 
-      for (let i = 0; i < rows.length; i++) {
-        const r = rows[i];
-        const no = i + 1;
+			for (let i = 0; i < rows.length; i++) {
+				const r = rows[i];
+				const no = i + 1;
 
-        if (!r || !r.workDate || typeof r.workDate !== "string" || !dateRe.test(r.workDate)) {
-          errors.push(`[${no}행] 근태일자(yyyy-MM-dd)`);
-        }
-        if (!r || !r.empCode) {
-          errors.push(`[${no}행] 사원코드(empCode)`);
-        }
-        if (!r || !r.attId) {
-          errors.push(`[${no}행] 근태코드(attId)`);
-        }
-        const wt = (r && r.workTime !== "" && r.workTime != null) ? Number(r.workTime) : NaN;
-        if (!Number.isFinite(wt) || wt < 0) {
-          errors.push(`[${no}행] 근태(일/시간)(workTime)은 0 이상 숫자`);
-        }
-        if (r && r.holyIs != null && r.holyIs !== "" && !Object.prototype.hasOwnProperty.call(HOLY, r.holyIs)) {
-          errors.push(`[${no}행] 휴가여부(holyIs)는 목록에서 선택`);
-        }
-      }
+				if (!r || !r.workDate || typeof r.workDate !== "string" || !dateRe.test(r.workDate)) {
+					errors.push(`[${no}행] 근태일자(yyyy-MM-dd)`);
+				}
+				if (!r || !r.empCode) {
+					errors.push(`[${no}행] 사원코드(empCode)`);
+				}
+				if (!r || !r.attId) {
+					errors.push(`[${no}행] 근태코드(attId)`);
+				}
+				const wt = (r && r.workTime !== "" && r.workTime != null) ? Number(r.workTime) : NaN;
+				if (!Number.isFinite(wt) || wt < 0) {
+					errors.push(`[${no}행] 근태(일/시간)(workTime)은 0 이상 숫자`);
+				}
+				if (r && r.holyIs != null && r.holyIs !== "" && !Object.prototype.hasOwnProperty.call(HOLY, r.holyIs)) {
+					errors.push(`[${no}행] 휴가여부(holyIs)는 목록에서 선택`);
+				}
+			}
 
-      if (errors.length) {
-        alert("먼저 값을 올바르게 입력하세요.\n\n확인 필요 항목:\n" + errors.join("\n"));
-        return;
-      }
+			if (errors.length) {
+				alert("먼저 값을 올바르게 입력하세요.\n\n확인 필요 항목:\n" + errors.join("\n"));
+				return;
+			}
 
-      // 3. payload 만들기
-      const payload = rows.filter(r => r.empCode && r.attId).map(r => ({
-        ...r,
-        companyCode: undefined // ❌ companyCode는 body에 넣을 필요 없음
-      }));
-      console.log("저장 전 payload:", JSON.stringify(payload, null, 2));
-      console.log("저장 데이터:", payload);
+			// 3. payload 만들기
+			const payload = rows.filter(r => r.empCode && r.attId).map(r => ({
+				...r,
+				companyCode: undefined // ❌ companyCode는 body에 넣을 필요 없음
+			}));
+			console.log("저장 전 payload:", JSON.stringify(payload, null, 2));
+			console.log("저장 데이터:", payload);
 
-      // 3. 서버에 전송
-      const res = await fetch(`/empAttendance/saveAll?companyCode=${manager}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": token
-        },
-        body: JSON.stringify(payload) // 배열 그대로 보냄
-      });
+			// 3. 서버에 전송
+			const res = await fetch(`/empAttendance/saveAll?companyCode=${manager}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRF-Token": token
+				},
+				body: JSON.stringify(payload) // 배열 그대로 보냄
+			});
 
-      if (!res.ok) {
-        throw new Error("서버 오류: " + res.status);
-      }
+			if (!res.ok) {
+				throw new Error("서버 오류: " + res.status);
+			}
 
-      const result = await res.text();
-      if (result === "success") {
-        alert("사원 근태 등록을 완료하였습니다.");
-        empAttInsertTable.clearData();
-        loadEmpAttendances();
-      } else {
-        alert("사원 근태 등록에 실패하였습니다. 잠시 후 다시 시도해주세요.");
-        console.log(result);
-      }
+			const result = await res.text();
+			if (result === "success") {
+				alert("사원 근태 등록을 완료하였습니다.");
+				empAttInsertTable.getRows().forEach(row => {
+					row.update({
+						workDate: "", name: "", empCode: "",
+						attType: "", attId: "", holyIs: "",
+						workTime: "", note: ""
+					});
+				});
+				loadEmpAttendances();
+			} else {
+				alert("사원 근태 등록에 실패하였습니다. 잠시 후 다시 시도해주세요.");
+				console.log(result);
+			}
 
-    } catch (err) {
-      console.error("저장 중 오류:", err);
-      alert("에러 발생: " + err.message);
-    }
-  });
+		} catch (err) {
+			console.error("저장 중 오류:", err);
+			alert("에러 발생: " + err.message);
+		}
+	});
 
-  const EMP_MAP = await loadMapEmployees();
-  const ATT_MAP = await loadMapAttendances();
+	const EMP_MAP = await loadMapEmployees();
+	const ATT_MAP = await loadMapAttendances();
 
-  // 사원 근태 조회
-  const empAttSelectTable = new Tabulator(document.getElementById("empAttSelect-table"), {
-    layout: "fitColumns",
-    pagination: "local",
-    paginationSize: 20,
-    placeholder: "조회된 사원의 근태 목록이 없습니다.",
-    selectable: true,
-    columns: [
-      {
-        title: "선택",
-        formatter: "rowSelection",
-        titleFormatter: "rowSelection",
-        headerSort: false,
-        width: 44,
-        hozAlign: "center",
-        headerHozAlign: "center",
-      },
-      { title: "근태번호", field: "empAttId" },
-      {
-        title: "사원",
-        field: "empCode",
-        formatter: (cell) => EMP_MAP[cell.getValue()] || cell.getValue()
-      },
-      {
-        title: "근태",
-        field: "attId",
-        formatter: (cell) => ATT_MAP[cell.getValue()] || cell.getValue()
-      },
-      {
-        title: "휴가여부",
-        field: "holyIs",
-        formatter: (cell) => HOLY[cell.getValue()] || cell.getValue()
-      },
-      { title: "근태(일/시간)", field: "workTime" },
-      { title: "근태일자", field: "workDate" },
-      { title: "비고", field: "note" }
-    ],
-  });
+	// 사원 근태 조회
+	const empAttSelectTable = new Tabulator(document.getElementById("empAttSelect-table"), {
+		layout: "fitColumns",
+		pagination: "local",
+		paginationSize: 20,
+		placeholder: "조회된 사원의 근태 목록이 없습니다.",
+		selectable: true,
+		columns: [
+			{
+				title: "선택",
+				formatter: "rowSelection",
+				titleFormatter: "rowSelection",
+				headerSort: false,
+				width: 44,
+				hozAlign: "center",
+				headerHozAlign: "center",
+			},
+			{ title: "근태번호", field: "empAttId" },
+			{
+				title: "사원",
+				field: "empCode",
+				formatter: (cell) => EMP_MAP[cell.getValue()] || cell.getValue()
+			},
+			{
+				title: "근태",
+				field: "attId",
+				formatter: (cell) => ATT_MAP[cell.getValue()] || cell.getValue()
+			},
+			{
+				title: "휴가여부",
+				field: "holyIs",
+				formatter: (cell) => HOLY[cell.getValue()] || cell.getValue()
+			},
+			{ title: "근태(일/시간)", field: "workTime" },
+			{ title: "근태일자", field: "workDate" },
+			{ title: "비고", field: "note" }
+		],
+	});
 
-  // 데이터 로드 함수
-  async function loadEmpAttendances() {
-    const res = await fetch(`/empAttendance?companyCode=${manager}`);
-    const data = await res.json();
-    empAttSelectTable.setData([...data]);
-  }
+	// 데이터 로드 함수
+	async function loadEmpAttendances() {
+		const res = await fetch(`/empAttendance?companyCode=${manager}&_=${Date.now()}`, {
+			cache: "no-store"
+		});
+		const data = await res.json();
+		// setData 대신 replaceData가 안전합니다(가상 DOM/선택 상태 유지에도 유리)
+		if (typeof empAttSelectTable !== "undefined") {
+			empAttSelectTable.replaceData(data);
+		}
+	}
 
-  // 인쇄
-  const printBtn = document.getElementById("empAtt-print");
-  if (printBtn) {
-    printBtn.addEventListener("click", () => {
-      // 사원 근태 조회 테이블에서 선택 행 가져오기
-      const selected = (typeof empAttSelectTable !== "undefined" && empAttSelectTable.getSelectedData)
-        ? empAttSelectTable.getSelectedData()
-        : [];
+	// 인쇄
+	const printBtn = document.getElementById("empAtt-print");
+	if (printBtn) {
+		printBtn.addEventListener("click", () => {
+			// 사원 근태 조회 테이블에서 선택 행 가져오기
+			const selected = (typeof empAttSelectTable !== "undefined" && empAttSelectTable.getSelectedData)
+				? empAttSelectTable.getSelectedData()
+				: [];
 
-      if (selected.length === 0) { alert("인쇄할 근태 데이터를 선택하세요."); return; }
+			if (selected.length === 0) { alert("인쇄할 근태 데이터를 선택하세요."); return; }
 
-      // 전표일자 표기를 위해 날짜 포맷
-      const fmtDateYMD = (v) => {
-        if (!v) return "";
-        const d = new Date(v);
-        if (!isNaN(d)) {
-          const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), dd = String(d.getDate()).padStart(2, "0");
-          return `${y}/${m}/${dd}`;
-        }
-        const m = String(v).match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
-        return m ? `${m[1]}/${String(m[2]).padStart(2, "0")}/${String(m[3]).padStart(2, "0")}` : v;
-      };
+			// 전표일자 표기를 위해 날짜 포맷
+			const fmtDateYMD = (v) => {
+				if (!v) return "";
+				const d = new Date(v);
+				if (!isNaN(d)) {
+					const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), dd = String(d.getDate()).padStart(2, "0");
+					return `${y}/${m}/${dd}`;
+				}
+				const m = String(v).match(/(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})/);
+				return m ? `${m[1]}/${String(m[2]).padStart(2, "0")}/${String(m[3]).padStart(2, "0")}` : v;
+			};
 
-      // 행 렌더링(사원명 / 근태명칭 / 근태(일/시간) / 적요)
-      const rows = selected.map(r => {
-        const empName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? "");
-        const attName = (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? "");
-        const timeVal = r.workTime ?? r.time ?? r.days ?? "";
-        const noteVal = r.note ?? r.remark ?? "";
-        return `
+			// 행 렌더링(사원명 / 근태명칭 / 근태(일/시간) / 적요)
+			const rows = selected.map(r => {
+				const empName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? "");
+				const attName = (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? "");
+				const timeVal = r.workTime ?? r.time ?? r.days ?? "";
+				const noteVal = r.note ?? r.remark ?? "";
+				return `
         <tr>
           <td>${empName}</td>
           <td style="text-align:left; padding-left:10px;">${attName}</td>
           <td>${timeVal}</td>
           <td style="text-align:left; padding-left:10px;">${noteVal}</td>
         </tr>`;
-      }).join("");
+			}).join("");
 
-      // 상단 표기 값
-      const now = new Date().toISOString().slice(0, 16).replace("T", " ");
-      const count = selected.length;
-      const slipDate = fmtDateYMD(selected[0]?.workDate) || fmtDateYMD(new Date());
+			// 상단 표기 값
+			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+			const count = selected.length;
+			const slipDate = fmtDateYMD(selected[0]?.workDate) || fmtDateYMD(new Date());
 
-      // 프린트용 HTML (부모가 print() 호출하므로 스크립트 삽입 불필요)
-      const html = `
+			// 프린트용 HTML (부모가 print() 호출하므로 스크립트 삽입 불필요)
+			const html = `
 <!doctype html>
 <html>
 <head>
@@ -448,103 +459,103 @@ document.addEventListener("DOMContentLoaded", async () => {
 </body>
 </html>`;
 
-      // 새 창 없이 히든 iframe에 렌더 후 인쇄
-      const iframe = document.createElement("iframe");
-      iframe.style.position = "fixed";
-      iframe.style.right = "0";
-      iframe.style.bottom = "0";
-      iframe.style.width = "0";
-      iframe.style.height = "0";
-      iframe.style.border = "0";
-      iframe.style.visibility = "hidden";
-      document.body.appendChild(iframe);
+			// 새 창 없이 히든 iframe에 렌더 후 인쇄
+			const iframe = document.createElement("iframe");
+			iframe.style.position = "fixed";
+			iframe.style.right = "0";
+			iframe.style.bottom = "0";
+			iframe.style.width = "0";
+			iframe.style.height = "0";
+			iframe.style.border = "0";
+			iframe.style.visibility = "hidden";
+			document.body.appendChild(iframe);
 
-      const cleanup = () => { try { iframe.remove(); } catch (_) {} };
-      const safeCleanupTimer = setTimeout(cleanup, 15000); // 비정상 상황 대비
+			const cleanup = () => { try { iframe.remove(); } catch (_) { } };
+			const safeCleanupTimer = setTimeout(cleanup, 15000); // 비정상 상황 대비
 
-      const tryPrint = () => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow.onafterprint = () => { clearTimeout(safeCleanupTimer); cleanup(); };
-          iframe.contentWindow.addEventListener?.("beforeunload", () => { clearTimeout(safeCleanupTimer); cleanup(); });
-          iframe.contentWindow?.print();
-        } catch (_) {
-          clearTimeout(safeCleanupTimer);
-          cleanup();
-        }
-      };
+			const tryPrint = () => {
+				try {
+					iframe.contentWindow?.focus();
+					iframe.contentWindow.onafterprint = () => { clearTimeout(safeCleanupTimer); cleanup(); };
+					iframe.contentWindow.addEventListener?.("beforeunload", () => { clearTimeout(safeCleanupTimer); cleanup(); });
+					iframe.contentWindow?.print();
+				} catch (_) {
+					clearTimeout(safeCleanupTimer);
+					cleanup();
+				}
+			};
 
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (doc) {
-        doc.open(); doc.write(html); doc.close();
-        setTimeout(tryPrint, 120); // 스타일 로딩 여유
-      } else {
-        clearTimeout(safeCleanupTimer);
-        cleanup();
-      }
-    });
-  }
+			const doc = iframe.contentDocument || iframe.contentWindow?.document;
+			if (doc) {
+				doc.open(); doc.write(html); doc.close();
+				setTimeout(tryPrint, 120); // 스타일 로딩 여유
+			} else {
+				clearTimeout(safeCleanupTimer);
+				cleanup();
+			}
+		});
+	}
 
-  // EXCEL 버튼 (교체)
-  const excelBtn = document.getElementById("empAtt-excel");
-  if (excelBtn) {
-    excelBtn.addEventListener("click", function() {
-      // 선택 행 가져오기: empAttSelectTable 우선
-      const rows = (typeof empAttSelectTable !== "undefined" && empAttSelectTable?.getSelectedData)
-        ? empAttSelectTable.getSelectedData()
-        : (typeof table !== "undefined" && table?.getSelectedData ? table.getSelectedData() : []);
+	// EXCEL 버튼 (교체)
+	const excelBtn = document.getElementById("empAtt-excel");
+	if (excelBtn) {
+		excelBtn.addEventListener("click", function() {
+			// 선택 행 가져오기: empAttSelectTable 우선
+			const rows = (typeof empAttSelectTable !== "undefined" && empAttSelectTable?.getSelectedData)
+				? empAttSelectTable.getSelectedData()
+				: (typeof table !== "undefined" && table?.getSelectedData ? table.getSelectedData() : []);
 
-      if (!rows || rows.length === 0) {
-        alert("선택된 데이터가 없습니다.");
-        return;
-      }
+			if (!rows || rows.length === 0) {
+				alert("선택된 데이터가 없습니다.");
+				return;
+			}
 
-      if (typeof XLSX === "undefined") {
-        alert("엑셀 라이브러리(XLSX)가 로드되지 않았습니다.");
-        return;
-      }
+			if (typeof XLSX === "undefined") {
+				alert("엑셀 라이브러리(XLSX)가 로드되지 않았습니다.");
+				return;
+			}
 
-      // 사원별 그룹핑
-      const grouped = rows.reduce((acc, r) => {
-        (acc[r.empCode] ??= []).push(r);
-        return acc;
-      }, {});
+			// 사원별 그룹핑
+			const grouped = rows.reduce((acc, r) => {
+				(acc[r.empCode] ??= []).push(r);
+				return acc;
+			}, {});
 
-      const wb = XLSX.utils.book_new();
+			const wb = XLSX.utils.book_new();
 
-      Object.keys(grouped).forEach((empCode) => {
-        const list = grouped[empCode];
+			Object.keys(grouped).forEach((empCode) => {
+				const list = grouped[empCode];
 
-        const empRows = list.map((r) => ({
-          사원: (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? ""),
-          근태: (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? ""),
-          휴가여부: (typeof HOLY !== "undefined" && HOLY?.[r.holyIs]) ? HOLY[r.holyIs] : (r.holyIs ?? ""),
-          "근태(일/시간)": r.workTime ?? r.time ?? r.days ?? "",
-          근태일자: r.workDate ?? "",
-          적요: r.note ?? r.remark ?? ""
-        }));
+				const empRows = list.map((r) => ({
+					사원: (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? ""),
+					근태: (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? ""),
+					휴가여부: (typeof HOLY !== "undefined" && HOLY?.[r.holyIs]) ? HOLY[r.holyIs] : (r.holyIs ?? ""),
+					"근태(일/시간)": r.workTime ?? r.time ?? r.days ?? "",
+					근태일자: r.workDate ?? "",
+					적요: r.note ?? r.remark ?? ""
+				}));
 
-        const ws = XLSX.utils.json_to_sheet(empRows);
+				const ws = XLSX.utils.json_to_sheet(empRows);
 
-        // (선택) 기본 열 너비
-        ws["!cols"] = [
-          { wch: 12 }, // 사원
-          { wch: 16 }, // 근태
-          { wch: 10 }, // 휴가여부
-          { wch: 12 }, // 근태(일/시간)
-          { wch: 12 }, // 근태일자
-          { wch: 30 }, // 적요
-        ];
+				// (선택) 기본 열 너비
+				ws["!cols"] = [
+					{ wch: 12 }, // 사원
+					{ wch: 16 }, // 근태
+					{ wch: 10 }, // 휴가여부
+					{ wch: 12 }, // 근태(일/시간)
+					{ wch: 12 }, // 근태일자
+					{ wch: 30 }, // 적요
+				];
 
-        const sheetName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[empCode]) ? EMP_MAP[empCode] : (empCode || "사원");
-        XLSX.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31)); // 시트명 31자 제한
-      });
+				const sheetName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[empCode]) ? EMP_MAP[empCode] : (empCode || "사원");
+				XLSX.utils.book_append_sheet(wb, ws, String(sheetName).slice(0, 31)); // 시트명 31자 제한
+			});
 
-      XLSX.writeFile(wb, "근태전표.xlsx");
-    });
-  }
+			XLSX.writeFile(wb, "근태전표.xlsx");
+		});
+	}
 
-  // 초기 로드
-  loadAttendances();
-  loadEmpAttendances();
+	// 초기 로드
+	loadAttendances();
+	loadEmpAttendances();
 });
