@@ -384,7 +384,7 @@ body {
   let recaptchaLogin, recaptchaModal;
   let __loginSubmitting = false;
 
-  function onloadCallback(){
+  function initLoginRecaptchaV2(){
     recaptchaLogin = grecaptcha.render('recaptcha-login', {
       'sitekey': '6Let1_MrAAAAAK9ASdQeXoKCqIyrq_9U-REc6SxY'
     });
@@ -489,7 +489,7 @@ body {
 	
 
 	<script
-		src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit"
+		src="https://www.google.com/recaptcha/api.js?onload=initLoginRecaptchaV2&render=explicit"
 		async defer></script>
 </body>
 </html>
