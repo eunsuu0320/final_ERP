@@ -22,8 +22,6 @@
 					<h1 class="mt-4">품목관리</h1>
 				</div>
 
-
-
 				<div class="searchTool d-flex align-items-end mb-3">
 					<div class="d-flex">
 
@@ -104,12 +102,19 @@
 						onclick="showDetailModal('regist')">신규</button>
 				</div>
 				<div class="mb-2">
+					<!-- ✅ 전체 선택 체크박스 -->
+					<label class="me-2"> <input type="checkbox" id="selectAll"
+					 /> <span>전체</span>
+					</label>
+
+					<!-- ✅ 개별 컬럼 체크박스 -->
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
 						th:checked="${col == '품목코드' or col == '품목명' or col == '품목그룹' or col == '규격/단위' or col == '입고단가' or col == '출고단가' or col == '이미지' or col == '창고코드' or col == '비고'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
+
 
 
 				<div id="productTable"></div>

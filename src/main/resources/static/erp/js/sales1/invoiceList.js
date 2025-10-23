@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
 		"수금완료": { label: "수금완료" },
-
 	};
 
 	const cleanValue = (v) => (v ? Number(String(v).replace(/,/g, "")) : 0);
@@ -20,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		if (!row) return null;
 		const tds = Array.from(row.querySelectorAll("td"));
 		if (tds.length < 4) return null;
-		const [qtyCell, supplyCell, taxCell, finalCell] = tds.slice(-4); // 뒤에서 4칸
+		const [qtyCell, supplyCell, taxCell, finalCell] = tds.slice(-4);
 		return { qtyCell, supplyCell, taxCell, finalCell };
 	}
 
@@ -62,54 +61,39 @@ document.addEventListener("DOMContentLoaded", function() {
 		table.setFilter(filterField, "=", filterValue);
 	}
 
-
 	window.filterSearch = function() {
-		// 🔍 검색 조건 수집 (널 안전 처리 포함)
 		const partnerName = document.getElementById("partnerName")?.value.trim() || "";
 		const quoteDateSearch1 = document.getElementById("quoteDateSearch1")?.value.trim() || "";
 		const quoteDateSearch2 = document.getElementById("quoteDateSearch2")?.value.trim() || "";
 		const managerSearch = document.getElementById("managerSearch")?.value.trim() || "";
 
-		// 🔧 기본 필터 조건 배열
 		const filters = [];
 		if (partnerName) filters.push({ field: "거래처명", type: "like", value: partnerName });
 		if (managerSearch) filters.push({ field: "담당자", type: "like", value: managerSearch });
 
-		// ✅ 전역 Tabulator 인스턴스 참조
 		const table = window.invoiceTableInstance;
-
 		if (table && typeof table.setFilter === "function") {
-			table.clearFilter(); // 기존 필터 제거
-
-			// 기본 필터 먼저 적용
+			table.clearFilter();
 			table.setFilter(filters);
 
-			// ✅ 등록일자(quoteDateSearch1 ~ quoteDateSearch2) 범위 필터 추가
 			if (quoteDateSearch1 || quoteDateSearch2) {
 				table.addFilter((data) => {
 					const dateStr = data["등록일자"];
-					if (!dateStr) return false; // 등록일자가 없는 데이터는 제외
-
+					if (!dateStr) return false;
 					const cellDate = new Date(dateStr);
 					const startDate = quoteDateSearch1 ? new Date(quoteDateSearch1) : null;
 					const endDate = quoteDateSearch2 ? new Date(quoteDateSearch2) : null;
-
-					// 날짜 비교
 					if (startDate && cellDate < startDate) return false;
 					if (endDate && cellDate > endDate) return false;
 					return true;
 				});
 			}
-
 			console.log("✅ 클라이언트 필터 적용 완료:", filters, quoteDateSearch1, quoteDateSearch2);
 		} else {
 			console.error("❌ invoiceTable이 초기화되지 않았거나 Tabulator 인스턴스가 아닙니다.", table);
 			alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
 		}
 	};
-
-
-
 
 	// ===========================================================
 	// ✅ 모달 열기 (등록 / 상세)
@@ -140,9 +124,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		modal.show();
 	};
 
-	// ===========================================================
-	// ✅ 모달 초기화 (푸터 포함)
-	// ===========================================================
 	function clearInvoiceModal() {
 		document.querySelectorAll("#newDetailModal input").forEach((el) => {
 			if (el.type === "checkbox") el.checked = false;
@@ -164,9 +145,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 	document.getElementById("newDetailModal").addEventListener("hidden.bs.modal", clearInvoiceModal);
 
-	// ===========================================================
-	// ✅ 상세조회
-	// ===========================================================
 	async function loadInvoiceDetail(invoiceCode) {
 		try {
 			const res = await fetch(`/api/getDetailInvoice/${invoiceCode}`);
@@ -196,7 +174,6 @@ document.addEventListener("DOMContentLoaded", function() {
 					tbody.appendChild(tr);
 				});
 			}
-
 			updateTableFooter();
 		} catch (err) {
 			console.error("🚨 상세조회 오류:", err);
@@ -204,9 +181,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 	}
 
-	// ===========================================================
-	// ✅ 출하지시서 조회
-	// ===========================================================
 	window.loadShipmentDetailsForInvoice = async function() {
 		try {
 			const partnerCode = document.querySelector('#newDetailModal input[name="partnerCode"]')?.value?.trim();
@@ -249,9 +223,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 	};
 
-	// ===========================================================
-	// ✅ Footer 합계 계산
-	// ===========================================================
 	function updateTableFooter() {
 		const rows = document.querySelectorAll("#itemDetailBody tr");
 		let totalQty = 0, sumSupply = 0, sumTax = 0, sumTotal = 0;
@@ -270,11 +241,13 @@ document.addEventListener("DOMContentLoaded", function() {
 			cells.taxCell.textContent = fmt(sumTax);
 			cells.finalCell.textContent = fmt(sumTotal);
 		}
+
+		document.getElementById("supplyAmount").value = fmt(sumSupply);
+		document.getElementById("taxAmount").value = fmt(sumTax);
+		document.getElementById("totalAmount").value = fmt(sumTotal);
+
 	}
 
-	// ===========================================================
-	// ✅ 선택 행 합계 (체크박스)
-	// ===========================================================
 	function updateSelectedTotals() {
 		const checked = document.querySelectorAll("#itemDetailBody tr input.rowCheck:checked");
 		let totalQty = 0, totalSupply = 0, totalTax = 0, totalFinal = 0;
@@ -309,43 +282,17 @@ document.addEventListener("DOMContentLoaded", function() {
 		if (btn) btn.onclick = loadShipmentDetailsForInvoice;
 	});
 
-
-
-
-	// ===========================================================
-	// ✅ 회계 일괄반영
-	// ===========================================================
 	window.insertAc = async function() {
 		const table = window.invoiceTableInstance;
-		if (!table) {
-			alert("테이블이 아직 준비되지 않았습니다.");
-			return;
-		}
-
-		// ✅ 선택된 행 데이터 가져오기
+		if (!table) return alert("테이블이 아직 준비되지 않았습니다.");
 		const selectedRows = table.getSelectedData();
-		if (selectedRows.length === 0) {
-			return alert("회계반영할 청구서를 선택하세요.");
-		}
-
-		// ✅ '수금완료' 상태인 건만 필터링
+		if (selectedRows.length === 0) return alert("회계반영할 청구서를 선택하세요.");
 		const eligibleRows = selectedRows.filter(row => row.진행상태 === "수금완료");
-		if (eligibleRows.length === 0) {
-			return alert("선택된 청구서 중 '수금완료' 상태인 건만 회계반영할 수 있습니다.");
-		}
-
-		// ✅ 사용자 확인
-		if (!confirm(`선택된 ${eligibleRows.length}건의 청구서를 회계반영완료로 변경하시겠습니까?`)) {
-			return;
-		}
+		if (eligibleRows.length === 0) return alert("‘수금완료’ 상태만 회계반영할 수 있습니다.");
+		if (!confirm(`선택된 ${eligibleRows.length}건을 회계반영완료로 변경하시겠습니까?`)) return;
 
 		try {
-			// ✅ 서버 반영 (일괄 업데이트)
-			const updatePayload = eligibleRows.map(row => ({
-				invoiceCode: row.청구서코드,
-				status: "회계반영완료"
-			}));
-
+			const updatePayload = eligibleRows.map(row => ({ invoiceCode: row.청구서코드, status: "회계반영완료" }));
 			const res = await fetch("/api/updateInvoiceStatus", {
 				method: "POST",
 				headers: {
@@ -355,19 +302,13 @@ document.addEventListener("DOMContentLoaded", function() {
 				},
 				body: JSON.stringify(updatePayload)
 			});
-
 			if (!res.ok) throw new Error("서버 업데이트 실패");
 			alert("회계반영이 완료되었습니다.");
-
-			// ✅ 클라이언트 테이블 상태 갱신
 			eligibleRows.forEach(row => {
-				const rowComponent = table.getRow(row.청구서코드);
-				if (rowComponent) {
-					row.진행상태 = "회계반영완료";
-					rowComponent.update({ 진행상태: "회계반영완료" });
-				}
+				const rowComponent = table.getRows().find(r => r.getData().청구서코드 === row.청구서코드);
+				if (rowComponent) rowComponent.update({ 진행상태: "회계반영완료" });
 			});
-
+			table.deselectRow();
 			table.redraw(true);
 		} catch (err) {
 			console.error("🚨 회계반영 오류:", err);
@@ -375,31 +316,19 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
 	};
 
-
 	window.updateStatusAPI = function(code, status, selectElement) {
 		const row = window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code);
-		// API 호출 전 현재 상태를 저장합니다.
 		const currentStatus = row?.getData()?.진행상태;
-
 		if (currentStatus === status) {
-			console.log(`[출하지시서 ${code}]의 상태는 이미 '${status}'입니다. API 호출을 건너뜁니다.`);
-			// 현재 상태와 같더라도 Tabulator가 자동으로 리렌더링하지 않으므로 select 값을 되돌립니다.
-			if (selectElement) {
-				selectElement.value = currentStatus;
-			}
+			if (selectElement) selectElement.value = currentStatus;
 			return;
 		}
-
-		// 로딩 상태 등으로 임시 UI 변경을 원할 경우 여기에 로직을 추가할 수 있습니다.
 
 		const url = "/api/updateInvoice";
 		const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 		const csrfToken = document.querySelector('meta[name="_csrf"]').content;
 
-		const data = {
-			invoiceCode: code, // 서버에 보낼 견적서 코드
-			status: status
-		};
+		const data = { invoiceCode: code, status: status };
 
 		fetch(url, {
 			method: "POST",
@@ -410,44 +339,24 @@ document.addEventListener("DOMContentLoaded", function() {
 			body: JSON.stringify(data)
 		})
 			.then(res => {
-				if (!res.ok) {
-					// HTTP 상태 코드가 200번대가 아니면 오류 처리
-					return res.json().then(error => {
-						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
-					});
-				}
+				if (!res.ok) return res.json().then(error => { throw new Error(error.message || `서버 오류 발생: ${res.status}`); });
 				return res.json();
 			})
 			.then(response => {
-				if (response.success) { // 서버 응답에 'success: true'가 있다고 가정
-					// Tabulator 행 데이터 업데이트 (화면 새로고침 없이)
-					if (window.invoiceTableInstance) {
-						// 고유 견적서 코드를 기반으로 행을 찾아 '진행상태' 필드를 업데이트합니다.
-						// 이 업데이트는 자동으로 Tabulator 셀의 formatter를 다시 호출합니다.
-						window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code)?.update({ '진행상태': status });
-					}
+				if (response.success) {
+					window.invoiceTableInstance.getRows().find(r => r.getData().청구서코드 === code)?.update({ '진행상태': status });
 				} else {
-					alert(`상태 변경에 실패했습니다: ${response.message || '알 수 없는 오류'}`);
-					// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
-					if (selectElement) {
-						selectElement.value = currentStatus;
-					}
+					alert(`상태 변경 실패: ${response.message || '알 수 없는 오류'}`);
+					if (selectElement) selectElement.value = currentStatus;
 				}
 			})
 			.catch(err => {
-				console.error("상태 변경 API 호출 실패:", err);
-				alert(`상태 변경 중 통신 오류가 발생했습니다. 오류: ${err.message}`);
-				// 실패 시 <select> 요소를 원래 상태로 되돌립니다.
-				if (selectElement) {
-					selectElement.value = currentStatus;
-				}
+				console.error("상태 변경 실패:", err);
+				alert(`상태 변경 오류: ${err.message}`);
+				if (selectElement) selectElement.value = currentStatus;
 			});
-	}
+	};
 
-
-	// ===========================================================
-	// ✅ 청구서 저장
-	// ===========================================================
 	window.saveModal = async function() {
 		const partnerCode = document.querySelector("#partnerCodeModal").value.trim();
 		const partnerName = document.querySelector("#partnerNameModal").value.trim();
@@ -526,44 +435,40 @@ document.addEventListener("DOMContentLoaded", function() {
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${code}')">${cell.getValue()}</div>`;
 				};
 			}
-			// "진행상태" 컬럼에 HTML Select 요소 적용 (직접 변경 방식)
+
+
+			if (col === "비고") {
+				def.hozAlign = "left";
+			}
+
 			if (col === "진행상태") {
 				def.field = "진행상태";
 				def.formatter = function(cell) {
-					const value = cell.getValue(); // 현재 상태 값
+					const value = cell.getValue();
 					const rowData = cell.getData();
 					const code = rowData.청구서코드;
 
-					// 만약 진행상태가 "판매완료"라면 select 대신 input으로 표시
 					if (value === "회계반영완료") {
-						return `
-		<input type="text" 
-			class="form-control form-control-sm text-center bg-light" 
-			value="${value}" 
-			readonly 
-			style="font-size:0.75rem; height:auto; min-width:90px; cursor: no-drop;">
-	`;
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${value}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
 					}
 
-					// 나머지 상태는 select로 표시
 					const options = Object.keys(STATUS_MAP).map(key => {
 						const itemInfo = STATUS_MAP[key];
 						const isSelected = key === value ? 'selected' : '';
 						return `<option value="${key}" ${isSelected}>${itemInfo.label}</option>`;
 					}).join('');
 
-					return `
-			<select class="form-select form-select-sm" 
-					onchange="updateStatusAPI('${code}', this.value, this)"
-					style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
-				${options}
-			</select>
-		`;
+					return `<select class="form-select form-select-sm"
+						onchange="updateStatusAPI('${code}', this.value, this)"
+						style="font-size:0.75rem; padding:0.25rem 0.5rem; height:auto; min-width:90px;">
+						${options}</select>`;
 				};
 			}
 
 			if (col === "청구금액") {
-				def.title = "청구금액 (원)"; // 컬럼명 변경
+				def.title = "청구금액 (원)";
 				def.formatter = function(cell) {
 					const v = cell.getValue();
 					if (v === null || v === undefined || isNaN(v)) return "-";
@@ -580,4 +485,27 @@ document.addEventListener("DOMContentLoaded", function() {
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
 	window.invoiceTableInstance = tableInstance;
 	initTabFiltering();
+
+	// ✅ 컬럼 체크박스 제어 (PRODUCTLIST.js 스타일)
+	const selectAll = document.getElementById('selectAllColumns');
+	const columnCheckboxes = document.querySelectorAll('.colCheckbox');
+	if (selectAll && columnCheckboxes.length > 0) {
+		selectAll.addEventListener('change', function() {
+			const checked = this.checked;
+			columnCheckboxes.forEach(chk => {
+				chk.checked = checked;
+				if (checked) tableInstance.showColumn(chk.value);
+				else tableInstance.hideColumn(chk.value);
+				tableInstance.redraw(true);
+			});
+		});
+		columnCheckboxes.forEach(chk => {
+			chk.addEventListener('change', function() {
+				if (this.checked) tableInstance.showColumn(this.value);
+				else tableInstance.hideColumn(this.value);
+				selectAll.checked = Array.from(columnCheckboxes).every(c => c.checked);
+				tableInstance.redraw(true);
+			});
+		});
+	}
 });

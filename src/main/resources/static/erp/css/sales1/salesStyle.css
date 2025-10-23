@@ -6,13 +6,13 @@
 }
 
 .containerBox {
-	padding: 30px;
+	padding-left: 30px;
+	padding-right: 30px;
 }
 
 #productTable {
-  min-height: auto !important; /* 혹은 적절한 높이 제거 */
+	min-height: auto !important; /* 혹은 적절한 높이 제거 */
 }
-
 
 .tabulator-cell img {
 	max-height: 40px;
@@ -95,31 +95,28 @@
 }
 
 input:disabled {
-  background-color: #f8f9fa !important;
-  color: #6c757d !important;
-  cursor: not-allowed;
+	background-color: #f8f9fa !important;
+	color: #6c757d !important;
+	cursor: not-allowed;
 }
 
-input[readonly],
-textarea[readonly] {
-  background-color: #f8f9fa !important;
-  color: #6c757d !important;
-  cursor: not-allowed;
+input[readonly], textarea[readonly] {
+	background-color: #f8f9fa !important;
+	color: #6c757d !important;
+	cursor: not-allowed;
 }
 
 /* 모든 헤더 가운데 정렬 + 기본 마진 */
 .tabulator-col .tabulator-col-title {
-  text-align: center !important;
-  margin-left: 10px; /* 정렬 아이콘과 텍스트 간격용 */
+	text-align: center !important;
+	margin-left: 10px; /* 정렬 아이콘과 텍스트 간격용 */
 }
 
 /* ✅ 첫 번째 컬럼(체크박스 컬럼)은 마진 제거 */
 .tabulator-col:first-child .tabulator-col-title {
-  margin-left: 0 !important;
+	margin-left: 0 !important;
 }
 
 #priceTableContainer {
-  background-color: transparent !important;
+	background-color: transparent !important;
 }
-
-

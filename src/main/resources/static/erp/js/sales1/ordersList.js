@@ -53,15 +53,12 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (window.addItemRow) window.addItemRow();
 		}
 
-		// 부가 필드 초기화
 		const del = document.getElementById('deliveryDate'); if (del) del.value = '';
 		const est = document.getElementById('estimateUniqueCode'); if (est) est.value = '';
 
-		// 견적 로드 캐시 초기화 (요구사항 4 & 6)
 		window.lastLoadedOrderData = null;
 		window.lastModalType = null;
 
-		// 합계 리셋
 		if (typeof window.calculateTotal === 'function') window.calculateTotal();
 	};
 
@@ -70,23 +67,19 @@ document.addEventListener("DOMContentLoaded", function() {
 		const modal = new bootstrap.Modal(modalEl);
 		const form = document.getElementById("quoteForm");
 
-		// 헤더 타이틀
 		const modalName = (modalType === 'detail') ? '주문서 상세정보' : '주문서 등록';
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 
-		// 항상 초기화
 		window.resetOrder();
 
-		// 신규 모드: 파트너 검색 허용
 		if (modalType === 'regist') {
 			document.getElementById("partnerName").readOnly = false;
 			document.getElementById("partnerModalBtn").disabled = false;
 		}
 
-		// 상세 모드: 서버에서 주문서 데이터를 로딩/바인딩
 		if (modalType === 'detail' && (keyword !== undefined && keyword !== null)) {
 			showLoading();
-			loadDetailData('orders', keyword, form) // /api/orders/getDetail?keyword=...
+			loadDetailData('orders', keyword, form)
 				.then(data => {
 					window.lastLoadedOrderData = data;
 					window.lastModalType = 'detail';
@@ -95,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				.finally(hideLoading);
 		}
 
-		// 닫히면 전체 초기화 + 캐시 초기화 (요구사항 4)
 		modalEl.addEventListener('hidden.bs.modal', function() {
 			window.resetOrder();
 		}, { once: true });
@@ -128,8 +120,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			manager: orderDataObject.manager || '',
 			remarks: orderDataObject.remarks || '',
 			detailList: detailList,
-
-			// 🆕 신규 필드
 			postCode: orderDataObject.postCode ? parseInt(orderDataObject.postCode) : null,
 			address: orderDataObject.address || '',
 			payCondition: orderDataObject.payCondition || ''
@@ -140,8 +130,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				[document.querySelector('meta[name="_csrf_header"]').content]:
-					document.querySelector('meta[name="_csrf"]').content
+				[document.querySelector('meta[name=\"_csrf_header\"]').content]:
+					document.querySelector('meta[name=\"_csrf\"]').content
 			},
 			body: JSON.stringify(finalPayload),
 		})
@@ -153,7 +143,6 @@ document.addEventListener("DOMContentLoaded", function() {
 				alert("주문서가 성공적으로 등록되었습니다. ID: " + data.id);
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
 				if (modalInstance) modalInstance.hide();
-				// 전체 새로고침
 				location.reload();
 			})
 			.catch(err => {
@@ -170,17 +159,17 @@ document.addEventListener("DOMContentLoaded", function() {
 		tbody.querySelectorAll('tr').forEach(row => {
 			if (row.getAttribute('data-row-id') === 'new') return;
 
-			const supplyAmount = window.cleanValue(row.querySelector('input[name="supplyAmount"]').value);
-			const taxAmount = window.cleanValue(row.querySelector('input[name="taxAmount"]').value);
+			const supplyAmount = window.cleanValue(row.querySelector('input[name=\"supplyAmount\"]').value);
+			const taxAmount = window.cleanValue(row.querySelector('input[name=\"taxAmount\"]').value);
 			const pctVat = (supplyAmount > 0) ? (taxAmount / supplyAmount) * 100 : 0;
 
 			list.push({
-				productCode: row.querySelector('input[name="productCode"]').value || '',
-				quantity: window.cleanValue(row.querySelector('input[name="quantity"]').value),
-				price: window.cleanValue(row.querySelector('input[name="price"]').value),
+				productCode: row.querySelector('input[name=\"productCode\"]').value || '',
+				quantity: window.cleanValue(row.querySelector('input[name=\"quantity\"]').value),
+				price: window.cleanValue(row.querySelector('input[name=\"price\"]').value),
 				amountSupply: supplyAmount,
 				pctVat: Math.round(pctVat * 100) / 100,
-				remarks: row.querySelector('input[name="remarks"]').value || '',
+				remarks: row.querySelector('input[name=\"remarks\"]').value || '',
 			});
 		});
 		return list;
@@ -189,7 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	// === 메인 Tabulator ===
 	let tabulatorColumns = [
 		{
-			title: "No",           // 컬럼 제목
+			title: "No",
 			formatter: "rownum",
 			hozAlign: "center", headerHozAlign: "center",
 			headerSort: false, width: 50, frozen: true
@@ -197,49 +186,44 @@ document.addEventListener("DOMContentLoaded", function() {
 		...columns.map(col => {
 			let columnDef = { title: col, field: col, visible: defaultVisible.includes(col) };
 
-			// 주문서코드 클릭 → 상세모달 (요구사항 5)
 			if (col === "주문서코드") {
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
 					const rowData = cell.getData();
-					const uk = rowData.주문서고유코드; // 서비스에서 넣어줌
+					const uk = rowData.주문서고유코드;
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${uk}')">${value}</div>`;
 				};
 			}
-
-			// 품목명: 텍스트 그대로 (서비스에서 "A 외 n건" 생성)
+			
+			
+			if (col === "비고") {
+				columnDef.hozAlign = "left";
+			}
+			
 			if (col === "주문금액합계") {
+					columnDef.title = col + " (원)";
 				columnDef.formatter = function(cell) {
 					const v = cell.getValue();
 					if (v === null || v === undefined || isNaN(v)) return "-";
-					return Number(v).toLocaleString('ko-KR') + " 원"; // 요구사항 10 포맷
+					return Number(v).toLocaleString('ko-KR');
 				};
 				columnDef.sorter = "number";
 				columnDef.hozAlign = "right";
 			}
-
 			if (col === "진행상태") {
-				columnDef.field = "진행상태";
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
-					const rowData = cell.getData();
-					const code = rowData.주문서코드;
-
+					const code = cell.getData().주문서코드;
 					const options = Object.keys(STATUS_MAP).map(key => {
 						const isSelected = key === value ? 'selected' : '';
 						return `<option value="${key}" ${isSelected}>${STATUS_MAP[key].label}</option>`;
 					}).join('');
-
-					return `
-            <select class="form-select form-select-sm"
-                    onchange="updateStatusAPI('${code}', this.value, this)"
-                    style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
-              ${options}
-            </select>
-          `;
+					return `<select class="form-select form-select-sm"
+							onchange="updateStatusAPI('${code}', this.value, this)"
+							style="font-size:0.75rem; padding:0.25rem 0.5rem; height:auto; min-width:90px;">
+							${options}</select>`;
 				};
 			}
-
 			return columnDef;
 		})
 	];
@@ -247,7 +231,40 @@ document.addEventListener("DOMContentLoaded", function() {
 	const tableInstance = makeTabulator(rows, tabulatorColumns);
 	window.orderTableInstance = tableInstance;
 
-	// === 요구사항 1: fetch 없이 다중필터 ===
+	// ------------------------------
+	// ✅ 컬럼 체크박스 제어 (PRODUCTLIST.js 스타일)
+	// ------------------------------
+	const selectAll = document.getElementById('selectAllColumns');
+	const columnCheckboxes = document.querySelectorAll('.colCheckbox');
+
+	if (selectAll && columnCheckboxes.length > 0) {
+		// 전체 선택 체크박스
+		selectAll.addEventListener('change', function() {
+			const checked = this.checked;
+			columnCheckboxes.forEach(chk => {
+				chk.checked = checked;
+				if (checked) tableInstance.showColumn(chk.value);
+				else tableInstance.hideColumn(chk.value);
+
+				tableInstance.redraw(true); // true: 열 너비 자동 조정
+			});
+		});
+
+		// 개별 체크박스
+		columnCheckboxes.forEach(chk => {
+			chk.addEventListener('change', function() {
+				if (this.checked) tableInstance.showColumn(this.value);
+				else tableInstance.hideColumn(this.value);
+
+				// 전체 선택 상태 반영
+				selectAll.checked = Array.from(columnCheckboxes).every(c => c.checked);
+
+				tableInstance.redraw(true); // true: 열 너비 자동 조정
+			});
+		});
+	}
+
+	// === 다중필터 ===
 	window.filterSearch = function() {
 		const table = window.orderTableInstance;
 		if (!table) return;
@@ -258,29 +275,21 @@ document.addEventListener("DOMContentLoaded", function() {
 		const partner = document.getElementById('partnerNameSearch').value.trim();
 		const product = document.getElementById('productSearch').value.trim();
 
-		table.clearFilter(true); // 기존 필터 초기화
+		table.clearFilter(true);
 
-		// 함수형 필터 (Tabulator 전체 필터링)
 		table.setFilter((data) => {
-			// 등록일자 비교
 			if (startDate || endDate) {
 				const cellDate = new Date(data['등록일자']);
 				const sOk = !startDate || cellDate >= new Date(startDate);
 				const eOk = !endDate || cellDate <= new Date(endDate);
 				if (!sOk || !eOk) return false;
 			}
-
-			// 담당자
 			if (manager && !String(data['담당자'] || '').includes(manager)) return false;
-			// 거래처명
 			if (partner && !String(data['거래처명'] || '').includes(partner)) return false;
-			// 품목명
 			if (product && !String(data['품목명'] || '').includes(product)) return false;
-
 			return true;
 		});
 	};
-
 
 	window.resetSearch = function() {
 		document.getElementById('startDate').value = '';
@@ -305,8 +314,8 @@ window.updateStatusAPI = function(code, status, selectElement) {
 	}
 
 	const url = "/api/updateOrders";
-	const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
-	const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+	const csrfHeader = document.querySelector('meta[name=\"_csrf_header\"]').content;
+	const csrfToken = document.querySelector('meta[name=\"_csrf\"]').content;
 
 	fetch(url, {
 		method: "POST",
@@ -341,11 +350,11 @@ window.calculateRow = function(inputElement) {
 	const currentValue = cleanValue(inputElement.value);
 	inputElement.value = currentValue.toLocaleString('ko-KR');
 
-	const quantityInput = row.querySelector('input[name="quantity"]');
-	const unitPriceInput = row.querySelector('input[name="price"]');
-	const supplyAmountInput = row.querySelector('input[name="supplyAmount"]');
-	const taxAmountInput = row.querySelector('input[name="taxAmount"]');
-	const finalAmountInput = row.querySelector('input[name="finalAmount"]');
+	const quantityInput = row.querySelector('input[name=\"quantity\"]');
+	const unitPriceInput = row.querySelector('input[name=\"price\"]');
+	const supplyAmountInput = row.querySelector('input[name=\"supplyAmount\"]');
+	const taxAmountInput = row.querySelector('input[name=\"taxAmount\"]');
+	const finalAmountInput = row.querySelector('input[name=\"finalAmount\"]');
 
 	const quantity = cleanValue(quantityInput.value);
 	const unitPrice = cleanValue(unitPriceInput.value);
@@ -371,9 +380,9 @@ window.calculateTotal = function() {
 		if (row.getAttribute('data-row-id') === 'new') return;
 
 		const cleanValue = window.cleanValue;
-		const quantity = cleanValue(row.querySelector('input[name="quantity"]')?.value || 0);
-		const supplyAmount = cleanValue(row.querySelector('input[name="supplyAmount"]')?.value || 0);
-		const taxAmount = cleanValue(row.querySelector('input[name="taxAmount"]')?.value || 0);
+		const quantity = cleanValue(row.querySelector('input[name=\"quantity\"]')?.value || 0);
+		const supplyAmount = cleanValue(row.querySelector('input[name=\"supplyAmount\"]')?.value || 0);
+		const taxAmount = cleanValue(row.querySelector('input[name=\"taxAmount\"]')?.value || 0);
 
 		totalQuantity += quantity;
 		totalSupplyAmount += supplyAmount;

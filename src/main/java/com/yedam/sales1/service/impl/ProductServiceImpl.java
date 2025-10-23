@@ -72,9 +72,7 @@ public class ProductServiceImpl implements ProductService {
             columns.add("출고단가");
             columns.add("이미지");
             columns.add("창고코드");
-            columns.add("재고");
             columns.add("생성일자");
-            columns.add("수정일자");
             columns.add("사용여부");
             columns.add("비고");
 
@@ -107,7 +105,6 @@ public class ProductServiceImpl implements ProductService {
                 row.put("창고코드", product.getWarehouseCode());
                 row.put("입고단가", product.getInPrice());
                 row.put("출고단가", product.getOutPrice());
-                row.put("재고", product.getStock());
                 rows.add(row);
             }
         }

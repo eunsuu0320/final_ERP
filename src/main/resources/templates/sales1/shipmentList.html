@@ -61,13 +61,13 @@
 							</div>
 						</div>
 
-						<div >
-							<label for="warehouseCodeSearch"
-								class="me-3">창고</label>
+						<div>
+							<label for="warehouseCodeSearch" class="me-3">창고</label>
 							<div class="me-5 d-flex align-items-center">
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="warehouseCodeSearch" name="warehouseCode">
+										placeholder="검색어 입력" id="warehouseCodeSearch"
+										name="warehouseCode">
 									<button class="btn btn-outline-secondary" type="button"
 										onclick="openModal('commonCode', function(selected) {
                                         document.getElementById('warehouseCodeSearch').value=selected.codeName;}, 'GRP003')">
@@ -117,7 +117,9 @@
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" class="me-2"> <input
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> <label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" class="colCheckbox" th:value="${col}"
 						th:checked="${col == '출하지시서코드' or col == '출하예정일자' or col == '거래처명' or col == '담당자' or col == '창고명' or col == '품목명' or col == '수량합계' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
@@ -212,9 +214,14 @@
 													style="max-width: 400px;">
 													<input type="text" class="form-control" name="postCode"
 														id="postCode" placeholder="우편번호" readonly>
+													<button class="btn btn-outline-secondary" type="button"
+														onclick="execDaumPostcode()">
+														<i class="bi bi-search"></i>
+													</button>
 												</div>
 
-												<button class="btn btn-secondary btn-sm" type="button">변경</button>
+
+
 
 											</div>
 
@@ -340,7 +347,7 @@
 										class="table table-bordered table-sm">
 										<thead class="table-light text-center">
 											<tr>
-												<th style="width: 30px;"></th>
+												<th style="width: 5%;"></th>
 												<th style="width: 15%;">품목코드*</th>
 												<th style="width: 15%;">품목명</th>
 												<th style="width: 10%;">총수량</th>
@@ -348,8 +355,6 @@
 												<th style="width: 10%;">미지시수량</th>
 												<th style="width: 10%;">재고</th>
 												<th style="width: 10%;">현지시수량*</th>
-												<th style="width: 10%;">출하지시여부</th>
-												<th style="width: 15%;">비고</th>
 											</tr>
 										</thead>
 										<tbody id="itemDetailBody">
@@ -387,14 +392,6 @@
 													class="form-control form-control-sm item-input text-end"
 													name="nowQuantity" id="nowQuantity" value="0"
 													oninput="validateNowQuantity(this)"></td>
-												<!-- 출하지시여부 -->
-												<td><input type="text"
-													class="form-control form-control-sm item-input text-end"
-													name="isShipment" id="isShipment" value="0" readonly></td>
-												<!-- 비고 -->
-												<td><input type="text"
-													class="form-control form-control-sm item-input"
-													name="remarks" id="remarks"></td>
 											</tr>
 
 										</tbody>
