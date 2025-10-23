@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		const form = document.getElementById("itemForm");
 
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
-		
+
 		window.lastLoadedProductData = null;
 		window.lastModalType = null;
 		form.reset();
@@ -66,9 +66,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 					loadDetailData('product', keyword, form)
 						.then(responseData => {
-						window.lastLoadedProductData = responseData;
-						window.lastModalType = modalType;
-					});
+							window.lastLoadedProductData = responseData;
+							window.lastModalType = modalType;
+						});
 				})
 				.catch(err => {
 					console.error("공통 코드 로딩 중 치명적인 오류 발생:", err);
@@ -142,8 +142,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 품목리스트 테이블 컬럼에 대한 정의
 	let tabulatorColumns = [
 		{
-			formatter: "rowSelection",
-			titleFormatter: "rowSelection",
+			title: "No",           // 컬럼 제목
+			formatter: "rownum",
 			hozAlign: "center",
 			headerHozAlign: "center",
 			headerSort: false,
@@ -184,13 +184,15 @@ document.addEventListener("DOMContentLoaded", function() {
 			}
 
 			if (col === "입고단가" || col === "출고단가") {
+				// 컬럼명 변경
+				columnDef.title = col + " (원)";
+
 				columnDef.formatter = function(cell) {
 					const value = cell.getValue();
 					const formatted = (value !== null && value !== undefined && !isNaN(value))
-						? value.toLocaleString('ko-KR') + " 원"
+						? value.toLocaleString('ko-KR')
 						: "-";
 
-					// 값 유무에 따라 정렬 다르게 적용
 					const align = (value !== null && value !== undefined && !isNaN(value))
 						? "right"
 						: "center";
@@ -200,6 +202,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 				columnDef.sorter = "number";
 			}
+
 
 
 			// field가 정의되지 않은 경우를 대비 (실제 VO 필드명으로 수정 필요)

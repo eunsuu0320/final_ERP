@@ -21,10 +21,12 @@ public interface InvoiceService {
 	Long registerNewInvoice(InvoiceRegistrationDTO dto);
 
 	
-	boolean updateInvoiceStatus(String invoiceCode, String status);
 	
 	 void saveInvoice(InvoiceSaveRequestDto dto);
 	
 	InvoiceResponseDto getInvoiceDetail(String invoiceCode);
+
+	boolean updateInvoiceStatus(String invoiceCode, String status);
+		
 
 }

@@ -1,12 +1,12 @@
 document.addEventListener("DOMContentLoaded", function() {
 	// 테이블 컬럼을 위한 체크박스의 초기 값. (메인 테이블용)
-	const defaultVisible = ["거래처코드", "거래처명", "거래처유형", "전화번호", "이메일", "비고"];
+	const defaultVisible = ["거래처코드", "거래처명", "거래처유형", "전화번호", "이메일", "업종", "업태", "사업자번호", "담당자", "비고"];
 
 	let bankSelectOptions = {}; // 은행 코드 옵션을 저장할 객체
 
-	
 
-	
+
+
 	// 탭 전환 (Partner, LoanPrice, Payment)
 	function initTabSwitching() {
 		const tabButtons = document.querySelectorAll('#partnerTab button');
@@ -214,8 +214,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	// 💡 [유지] 메인 테이블 Tabulator 생성 로직 
 	let tabulatorColumns = [
 		{
-			formatter: "rowSelection",
-			titleFormatter: "rowSelection",
+			title: "No",           // 컬럼 제목
+			formatter: "rownum",
 			hozAlign: "center",
 			headerHozAlign: "center",
 			headerSort: false,
@@ -269,8 +269,8 @@ document.addEventListener("DOMContentLoaded", function() {
 			newRowCheckbox.disabled = true;
 		}
 	}
-	
-	
+
+
 	function autoTab(current, nextId, maxLength) {
 		if (current.value.length >= maxLength) {
 			document.getElementById(nextId)?.focus();
@@ -365,7 +365,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				}
 			});
 	}
-	
+
 	// ★ 2. 검색 버튼 이벤트 핸들러 (조건에 맞는 목록 조회)
 	window.filterSearch = function() {
 		const searchParams = getSearchParams('.searchTool');

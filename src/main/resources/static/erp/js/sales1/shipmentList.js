@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		"미확인": { label: "미확인" },
 		"출하중": { label: "출하중" },
 		"출하완료": { label: "출하완료" },
-		"회계반영완료": { label: "회계반영완료" }
 	};
 
 
@@ -66,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				filterValue = "출하완료";
 				break;
 			case 'SUCCESSAC':
-				filterValue = "회계반영완료";
+				filterValue = "판매완료";
 				break;
 			default:
 				return;
@@ -253,6 +252,81 @@ document.addEventListener("DOMContentLoaded", function() {
 			resetItemGrid();
 		}
 	};
+
+
+	// ===========================================================
+	// ✅ 판매 일괄반영 (출하완료 → 판매완료)
+	// ===========================================================
+	// ✅ 판매 일괄반영 (출하완료 → 판매완료)
+	// ===========================================================
+	window.insertSales = async function() {
+		const table = window.shipmentTableInstance;
+		if (!table) {
+			alert("테이블이 아직 준비되지 않았습니다.");
+			return;
+		}
+
+		// ✅ 체크박스 선택된 행 데이터 가져오기
+		const selectedRows = table.getSelectedData();
+		if (selectedRows.length === 0) {
+			return alert("판매완료로 변경할 출하지시서를 선택하세요.");
+		}
+
+		// ✅ '출하완료' 상태인 건만 필터링
+		const eligibleRows = selectedRows.filter(row => row.진행상태 === "출하완료");
+		if (eligibleRows.length === 0) {
+			return alert("선택된 출하지시서 중 '출하완료' 상태인 건만 판매완료로 변경할 수 있습니다.");
+		}
+
+		// ✅ 사용자 확인
+		if (!confirm(`선택된 ${eligibleRows.length}건의 출하지시서를 '판매완료'로 변경하시겠습니까?`)) {
+			return;
+		}
+
+		try {
+			// ✅ 서버에 보낼 데이터 구성
+			const updatePayload = eligibleRows.map(row => ({
+				shipmentCode: row.출하지시서코드,
+				status: "판매완료"
+			}));
+
+			// ✅ 서버 요청
+			const res = await fetch("/api/updateShipmentStatus", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					[document.querySelector('meta[name=\"_csrf_header\"]').content]:
+						document.querySelector('meta[name=\"_csrf\"]').content,
+				},
+				body: JSON.stringify(updatePayload)
+			});
+
+			if (!res.ok) throw new Error("서버 요청 실패");
+			const result = await res.json();
+
+			alert("판매완료로 상태가 변경되었습니다.");
+
+			// ✅ UI 즉시 반영
+			eligibleRows.forEach(row => {
+				const rowComponent = table.getRows().find(r => r.getData().출하지시서코드 === row.출하지시서코드);
+				if (rowComponent) {
+					rowComponent.update({ 진행상태: "판매완료" });
+				}
+			});
+
+			// 💡 추가된 로직: 모든 선택 상태 해제
+			// 대부분의 테이블 라이브러리는 'deselectRow()' 또는 유사한 메서드를 제공합니다.
+			table.deselectRow();
+
+			table.redraw(true);
+
+		} catch (err) {
+			console.error("🚨 판매완료 변경 중 오류:", err);
+			alert("판매완료 처리 중 오류가 발생했습니다.");
+		}
+	};
+
+
 
 
 	// ====================================================================
@@ -504,32 +578,40 @@ document.addEventListener("DOMContentLoaded", function() {
 
 			// "진행상태" 컬럼에 HTML Select 요소 적용 (직접 변경 방식)
 			if (col === "진행상태") {
-				// 데이터 필드 이름은 컬럼 제목과 동일하게 '진행상태'를 사용합니다.
 				columnDef.field = "진행상태";
 				columnDef.formatter = function(cell) {
-					const value = cell.getValue(); // 현재 상태 값 (예: "체결")
+					const value = cell.getValue(); // 현재 상태 값
 					const rowData = cell.getData();
 					const code = rowData.출하지시서코드;
 
-					// 옵션 HTML 생성
+					// 만약 진행상태가 "판매완료"라면 select 대신 input으로 표시
+					if (value === "판매완료") {
+						return `
+		<input type="text" 
+			class="form-control form-control-sm text-center bg-light" 
+			value="${value}" 
+			readonly 
+			style="font-size:0.75rem; height:auto; min-width:90px; cursor: no-drop;">
+	`;
+					}
+
+					// 나머지 상태는 select로 표시
 					const options = Object.keys(STATUS_MAP).map(key => {
 						const itemInfo = STATUS_MAP[key];
-						// 현재 상태를 'selected' 속성으로 설정
 						const isSelected = key === value ? 'selected' : '';
 						return `<option value="${key}" ${isSelected}>${itemInfo.label}</option>`;
 					}).join('');
 
-					// Select 요소 반환: 변경 시 updateStatusAPI 호출
-					// 'this'는 HTML Select 요소를 가리키며, 이를 세 번째 인수로 전달하여 실패 시 복구합니다.
 					return `
-                        <select class="form-select form-select-sm" 
-                                onchange="updateStatusAPI('${code}', this.value, this)"
-                                style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
-                            ${options}
-                        </select>
-                    `;
+			<select class="form-select form-select-sm" 
+					onchange="updateStatusAPI('${code}', this.value, this)"
+					style="font-size: 0.75rem; padding: 0.25rem 0.5rem; height: auto; min-width: 90px;">
+				${options}
+			</select>
+		`;
 				};
 			}
+
 
 
 

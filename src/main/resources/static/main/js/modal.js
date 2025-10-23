@@ -251,7 +251,7 @@ const modalConfigs = {
 				}
 			},
 			{
-				title: "입고단가",
+				title: "입고단가 (원)",
 				field: "inPrice",
 				hozAlign: "center", // 금액은 우측 정렬이 가독성이 좋습니다.
 				// 콤마 포맷터 적용
@@ -262,11 +262,11 @@ const modalConfigs = {
 						return '-';
 					}
 					// toLocaleString()을 사용하여 콤마를 적용합니다.
-					return Number(price).toLocaleString('ko-KR') + '원';
+					return Number(price).toLocaleString('ko-KR');
 				}
 			}, 
 			{
-				title: "출고단가",
+				title: "출고단가 (원)",
 				field: "outPrice",
 				hozAlign: "center", // 금액은 우측 정렬이 가독성이 좋습니다.
 				// 콤마 포맷터 적용
@@ -277,7 +277,7 @@ const modalConfigs = {
 						return '-';
 					}
 					// toLocaleString()을 사용하여 콤마를 적용합니다.
-					return Number(price).toLocaleString('ko-KR') + '원';
+					return Number(price).toLocaleString('ko-KR');
 				}
 			},
 			{ title: "비고", field: "remarks", hozAlign: "center" },
@@ -342,12 +342,7 @@ const modalConfigs = {
 		selectable: 1,
 	},
 
-
-
-
 };
-
-
 
 
 let table; // Tabulator 인스턴스 전역 변수
