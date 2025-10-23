@@ -278,19 +278,53 @@ public class PayController {
 	
 	// ---------- 성공 화면 렌더 (subscriptionCode 표시) ----------
 	@GetMapping("/complete")
-	public String payComplete(@RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
-			@RequestParam(value = "buyerName", required = false) String buyerName,
-			@RequestParam(value = "total", required = false) Long total,
-			@RequestParam(value = "vat", required = false) Long vat,
-			@RequestParam(value = "companyCode", required = false) String companyCode,
-			@RequestParam(value = "masterId", required = false) String masterId, org.springframework.ui.Model model) {
-		SuccessViewInfo info = new SuccessViewInfo(subscriptionCode == null ? "" : subscriptionCode,
-				buyerName == null ? "" : buyerName, new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
-				companyCode == null ? "" : companyCode, masterId == null ? "" : masterId);
-		model.addAttribute("info", info);
-		return "common/success";
+	public String payComplete(
+	        @RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
+	        @RequestParam(value = "buyerName",        required = false) String buyerName,
+	        @RequestParam(value = "total",            required = false) Long total,
+	        @RequestParam(value = "vat",              required = false) Long vat,
+	        @RequestParam(value = "companyCode",      required = false) String companyCode,
+	        @RequestParam(value = "masterId",         required = false) String masterId,
+	        org.springframework.ui.Model model) {
+
+	    // 1) 파라미터가 비었으면 캐시에서 보강
+	    if (subscriptionCode != null) {
+	        Map<String, String> vars = contractVarsCache.get(subscriptionCode);
+	        if (vars != null) {
+	            if (buyerName == null || buyerName.isBlank()) {
+	                buyerName = vars.getOrDefault("buyerName", "");
+	            }
+	            if (total == null || total == 0L) {
+	                total = parseLongSafe(vars.get("total")); // "99,000" → 99000
+	            }
+	            if (vat == null || vat == 0L) {
+	                vat = parseLongSafe(vars.get("vat"));
+	            }
+	            if (companyCode == null || companyCode.isBlank()) {
+	                companyCode = vars.getOrDefault("companyCode", "");
+	            }
+	        }
+	    }
+
+	    SuccessViewInfo info = new SuccessViewInfo(
+	        nvl(subscriptionCode),
+	        nvl(buyerName),
+	        new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
+	        nvl(companyCode),
+	        nvl(masterId)
+	    );
+	    model.addAttribute("info", info);
+	    return "common/success";
 	}
 
+	// 아래 유틸 둘을 PayController에 추가
+	private static long parseLongSafe(String s) {
+	    if (s == null) return 0L;
+	    try {
+	        return Long.parseLong(s.replaceAll("[^0-9]", ""));
+	    } catch (Exception e) { return 0L; }
+	}
+	
 	// ---------- 계약서 다운로드 (키: subscriptionCode) ----------
 	@GetMapping("/contract/download")
 	public void downloadContract(@RequestParam("subscriptionCode") String subscriptionCode, HttpServletResponse resp)
