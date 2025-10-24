@@ -709,24 +709,23 @@ function submitPayment(){
 window.submitPayment = submitPayment;
 
 /* 결제 결과 수신 (Kakao/Toss) */
-window.addEventListener('message', (e)=>{
-  try{
-    const data = e.data || {};
-    if (!['KAKAOPAY_RESULT','TOSS_RESULT'].includes(data.type)) return;
-
-    if (data.status === 'success') {
-      const qs = new URLSearchParams({
-        subscriptionCode: data.subscriptionCode || '',
-        companyCode: data.companyCode || '',
-        masterId: data.masterId || ''
+window.addEventListener('message', function(e){
+  try {
+    const d = e.data || {};
+    if ((d.type === 'KAKAOPAY_RESULT' || d.type === 'TOSS_RESULT') && d.status === 'success') {
+      const q = new URLSearchParams({
+        subscriptionCode: d.subscriptionCode || '',
+        companyCode: d.companyCode || '',
+        masterId: d.masterId || '',
+        buyerName: d.buyerName || '',
+        total: (d.total ?? 0).toString(),
+        vat: (d.vat ?? 0).toString(),
       });
-      location.href = `/pay/complete?${qs.toString()}`;
-    } else if (data.status === 'cancel') {
-      alert('결제가 취소되었습니다.');
-    } else {
-      alert('결제에 실패했습니다. 다시 시도해주세요.');
+      location.href = '/pay/complete?' + q.toString();
     }
-  }catch(err){ console.error(err); }
+  } catch(err) {
+    console.error('pay complete redirect error:', err);
+  }
 });
 
 /* 다음 주소 */
