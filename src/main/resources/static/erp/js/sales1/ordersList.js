@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", function() {
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
 		"출하지시완료": { label: "출하지시완료" },
-		"완료": { label: "완료" }
 	};
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
@@ -34,7 +33,6 @@ document.addEventListener("DOMContentLoaded", function() {
 			case 'NONCHECK': val = "미확인"; break;
 			case 'ONGOING': val = "진행중"; break;
 			case 'SHIPMENTSUCCESS': val = "출하지시완료"; break;
-			case 'SUCCESS': val = "완료"; break;
 			default: return;
 		}
 		table.setFilter([{ field, type: "=", value: val }], true); // replace=true
