@@ -7,46 +7,64 @@
 <body>
 	<div th:fragment="header">
 		<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-			<!-- Navbar Brand-->
 			<a class="navbar-brand ps-3" href="/dashboard">구독핑 이알핑</a>
 
-			<!-- Sidebar Toggle-->
 			<button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0"
 				id="sidebarToggle">
 				<i class="fas fa-bars"></i>
 			</button>
 
-			<!-- Spacer -->
 			<form
 				class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0"></form>
 
-			<!-- User Dropdown -->
 			<ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
 				<li class="nav-item dropdown"><a
 					class="nav-link dropdown-toggle" id="navbarDropdown" href="#"
 					role="button" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="fas fa-user fa-fw"></i>
-				</a> <!-- User Panel -->
+				</a>
+
 					<ul class="dropdown-menu dropdown-menu-end up-menu p-0"
 						aria-labelledby="navbarDropdown">
-						<li class="up-wrap">
+						<li class="up-wrap"
+							    th:with="
+							      parts=${#strings.arraySplit(#authentication?.name, ':')},
+							
+							      company=${(parts != null and parts.length > 0) ? parts[0] : ''},
+							      userId=${(parts != null and parts.length > 1) ? parts[1] : ''},
+							      empCodeRaw=${(parts != null and parts.length > 2) ? parts[2] : ''},
+							      roleCode=${(parts != null and parts.length > 3) ? parts[3] : ''},
+							      empNameRaw=${(parts != null and parts.length > 4) ? parts[4] : ''},
+							      deptRaw=${(parts != null and parts.length > 5) ? parts[5] : ''},
+							      roleRemk=${(parts != null and parts.length > 6) ? parts[6] : ''},
+							
+							      empName=${!#strings.isEmpty(empNameRaw) ? empNameRaw : (!#strings.isEmpty(userId) ? userId : '관리자')},
+							      empInitial=${!#strings.isEmpty(empName) ? #strings.substring(empName,0,1) : 'A'},
+							      empCode=${!#strings.isEmpty(empCodeRaw) ? empCodeRaw : 'MASTER'},
+							      deptName=${!#strings.isEmpty(deptRaw) ? deptRaw : '-'},
+							
+							      auths=${#authentication?.authorities},
+							      authRole=${(auths != null and auths.size() > 0) ? auths[0].authority : ''},
+							      roleDisp=${
+							        !#strings.isEmpty(authRole)
+							          ? ( #strings.startsWith(authRole,'ROLE_') ? #strings.substring(authRole,5) : authRole )
+							          : ( !#strings.isEmpty(roleRemk)
+							                ? roleRemk
+							                : ( #strings.startsWith(roleCode,'ROLE_') ? #strings.substring(roleCode,5) : roleCode )
+							            )
+							      }
+							    ">
 							<div class="up-card">
-								<!-- 아바타 (이니셜) -->
-								<div class="up-avatar"
-									th:text="${#strings.substring(#authentication.name.split(':')[4],0,1)}">U</div>
+								<div class="up-avatar" th:text="${empInitial}">A</div>
 
-								<!-- 메타 -->
 								<div class="up-meta">
-									<div class="up-name"
-										th:text="${#authentication.name.split(':')[4]}">홍길동</div>
-									<div class="up-dept"
-										th:text="${#authentication.name.split(':')[5]}">영업팀</div>
+									<div class="up-name" th:text="${empName}">관리자</div>
+									<div class="up-dept" th:text="${deptName}">-</div>
 
 									<div class="up-badges">
 										<span class="up-badge">ID: <span
-											th:text="${#authentication.name.split(':')[1]}">admin01</span>
-										</span> <span class="up-badge">사번: <span
-											th:text="${#authentication.name.split(':')[2]}">0001</span>
+											th:text="${!#strings.isEmpty(userId) ? userId : 'admin'}">admin</span>
+										</span> <span class="up-badge">사번: <span th:text="${empCode}">MASTER</span>
 										</span>
 									</div>
 								</div>
@@ -57,11 +75,11 @@
 							<div class="up-list">
 								<div class="up-item">
 									<span class="up-label">회사코드</span> <span class="up-value"
-										th:text="${#authentication.name.split(':')[0]}">C001</span>
+										th:text="${!#strings.isEmpty(company) ? company : 'C001'}">C001</span>
 								</div>
 								<div class="up-item">
-									<span class="up-label">권한</span> <span class="up-value"
-										th:text="${#authentication.name.split(':')[6]}">R002</span>
+								  <span class="up-label">권한</span>
+								  <span class="up-value" th:text="${ roleDisp }">MASTER</span>
 								</div>
 							</div>
 
@@ -72,11 +90,9 @@
 									로그아웃 </a>
 							</div>
 						</li>
-					</ul></li>
-			</ul>
+					</ul>
 
-			<!-- ▼ Scoped styles: 이 프래그먼트 내 드롭다운만 스타일 적용 -->
-			<style>
+					<style>
 .dropdown-menu.up-menu {
 	min-width: 280px;
 	border: none;
@@ -139,12 +155,6 @@
 	border: 1px solid #e5e7eb;
 	background: #f8fafc;
 	color: #334155
-}
-
-.dropdown-menu.up-menu .up-badge--role {
-	background: #eef2ff;
-	color: #3730a3;
-	border-color: #c7d2fe
 }
 
 .dropdown-menu.up-menu .up-divide {
@@ -211,10 +221,10 @@
 		min-width: 240px
 	}
 }
-</style>
+</style></li>
+			</ul>
 		</nav>
 
-		<!-- 로그아웃 폼(숨김) -->
 		<form id="logoutForm" action="/logout" method="post"
 			style="display: none;">
 			<input type="hidden" th:name="${_csrf.parameterName}"
