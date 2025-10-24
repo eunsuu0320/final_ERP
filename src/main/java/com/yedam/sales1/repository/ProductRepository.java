@@ -15,9 +15,7 @@ import com.yedam.sales1.domain.Product;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
-	@Query("SELECT p FROM Product p " 
-			+ "WHERE p.companyCode = :companyCode " 
-			+ "And p.usageStatus = 'Y' ")
+	@Query("SELECT p FROM Product p " + "WHERE p.companyCode = :companyCode " + "And p.usageStatus = 'Y' ")
 	List<Product> findAll(@Param("companyCode") String companyCode);
 
 	// 회사코드별 사원 조회
@@ -27,8 +25,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 			""")
 	List<Product> findByCompanyCode(String companyCode);
 
-	@Query("SELECT MAX(p.productCode) FROM Product p")
-	String findMaxProductCode();
+	@Query(value = "SELECT MAX(CAST(SUBSTRING(product_code, 2) AS UNSIGNED)) FROM tbl_product", nativeQuery = true)
+	Integer findMaxProductNumber();
 
 	@Query("SELECT p FROM Product p "
 			+ "WHERE (:#{#searchVo.productCode} IS NULL OR p.productCode = :#{#searchVo.productCode}) "
