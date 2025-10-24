@@ -88,7 +88,7 @@
             </div>
 
             <div class="col-lg-6">
-              <label class="form-label vf-label" id="lbl-saleCode">판매코드</label>
+              <label class="form-label vf-label" id="lbl-saleCode">판매코드 *</label>
               <div class="input-with-icon">
                 <input id="vf-saleCode" type="text" class="form-control" placeholder="">
                 <button id="vf-find-saleCode" class="icon-btn" type="button" aria-label="판매/구매코드 찾기">
@@ -97,7 +97,7 @@
               </div>
             </div>
             <div class="col-lg-6">
-              <label class="form-label vf-label">거래처</label>
+              <label class="form-label vf-label">거래처 *</label>
               <div class="input-with-icon">
                 <input id="vf-partnerName" type="text" class="form-control" placeholder="">
                 <button id="vf-find-partner" class="icon-btn" type="button" aria-label="거래처 찾기">
@@ -120,7 +120,7 @@
               </select>
             </div>
             <div class="col-12">
-              <label class="form-label vf-label">공급가액</label>
+              <label class="form-label vf-label">공급가액 *</label>
               <input id="vf-supply" type="text" class="form-control vf-num" value="0">
             </div>
             <div class="col-12">
@@ -128,7 +128,7 @@
               <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
             </div>
             <div class="col-12">
-              <label class="form-label vf-label">총 금액</label>
+              <label class="form-label vf-label">총 금액 *</label>
               <input id="vf-total" type="text" class="form-control vf-num" value="0">
             </div>
             <div class="col-12">
@@ -257,10 +257,10 @@
     }
 
     const labelsByType={
-      SALES:{saleCode:'판매코드',saleDate:'판매일자',partnerModal:'partner', saveUrl:'/api/statements/sales'},
-      BUY:{saleCode:'구매코드',saleDate:'구매일자',partnerModal:'supplier', saveUrl:'/api/statements/buy'},
-      MONEY:{saleCode:'수금코드',saleDate:'수금일자',partnerModal:'partner', saveUrl:'/api/statements/money'},
-      PAYMENT:{saleCode:'지급코드',saleDate:'지급일자',partnerModal:'supplier', saveUrl:'/api/statements/payment'},
+      SALES:{saleCode:'판매코드 *',saleDate:'판매일자',partnerModal:'partner', saveUrl:'/api/statements/sales'},
+      BUY:{saleCode:'구매코드 *',saleDate:'구매일자',partnerModal:'supplier', saveUrl:'/api/statements/buy'},
+      MONEY:{saleCode:'수금코드 *',saleDate:'수금일자',partnerModal:'partner', saveUrl:'/api/statements/money'},
+      PAYMENT:{saleCode:'지급코드 *',saleDate:'지급일자',partnerModal:'supplier', saveUrl:'/api/statements/payment'},
     };
     function applyTypeLabels(t){
       const m=labelsByType[normalizeLongType(t)]||labelsByType.SALES;

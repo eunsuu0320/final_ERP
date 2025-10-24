@@ -214,7 +214,7 @@
               </div>
 
               <div class="col-6">
-                <label class="form-label vf-label" id="lbl-saleCode" for="vf-saleCode">판매코드</label>
+                <label class="form-label vf-label" id="lbl-saleCode" for="vf-saleCode">판매코드 *</label>
                 <div class="input-with-icon">
                   <input id="vf-saleCode" type="text" class="form-control" placeholder="">
                   <button id="vf-icon-find-saleCode" type="button" class="icon-btn" aria-label="판매/구매코드 찾기">
@@ -224,7 +224,7 @@
               </div>
 
               <div class="col-6">
-                <label class="form-label vf-label" for="vf-partnerName">거래처</label>
+                <label class="form-label vf-label" for="vf-partnerName">거래처 *</label>
                 <div class="input-with-icon">
                   <input id="vf-partnerName" type="text" class="form-control" placeholder="">
                   <button id="vf-icon-find-partner" type="button" class="icon-btn" aria-label="거래처 찾기">
@@ -262,7 +262,7 @@
               </div>
 
               <div class="col-12">
-                <label class="form-label vf-label" for="vf-supply">공급가액</label>
+                <label class="form-label vf-label" for="vf-supply">공급가액 *</label>
                 <input id="vf-supply" type="text" class="form-control vf-num" value="0">
               </div>
               <div class="col-12">
@@ -270,7 +270,7 @@
                 <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
               </div>
               <div class="col-12">
-                <label class="form-label vf-label" for="vf-total">총 금액</label>
+                <label class="form-label vf-label" for="vf-total">총 금액 *</label>
                 <input id="vf-total" type="text" class="form-control vf-num" value="0">
               </div>
               <div class="col-12">
@@ -978,12 +978,12 @@
 
       if (type==='BUY') {
         $title.textContent='매입전표 등록';
-        if($lblSaleCode) $lblSaleCode.textContent='구매코드';
+        if($lblSaleCode) $lblSaleCode.textContent='구매코드 *';
         if($lblSaleDate) $lblSaleDate.textContent='구매일자';
         if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
       } else {
         $title.textContent='매출전표 등록';
-        if($lblSaleCode) $lblSaleCode.textContent='판매코드';
+        if($lblSaleCode) $lblSaleCode.textContent='판매코드 *';
         if($lblSaleDate) $lblSaleDate.textContent='판매일자';
         if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
       }
