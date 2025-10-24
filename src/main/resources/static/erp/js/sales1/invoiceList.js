@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	const defaultVisible = ["청구서코드", "등록일자", "청구일자", "청구금액", "수금일자", "거래처명", "담당자", "진행상태"];
 
 	const STATUS_MAP = {
-		"미청구": { label: "미청구" },
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
 		"수금완료": { label: "수금완료" },
@@ -51,7 +50,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
 		switch (type) {
 			case "ALL": table.clearFilter(); return;
-			case "NONINVOICE": filterValue = "미청구"; break;
 			case "NONCHECK": filterValue = "미확인"; break;
 			case "ONGOING": filterValue = "진행중"; break;
 			case "DMND": filterValue = "수금완료"; break;
