@@ -35,7 +35,7 @@ public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> {
 			+ "    FROM SALES_PLAN sp\r\n"
 			+ "    JOIN SALES_PLAN_DETAIL spd\r\n"
 			+ "        ON sp.SALES_PLAN_CODE = spd.SALES_PLAN_CODE\r\n"
-			+ "    WHERE sp.COMPANY_CODE := companyCode\r\n"
+			+ "    WHERE sp.COMPANY_CODE = :companyCode\r\n"
 			+ "    GROUP BY \r\n"
 			+ "        sp.SALES_PLAN_CODE, -- 📌 그룹화 기준에 추가\r\n"
 			+ "        EXTRACT(YEAR FROM sp.PLAN_YEAR)\r\n"
