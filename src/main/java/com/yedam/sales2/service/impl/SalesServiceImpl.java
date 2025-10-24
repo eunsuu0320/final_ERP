@@ -40,7 +40,9 @@ public class SalesServiceImpl implements SalesService {
 	// 년도별 영업계획
 	@Override
 	public List<Map<String, Object>> findSalesStatsByYear() {
-		return salesPlanRepository.findSalesStatsByYear();
+		String companyCode = getCompanyCodeFromAuthentication();
+
+		return salesPlanRepository.findSalesStatsByYear(companyCode);
 	}
 
 	@Override

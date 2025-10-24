@@ -18,7 +18,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 	@Query(value = """
 		    SELECT e.*
 		    FROM INVOICE e
-		    where e.companyCode = :companyCode
+		    where e.COMPANY_CODE = :companyCode
 		    """, nativeQuery = true)
 	List<Invoice> findAll(@Param("companyCode") String companyCode);
 
