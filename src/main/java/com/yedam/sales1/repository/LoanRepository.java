@@ -17,7 +17,7 @@ public interface LoanRepository extends JpaRepository<Loan, Long>{
 	@Query(value = """
 		    SELECT e.*
 		    FROM Loan e
-		    where e.companyCode = :companyCode
+		    where e.COMPANY_CODE = :companyCode
 		    """, nativeQuery = true)
     List<Loan> findAll(@Param("companyCode") String companyCode);
 

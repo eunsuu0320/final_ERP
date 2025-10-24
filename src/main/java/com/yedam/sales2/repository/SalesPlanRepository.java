@@ -35,6 +35,7 @@ public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> {
 			+ "    FROM SALES_PLAN sp\r\n"
 			+ "    JOIN SALES_PLAN_DETAIL spd\r\n"
 			+ "        ON sp.SALES_PLAN_CODE = spd.SALES_PLAN_CODE\r\n"
+			+ "    WHERE sp.COMPANY_CODE := companyCode\r\n"
 			+ "    GROUP BY \r\n"
 			+ "        sp.SALES_PLAN_CODE, -- 📌 그룹화 기준에 추가\r\n"
 			+ "        EXTRACT(YEAR FROM sp.PLAN_YEAR)\r\n"
@@ -54,7 +55,7 @@ public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> {
 			+ "FROM YEARLY_PLAN_DATA YPD\r\n"
 			+ "ORDER BY YPD.SALESYEAR, YPD.SALES_PLAN_CODE",
 	       nativeQuery = true)
-	List<Map<String, Object>> findSalesStatsByYear();
+	List<Map<String, Object>> findSalesStatsByYear(@Param("companyCode") String companyCode);
 	
 	 // 네이티브 쿼리: planYear의 연도가 일치하는 데이터 조회
 	@Query(value = "SELECT * FROM sales_plan WHERE EXTRACT(YEAR FROM plan_year) = :year", nativeQuery = true)

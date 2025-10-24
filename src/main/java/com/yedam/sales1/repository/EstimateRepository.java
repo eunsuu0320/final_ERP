@@ -19,7 +19,7 @@ public interface EstimateRepository extends JpaRepository<Estimate, Long> {
 	@Query(value = """
 		    SELECT e.*
 		    FROM ESTIMATE e
-		    where e.companyCode = :companyCode
+		    where e.COMPANY_CODE = :companyCode
 		    ORDER BY e.CREATE_DATE DESC
 		    """, nativeQuery = true)
 	List<Estimate> findAll(String companyCode);
@@ -27,7 +27,7 @@ public interface EstimateRepository extends JpaRepository<Estimate, Long> {
 	@Query(value = """
 		    SELECT e.*
 		    FROM ESTIMATE e
-		    where e.companyCode = :companyCode
+		    where e.COMPANY_CODE = :companyCode
 		    ORDER BY e.CREATE_DATE DESC
 		    """, nativeQuery = true)
 		List<Estimate> findAllEstimates(String companyCode);
