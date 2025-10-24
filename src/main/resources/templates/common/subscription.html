@@ -604,11 +604,47 @@ window.selectPayMethod = selectPayMethod;
 /* 팝업 열기 */
 function openPayPopup(url){
   showMask();
-  const features = 'width=480,height=720,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+
+  // 화면 기준 반응형 크기
+  const sw = window.screen.availWidth  || window.innerWidth;
+  const sh = window.screen.availHeight || window.innerHeight;
+
+  // 원하는 기본값(필요하면 숫자만 바꿔서 쓰세요)
+  const targetW = Math.min(980, Math.floor(sw * 0.88));   // 최대 980px, 화면의 88%
+  const targetH = Math.min(800, Math.floor(sh * 0.92));  // 최대 1100px, 화면의 92%
+
+  // 화면 가운데 배치
+  const left = Math.max(0, Math.floor((sw - targetW) / 2));
+  const top  = Math.max(0, Math.floor((sh - targetH) / 2));
+
+  const features = [
+    `width=${targetW}`,
+    `height=${targetH}`,
+    `left=${left}`,
+    `top=${top}`,
+    'menubar=no',
+    'toolbar=no',
+    'location=no',
+    'status=no',
+    'scrollbars=yes',
+    'resizable=yes'
+  ].join(',');
+
   payWin = window.open(url, 'easyPay', features);
-  if(payClosePoll) clearInterval(payClosePoll);
+
+  // 팝업 차단 시 현재 탭으로 이동(폴백)
+  if (!payWin || payWin.closed || typeof payWin.closed === 'undefined') {
+    hideMask();
+    window.location.href = url;
+    return;
+  }
+
+  if (payClosePoll) clearInterval(payClosePoll);
   payClosePoll = setInterval(()=>{
-    if(!payWin || payWin.closed){ clearInterval(payClosePoll); hideMask(); }
+    if(!payWin || payWin.closed){
+      clearInterval(payClosePoll);
+      hideMask();
+    }
   }, 700);
 }
 

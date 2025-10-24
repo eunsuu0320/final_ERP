@@ -28,6 +28,7 @@ import com.yedam.common.service.PaymentService;
 import com.yedam.common.service.RoleService;
 import com.yedam.common.service.TossPayService;
 import com.yedam.common.service.UserService;
+import com.yedam.common.repository.InitCommonCodeRepository;   // ★ 추가
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class PayController {
 	@Autowired ContractPdfService contractPdfService;
 	@Autowired RoleService roleService;
 	@Autowired TossPayService tossPayService;
+	@Autowired InitCommonCodeRepository initCommonCodeRepository; // ★ 추가
 
 	// 결제 준비 때 저장했다가 성공 콜백에서 사용 (키: orderId)
 	private final Map<String, PayRequestWrapper> payRequestStore = new ConcurrentHashMap<>();
@@ -73,8 +75,10 @@ public class PayController {
 
 		if ("KAKAO".equalsIgnoreCase(payRequest.getPayMethod())) {
 			return kakaoPayService.kakaoPayReady(payRequest);
+		} else if ("NAVER".equalsIgnoreCase(payRequest.getPayMethod())) {
+			// 현재 파일에는 NAVER 연동이 없는 상태로 보임 (Toss 사용)
+			throw new IllegalArgumentException("지원하지 않는 결제수단: " + payRequest.getPayMethod());
 		} else if ("TOSS".equalsIgnoreCase(payRequest.getPayMethod())) {
-			// 팝업에서 열 체크아웃(내 서버 페이지) URL 반환
 			var params = tossPayService.buildCheckoutParams(payRequest.getOrderId(), payRequest.getItemName(),
 					payRequest.getAmount());
 			// 팝업용 서버 엔드포인트로 리디렉트
@@ -105,12 +109,16 @@ public class PayController {
 
 		PayRequestWrapper wrapper = payRequestStore.remove(orderId);
 		if (wrapper != null) {
-			// ⬇︎ 변경: saveCompanyInfo(...) → ensureCompanyForSubscription(...)
 			var _ens = paymentService.ensureCompanyForSubscription(wrapper.getCompanyInfo());
 			Company savedCompany = _ens.getCompany();
-			isNewCompany = _ens.isNew(); // ★ 값 대입
+			isNewCompany = _ens.isNew(); // 값 대입
 			if (savedCompany != null)
 				companyCode = savedCompany.getCompanyCode();
+
+				// ★ 신규 회사면 기본 공통코드 초기화 (소스=C001)
+				if (isNewCompany && companyCode != null) {
+					try { initCommonCodeRepository.initDefaultsFromC001(companyCode); } catch (Exception ignore) {}
+				}
 
 			// 이하 동일
 			Subscription sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
@@ -118,7 +126,7 @@ public class PayController {
 				subscriptionCode = sub.getSubscriptionCode();
 
 			try {
-				if (isNewCompany) { // ★ 이제 정상 동작
+				if (isNewCompany) {
 					SystemUser su = wrapper.getSystemUser();
 					if (su != null && su.getUserId() != null && su.getUserPw() != null) {
 						String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
@@ -159,38 +167,33 @@ public class PayController {
 	public String kakaoFail() {
 		return popupAutoCloseHtml("KAKAOPAY_RESULT", "fail", null, null, null);
 	}
-	
-	// ---------- Toss ----------
-	@GetMapping(value = "/toss/checkout", produces = "text/html; charset=UTF-8")
+
+	// ---------- Toss: 결제창 (팝업에서 열 HTML 반환) ----------
+	@GetMapping(value="/toss/checkout", produces="text/html; charset=UTF-8")
 	@ResponseBody
 	public String tossCheckout(@RequestParam("orderId") String orderId) {
-	    // payRequestStore 에 준비된 주문 정보를 꺼냄 (ready 때 put 해둔 것)
-	    PayRequestWrapper wrapper = payRequestStore.get(orderId);
-	    if (wrapper == null) return "<script>alert('유효하지 않은 주문입니다.');window.close();</script>";
-
-	    var pay = wrapper.getPayRequest();
-	    var params = tossPayService.buildCheckoutParams(
-	        pay.getOrderId(),
-	        pay.getItemName(),
-	        pay.getAmount()
-	    );
-
-	    // 간단한 HTML 반환: 토스 SDK 로드 후 requestPayment 호출
+	    var wrapper = payRequestStore.get(orderId);
+	    if (wrapper == null) {
+	        return popupAutoCloseHtml("TOSS_RESULT", "fail", null, null, null);
+	    }
+	    var params = tossPayService.buildCheckoutParams(wrapper.getPayRequest().getOrderId(),
+	            wrapper.getPayRequest().getItemName(),
+	            wrapper.getPayRequest().getAmount());
 	    String html = """
-	    <!doctype html><meta charset="utf-8">
-	    <title>Toss Checkout</title>
+	    <!doctype html>
+	    <meta charset="utf-8"/>
+	    <title>TossPay</title>
 	    <script src="https://js.tosspayments.com/v1"></script>
 	    <script>
 	      (async function(){
+	        const tossPayments = TossPayments('%s');
 	        try{
-	          const clientKey = '%s';
-	          const toss = TossPayments(clientKey);
-	          await toss.requestPayment('CARD',{
-	            amount: %s,
-	            orderId: '%s',
-	            orderName: '%s',
-	            successUrl: '%s',
-	            failUrl: '%s'
+	          await tossPayments.requestPayment('카드', {
+	            amount:%s,
+	            orderId:'%s',
+	            orderName:'%s',
+	            successUrl:'%s',
+	            failUrl:'%s'
 	          });
 	        }catch(e){
 	          alert('결제창 호출 실패: ' + (e && e.message ? e.message : e));
@@ -209,14 +212,14 @@ public class PayController {
 	    return html;
 	}
 
-	// 토스 성공 콜백 → 서버 승인(confirm) → 기존 후처리 동일 적용
+	// ---------- Toss: 성공 콜백 ----------
 	@GetMapping(value="/toss/success", produces="text/html; charset=UTF-8")
 	@ResponseBody
-	public String tossSuccess(@RequestParam("paymentKey") String paymentKey,
-	                          @RequestParam("orderId") String orderId,
-	                          @RequestParam("amount") long amount) {
+	public String tossSuccess(@RequestParam("orderId") String orderId,
+	                          @RequestParam("paymentKey") String paymentKey,
+	                          @RequestParam("amount") Long amount) {
 
-		try {
+	    try {
 	        // 1) 승인(confirm)
 	        tossPayService.confirm(paymentKey, orderId, amount);
 	    } catch (Exception e) {
@@ -238,6 +241,11 @@ public class PayController {
 	        isNewCompany = _ens.isNew();
 	        if (savedCompany != null) companyCode = savedCompany.getCompanyCode();
 
+				// ★ 신규 회사면 기본 공통코드 초기화 (소스=C001)
+				if (isNewCompany && companyCode != null) {
+					try { initCommonCodeRepository.initDefaultsFromC001(companyCode); } catch (Exception ignore) {}
+				}
+
 	        var sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
 	        if (sub != null) subscriptionCode = sub.getSubscriptionCode();
 
@@ -247,85 +255,41 @@ public class PayController {
 	                if (su != null && su.getUserId() != null && su.getUserPw() != null) {
 	                    String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
 	                    String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank()) ? null : su.getEmpCode();
+
 	                    userService.createMasterUser(companyCode, su.getUserId(), su.getUserPw(), roleCode, empCode, su.getRemk());
 	                    masterId = su.getUserId();
+
 	                    userService.sendWelcomeMail(wrapper.getContactEmail(), companyCode, su.getUserId(), su.getUserPw());
 	                }
 	            }
-	        } catch (Exception ignore) {}
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
 
-	        var vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
+	        Map<String,String> vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
 	        if (subscriptionCode != null) contractVarsCache.put(subscriptionCode, vars);
 	    }
 
-	    // 3) 부모창 postMessage 후 팝업 닫기 (카카오와 동일 패턴)
 	    return popupAutoCloseHtml("TOSS_RESULT", "success", subscriptionCode, companyCode, masterId);
 	}
 
-	@GetMapping(value="/toss/fail", produces="text/html; charset=UTF-8")
-	@ResponseBody
-	public String tossFail(@RequestParam(value="code", required=false) String code,
-	                       @RequestParam(value="message", required=false) String message) {
-	    return popupAutoCloseHtml("TOSS_RESULT", "fail", null, null, null);
-	}
-
-	/** 아주 단순한 JS 문자열 이스케이프(쌍따옴표/작은따옴표 최소) */
-	private static String escapeJs(String s){
-	    if (s == null) return "";
-	    return s.replace("\\","\\\\").replace("'","\\'").replace("\"","\\\"");
-	}
-
-	
-	// ---------- 성공 화면 렌더 (subscriptionCode 표시) ----------
+	// ---------- 성공 화면 렌더 ----------
 	@GetMapping("/complete")
-	public String payComplete(
-	        @RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
-	        @RequestParam(value = "buyerName",        required = false) String buyerName,
-	        @RequestParam(value = "total",            required = false) Long total,
-	        @RequestParam(value = "vat",              required = false) Long vat,
-	        @RequestParam(value = "companyCode",      required = false) String companyCode,
-	        @RequestParam(value = "masterId",         required = false) String masterId,
-	        org.springframework.ui.Model model) {
-
-	    // 1) 파라미터가 비었으면 캐시에서 보강
-	    if (subscriptionCode != null) {
-	        Map<String, String> vars = contractVarsCache.get(subscriptionCode);
-	        if (vars != null) {
-	            if (buyerName == null || buyerName.isBlank()) {
-	                buyerName = vars.getOrDefault("buyerName", "");
-	            }
-	            if (total == null || total == 0L) {
-	                total = parseLongSafe(vars.get("total")); // "99,000" → 99000
-	            }
-	            if (vat == null || vat == 0L) {
-	                vat = parseLongSafe(vars.get("vat"));
-	            }
-	            if (companyCode == null || companyCode.isBlank()) {
-	                companyCode = vars.getOrDefault("companyCode", "");
-	            }
-	        }
-	    }
-
-	    SuccessViewInfo info = new SuccessViewInfo(
-	        nvl(subscriptionCode),
-	        nvl(buyerName),
-	        new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
-	        nvl(companyCode),
-	        nvl(masterId)
-	    );
-	    model.addAttribute("info", info);
-	    return "common/success";
+	public String payComplete(@RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
+			@RequestParam(value = "buyerName", required = false) String buyerName,
+			@RequestParam(value = "total", required = false) Long total,
+			@RequestParam(value = "vat", required = false) Long vat,
+			@RequestParam(value = "companyCode", required = false) String companyCode,
+			@RequestParam(value = "masterId", required = false) String masterId,
+			org.springframework.ui.Model model) {
+		SuccessViewInfo info = new SuccessViewInfo(subscriptionCode == null ? "" : subscriptionCode,
+				buyerName == null ? "" : buyerName, new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
+				companyCode == null ? "" : companyCode, masterId == null ? "" : masterId);
+		model.addAttribute("info", info);
+		return "common/success";
 	}
 
-	// 아래 유틸 둘을 PayController에 추가
-	private static long parseLongSafe(String s) {
-	    if (s == null) return 0L;
-	    try {
-	        return Long.parseLong(s.replaceAll("[^0-9]", ""));
-	    } catch (Exception e) { return 0L; }
-	}
-	
-	// ---------- 계약서 다운로드 (키: subscriptionCode) ----------
+	// ---------- 계약서 다운로드 ----------
 	@GetMapping("/contract/download")
 	public void downloadContract(@RequestParam("subscriptionCode") String subscriptionCode, HttpServletResponse resp)
 			throws Exception {
@@ -448,5 +412,10 @@ public class PayController {
 
 	private static String nvl(String s) {
 		return (s == null) ? "" : s;
+	}
+	
+	private static String escapeJs(String s){
+	    if (s == null) return "";
+	    return s.replace("\\","\\\\").replace("'","\\'").replace("\"","\\\"");
 	}
 }

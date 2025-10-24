@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -16,7 +17,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class CaptchaFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY = "6Let1_MrAAAAAE1JqSXrMYjNBurvrg5_6pjxRw7f";
+    @Value("${recaptcha.secret}")
+    private String SECRET_KEY;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
