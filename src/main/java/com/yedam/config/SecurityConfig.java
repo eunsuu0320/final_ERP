@@ -2,8 +2,6 @@
 package com.yedam.config;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,18 +11,29 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Bean public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
-    @Bean public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception { return cfg.getAuthenticationManager(); }
+    private final CaptchaFilter captchaFilter; // 스프링이 만든 CaptchaFilter 빈 주입(@Component)
+
+    @Bean
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-          .addFilterBefore(new CaptchaFilter(), org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+          .addFilterBefore(captchaFilter, UsernamePasswordAuthenticationFilter.class)
           .authorizeHttpRequests(auth -> auth
               .requestMatchers("/", "/common/**", "/css/**", "/js/**",
                                "/erp/**", "/hr/**", "/main/**",
@@ -32,7 +41,7 @@ public class SecurityConfig {
                                "/api/**", "/ac/**", "/sales2/**",
                                "/pay/**", "/pay/kakao/**", "/pay/naver/**", "/pay/toss/**",
                                "/success", "/error",
-                               "/forbidden" // forbidden 화면은 공개
+                               "/forbidden"
               ).permitAll()
               .requestMatchers("/statements").authenticated()
               .anyRequest().authenticated()
@@ -49,18 +58,15 @@ public class SecurityConfig {
           )
           .headers(h -> h.frameOptions(fr -> fr.sameOrigin()))
           .csrf(c -> c.ignoringRequestMatchers("/api/**", "/pay/**"))
-          .exceptionHandling(ex -> ex
-              // 401 처리
-              .authenticationEntryPoint((req, res, e) -> {
-                  if (isApi(req)) {
-                      res.setStatus(401);
-                      res.setContentType("text/plain;charset=UTF-8");
-                      res.getWriter().write("로그인이 필요합니다.");
-                  } else {
-                      res.sendRedirect("/common/login");
-                  }
-              })
-          );
+          .exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> {
+              if (isApi(req)) {
+                  res.setStatus(401);
+                  res.setContentType("text/plain;charset=UTF-8");
+                  res.getWriter().write("로그인이 필요합니다.");
+              } else {
+                  res.sendRedirect("/common/login");
+              }
+          }));
 
         return http.build();
     }
