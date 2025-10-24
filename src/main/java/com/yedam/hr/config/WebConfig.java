@@ -8,10 +8,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    	
+    	String path = "file:" + System.getProperty("user.dir") + "/uploads/hr/sign/";
+    	System.out.println("path="+path);
+    	
         // 사인 이미지 URL 매핑
         registry.addResourceHandler("/hr/sign/**")
                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/hr/sign/");
 
+        registry.addResourceHandler("/hr/sign1/**")
+        .addResourceLocations("file:/uploads/hr/sign/");
+        
         // PDF URL 매핑
         registry.addResourceHandler("/hr/pdf/**")
                 .addResourceLocations("file:" + System.getProperty("user.dir") + "/uploads/hr/pdf/");
