@@ -79,7 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // 전역으로 접근 가능하게
-  
   window.table = new Tabulator(salesTableEl, {
     layout: "fitColumns",
     height: "350px",
@@ -130,11 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // ✅ 생성 직후 안전한 지역 참조
   const table = window.table;
-collectionTable = window.table;
-  // 테이블 로드 후 제목 초기화
-  table.on("dataLoaded", function () {
-    updateInvoiceTitle(null);
-  });
+  collectionTable = window.table;
+  table.on("dataLoaded", function () { updateInvoiceTitle(null); });
 
   // ===============================
   // 📌 제목/선택 강조/버튼 상태
@@ -144,13 +140,11 @@ collectionTable = window.table;
     if (!el) return;
     el.textContent = partnerName ? `${partnerName}의 청구내역` : "청구내역";
   }
-
   function setActiveRow(row) {
     const tableEl = document.getElementById("sales-table");
     tableEl.querySelectorAll(".tabulator-row.row-active").forEach(el => el.classList.remove("row-active"));
     row.getElement().classList.add("row-active");
   }
-
   function setActiveViewButton(cell) {
     const allButtons = document.getElementById("sales-table").querySelectorAll(".btn-view-invoices");
     allButtons.forEach(btn => {
@@ -165,7 +159,7 @@ collectionTable = window.table;
   }
 
   // ===============================
-  // 📌 위임 클릭 (원래 있던 핸들러 유지)
+  // 📌 위임 클릭(유지)
   // ===============================
   salesTableEl.addEventListener("click", async function (e) {
     if (e.target.closest('.js-view-invoices')) return;
@@ -178,14 +172,10 @@ collectionTable = window.table;
         setActiveRow(row);
         await openCollectionModal(data);
       }
-    } catch (err) {
-      console.warn("delegate 처리 중 오류:", err);
-    }
+    } catch (err) { console.warn("delegate 처리 중 오류:", err); }
   });
 
-  // ===============================
-  // 🔁 추가: 문서 전역 Fallback 클릭(보호장치)
-  // ===============================
+  // 🔁 전역 Fallback(유지)
   document.addEventListener("click", async function (e) {
     if (e.target.closest('.js-view-invoices')) return;
     const rowEl = e.target.closest("#sales-table .tabulator-row");
@@ -197,9 +187,7 @@ collectionTable = window.table;
         setActiveRow(row);
         await openCollectionModal(data);
       }
-    } catch (err) {
-      console.warn("document fallback 처리 중 오류:", err);
-    }
+    } catch (err) { console.warn("document fallback 처리 중 오류:", err); }
   }, true);
 
   // 모달 닫히면 강조 해제
@@ -247,20 +235,17 @@ collectionTable = window.table;
   }
 
   // ===============================
-  // (B) 청구내역 테이블 렌더러 (✅ 로컬 페이징 추가)
+  // (B) 청구내역 테이블 렌더러
   // ===============================
   window.invoiceTable = null;
-
   async function renderInvoiceTable(rowData) {
     const el = document.getElementById("invoice-table");
     if (!el) return;
-
     const partnerCode = rowData?.PARTNER_CODE || rowData?.partnerCode || "";
 
     showInvoiceLoading();
     try {
       const data = await fetchInvoices(partnerCode);
-
       const columns = [
         { title:"청구번호",    field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
         { title:"청구일",      field:"DMND_DATE",   width:110, hozAlign:"center", widthGrow:0.4 },
@@ -290,12 +275,9 @@ collectionTable = window.table;
           layout:"fitColumns",
           height:"260px",
           placeholder:"청구내역이 없습니다.",
-          data,
-          columns,
+          data, columns,
           columnDefaults:{ headerHozAlign:"center" },
           index:"INVOICE_UNIQUE_CODE",
-
-          // ✅ 청구내역도 로컬 페이징(드롭박스 없이)
           pagination: "local",
           paginationSize: 8,
           paginationCounter: "rows",
@@ -349,9 +331,7 @@ collectionTable = window.table;
         const userInfo = await res.json();
         empName = userInfo.empName || "";
       }
-    } catch (err) {
-      console.warn("사원명 조회 실패:", err);
-    }
+    } catch (err) { console.warn("사원명 조회 실패:", err); }
     document.getElementById("managerName").value = empName || "로그인사용자";
 
     const collectAmtInput     = document.getElementById("collectAmt");
@@ -395,9 +375,12 @@ collectionTable = window.table;
   }
 
   // ===============================
-  // 📌 저장
+  // 📌 저장 (로딩 오버레이 + 중복 방지 추가)
   // ===============================
   document.getElementById("btnSave")?.addEventListener("click", async function () {
+    const saveBtn   = this;
+    if (saveBtn.dataset.loading === "1") return; // 중복 클릭 방지
+
     const moneyDate = document.getElementById("moneyDate").value;
     const recpt = Number(uncomma(document.getElementById("collectAmt").value || "0"));
     const postDeduction = Number(uncomma((document.getElementById("postDeductionAmt")?.value) || "0"));
@@ -406,12 +389,23 @@ collectionTable = window.table;
     const partnerCode = (document.querySelector("#insertCollectionModal #partnerCode")?.value) || "";
     const outstandingVal = Number(uncomma(document.getElementById("outstandingAmt").value || "0"));
 
+    // 기본 검증
     if (!partnerCode) { alert("거래처를 선택하세요."); return; }
     if (recpt <= 0) { alert("수금금액은 0보다 커야 합니다."); return; }
     if (recpt + postDeduction > outstandingVal) { alert("수금금액 + 사후공제가 미수잔액보다 큽니다."); return; }
     if (!paymentMethods) { alert("결제방식을 선택하세요."); return; }
 
     const data = { moneyDate, recpt, postDeduction, paymentMethods, remk, partnerCode };
+
+    // ▼ UI 잠그기
+    const closeBtn = document.querySelector("#insertCollectionModal .btn-close");
+    const overlay  = document.getElementById("collection-loading");
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.dataset.loading = "1";
+    saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>로딩 중…`;
+    saveBtn.disabled = true;
+    if (closeBtn) closeBtn.disabled = true;
+    if (overlay) overlay.classList.remove("d-none");
 
     try {
       const res = await fetch("/api/collection/insert", {
@@ -430,6 +424,13 @@ collectionTable = window.table;
     } catch (err) {
       console.error("등록 중 오류:", err);
       alert("서버 통신 오류");
+    } finally {
+      // ▼ UI 해제
+      saveBtn.innerHTML = originalHtml;
+      saveBtn.disabled = false;
+      if (closeBtn) closeBtn.disabled = false;
+      if (overlay) overlay.classList.add("d-none");
+      saveBtn.dataset.loading = "0";
     }
   });
 
@@ -495,7 +496,7 @@ document.addEventListener('hidden.bs.modal', function () {
   } catch (_) {}
 });
 
-// ✅ 남은 백드롭이 있으면 제거 + 테이블 가시성 보정
+// ✅ 남은 백드롭 제거 + 테이블 가시성 보정
 document.addEventListener('click', (e) => {
   const hasModalOpen = document.body.classList.contains('modal-open');
   const leftoverBackdrop = document.querySelector('.modal-backdrop');
@@ -511,5 +512,3 @@ document.addEventListener('click', (e) => {
     }
   }
 }, true);
-
-

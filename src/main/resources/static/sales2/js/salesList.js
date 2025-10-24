@@ -142,7 +142,26 @@ document.addEventListener("DOMContentLoaded", function () {
   // ================================
   // 📌 저장 버튼 (등록)
   // ================================
-  document.getElementById("btn-save-sales").addEventListener("click", function () {
+  // ================================
+// 📌 저장 버튼 (등록) — 로딩 표시 + 중복방지
+// ================================
+document.getElementById("btn-save-sales").addEventListener("click", async function () {
+  const btn = this;
+  if (btn.dataset.loading === "1") return; // 중복 클릭 방지
+
+  const overlay = document.getElementById("save-loading");
+  const resetBtn = document.getElementById("btn-reset-sales");
+
+  // 1) UI 잠그기
+  btn.dataset.loading = "1";
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>로딩 중…`;
+  btn.disabled = true;
+  if (resetBtn) resetBtn.disabled = true;
+  if (overlay) overlay.classList.remove("d-none");
+
+  try {
+    // 기존 로직 그대로 유지
     const tableData = thisYearTable.getData();
     const payload = tableData.map(row => ({
       qtr: row.qtr,
@@ -150,17 +169,35 @@ document.addEventListener("DOMContentLoaded", function () {
       purpProfitAmt: row.purpProfitAmt || 0,
       newVendCnt: row.newVendCnt || 0,
     }));
+
     const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
     const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
 
-    fetch('/api/sales/insert', {
+    const res = await fetch('/api/sales/insert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
       body: JSON.stringify(payload)
-    })
-      .then(res => { if (res.ok) { alert("영업계획이 저장되었습니다."); table.replaceData(); } else { return res.text().then(text => { throw new Error(text); }); } })
-      .catch(err => { console.error(err); alert("저장 실패: " + err.message); });
-  });
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+
+    alert("영업계획이 저장되었습니다.");
+    try { table.replaceData(); } catch (e) {}
+  } catch (err) {
+    console.error(err);
+    alert("저장 실패: " + err.message);
+  } finally {
+    // 2) UI 해제
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+    if (resetBtn) resetBtn.disabled = false;
+    if (overlay) overlay.classList.add("d-none");
+    btn.dataset.loading = "0";
+  }
+});
 
 // ================================
 // 📌 combo-option (드롭박스 전용 코드)
@@ -239,7 +276,27 @@ if (combo) {
   // ================================
   // 📌 수정 저장 버튼
   // ================================
-  document.getElementById("btn-update-sales").addEventListener("click", function () {
+ // ================================
+// 📌 수정 저장 버튼 — 로딩 표시 + 중복방지
+// ================================
+document.getElementById("btn-update-sales").addEventListener("click", async function () {
+  const btn = this;
+  if (btn.dataset.loading === "1") return; // 중복 클릭 방지
+
+  const overlay   = document.getElementById("update-loading");   // ← 수정 모달용 오버레이
+  const cancelBtn = document.getElementById("btn-cancel-update");
+  const closeBtn  = document.querySelector("#modifySalesModal .btn-close");
+
+  // 1) UI 잠그기
+  btn.dataset.loading = "1";
+  const originalHtml = btn.innerHTML;
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>로딩 중…`;
+  btn.disabled = true;
+  if (cancelBtn) cancelBtn.disabled = true;
+  if (closeBtn)  closeBtn.disabled  = true;
+  if (overlay)   overlay.classList.remove("d-none"); // 편집/그리드 조작 차단
+
+  try {
     const updatedData = editYearTable.getData();
     const payload = updatedData.map(d => ({
       qtr: d.qtr,
@@ -252,22 +309,33 @@ if (combo) {
     const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
     const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
 
-    fetch("/api/sales/update", {
+    const res = await fetch("/api/sales/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json", [csrfHeader]: csrfToken },
       body: JSON.stringify(payload)
-    })
-      .then(res => {
-        if (res.ok) {
-          alert("수정되었습니다.");
-          table.replaceData();
-          bootstrap.Modal.getInstance(document.getElementById("modifySalesModal")).hide();
-        } else {
-          return res.text().then(text => { throw new Error(text); });
-        }
-      })
-      .catch(err => { console.error(err); alert("저장 실패: " + err.message); });
-  });
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || `HTTP ${res.status}`);
+    }
+
+    alert("수정되었습니다.");
+    try { table.replaceData(); } catch (e) {}
+    bootstrap.Modal.getInstance(document.getElementById("modifySalesModal")).hide();
+  } catch (err) {
+    console.error(err);
+    alert("저장 실패: " + err.message);
+  } finally {
+    // 2) UI 해제
+    btn.innerHTML = originalHtml;
+    btn.disabled = false;
+    if (cancelBtn) cancelBtn.disabled = false;
+    if (closeBtn)  closeBtn.disabled  = false;
+    if (overlay)   overlay.classList.add("d-none");
+    btn.dataset.loading = "0";
+  }
+});
 
   // ================================
   // 📌 수정 취소 버튼
