@@ -17,8 +17,8 @@ import com.yedam.sales2.domain.SalesPlan;
 public interface SalesPlanRepository extends JpaRepository<SalesPlan, Integer> { 
 
 	@Query("SELECT CASE WHEN COUNT(sp) > 0 THEN true ELSE false END " +
-	           "FROM SalesPlan sp WHERE EXTRACT(YEAR FROM sp.planYear) = :year")
-	    boolean existsByPlanYear(@Param("year") int year);
+	           "FROM SalesPlan sp WHERE EXTRACT(YEAR FROM sp.planYear) = :year AND sp.companyCode = :companyCode")
+	    boolean existsByPlanYear(@Param("year") int year, @Param("companyCode") String companyCode);
 	    
     // 특정 기간에 해당하는 SalesPlan이 존재하는지 확인하는 메서드
     boolean existsByPlanYearBetween(Date startDate, Date endDate);

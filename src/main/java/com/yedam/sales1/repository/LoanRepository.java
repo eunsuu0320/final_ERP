@@ -14,7 +14,12 @@ import com.yedam.sales1.domain.Loan;
 public interface LoanRepository extends JpaRepository<Loan, Long>{
 
     // ===== 기존 메서드 =====
-    List<Loan> findAll();
+	@Query(value = """
+		    SELECT e.*
+		    FROM Loan e
+		    where e.companyCode = :companyCode
+		    """, nativeQuery = true)
+    List<Loan> findAll(@Param("companyCode") String companyCode);
 
 
     Loan findByLoanCode(String loanCode);

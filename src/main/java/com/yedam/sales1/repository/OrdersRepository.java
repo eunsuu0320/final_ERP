@@ -13,8 +13,9 @@ import com.yedam.sales1.domain.Orders;
 
 @Repository
 public interface OrdersRepository extends JpaRepository<Orders, Long> {
-
-	List<Orders> findAll();
+	
+	@Query("SELECT od FROM Orders od where od.companyCode = :companyCode")
+	List<Orders> findAll(@Param("companyCode") String companyCode);
 
 	@Query("SELECT MAX(p.orderCode) FROM Orders p")
 	String findMaxOrdersCode();

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -141,8 +142,23 @@ public class SalesServiceImpl implements SalesService {
 	// 📌 추가: 올해 영업계획 존재 여부 확인 (Controller 연동을 위해 필요)
     @Override
     public boolean checkSalesPlanExists(int year) {
-        return salesPlanRepository.existsByPlanYear(year);
+
+		String companyCode = getCompanyCodeFromAuthentication();
+		
+        return salesPlanRepository.existsByPlanYear(year, companyCode);
     }
+    
+	private String getCompanyCodeFromAuthentication() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		if (authentication == null || authentication.getName().equals("anonymousUser")) {
+			return "DEFAULT";
+		}
+		String username = authentication.getName();
+		if (username != null && username.contains(":")) {
+			return username.trim().split(":")[0].trim();
+		}
+		return "DEFAULT";
+	}
 
     // 📌 추가: 신규 영업계획 등록 (Controller 연동을 위해 필요)
     @Override

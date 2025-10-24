@@ -14,7 +14,13 @@ import com.yedam.sales1.domain.Invoice;
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-	List<Invoice> findAll();
+	
+	@Query(value = """
+		    SELECT e.*
+		    FROM INVOICE e
+		    where e.companyCode = :companyCode
+		    """, nativeQuery = true)
+	List<Invoice> findAll(@Param("companyCode") String companyCode);
 
 	@Query("SELECT MAX(p.invoiceCode) FROM Invoice p")
 	String findMaxInvoiceCode();

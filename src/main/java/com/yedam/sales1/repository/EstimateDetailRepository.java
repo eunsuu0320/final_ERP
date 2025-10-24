@@ -12,7 +12,9 @@ import com.yedam.sales1.domain.EstimateDetail;
 @Repository
 public interface EstimateDetailRepository extends JpaRepository<EstimateDetail, String> {
 
-	List<EstimateDetail> findAll();
+	
+	@Query("SELECT ed FROM EstimateDetail ed where e.companyCode = :companyCode")
+	List<EstimateDetail> findAll(@Param("companyCode") String companyCode);
 
 	EstimateDetail findByEstimateUniqueCode(Long estimateUniqueCode);
 

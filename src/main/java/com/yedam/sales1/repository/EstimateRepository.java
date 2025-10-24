@@ -15,14 +15,22 @@ import com.yedam.sales1.domain.Product;
 @Repository
 public interface EstimateRepository extends JpaRepository<Estimate, Long> {
 
-	List<Estimate> findAll();
+	
+	@Query(value = """
+		    SELECT e.*
+		    FROM ESTIMATE e
+		    where e.companyCode = :companyCode
+		    ORDER BY e.CREATE_DATE DESC
+		    """, nativeQuery = true)
+	List<Estimate> findAll(String companyCode);
 
 	@Query(value = """
 		    SELECT e.*
 		    FROM ESTIMATE e
+		    where e.companyCode = :companyCode
 		    ORDER BY e.CREATE_DATE DESC
 		    """, nativeQuery = true)
-		List<Estimate> findAllEstimates();
+		List<Estimate> findAllEstimates(String companyCode);
 
 
 
@@ -42,6 +50,6 @@ public interface EstimateRepository extends JpaRepository<Estimate, Long> {
 	
 	
 	
-	@Query("SELECT p FROM Estimate p ")
+	@Query("SELECT p FROM Estimate p")
 	List<Estimate> findByFilter(@Param("searchVo") Estimate searchVo);
 }

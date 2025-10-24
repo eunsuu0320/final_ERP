@@ -12,7 +12,8 @@ import com.yedam.sales1.domain.ShipmentDetail;
 @Repository
 public interface ShipmentDetailRepository extends JpaRepository<ShipmentDetail, String> {
 
-	List<ShipmentDetail> findAll();
+	@Query("SELECT sd  FROM ShipmentDetail sd WHERE sd.companyCode = :companyCode")
+	List<ShipmentDetail> findAll(@Param("companyCode") String companyCode);
 
 	List<ShipmentDetail> findByShipmentCode(String shipmentCode);
 
