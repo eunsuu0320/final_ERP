@@ -376,120 +376,183 @@ body {
 		</div>
 	</div>
 
-
-	<script
-		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- Toast host -->
+	<div id="toastHost" class="position-fixed top-0 end-0 p-3" style="z-index:12000;"></div>
+	
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 	<script>
-  let recaptchaLogin, recaptchaModal;
-  let __loginSubmitting = false;
-
-  function initLoginRecaptchaV2(){
-    recaptchaLogin = grecaptcha.render('recaptcha-login', {
-      'sitekey': '6Let1_MrAAAAAK9ASdQeXoKCqIyrq_9U-REc6SxY'
-    });
-    recaptchaModal = grecaptcha.render('recaptcha-modal', {
-      'sitekey': '6Let1_MrAAAAAK9ASdQeXoKCqIyrq_9U-REc6SxY'
-    });
-  }
-
-  function mergeUserId(){
-    const company = document.getElementById("inputCompanyCode").value.trim();
-    const userId  = document.getElementById("inputId").value.trim();
-    document.getElementById("username").value = company + ":" + userId;
-  }
-
-  // === 추가: 로그인 대기 표시 & 버튼 잠금 ===
-  function startLoginPending(){
-    if (__loginSubmitting) return;
-    __loginSubmitting = true;
-
-    // 오버레이 표시
-    const overlay = document.getElementById('loginPending');
-    overlay.classList.add('show');
-
-    // 버튼 잠금 + 라벨 변경
-    const btn = document.querySelector('button[type="submit"].btn-neo');
-    if (btn){
-      btn.disabled = true;
-      btn.dataset.label = btn.textContent;
-      btn.innerHTML = '로그인 중…';
-    }
-
-    // 입력창/링크 잠금(선택)
-    document.querySelectorAll('input,select,button,a').forEach(el=>{
-      if (el.closest('#passwordModal')) return; // 모달은 무시
-      if (el.type !== 'submit') el.setAttribute('aria-disabled','true');
-    });
-  }
-
-  // === 추가: 뒤로가기 시 버튼/오버레이 복구 (bfcache 대비) ===
-  window.addEventListener('pageshow', (e)=>{
-    if (e.persisted) {
-      const overlay = document.getElementById('loginPending');
-      overlay.classList.remove('show');
-      const btn = document.querySelector('button[type="submit"].btn-neo');
-      if (btn){
-        btn.disabled = false;
-        btn.textContent = btn.dataset.label || 'Login';
-      }
-      __loginSubmitting = false;
-    }
-  });
-
-  // (수정) 캡챠 검증 + 대기 시작
-  function validateCaptcha(){
-    mergeUserId();
-    if (__loginSubmitting) return false; // 더블클릭 방지
-
-    const res = grecaptcha.getResponse(recaptchaLogin);
-    if(res.length === 0){
-      alert("캡챠 인증을 완료해주세요.");
-      return false;
-    }
-
-    // 여기서부터 실제 submit 진행 직전: 대기 표시
-    startLoginPending();
-    return true; // 폼 submit 진행
-  }
-
-  function submitPasswordFind(){
-    const company = document.getElementById("findCompany").value.trim();
-    const userId  = document.getElementById("findUserId").value.trim();
-    const email   = document.getElementById("findEmail").value.trim();
-    const captcha = grecaptcha.getResponse(recaptchaModal);
-    if(!company || !userId || !email){ alert("모든 값을 입력해주세요."); return; }
-    if(captcha.length === 0){ alert("캡챠 인증을 완료해주세요."); return; }
-
-    const csrfToken  = document.querySelector("meta[name='_csrf']").getAttribute("content");
-    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
-
-    fetch("/common/findPassword",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json", [csrfHeader]: csrfToken },
-      body: JSON.stringify({ companyCode:company, userId:userId, email:email, recaptcha:captcha })
-    })
-    .then(r=>r.json())
-    .then(data=>{
-      alert(data.message);
-      grecaptcha.reset(recaptchaModal);
-      document.getElementById("passwordFindForm").reset();
-      if(data.success){
-        const modal = bootstrap.Modal.getInstance(document.getElementById("passwordModal"));
-        modal.hide();
-      }
-    })
-    .catch(err=>{ console.error(err); alert("오류가 발생했습니다."); });
-  }
-
-  ["inputCompanyCode","inputId"].forEach(id=>{
-    document.getElementById(id).addEventListener("input", mergeUserId);
-  });
-</script>
+	  let recaptchaLogin, recaptchaModal;
+	  let __loginSubmitting = false;
 	
+	  function initLoginRecaptchaV2(){
+	    recaptchaLogin = grecaptcha.render('recaptcha-login', {
+	      'sitekey': '6Let1_MrAAAAAK9ASdQeXoKCqIyrq_9U-REc6SxY'
+	    });
+	    recaptchaModal = grecaptcha.render('recaptcha-modal', {
+	      'sitekey': '6Let1_MrAAAAAK9ASdQeXoKCqIyrq_9U-REc6SxY'
+	    });
+	  }
+	
+	  function mergeUserId(){
+	    const company = document.getElementById("inputCompanyCode").value.trim();
+	    const userId  = document.getElementById("inputId").value.trim();
+	    document.getElementById("username").value = company + ":" + userId;
+	  }
+	
+	  // === 로그인 대기 표시 & 버튼 잠금 ===
+	  function startLoginPending(){
+	    if (__loginSubmitting) return;
+	    __loginSubmitting = true;
+	
+	    const overlay = document.getElementById('loginPending');
+	    overlay.classList.add('show');
+	
+	    const btn = document.querySelector('button[type="submit"].btn-neo');
+	    if (btn){
+	      btn.disabled = true;
+	      btn.dataset.label = btn.textContent;
+	      btn.innerHTML = '로그인 중…';
+	    }
+	
+	    document.querySelectorAll('input,select,button,a').forEach(el=>{
+	      if (el.closest('#passwordModal')) return; // 모달은 무시
+	      if (el.type !== 'submit') el.setAttribute('aria-disabled','true');
+	    });
+	  }
+	
+	  // 뒤로가기(bfcache) 복구
+	  window.addEventListener('pageshow', (e)=>{
+	    if (e.persisted) {
+	      const overlay = document.getElementById('loginPending');
+	      overlay.classList.remove('show');
+	      const btn = document.querySelector('button[type="submit"].btn-neo');
+	      if (btn){
+	        btn.disabled = false;
+	        btn.textContent = btn.dataset.label || 'Login';
+	      }
+	      __loginSubmitting = false;
+	    }
+	  });
+	
+	  // ===== 토스트 헬퍼 =====
+	  function pushToast({ title='알림', body='', variant='primary', delay=4200 }) {
+	    const host = document.getElementById('toastHost');
+	    if (!host) return;
+	
+	    const wrap = document.createElement('div');
+	    wrap.className = `toast align-items-center text-bg-${variant} border-0`;
+	    wrap.setAttribute('role','alert');
+	    wrap.setAttribute('aria-live','assertive');
+	    wrap.setAttribute('aria-atomic','true');
+	    wrap.setAttribute('data-bs-delay', String(delay));
+	
+	    wrap.innerHTML = `
+	      <div class="toast-header ${variant==='light'?'border-0':''}">
+	        <strong class="me-auto">${title}</strong>
+	        <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+	      </div>
+	      <div class="toast-body">${body}</div>
+	    `;
+	
+	    host.appendChild(wrap);
+	    const t = new bootstrap.Toast(wrap);
+	    wrap.addEventListener('hidden.bs.toast', () => wrap.remove());
+	    t.show();
+	  }
+	
+	  // ===== 캡챠 검증(로그인): alert → 토스트 =====
+	  function validateCaptcha(){
+	    mergeUserId();
+	    if (__loginSubmitting) return false; // 더블클릭 방지
+	
+	    const res = grecaptcha.getResponse(recaptchaLogin);
+	    if(res.length === 0){
+	      pushToast({ title:'캡챠 필요', body:'캡챠 인증을 완료해주세요.', variant:'warning' });
+	      document.getElementById('recaptcha-login')?.scrollIntoView({behavior:'smooth', block:'center'});
+	      return false;
+	    }
+	
+	    startLoginPending();
+	    return true;
+	  }
+	
+	  // ===== 비밀번호 찾기(모달): alert → 토스트 =====
+	  function submitPasswordFind(){
+	    const company = document.getElementById("findCompany").value.trim();
+	    const userId  = document.getElementById("findUserId").value.trim();
+	    const email   = document.getElementById("findEmail").value.trim();
+	    const captcha = grecaptcha.getResponse(recaptchaModal);
+	
+	    if(!company || !userId || !email){
+	      pushToast({ title:'입력 필요', body:'모든 값을 입력해주세요.', variant:'warning' });
+	      return;
+	    }
+	    if(captcha.length === 0){
+	      pushToast({ title:'캡챠 필요', body:'캡챠 인증을 완료해주세요.', variant:'warning' });
+	      return;
+	    }
+	
+	    const csrfToken  = document.querySelector("meta[name='_csrf']").getAttribute("content");
+	    const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+	
+	    fetch("/common/findPassword",{
+	      method:"POST",
+	      headers:{ "Content-Type":"application/json", [csrfHeader]: csrfToken },
+	      body: JSON.stringify({ companyCode:company, userId:userId, email:email, recaptcha:captcha })
+	    })
+	    .then(r=>r.json())
+	    .then(data=>{
+	      // 성공/실패를 토스트로 표시
+	      pushToast({
+	        title: data.success ? '메일 발송' : '요청 실패',
+	        body: data.message || (data.success ? '임시 비밀번호를 전송했습니다.' : '오류가 발생했습니다.'),
+	        variant: data.success ? 'success' : 'danger'
+	      });
+	
+	      // 캡챠/폼 리셋
+	      try { grecaptcha.reset(recaptchaModal); } catch(_) {}
+	      document.getElementById("passwordFindForm").reset();
+	
+	      if(data.success){
+	        const modal = bootstrap.Modal.getInstance(document.getElementById("passwordModal"));
+	        modal && modal.hide();
+	      }
+	    })
+	    .catch(err=>{
+	      console.error(err);
+	      pushToast({ title:'네트워크 오류', body:'잠시 후 다시 시도해주세요.', variant:'danger' });
+	    });
+	  }
+	
+	  ["inputCompanyCode","inputId"].forEach(id=>{
+	    document.getElementById(id).addEventListener("input", mergeUserId);
+	  });
+	  
+	  document.addEventListener('DOMContentLoaded', () => {
+	    try {
+	      const usp = new URLSearchParams(window.location.search);
+	      if (usp.has('error')) {
+	        const msg = (usp.get('msg') || '').trim() || '로그인에 실패했습니다. 정보를 확인해주세요.';
+	        pushToast({ title:'로그인 실패', body: msg, variant:'danger' });
+	      }
+	      if (usp.has('logout')) {
+	        pushToast({ title:'로그아웃', body:'정상적으로 로그아웃되었습니다.', variant:'success' });
+	      }
 
-	<script
-		src="https://www.google.com/recaptcha/api.js?onload=initLoginRecaptchaV2&render=explicit"
-		async defer></script>
+	      const ds = document.getElementById('loginFlags')?.dataset || {};
+	      if (ds.error !== undefined) {
+	        const msg2 = (ds.msg || '').trim() || '로그인에 실패했습니다. 정보를 확인해주세요.';
+	        pushToast({ title:'로그인 실패', body: msg2, variant:'danger' });
+	      }
+	      if (ds.logout !== undefined) {
+	        pushToast({ title:'로그아웃', body:'정상적으로 로그아웃되었습니다.', variant:'success' });
+	      }
+	    } catch (e) {
+	      console.error(e);
+	    }
+	 });
+	</script>
+	<script src="https://www.google.com/recaptcha/api.js?onload=initLoginRecaptchaV2&render=explicit" async defer></script>
 </body>
 </html>
