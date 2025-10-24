@@ -14,7 +14,8 @@ import com.yedam.sales1.domain.OrderDetail;
 @Repository
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, String> {
 
-	List<OrderDetail> findAll();
+	@Query("SELECT od FROM OrderDetail od where od.companyCode = :companyCode")
+	List<OrderDetail> findAll(@Param("companyCode") String companyCode);
 
 	OrderDetail findByOrderDetailCode(String orderDetailCode);
 

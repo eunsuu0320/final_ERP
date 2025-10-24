@@ -2,18 +2,19 @@ package com.yedam.sales1.repository;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Payment;
 
 @Repository
 public interface PartnerPaymentRepository extends
 		JpaRepository<Payment, String>{
 
-	List<Payment> findAll();
+	@Query("SELECT od FROM Payment od where od.companyCode = :companyCode")
+	List<Payment> findAll(@Param("companyCode") String companyCode);
 	
 	@Query("SELECT MAX(p.paymentCode) FROM Payment p")
 	String findMaxPaymentCode();

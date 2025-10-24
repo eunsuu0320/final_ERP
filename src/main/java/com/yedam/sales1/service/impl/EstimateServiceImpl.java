@@ -45,7 +45,9 @@ public class EstimateServiceImpl implements EstimateService {
 	// =============================================================
 	@Override
 	public List<Estimate> getAllEstimate() {
-		return estimateRepository.findAllEstimates();
+		String companyCode = getCompanyCodeFromAuthentication();
+
+		return estimateRepository.findAllEstimates(companyCode);
 	}
 	
 	
