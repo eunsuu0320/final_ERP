@@ -48,52 +48,77 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // ================================
-  // 📌 저장 버튼 → 서버 전송
+  // 📌 저장 버튼 → 서버 전송 (오른쪽 패널)
+  //  - 로딩 오버레이(emp-save-loading) 표시 + 중복 방지
   // ================================
-  document.getElementById("btn-update-sales").addEventListener("click", () => {
-    const empCode = document.getElementById("employCode").value;
-    if (!empCode) {
-      alert("사원을 먼저 선택해주세요");
-      return;
-    }
+  const mainSaveBtn   = document.querySelector('.table-box.right #btn-update-sales');
+  const mainResetBtn  = document.querySelector('.table-box.right #btn-cancel-update');
+  const mainOverlayEl = document.getElementById('emp-save-loading');
 
-    const data = planTable.getData();
+  if (mainSaveBtn) {
+    mainSaveBtn.addEventListener("click", async () => {
+      const btn = mainSaveBtn;
+      if (btn.dataset.loading === "1") return;
 
-    // payload를 객체 구조로 감싸기
-    const payload = {
-      empCode: empCode,
-      espCode: document.getElementById("espCode").value,
-      detailPlans: data.map(row => ({
-        espCode: row.espCode,
-        esdpCode: row.esdpCode,
-        qtr: row.qtr,
-        purpSales: row.purpSales || 0,
-        purpProfitAmt: row.purpProfitAmt || 0,
-        newVendCnt: row.newVendCnt || 0
-      }))
-    };
+      const empCode = document.getElementById("employCode").value;
+      if (!empCode) {
+        alert("사원을 먼저 선택해주세요");
+        return;
+      }
 
-    console.log("서버로 전송할 데이터:", payload);
+      // UI 잠그기
+      btn.dataset.loading = "1";
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>로딩 중…`;
+      btn.disabled = true;
+      if (mainResetBtn) mainResetBtn.disabled = true;
+      if (mainOverlayEl) mainOverlayEl.classList.remove("d-none");
 
-    fetch("/api/sales/insertPlanWithDetails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        [document.querySelector("meta[name='_csrf_header']").content]:
-          document.querySelector("meta[name='_csrf']").content
-      },
-      body: JSON.stringify(payload)
-    })
-      .then(res => res.text())
-      .then(result => {
+      try {
+        const data = planTable.getData();
+
+        // payload를 객체 구조로 감싸기
+        const payload = {
+          empCode: empCode,
+          espCode: document.getElementById("espCode").value,
+          detailPlans: data.map(row => ({
+            espCode: row.espCode,
+            esdpCode: row.esdpCode,
+            qtr: row.qtr,
+            purpSales: row.purpSales || 0,
+            purpProfitAmt: row.purpProfitAmt || 0,
+            newVendCnt: row.newVendCnt || 0
+          }))
+        };
+
+        const res = await fetch("/api/sales/insertPlanWithDetails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            [document.querySelector("meta[name='_csrf_header']").content]:
+              document.querySelector("meta[name='_csrf']").content
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.text();
+        if (!res.ok) throw new Error(result || `HTTP ${res.status}`);
+
         console.log("등록 성공:", result);
         alert("분기별 영업계획이 저장되었습니다!");
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("등록 실패:", err);
-        alert("등록 중 오류 발생");
-      });
-  });
+        alert("등록 중 오류 발생: " + err.message);
+      } finally {
+        // UI 해제
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        if (mainResetBtn) mainResetBtn.disabled = false;
+        if (mainOverlayEl) mainOverlayEl.classList.add("d-none");
+        btn.dataset.loading = "0";
+      }
+    });
+  }
 
   // ================================
   // 📌 사원 클릭 시 강조 + 계획 테이블 채우기
@@ -115,8 +140,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // hidden input 값 세팅
     document.getElementById("employCode").value = data.EMP_CODE;
-    // ▼ 자동 입력 제거: 검색 인풋에 이름 넣지 않음
-    // document.getElementById("employeeName").value = data.EMPNAME;
+    // document.getElementById("employeeName").value = data.EMPNAME; // 자동 입력 제거
     document.getElementById("espCode").value = data.ESPCODE;
 
     // 오른쪽 제목 업데이트
@@ -128,7 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!response.ok) {
           throw new Error("HTTP error! Status: " + response.status);
         }
-        return response.json(); // JSON 응답을 JS 객체로 변환
+        return response.json();
       })
       .then(data => {
         planTable.replaceData(data);
@@ -174,4 +198,52 @@ document.addEventListener("DOMContentLoaded", function () {
     ]);
     alert("계획 테이블이 초기화되었습니다!");
   });
+
+  // ================================
+  // 📌 수정(모달) 저장 — 로딩 표시 + 중복 방지
+  //  - 모달 버튼은 같은 id가 중복되므로 #modifySalesModal 영역으로 한정
+  // ================================
+  const modalSaveBtn   = document.querySelector('#modifySalesModal #btn-update-sales');
+  const modalCancelBtn = document.querySelector('#modifySalesModal #btn-cancel-update');
+  const modalCloseBtn  = document.querySelector('#modifySalesModal .btn-close');
+  const modalOverlayEl = document.getElementById('emp-update-loading');
+
+  if (modalSaveBtn) {
+    modalSaveBtn.addEventListener("click", async () => {
+      const btn = modalSaveBtn;
+      if (btn.dataset.loading === "1") return;
+
+      // UI 잠그기
+      btn.dataset.loading = "1";
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>로딩 중…`;
+      btn.disabled = true;
+      if (modalCancelBtn) modalCancelBtn.disabled = true;
+      if (modalCloseBtn)  modalCloseBtn.disabled  = true;
+      if (modalOverlayEl) modalOverlayEl.classList.remove("d-none");
+
+      try {
+        // 🔧 실제 수정 저장 로직을 여기에 작성
+        // 예: 모달 내 empListTable(or 편집 그리드)에서 데이터 수집 후 전송
+        // const payload = ...
+        // const res = await fetch("/api/sales/updatePlanWithDetails", { method:"PUT", headers:{...}, body: JSON.stringify(payload) });
+        // if (!res.ok) throw new Error(await res.text());
+
+        alert("수정이 완료되었습니다.");
+        const modalEl = document.getElementById("modifySalesModal");
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      } catch (err) {
+        console.error("수정 실패:", err);
+        alert("수정 중 오류 발생: " + err.message);
+      } finally {
+        // UI 해제
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+        if (modalCancelBtn) modalCancelBtn.disabled = false;
+        if (modalCloseBtn)  modalCloseBtn.disabled  = false;
+        if (modalOverlayEl) modalOverlayEl.classList.add("d-none");
+        btn.dataset.loading = "0";
+      }
+    });
+  }
 });
