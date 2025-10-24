@@ -16,6 +16,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinColumns;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
@@ -64,19 +65,31 @@ public class Employee implements Prefixable {
 	private String address; // 주소
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "dept", referencedColumnName = "codeId", insertable = false, updatable = false)
+	@JoinColumns({
+		@JoinColumn(name = "dept", referencedColumnName = "codeId", insertable = false, updatable = false),
+		@JoinColumn(name = "companyCode",  referencedColumnName = "companyCode", insertable = false, updatable = false)
+	})
 	private CommonCode deptCode;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "position", referencedColumnName = "codeId", insertable = false, updatable = false)
+	@JoinColumns({
+		@JoinColumn(name = "position", referencedColumnName = "codeId", insertable = false, updatable = false),
+		@JoinColumn(name = "companyCode",  referencedColumnName = "companyCode", insertable = false, updatable = false)
+	})
 	private CommonCode positionCode;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "grade", referencedColumnName = "codeId", insertable = false, updatable = false)
+	@JoinColumns({
+		@JoinColumn(name = "grade", referencedColumnName = "codeId", insertable = false, updatable = false),
+		@JoinColumn(name = "companyCode",  referencedColumnName = "companyCode", insertable = false, updatable = false)
+	})
 	private CommonCode gradeCode;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "bankCode", referencedColumnName = "codeId", insertable = false, updatable = false)
+	@JoinColumns({
+		@JoinColumn(name = "bankCode", referencedColumnName = "codeId", insertable = false, updatable = false),
+		@JoinColumn(name = "companyCode",  referencedColumnName = "companyCode", insertable = false, updatable = false)
+	})
 	private CommonCode bankCodeEntity;
 
 
