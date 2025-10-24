@@ -1,4 +1,3 @@
-// src/main/java/com/yedam/common/service/KakaoPayService.java
 package com.yedam.common.service;
 
 import java.util.Map;
