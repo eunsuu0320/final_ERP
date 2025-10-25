@@ -1,5 +1,8 @@
 package com.yedam.sales1.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -7,9 +10,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
-import lombok.Builder; // EstimateServiceImpl에서 builder 패턴 사용을 위해 추가
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Entity
@@ -17,8 +22,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder // EstimateServiceImpl에서 객체 복사 시 사용
-public class EstimateDetail {
+@Builder
+public class EstimateDetail implements java.io.Serializable {
+
+	private static final long serialVersionUID = 1L;
 
 	@Id
 	@Column(name = "ESTIMATE_DETAIL_CODE", length = 20, nullable = false)
@@ -46,8 +53,30 @@ public class EstimateDetail {
 	// COMPANY_CODE (VARCHAR2(20) NOT NULL) - 회사 코드
 	@Column(name = "COMPANY_CODE", length = 20, nullable = false)
 	private String companyCode;
+	
+	
+	@Transient
+	private String productName;
 
+	@Transient
+	private String productSize;
+
+	@Transient
+	private String unit;
+
+	// ✅ 수정 코드 (순환 참조 완전 차단)
+	@JsonIgnore
+	@EqualsAndHashCode.Exclude
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "ESTIMATE_UNIQUE_CODE", insertable = false, updatable = false)
 	private Estimate estimate;
+
+
+	// ✅ 상품(Product)과의 연관관계 추가
+	@JsonIgnore
+	@JsonManagedReference
+	@EqualsAndHashCode.Exclude
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "PRODUCT_CODE", insertable = false, updatable = false)
+	private Product product;  // Product 엔티티 참조
 }

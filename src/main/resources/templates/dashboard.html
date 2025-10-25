@@ -462,8 +462,8 @@ async function load(){
     document.getElementById('kpi-attend-note').textContent = '금일 기준';
 
     // Sparklines
-    sparkline(document.getElementById('spark-sales'), (d.salesTrend||[]), 'rgba(37,99,235,1)');
-    sparkline(document.getElementById('spark-buy'),   (d.buyTrend||[]),   'rgba(245,158,11,1)');
+    
+    
     sparkline(document.getElementById('spark-emp'),   (d.deptCounts||[]), 'rgba(16,185,129,1)');
     sparkline(document.getElementById('spark-ar'),    (d.arTrend||[]),    'rgba(20,184,166,1)');
     sparkline(document.getElementById('spark-sales-cnt'), (d.salesCntTrend||[]), 'rgba(6,182,212,1)');

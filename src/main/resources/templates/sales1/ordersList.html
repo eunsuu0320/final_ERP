@@ -3,8 +3,8 @@
 	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
 	layout:decorate="~{layout/main}">
 <head>
-<meta name="_csrf" content="${_csrf.token}" />
-<meta name="_csrf_header" content="${_csrf.headerName}" />
+<meta name="_csrf" th:content="${_csrf.token}" />
+<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 <link rel="stylesheet" th:href="@{/erp/css/sales1/salesStyle.css}" />
 <link
 	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
@@ -13,9 +13,22 @@
 	href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+/* 로딩 오버레이 (공통) */
+.modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(255, 255, 255, .7);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 1056;
+	font-weight: 700;
+	font-size: 18px;
+}
+</style>
 </head>
 <body layout:fragment="content">
-
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="containerBox">
@@ -23,53 +36,51 @@
 					<h1 class="mt-4">주문서관리</h1>
 				</div>
 
-
-
+				<!-- 검색 바 (요구사항 1: fetch 없이 Tabulator 다중필터) -->
 				<div class="searchTool d-flex align-items-center mb-3">
 					<div class="d-flex">
 						<div class="me-5 d-flex flex-column align-items-start">
 							<label for="startDate" class="col-form-label fw-bold text-nowrap">기준일자</label>
 							<div class="d-flex">
 								<input type="date" class="form-control form-control-sm"
-									id="startDate" name="startDate" style="width: 120px;">
-								<span class="mx-2">~</span> <input type="date"
+									id="startDate" style="width: 120px;"> <span
+									class="mx-2">~</span> <input type="date"
 									class="form-control form-control-sm" id="endDate"
-									name="endDate" style="width: 120px;">
+									style="width: 120px;">
 							</div>
 						</div>
 
 						<div class="me-5 d-flex flex-column align-items-start">
-							<label for="manager" class="col-form-label fw-bold text-nowrap">담당자</label>
-							<input type="text" class="form-control form-control-sm w-auto"
-								placeholder="검색어 입력" id="manager">
+							<label for="managerSearch"
+								class="col-form-label fw-bold text-nowrap">담당자</label> <input
+								type="text" class="form-control form-control-sm w-auto"
+								placeholder="담당자명 입력" id="managerSearch">
 						</div>
 
 						<div class="me-5 d-flex flex-column align-items-start">
-							<label for="itemGroup" class="col-form-label fw-bold text-nowrap">거래처명</label>
-							<input type="text" class="form-control form-control-sm w-auto"
-								placeholder="검색어 입력" id="itemGroup">
+							<label for="partnerNameSearch"
+								class="col-form-label fw-bold text-nowrap">거래처명</label> <input
+								type="text" class="form-control form-control-sm w-auto"
+								placeholder="거래처명 입력" id="partnerNameSearch">
 						</div>
 
 						<div class="d-flex flex-column align-items-start">
-							<label for="warehouse" class="col-form-label fw-bold text-nowrap">품목</label>
-							<input type="text" class="form-control form-control-sm w-auto"
-								placeholder="검색어 입력" id="warehouse">
+							<label for="productSearch"
+								class="col-form-label fw-bold text-nowrap">품목</label> <input
+								type="text" class="form-control form-control-sm w-auto"
+								placeholder="품목 키워드" id="productSearch">
 						</div>
 					</div>
 
 					<div class="d-flex flex-column align-items-end ms-3">
 						<div style="height: 34px;"></div>
-
 						<div class="d-flex">
 							<button class="btn btn-warning me-2 btn-sm"
 								onclick="filterSearch()">검색</button>
-							<button class="btn btn-dark btn-sm"
-								onclick="filterReset('.searchTool')">초기화</button>
+							<button class="btn btn-dark btn-sm" onclick="resetSearch()">초기화</button>
 						</div>
 					</div>
-
 				</div>
-
 
 				<div class="d-flex justify-content-between align-items-center mb-3">
 					<div class="btn-group btn-type ms-2" role="group"
@@ -81,31 +92,28 @@
 							data-type="ONGOING">진행중</button>
 						<button type="button" class="btn btn-outline-primary"
 							data-type="SHIPMENTSUCCESS">출하지시완료</button>
-						<button type="button" class="btn btn-outline-primary"
-							data-type="SUCCESS">완료</button>
 					</div>
 
 					<div class="d-flex align-items-center">
 						<button class="btn btn-primary me-2"
 							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
 					</div>
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" class="me-2"> <input
-						type="checkbox" class="colCheckbox" th:value="${col}"
-						th:checked="${col == '주문서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '납기일자' or col == '진행상태'}" />
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> <label th:each="col : ${columns}" th:if="${col != '주문서고유코드'}"
+						class="me-2"> <input type="checkbox" class="colCheckbox"
+						th:value="${col}"
+						th:checked="${col == '주문서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '납기일자' or col == '주문금액합계' or col == '담당자' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
 				</div>
 
-
 				<div id="productTable"></div>
 
-
+				<!-- 상세 모달 -->
 				<div class="modal fade" id="newDetailModal" tabindex="-1"
 					aria-hidden="true">
 					<div class="modal-dialog modal-xl modal-dialog-centered">
@@ -116,102 +124,95 @@
 									<button type="button" class="btn btn-primary me-2"
 										onclick="saveModal()">저장</button>
 									<button type="button" class="btn btn-dark me-3"
-										onclick="resetQuote()">초기화</button>
+										onclick="resetOrder()">초기화</button>
 									<button type="button" class="btn btn-secondary me-3"
 										onclick="openModal('estimate', function(selected) {
-                						document.getElementById('estimateCodeModal').value = selected.estimateCode;
-										document.getElementById('partnerNameModal').value = selected.partnerCode;
-										document.getElementById('managerModal').value = selected.manager;
-										document.getElementById('deliveryDateModal').value = selected.deliveryDate;
-            })">견적서조회</button>
+                          // 견적서 조회 → 로딩 표시 + 데이터 바인딩 (요구사항 3)
+                          showLoading();
+                          document.getElementById('estimateCode').value = selected.estimateCode;
+                          document.getElementById('estimateUniqueCode').value = selected.estimateUniqueCode;
+                          loadDetailData('estimate', selected.estimateUniqueCode, document.getElementById('quoteForm'))
+                            .then(d => { window.lastLoadedOrderData = d; }) // 캐시
+                            .catch(err => console.error('견적 상세 로딩 실패:', err))
+                            .finally(hideLoading);
+                        })">
+										견적서조회</button>
 									<button type="button" class="btn-close" data-bs-dismiss="modal"
 										aria-label="Close"></button>
 								</div>
 							</div>
 
 							<div class="modal-body">
-								<form id="orderForm">
-
+								<form id="quoteForm">
 									<div class="row mb-3 g-3 border-bottom pb-3">
 										<h6 class="mt-4 mb-2 fw-bold">1. 기본정보</h6>
 
 										<div class="col-12 d-flex align-items-center">
-											<label for="estimateCodeModal"
+											<label for="estimateCode"
 												class="col-form-label fw-bold text-nowrap"
 												style="width: 120px;">견적서코드</label>
 											<div class="input-group input-group-sm"
 												style="max-width: 250px;">
 												<input type="text" class="form-control" placeholder="견적서코드"
-													id="estimateCodeModal" style="background-color: #f8f9fa;"
-													readonly>
+													id="estimateCode" name="estimateCode" readonly> <input
+													type="hidden" class="form-control"
+													name="estimateUniqueCode" id="estimateUniqueCode" readonly>
 											</div>
 										</div>
 
 										<div class="col-6 d-flex align-items-center">
-											<label for="partnerNameModal"
+											<label for="partnerName"
 												class="col-form-label fw-bold text-nowrap"
 												style="width: 120px;">거래처</label>
-
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
 												<input type="hidden" id="partnerCodeModal"
 													name="partnerCode"> <input type="text"
 													class="form-control" placeholder="검색어 입력"
-													id="partnerNameModal">
-												<button class="btn btn-outline-secondary" type="button"
-													onclick="openModal('partner', function(selected) {
-                document.getElementById('partnerNameModal').value = selected.partnerName;
-                document.getElementById('partnerCodeModal').value = selected.partnerCode;
-            })">
+													name="partnerName" id="partnerName">
+												<button class="btn btn-outline-secondary"
+													id="partnerModalBtn" type="button"
+													onclick="openModal('salesPartner', function(selected) {
+                                document.getElementById('partnerName').value = selected.partnerName;
+                                document.getElementById('partnerCodeModal').value = selected.partnerCode;
+                                document.getElementById('managerName').value = selected.name;
+                                document.getElementById('manager').value = selected.manager;
+                                document.getElementById('zipcode').value = selected.postCode;
+                                document.getElementById('address').value = selected.address;
+                              })">
 													<i class="bi bi-search"></i>
 												</button>
 											</div>
 										</div>
 
 										<div class="col-6 d-flex align-items-center">
-											<label for="managerModal"
+											<label for="manager"
 												class="col-form-label fw-bold text-nowrap"
 												style="width: 120px;">담당자</label>
-
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
-												<input type="text" class="form-control" id="managerModal">
+												<input type="hidden" id="manager" name="manager"> <input
+													type="text" class="form-control" id="managerName"
+													name="managerName">
+												<button class="btn btn-outline-secondary" type="button"
+													onclick="openModal('salesEmployee', function(selected) {
+                                document.getElementById('managerName').value = selected.name;
+                                document.getElementById('manager').value = selected.empCode;
+                              })">
+													<i class="bi bi-search"></i>
+												</button>
 											</div>
-										</div>
-
-										<div class="col-6 d-flex align-items-center">
-											<label for="deliveryDateModal"
-												class="col-form-label fw-bold text-nowrap"
-												style="width: 120px;">납기일</label>
-
-											<div class="input-group input-group-sm"
-												style="max-width: 400px;">
-												<input type="date" class="form-control"
-													id="deliveryDateModal">
-											</div>
-										</div>
-
-										<div class="col-6 d-flex align-items-start">
-											<label for="quotePaymentTerms"
-												class="col-form-label fw-bold text-nowrap pt-1"
-												style="width: 120px;">결제조건</label> <input
-												class="form-control form-control-sm" id="quotePaymentTerms"
-												name="paymentTerms" placeholder="예: 현금 100%, 납품 후 7일 이내 지급."
-												style="max-width: 400px;"></input>
 										</div>
 
 										<div class="col-12 d-flex flex-column">
-
 											<div class="d-flex align-items-center mb-2">
 												<label for="zipcode"
 													class="col-form-label fw-bold text-nowrap"
 													style="width: 120px;">납품장소</label>
-
 												<div class="input-group input-group-sm"
 													style="max-width: 400px;">
-													<input type="text" class="form-control"
-														name="deliveryLocation" id="zipcode" placeholder="우편번호"
-														readonly>
+													<input type="text" class="form-control" name="postCode"
+														id="zipcode" placeholder="우편번호" readonly>
 													<button class="btn btn-outline-secondary" type="button"
 														onclick="execDaumPostcode()">
 														<i class="bi bi-search"></i>
@@ -220,22 +221,40 @@
 											</div>
 
 											<div class="d-flex align-items-center">
-												<div style="width: 135px;"></div>
-
+												<div style="width: 120px;"></div>
 												<input type="text" class="form-control form-control-sm"
-													name="deliveryDetailLocation" id="address"
-													placeholder="상세 주소" style="flex-grow: 1;">
+													name="address" id="address" placeholder="상세 주소"
+													style="max-width: 962px;">
 											</div>
 										</div>
 
+										<div class="col-6 d-flex align-items-center">
+											<label for="deliveryDate"
+												class="col-form-label fw-bold text-nowrap"
+												style="width: 120px;">납기일</label>
+											<div class="input-group input-group-sm"
+												style="max-width: 400px;">
+												<input type="date" class="form-control" id="deliveryDate"
+													name="deliveryDate">
+											</div>
+										</div>
+
+										<div class="col-6 d-flex align-items-start">
+											<label for="quotePaymentTerms"
+												class="col-form-label fw-bold text-nowrap pt-1"
+												style="width: 120px;">결제조건</label> <input
+												class="form-control form-control-sm" id="quotePaymentTerms"
+												name="payCondition" placeholder="예: 현금 100%, 납품 후 7일 이내 지급."
+												style="max-width: 400px;">
+										</div>
 
 										<div class="col-12 d-flex align-items-start">
 											<label for="quoteRemarks"
 												class="col-form-label fw-bold text-nowrap pt-1"
-												style="width: 135px;">비고</label>
+												style="width: 120px;">비고</label>
 											<textarea class="form-control form-control-sm"
 												id="quoteRemarks" name="remarks" rows="2"
-												style="max-width: 1000px;"></textarea>
+												style="max-width: 962px;"></textarea>
 										</div>
 									</div>
 								</form>
@@ -248,6 +267,7 @@
 									<button type="button" class="btn btn-sm btn-outline-danger"
 										onclick="deleteSelectedItemRows()">- 선택 삭제</button>
 								</div>
+
 								<div class="table-responsive">
 									<table id="quoteDetailTable"
 										class="table table-bordered table-sm">
@@ -256,9 +276,9 @@
 												<th style="width: 30px;"></th>
 												<th style="width: 10%;">품목코드*</th>
 												<th style="width: 10%;">품목명</th>
-												<th style="width: 10%;">규격</th>
-												<th style="width: 10%;">수량*</th>
+												<th style="width: 10%;">규격/단위</th>
 												<th style="width: 10%;">단가*</th>
+												<th style="width: 10%;">수량*</th>
 												<th style="width: 10%;">공급가액</th>
 												<th style="width: 10%;">부가세</th>
 												<th style="width: 10%;">최종금액</th>
@@ -270,65 +290,52 @@
 												<td class="text-center"><input type="checkbox"
 													class="form-check-input"></td>
 												<td>
-													<!-- Input Group을 사용하여 Input 필드와 버튼을 결합 -->
 													<div class="input-group input-group-sm">
-														<!-- 읽기 전용 품목 코드 Input -->
 														<input type="text" class="form-control item-input"
-															name="itemCode" id="itemCode" readonly>
-
-														<!-- 검색 버튼을 Input Group에 붙임 -->
+															name="productCode" id="productCode" readonly>
 														<button class="btn btn-outline-secondary" type="button"
 															onclick="openModal('productCode', function(selected) {
-                // ID를 사용하여 값을 설정합니다.
-                document.getElementById('itemCode').value = selected.productCode;
-                document.getElementById('itemName').value = selected.productName; 
-                
-                // 사용자가 요청한 itemSpec 로직을 적용했습니다.
-                document.getElementById('itemSpec').value = selected.productSize || ' ' || selected.unit;
-                document.getElementById('price').value = selected.price;
-            })">
-															<!-- 부트스트랩 아이콘 (bi bi-search) -->
+                                  document.getElementById('productCode').value = selected.productCode;
+                                  document.getElementById('productName').value = selected.productName;
+                                  const itemSpecValue = [selected.productSize, selected.unit].filter(v => v && String(v).trim() !== '').join(' ');
+                                  document.getElementById('productSpec').value = itemSpecValue;
+                                  document.getElementById('price').value = selected.outPrice.toLocaleString('ko-KR');
+                                })">
 															<i class="bi bi-search"></i>
 														</button>
 													</div>
 												</td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemName" id="itemName" readonly></td>
+													name="productName" id="productName" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemSpec" id="itemSpec" readonly></td>
+													name="productSpec" id="productSpec" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="quantity" value="0" oninput="calculateRow(this)"></td>
-
+													name="price" id="price" oninput="calculateRow(this)"></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="price" id="price" value="0"
-													oninput="calculateRow(this)"></td>
-
+													name="quantity" id="quantity" oninput="calculateRow(this)"></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="supplyAmount" value="0" readonly></td>
-
+													name="supplyAmount" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="taxAmount" value="0" readonly></td>
+													name="taxAmount" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="finalAmount" value="0" readonly></td>
-
+													name="finalAmount" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
 													name="remarks"></td>
 											</tr>
-
 										</tbody>
 										<tfoot id="itemDetailFooter">
 											<tr class="table-warning fw-bold">
 												<td colspan="4" class="text-end">합계</td>
-												<td class="text-end" id="totalQuantity">0 개</td>
 												<td class="text-end"></td>
+												<td class="text-end" id="totalQuantity">0 개</td>
 												<td class="text-end" id="totalSupplyAmount">0 원</td>
 												<td class="text-end" id="totalTaxAmount">0 원</td>
 												<td></td>
@@ -336,40 +343,38 @@
 											</tr>
 											<tr class="table-warning fw-bold">
 												<td colspan="4" class="text-end">총 금액</td>
-												<td colspan="5" class="text-end" id="totalAmount">0 원</td>
+												<td colspan="5" class="text-end" id="totalFinalAmount">0
+													원</td>
 												<td></td>
-
 											</tr>
 										</tfoot>
 									</table>
 								</div>
-
-
 							</div>
 						</div>
 					</div>
 				</div>
+
 			</div>
 		</main>
 	</div>
-	<div id="modalOverlay" class="modal-overlay" style="display: none;"></div>
+
+	<!-- 로딩 오버레이 (요구사항 3) -->
+	<div id="loadingOverlay" class="modal-overlay">데이터 로딩 중...</div>
 
 	<div id="postcodeLayer" class="postcode-layer">
 		<div class="close-btn text-end p-2">
 			<button type="button" class="btn-close"
-				onclick="document.getElementById('postcodeLayer').style.display='none'">
-			</button>
+				onclick="document.getElementById('postcodeLayer').style.display='none'"></button>
 		</div>
 	</div>
 
-
 	<div th:replace="common/modal :: commonModal"></div>
 
-
 	<script th:inline="javascript">
-		var columns = /*[[${columns}]]*/[];
-		var rows = /*[[${rows}]]*/[];
-	</script>
+  var columns = /*[[${columns}]]*/[];
+  var rows    = /*[[${rows}]]*/[];
+</script>
 	<script
 		src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<script

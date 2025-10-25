@@ -37,7 +37,7 @@ window.checkRequired = function(formElement) {
 	for (let label of labels) {
 		const text = label.textContent.trim();
 		if (text.endsWith("*")) {
-			const inputWrapper = label.closest(".row");
+			const inputWrapper = label.closest(".col-6, .row");
 			const input = inputWrapper ? inputWrapper.querySelector("input, select, textarea") : null;
 
 			if (input) {
@@ -132,31 +132,27 @@ async function loadCommonCode(value, selectName, name) {
 			return;
 		}
 
+		// 기존 Choices 인스턴스 정리
 		let choicesInstance = select.choicesInstance;
-
-		// (Choices.js 인스턴스 파괴 및 재설정 로직 유지) ...
 		if (choicesInstance && typeof choicesInstance.destroy === 'function') {
 			choicesInstance.destroy();
 			select.choicesInstance = undefined;
 		}
-		const wrapper = select.closest('.choices');
-		if (wrapper) {
-			wrapper.parentNode.insertBefore(select, wrapper);
-			wrapper.remove();
+		const oldWrapper = select.closest('.choices');
+		if (oldWrapper) {
+			oldWrapper.parentNode.insertBefore(select, oldWrapper);
+			oldWrapper.remove();
 		}
 		select.removeAttribute('data-choice');
 		select.removeAttribute('data-choice-id');
-		select.style.display = '';
-
+		select.style.display = ''; // native select 보이게
 		select.innerHTML = '';
 
 		const defaultPlaceholderText = `${name}을 선택하세요`;
-
-		// 💡 1. 초기화를 위해 Native Select에 빈 옵션을 추가
+		// placeholder
 		select.innerHTML = `<option value="" selected disabled hidden>${defaultPlaceholderText}</option>`;
 
-
-		// 2. Choices.js 인스턴스 생성 (removeItemButton: false 유지)
+		// 새 Choices 인스턴스
 		choicesInstance = new Choices(select, {
 			removeItemButton: false,
 			searchEnabled: true,
@@ -167,32 +163,39 @@ async function loadCommonCode(value, selectName, name) {
 		});
 		select.choicesInstance = choicesInstance;
 
-		// 3. 데이터 로드 및 setChoices 호출
+		// 데이터 주입
 		const codeChoices = codes.map(code => ({
 			value: code.codeName,
 			label: code.codeName,
 		}));
+		choicesInstance.setChoices(codeChoices, 'value', 'label', false);
 
-		choicesInstance.setChoices(
-			codeChoices,
-			'value',
-			'label',
-			false // replaceChoices: false (초기 옵션 유지)
-		);
-
-		// 4. 💡 최종 해결: 로드 후 강제로 선택 상태를 초기화하여 진한 표시 제거
-		// '원자재'나 플레이스홀더가 진하게 선택되는 것을 즉시 해제합니다.
+		// 선택 초기화
 		choicesInstance.removeActiveItems();
 		choicesInstance.setChoiceByValue('');
 
+		// ✅ 여기서부터 "보이는 박스(.choices)"에 직접 크기 적용
+		const wrapper = select.closest('.choices'); // Choices가 만든 래퍼
+		if (wrapper) {
+			// 원하는 width 값 분기
+			let targetWidth = '500px';
+			if (selectName === 'businessType') targetWidth = '300px';
+			if (selectName === 'businessSector') targetWidth = '300px';
+			if (selectName === 'emailDomain') targetWidth = '250px';
+			if (selectName === 'warehouse') targetWidth = '250px';
+			
+			wrapper.style.width = targetWidth;    // 폭 고정
+			wrapper.style.maxWidth = 'none';      // 최대폭 제한 해제
+			wrapper.style.flex = `0 0 ${targetWidth}`; // flex 컨테이너에서 줄어들지 않도록
+		}
 
 		return;
-
 	} catch (err) {
 		console.error(`${value} 코드 불러오기 실패:`, err);
 		throw err;
 	}
-};
+}
+
 
 
 
@@ -208,7 +211,9 @@ window.makeTabulator = function(rows, tabulatorColumns) {
 		movableColumns: true,
 		resizableRows: false,
 		pagination: "local",
-		paginationSize: 12
+		paginationSize: 12,
+		headerHozAlign: "center" // ✅ 모든 헤더 가운데 정렬
+
 	});
 
 	// 컬럼 토글 체크박스
@@ -316,8 +321,9 @@ window.getCommonCode = async function(commonGroup) {
 
 
 
-// 데이터를 폼 요소에 매핑
 function bindDataToForm(data, form) {
+	console.log("바인딩할 데이터:", data);
+	console.log("바인딩할 폼:", form);
 	const allInputs = form.querySelectorAll('input, select, textarea');
 	const codeFields = ['productCode', 'partnerCode', 'estimateCode', 'priceGroupCode'];
 
@@ -333,30 +339,30 @@ function bindDataToForm(data, form) {
 		displayElement.value = "";
 	}
 
-	// 데이터 바인딩 시작
 	for (const key in data) {
-		if (data.hasOwnProperty(key)) {
+		if (data.hasOwnProperty(key) && key !== 'detailList') {
 			const elements = form.querySelectorAll(`[name="${key}"]`);
-
 			if (elements.length > 0) {
-				const value = data[key] === null ? '' : String(data[key]);
+				let value = data[key] === null ? '' : data[key];
+
+				// discountPct 처리
+				if (key === 'discountPct' && value !== '') {
+					value = Number(value) * 100; // 서버 값 × 100
+					value = value.toFixed(2); // 소수점 2자리로 제한 (필요시)
+				}
+
+				value = String(value);
 
 				if (elements[0].type === 'radio' || elements[0].type === 'checkbox') {
 					elements.forEach(element => {
-						if (element.value === value) {
-							element.checked = true;
-						} else if (element.type === 'radio') {
-							element.checked = false;
-						}
+						element.checked = (element.value === value);
 					});
-
 				} else {
 					const element = elements[0];
 					element.value = value;
 
 					if (codeFields.includes(key)) {
 						element.readOnly = true;
-
 						if (displayElement) {
 							displayElement.value = value;
 							displayElement.readOnly = true;
@@ -369,21 +375,113 @@ function bindDataToForm(data, form) {
 					}
 				}
 			}
+
+			const partnerNameEl = document.getElementById("partnerName");
+			if (partnerNameEl) partnerNameEl.readOnly = true;
+
+			const partnerModalBtn = document.getElementById("partnerModalBtn");
+			if (partnerModalBtn) partnerModalBtn.disabled = true;
+		}
+	}
+
+
+	// --- [2] 디테일 데이터(detailList) 바인딩 ---
+	if (data.detailList && Array.isArray(data.detailList) && data.detailList.length > 0) {
+		console.log("디테일 리스트 바인딩 시작:", data.detailList);
+		const detailTbody = document.getElementById('itemDetailBody');
+		if (!detailTbody) {
+			console.warn("itemDetailBody를 찾을 수 없습니다. detailList 바인딩을 건너뜁니다.");
+			return;
+		}
+
+		// 기존 행 초기화
+		detailTbody.querySelectorAll('tr:not(.new-item-row)').forEach(tr => tr.remove());
+
+		data.detailList.forEach(detail => {
+			// 템플릿 행 복제
+			const newRowTemplate = detailTbody.querySelector('tr.new-item-row');
+			if (!newRowTemplate) {
+				console.log("newRowTemplate 없음.");
+				return;
+			}
+			const dataRow = newRowTemplate.cloneNode(true);
+			dataRow.classList.remove('new-item-row', 'bg-light');
+			dataRow.removeAttribute('data-row-id');
+			dataRow.setAttribute('data-row-id', Date.now());
+
+			dataRow.querySelectorAll('.btn-outline-secondary').forEach(btn => btn.remove());
+
+			// 각 key에 해당하는 id를 찾아 값 매핑
+			for (const key in detail) {
+				if (!detail.hasOwnProperty(key)) continue;
+				console.log("detail의 key는: ", key);
+				const value = detail[key] ?? '';
+				const targetInput = dataRow.querySelector(`#${key}`);
+				if (targetInput) {
+					targetInput.value = value;
+
+					// 숫자 계산용 필드에만 calculateRow 적용
+					const numericFields = ['price', 'quantity', 'supplyAmount', 'taxAmount', 'finalAmount'];
+					if (numericFields.includes(key)) {
+						calculateRow(targetInput);
+					}
+				}
+			}
+
+			// productSpec = productSize + ' ' + unit
+			const productSize = detail.productSize ?? '';
+			const unit = detail.unit ?? '';
+			const specValue = [productSize, unit].filter(v => v && v.trim() !== '').join(' ');
+			const specInput = dataRow.querySelector('#productSpec');
+			if (specInput) {
+				specInput.value = specValue;
+			}
+
+			// 첫 번째 셀 체크박스 활성화
+			const checkbox = dataRow.querySelector('input[type="checkbox"]');
+			if (checkbox) {
+				checkbox.classList.add('item-checkbox');
+				checkbox.disabled = false;
+				checkbox.checked = false;
+			}
+
+			detailTbody.appendChild(dataRow);
+		});
+
+		// 모든 상세 항목 바인딩 후 총합 계산
+		if (typeof window.calculateTotal === 'function') {
+			window.calculateTotal();
 		}
 	}
 }
 
+
+window.showLoading = function() {
+	const overlay = document.getElementById("loadingOverlay");
+	if (overlay) overlay.style.display = "flex";
+}
+
+window.hideLoading = function() {
+	const overlay = document.getElementById("loadingOverlay");
+	if (overlay) overlay.style.display = "none";
+}
+
+
+
+
 // 상세 정보 데이터 로딩 함수
 function loadDetailData(domain, keyword, form) {
-	if (!keyword || !domain) return;
+	if (!keyword || !domain) return Promise.reject("keyword 또는 domain 누락");
 
+	console.log("keyword: ", keyword, "      domain: ", domain);
 	const url = `/api/${domain}/getDetail?keyword=${encodeURIComponent(keyword)}`;
 
-	// CSRF 토큰을 가져옵니다.
+	// CSRF 토큰 설정
 	const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
 	const csrfToken = document.querySelector('meta[name="_csrf"]').content;
 
-	fetch(url, {
+	// ✅ Promise 반환
+	return fetch(url, {
 		method: "GET",
 		headers: {
 			[csrfHeader]: csrfToken
@@ -397,15 +495,20 @@ function loadDetailData(domain, keyword, form) {
 		})
 		.then(data => {
 			console.log("상세 품목 정보 수신:", data);
-
+			// ✅ 폼에 데이터 바인딩
 			bindDataToForm(data, form);
 
+			// ✅ 다음 then에서 사용할 수 있도록 데이터 반환
+			return data;
 		})
 		.catch(err => {
 			console.error("상세 정보 로딩 실패:", err);
+
 			alert(`상세 정보를 불러오는 데 실패했습니다: ${err.message}`);
+			throw err; // 에러를 상위로 전달 (필요 시 catch 가능)
 		});
 }
+
 
 
 // 주소 API
@@ -466,66 +569,85 @@ window.resetItemGrid = function() {
 
 
 
+
+
+
+
+
+
+
+
 // 행 추가 버튼 이벤트
 // 파일: partnerList.js (결제 정보 테이블 로직)
 
 window.addItemRow = function() {
-	const tbody = document.getElementById('itemDetailBody');
-	const newRowTemplate = tbody.querySelector('tr.new-item-row');
+  const tbody = document.getElementById('itemDetailBody');
+  const newRowTemplate = tbody.querySelector('tr.new-item-row');
 
-	if (!newRowTemplate) return;
+  if (!newRowTemplate) return;
 
-	// 1. [수정] 공통 함수 checkRowRequired를 사용하여 필수 입력 필드 검사
-	//    이 함수는 테이블 헤더(<th>)에 * 표시가 있는지 확인합니다.
-	const validationResult = window.checkRowRequired(newRowTemplate);
+  // 1. 필수 입력 검증
+  const validationResult = window.checkRowRequired(newRowTemplate);
 
-	if (validationResult.isValid) {
-		// 필수 필드가 모두 입력되었다면 (행 추가 로직 실행)
+  if (validationResult.isValid) {
+    // 입력이 있다면 데이터 행으로 복사
+    const dataRow = newRowTemplate.cloneNode(true);
+    dataRow.classList.remove('new-item-row', 'bg-light');
+    dataRow.removeAttribute('data-row-id');
+    dataRow.setAttribute('data-row-id', Date.now());
 
-		// 입력이 있다면 데이터 행으로 복사하여 추가
-		const dataRow = newRowTemplate.cloneNode(true);
-		dataRow.classList.remove('new-item-row', 'bg-light');
-		dataRow.removeAttribute('data-row-id');
-		dataRow.setAttribute('data-row-id', Date.now()); // 고유 ID 부여
+    // 💡 복제된 행에서 검색 버튼 제거
+    const searchBtn = dataRow.querySelector('.btn-outline-secondary');
+    if (searchBtn) searchBtn.remove();
 
-		// 💡 복사된 행의 Select 요소들에 현재 선택된 값을 유지 (기존 로직 유지)
-		const newRowSelects = newRowTemplate.querySelectorAll('select.item-input');
-		const dataRowSelects = dataRow.querySelectorAll('select.item-input');
+    // select 값 유지
+    const newRowSelects = newRowTemplate.querySelectorAll('select.item-input');
+    const dataRowSelects = dataRow.querySelectorAll('select.item-input');
 
-		newRowSelects.forEach((selectEl, index) => {
-			dataRowSelects[index].value = selectEl.value;
-		});
+    newRowSelects.forEach((selectEl, index) => {
+      dataRowSelects[index].value = selectEl.value;
+    });
 
-		// 데이터 행의 체크박스를 활성화하고 클래스 부여
-		const dataRowCheckbox = dataRow.querySelector('td:first-child input[type="checkbox"]');
-		if (dataRowCheckbox) {
-			dataRowCheckbox.classList.add('item-checkbox');
-			dataRowCheckbox.disabled = false;
-			dataRowCheckbox.checked = false;
-		}
+    // 체크박스 활성화
+    const dataRowCheckbox = dataRow.querySelector('td:first-child input[type="checkbox"]');
+    if (dataRowCheckbox) {
+      dataRowCheckbox.classList.add('item-checkbox');
+      dataRowCheckbox.disabled = false;
+      dataRowCheckbox.checked = false;
+    }
 
-		tbody.appendChild(dataRow);
-		window.calculateTotal();
+    tbody.appendChild(dataRow);
+    window.calculateTotal();
 
-	} else {
-		// 유효성 검사에 실패했을 때 (경고 및 초기화 방지)
+    // ✅ 추가: 기존 입력 행 초기화 (reset)
+    const inputs = newRowTemplate.querySelectorAll('input.item-input, select.item-input');
+    inputs.forEach(el => {
+      if (el.tagName === 'SELECT') {
+        el.selectedIndex = 0; // 첫 옵션으로 초기화
+      } else if (el.type === 'checkbox' || el.type === 'radio') {
+        el.checked = false;
+      } else {
+        el.value = ''; // 일반 input 초기화
+      }
+    });
 
-		// 현재 등록된 데이터 행이 하나도 없을 때만 경고를 보여주는 로직은 유지
-		if (tbody.querySelectorAll('tr:not(.new-item-row)').length === 0) {
-			const missingField = validationResult.missingFieldName;
-			alert(`${missingField}은(는) 필수 입력 항목입니다.`);
+  } else {
+    if (tbody.querySelectorAll('tr:not(.new-item-row)').length === 0) {
+      const missingField = validationResult.missingFieldName;
+      alert(`${missingField}은(는) 필수 입력 항목입니다.`);
+      const missingInput = newRowTemplate.querySelector(`[name="${missingField}"]`);
+      if (missingInput) missingInput.focus();
+      return;
+    }
+  }
 
-			// 누락된 필드로 포커스 이동 (선택적)
-			const missingInput = newRowTemplate.querySelector(`[name="${missingField}"]`);
-			if (missingInput) missingInput.focus();
 
-			return;
-		}
-	}
+  // 기존 함수 호출 (혹시 커스텀 초기화 로직이 있는 경우)
+  window.clearInputRowValues(newRowTemplate);
 
-	window.clearInputRowValues(newRowTemplate);
-	console.log("새로운 결제 정보 행 추가 완료 및 입력 행 초기화.");
-}
+  console.log("새로운 결제 정보 행 추가 완료 및 입력 행 초기화.");
+};
+
 
 
 
@@ -559,6 +681,7 @@ window.deleteSelectedItemRows = function() {
 		// 사용자가 '취소'를 누르면 아무것도 하지 않습니다.
 	}
 }
+
 
 
 

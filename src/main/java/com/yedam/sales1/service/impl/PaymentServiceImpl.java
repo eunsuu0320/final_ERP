@@ -93,4 +93,10 @@ public class PaymentServiceImpl implements PaymentService {
 		}
 		return String.format("%s%04d", prefix, newNum);
 	}
+
+	@Override
+	public List<Payment> findPaymentsByPartnerCode(String partnerCode) {
+        return paymentRepository.findByPartnerCode(partnerCode);
+
+	}
 }

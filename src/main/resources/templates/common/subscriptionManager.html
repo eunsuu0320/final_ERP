@@ -4,7 +4,7 @@
       layout:decorate="~{layout/main}">
 <head>
   <meta charset="utf-8" />
-  <title>구독 관리 - Tabulator 전환</title>
+  <title>구독 관리</title>
 
   <!-- Font Awesome (돋보기) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -306,7 +306,44 @@
     userTable.setData("/api/common/users");
   });
   document.getElementById('employeeName').addEventListener('keydown',(e)=>{ if(e.key==='Enter') applyUserFilters(); });
-
+  
+  // 회사 정보
+  async function loadCompanyInfo(){
+	  try{
+	    const res = await fetch('/api/common/company', { headers:{ 'Accept':'application/json' }});
+	    if(!res.ok) throw new Error('회사 정보를 불러오지 못했습니다.');
+	    const c = await res.json();
+	
+	    const companyCode = c.companyCode ?? c.compCode ?? c.code ?? '';
+	    const bizNo       = c.bizRegNo ?? c.bizNo ?? c.businessNumber ?? '';
+	    const companyName = c.companyName ?? c.compName ?? c.name ?? '';
+	    const addr1       = c.roadAddress ?? c.address ?? c.addr ?? '';
+	    const addr2       = c.addressDetail ?? c.addrDetail ?? c.detailAddress ?? '';
+	    const picName     = c.managerName ?? c.picName ?? c.contactName ?? '';
+	    const picTel      = c.tel ?? c.phone ?? c.picTel ?? '';
+	    const picEmail    = c.managerEmail ?? c.picEmail ?? c.email ?? '';
+	
+	    // DOM 주입
+	    document.getElementById('compCode').value = companyCode;
+	    document.getElementById('bizNo').value    = bizNo;
+	    document.getElementById('compName').value = companyName;
+	    document.getElementById('addr').value     = [addr1, addr2].filter(Boolean).join(' ');
+	    document.getElementById('picName').value  = picName;
+	    document.getElementById('picTel').value   = picTel;
+	    document.getElementById('picEmail').value = picEmail;
+	  }catch(err){
+	    console.error(err);
+	    // 최소한 사용자에게도 표시
+	    document.getElementById('compCode').value = '';
+	    document.getElementById('bizNo').value    = '';
+	    document.getElementById('compName').value = '회사 정보를 불러오지 못했습니다.';
+	    document.getElementById('addr').value     = '';
+	    document.getElementById('picName').value  = '';
+	    document.getElementById('picTel').value   = '';
+	    document.getElementById('picEmail').value = '';
+	  }
+  }
+  
   /* ====== 구독 내역 ====== */
   function toDateStr(v){ if(!v) return ''; const d=new Date(v); if(Number.isNaN(d.getTime())) return ''; const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
   const subsTable = new Tabulator("#subsTable", {
@@ -334,7 +371,11 @@
     },
   });
   document.getElementById('btnSubsExcel').addEventListener('click', ()=>subsTable.download("xlsx","구독내역.xlsx",{sheetName:"Subscriptions"}));
-
+  
+  document.addEventListener('DOMContentLoaded', () => {
+	  loadCompanyInfo();
+  });
+  
   /* ====== 모달 오픈/저장 (기존 로직 유지) ====== */
   let userModalMode='edit';
   function setFormMode(mode){

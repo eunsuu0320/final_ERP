@@ -16,6 +16,7 @@ public class EstimateRegistrationDTO {
     private Integer validPeriod; 
     private String remarks;
     private String manager;
+    private String managerName;
     private Integer postCode;
     private String address;
     private String payCondition;

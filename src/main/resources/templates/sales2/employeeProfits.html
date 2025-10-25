@@ -6,6 +6,9 @@
 <head>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+<!-- ✅ Bootstrap Icons (수량 카드 아이콘용) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 
@@ -55,19 +58,96 @@
   border-radius: 4px;
   padding: 6px 12px;
 }
-
-.summary-box {
-  border: 2px solid #dee2e6;
+.grid{
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.card{
+  grid-column: span 4; /* 3장 한 줄 */
+  background: #fff;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 20px 10px;
-  background-color: #fafafa;
-  margin-bottom: 30px;
+  padding: 16px 18px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+.kpi{
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+}
+.kpi .t{ font-size: .92rem; color:#6b7280; }
+.kpi .v{ font-size: 1.4rem; font-weight: 700; color:#111827; }
+.kpi i{ font-size: 1.6rem; color:#94a3b8; }
+
+/* 테이블+차트 2단 */
+.grid-and-chart{ display:flex; gap:12px; align-items:stretch; }
+#sales-table{ flex: 1 1 58%; min-width:0; box-sizing:border-box; }
+.chart-panel{ flex: 0 1 40%; min-width:280px; box-sizing:border-box; }
+.chart-wrap{ height:360px; min-height:360px; max-height:360px; overflow:hidden; position:relative; }
+#profitChart{ width:100% !important; height:100% !important; display:block; }
+
+@media (max-width: 1200px){
+  .grid{ grid-template-columns: 1fr; }
+  .card{ grid-column: span 1; }
+  .grid-and-chart{ flex-direction:column; }
+  #sales-table, .chart-panel{ flex: 1 1 auto; width:100%; }
+  .chart-wrap{ height:320px; min-height:320px; max-height:320px; }
+}
+.kpi i { font-size: 1.6rem; }
+.card:nth-child(1) .kpi i { color:#6c8cff; }  /* 판매수량 */
+.card:nth-child(2) .kpi i { color:#22c55e; }  /* 공급가액 */
+.card:nth-child(3) .kpi i { color:#0ea5e9; }  /* 합계금액 - 사원별과 동일 색상으로 통일 */
+
+
+/* 🔧 그리드 주변 여백 최소화 */
+h3.mt-4.mb-4 { margin-top: 12px !important; margin-bottom: 8px !important; }
+#sales-table { margin-top: 0 !important; }
+
+/* ✅ KPI 카드 그리드 */
+.kpi i{
+  /* 고정 박스 */
+  width: 46px !important;
+  height: 46px !important;
+  flex: 0 0 46px !important;
+
+  /* 가운데 정렬 */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  /* 실제 아이콘 크기 */
+  font-size: 30px !important;   /* BS 아이콘/FA 모두 동일하게 큼 */
+  line-height: 1 !important;
 }
 
-.summary-item {
-  font-weight: 600;
-  color: #333;
-  text-align: center;
+/* ================================
+   ✅ 아이콘 크기 '28×28'로 완전 고정 (중복 규칙 제거)
+   ================================ */
+/* 카드 아이콘 한 단계 더 축소 & 통일 */
+.grid .card .kpi i,
+.grid .card .kpi svg {
+  width: 28px !important;
+  height: 28px !important;
+  flex: 0 0 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  font-size: 20px !important; /* 기본 사이즈 */
+}
+
+/* Font Awesome( fas / fa- )는 살짝 키워 시각 보정 */
+.grid .card .kpi i.fas,
+.grid .card .kpi i.fa-solid,
+.grid .card .kpi i.fa-regular,
+.grid .card .kpi i.fa-light,
+.grid .card .kpi i.fa-thin {
+  font-size: 28px !important;
+}
+
+/* Bootstrap Icons(첫 번째 카드 아이콘 bi- 계열)도 소폭 보정 */
+.grid .card .kpi i.bi {
+  font-size: 28px !important;
 }
 </style>
 </head>
@@ -78,11 +158,15 @@
     <div class="container-fluid px-4">
       <h1 class="mt-4 mb-4">영업이익관리</h1>
 
-      <!-- 보기 탭 -->
-      <div class="view-buttons">
-        <button class="view-btn" id="btnProductView">품목별</button>
-        <button class="view-btn active" id="btnEmployeeView">사원별</button>
-      </div>
+      <!-- 보기 탭 버튼 -->
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <button class="nav-link" id="btnProductView">품목별</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link active" id="btnEmployeeView">사원별</button>
+        </li>
+      </ul>
 
       <!-- 필터 영역 -->
       <div class="filter-bar">
@@ -99,94 +183,97 @@
         </select>
 
         <!-- 사원 검색 -->
-       <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
-
-        <!-- 사원 검색 -->
-        <div class="input-group" style="width:350px;">
-          <input id="name" type="text" class="form-control" placeholder="사원명 입력">
-          <input type="hidden" id="empCode" name="empCode">
-          <i class="fas fa-search"
-             style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
-             onclick="openModal('employee', function(selected) {
-               document.getElementById('empCode').value = selected.empCode;
-               document.getElementById('name').value = selected.name;
-             })"></i>
-          <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
-        </div>
-       </div>
-     </div>
-
-      <!-- 요약 박스 -->
-      <div class="summary-box">
-        <div class="row text-center">
-          <div class="col summary-item">
-            총 판매수량<br>
-            <span id="totalSalesCount" class="text-primary fs-5 fw-bold">0</span>
-          </div>
-          <div class="col summary-item">
-            총 공급가액<br>
-            <span id="totalSupply" class="text-primary fs-5 fw-bold">0</span>
-          </div>
-          <div class="col summary-item">
-            총 부가세<br>
-            <span id="totalTax" class="text-primary fs-5 fw-bold">0</span>
-          </div>
-          <div class="col summary-item">
-            총 합계금액<br>
-            <span id="totalAmount" class="text-primary fs-5 fw-bold">0</span>
+        <div class="d-flex align-items-center justify-content-between mb-3 mt-3">
+          <div class="input-group" style="width:350px;">
+            <input id="name" type="text" class="form-control" placeholder="사원명 입력">
+            <input type="hidden" id="empCode" name="empCode">
+            <i class="fas fa-search"
+               style="position: absolute; right: 80px; top: 50%; transform: translateY(-50%); cursor: pointer;"
+               onclick="openModal('employee', function(selected) {
+                 document.getElementById('empCode').value = selected.empCode;
+                 document.getElementById('name').value = selected.name;
+               })"></i>
+            <button id="btn-search" class="btn btn-warning" type="button" style="margin-left:10px;">검색</button>
           </div>
         </div>
       </div>
-      <div class="mt-3 mb-4">
-		  <canvas id="summaryChart" height="120"></canvas>
-		</div>
-		      
+
+      <!-- ✅ KPI 카드 (부가세 카드/표시 없음) -->
+      <div class="grid">
+        <div class="card">
+           <div class="kpi">
+            <div>
+              <div class="t">총 판매수량</div>
+              <div class="v" id="totalSalesCount">0</div>
+            </div>
+            <!-- 박스 아이콘 + 색상 -->
+            <i class="bi bi-box-seam" style="color:#6c8cff;"></i>
+          </div>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <div>
+              <div class="t">총 공급가액</div>
+              <div class="v" id="totalSupply">0</div>
+            </div>
+            <i class="fas fa-coins" style="color:#22c55e;"></i>
+          </div>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <div>
+              <div class="t">총 합계금액</div>
+              <div class="v" id="totalAmount">0</div>
+            </div>
+            <i class="fas fa-file-invoice-dollar" style="color:#0ea5e9;"></i>
+          </div>
+        </div>
+      </div>
 
       <!-- 사원별 실적 조회 테이블 -->
       <h3 class="mt-4 mb-4">사원별 실적 조회</h3>
       <div id="sales-table"></div>
     </div>
-    
+
     <!-- 사원 상세 모달 -->
-<div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="employeeModalLabel">판매목록</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="닫기"></button>
-      </div>
-
-      <div class="modal-body">
-        <!-- 검색 영역 -->
-        <div class="d-flex align-items-center mb-3">
-          <label class="fw-bold me-2">검색:</label>
-          <div style="position: relative; display: inline-block;">
-            <input id="modal-searchInput" type="text" placeholder="거래처명 입력" style="width:180px; padding-right:30px;">
-            <i class="fas fa-search"
-              id="modal-searchIcon"
-              style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"></i>
+    <div class="modal fade" id="employeeModal" tabindex="-1" aria-labelledby="employeeModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="employeeModalLabel">판매목록</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="닫기"></button>
           </div>
-          <button id="modal-btn-search" class="btn btn-warning btn-sm ms-2">검색</button>
+
+          <div class="modal-body">
+            <!-- 검색 영역 -->
+            <div class="d-flex align-items-center mb-3">
+              <label class="fw-bold me-2">검색:</label>
+              <div style="position: relative; display: inline-block;">
+                <input id="modal-searchInput" type="text" placeholder="거래처명 입력" style="width:180px; padding-right:30px;">
+                <i class="fas fa-search"
+                  id="modal-searchIcon"
+                  style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: #888; cursor: pointer;"></i>
+              </div>
+              <button id="modal-btn-search" class="btn btn-warning btn-sm ms-2">검색</button>
+            </div>
+
+            <!-- 판매 테이블 -->
+            <div id="employee-sales-table"></div>
+          </div>
+
+          <div class="modal-footer">
+          </div>
         </div>
-
-        <!-- 판매 테이블 -->
-        <div id="employee-sales-table"></div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
       </div>
     </div>
-  </div>
-</div>
-    
+
   </main>
 </div>
 
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- (하단 스크립트들 위쪽 아무 곳에) Chart.js CDN 추가 -->
+<!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script th:src="@{/sales2/js/employeeProfits.js}"></script>

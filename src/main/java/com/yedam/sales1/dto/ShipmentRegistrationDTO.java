@@ -1,40 +1,29 @@
 package com.yedam.sales1.dto;
 
-import com.yedam.sales1.domain.ShipmentDetail; // ShipmentDetail 엔티티를 직접 사용
+import java.util.List;
+
+import com.yedam.sales1.domain.ShipmentDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ShipmentRegistrationDTO {
-    
-    // =============================================================
-    // Shipment (마스터) 정보 필드
-    // =============================================================
 
-    private String shipmentDate; 
-    
-    private String partnerName; 
-    private String partnerCode; 
-    
-    private String warehouse;
-    
-    private String manager;
-    
-    private String postCode; 
-    private String address;  
-    
-    private String remarks;
-    
-    // =============================================================
-    // ShipmentDetail (상세) 정보 리스트 필드 (엔티티 자체를 사용)
-    // =============================================================
-    // ⭐ ShipmentDetail 엔티티를 리스트 타입으로 사용합니다.
-    private List<ShipmentDetail> detailList; 
+    // 출하 마스터(Shipment)
+    private String deliveryDate;      // 출하예정일자
+    private String partnerName;       // 거래처명
+    private String partnerCode;       // 거래처코드
+    private String warehouse;         // 창고
+    private String manager;           // 담당자
+    private String postCode;          // 우편번호
+    private String address;           // 주소
+    private String remarks;           // 비고
+
+    // 출하 상세(ShipmentDetail)
+    private List<ShipmentDetail> detailList; // 상세 항목
 }

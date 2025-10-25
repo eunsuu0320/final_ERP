@@ -13,4 +13,7 @@ public interface PaymentService {
 	Payment savePayment(Payment payment);
 
 	Payment getPartnerByPaymentCode(String keyword);
+	
+    List<Payment> findPaymentsByPartnerCode(String partnerCode);
+
 }

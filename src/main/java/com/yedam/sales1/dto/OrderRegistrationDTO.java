@@ -1,6 +1,7 @@
 package com.yedam.sales1.dto;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 
 import com.yedam.sales1.domain.OrderDetail;
@@ -27,13 +28,17 @@ public class OrderRegistrationDTO {
     private LocalDate orderDate; 
     
     // 3. OrdersServiceImpl에서 getDeliveryDate() 사용을 위해 추가
-    private LocalDate deliveryDate;
+    private Date deliveryDate;
 
     // 4. OrdersServiceImpl에서 getEstimateUniqueCode() 사용을 위해 추가 (연결된 견적서 ID)
     private Long estimateUniqueCode; 
     
     // 5. OrdersServiceImpl에서 getDetailList() 사용
     private List<OrderDetail> detailList;
+    
+    private Integer postCode;
+    private String address;
+    private String payCondition;
     
     // 이전 DTO에 있던 validPeriod는 주문서 등록 로직에 필요하지 않아 제거했습니다.
 }

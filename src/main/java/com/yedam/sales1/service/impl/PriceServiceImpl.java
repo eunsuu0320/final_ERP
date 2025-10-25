@@ -34,17 +34,30 @@ public class PriceServiceImpl implements PriceService {
 
     @Override
     public List<Price> getAllPrice() {
-        return priceRepository.findAllWithAllRelations();
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return priceRepository.findAllWithAllRelations(companyCode);
+    }
+    
+    
+    @Override
+    public List<Price> getFilterPrice(Price searchVo) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findByFilter(searchVo, companyCode);
     }
 
     @Override
     public List<Price> getAllPricePartner() {
-        return priceRepository.findAllWithPartner();
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findAllWithPartner(companyCode);
     }
 
     @Override
     public List<Price> getAllPriceProduct() {
-        return priceRepository.findAllWithProduct();
+    	String companyCode = getCompanyCodeFromAuthentication();
+
+        return priceRepository.findAllWithProduct(companyCode);
     }
 
     @Override
@@ -230,7 +243,6 @@ public class PriceServiceImpl implements PriceService {
             columns.add("단가그룹명");
             columns.add("단가유형");
             columns.add("할인율");
-            columns.add("사용구분");
             columns.add("비고");
             columns.add("단가적용시작일");
             columns.add("단가적용종료일");
@@ -246,7 +258,6 @@ public class PriceServiceImpl implements PriceService {
                 row.put("할인율", (price.getDiscountPct() * 100) + " %");
                 row.put("단가적용시작일", price.getStartDate());
                 row.put("단가적용종료일", price.getEndDate());
-                row.put("사용구분", price.getUsageStatus());
                 row.put("비고", price.getRemarks());
                 rows.add(row);
             }

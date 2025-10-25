@@ -3,6 +3,7 @@ package com.yedam.common.service;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -20,35 +21,55 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class KakaoPayService {
 
+    // 기존대로 인스턴스 생성 유지 (Bean 주입으로 바꾸고 싶으면 RestTemplate @Bean 등록 후 final RestTemplate 주입)
     private final RestTemplate restTemplate = new RestTemplate();
+
+    // ===== application.properties 값 주입 =====
+    @Value("${kakaopay.cid}")
+    private String cid;
+
+    @Value("${kakaopay.admin-key}")
+    private String adminKey;
+
+    @Value("${kakaopay.base-url}")
+    private String baseUrl;
+
+    @Value("${kakaopay.endpoints.approval}")
+    private String approvalPath;
+
+    @Value("${kakaopay.endpoints.cancel}")
+    private String cancelPath;
+
+    @Value("${kakaopay.endpoints.fail}")
+    private String failPath;
+
+    // =========================================
+
     private final Map<String, String> orderTidMap = new ConcurrentHashMap<>();
     private final Map<String, String> orderBuyerMap = new ConcurrentHashMap<>();
 
     private static final String HOST = "https://kapi.kakao.com";
-    private static final String ADMIN_KEY = "3c4d225c4cfafacf87d4c8cce4342a24"; // 환경변수/설정파일로 분리 권장
-
-    // 환경/프로파일별로 분기하세요. 지금은 로컬 기준.
-    private static final String BASE_URL = "http://localhost:8080";
 
     public KakaoReadyResponse kakaoPayReady(PayRequest payRequest) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "KakaoAK " + ADMIN_KEY);
+        headers.add("Authorization", "KakaoAK " + adminKey);
         headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("cid", "TC0ONETIME");
+        params.add("cid", nullToEmpty(cid));                      // ex) TC0ONETIME
         params.add("partner_order_id", payRequest.getOrderId());
-        params.add("partner_user_id", payRequest.getUserId());
-        params.add("item_name", payRequest.getItemName());
-        params.add("quantity", "1");
-        params.add("total_amount", String.valueOf(payRequest.getAmount()));
-        params.add("tax_free_amount", "0");
+        params.add("partner_user_id",  payRequest.getUserId());
+        params.add("item_name",        payRequest.getItemName());
+        params.add("quantity",         "1");
+        params.add("total_amount",     String.valueOf(payRequest.getAmount()));
+        params.add("tax_free_amount",  "0");
 
-        // 반드시 orderId를 세 URL 모두에 포함시킨다
-        String orderQS = "?orderId=" + payRequest.getOrderId();
-        params.add("approval_url", BASE_URL + "/pay/kakao/success" + orderQS);
-        params.add("cancel_url",   BASE_URL + "/pay/kakao/cancel"  + orderQS);
-        params.add("fail_url",     BASE_URL + "/pay/kakao/fail"    + orderQS);
+        // 반드시 orderId 포함
+        final String orderQS = "?orderId=" + payRequest.getOrderId();
+        final String base = trimTrailingSlash(nullToEmpty(baseUrl));
+        params.add("approval_url", base + ensureLeadingSlash(nullToEmpty(approvalPath)) + orderQS);
+        params.add("cancel_url",   base + ensureLeadingSlash(nullToEmpty(cancelPath))   + orderQS);
+        params.add("fail_url",     base + ensureLeadingSlash(nullToEmpty(failPath))     + orderQS);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         KakaoReadyResponse response = restTemplate.postForObject(
@@ -69,14 +90,14 @@ public class KakaoPayService {
         if (tid == null) throw new IllegalStateException("tid가 존재하지 않습니다. orderId=" + orderId);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "KakaoAK " + ADMIN_KEY);
+        headers.add("Authorization", "KakaoAK " + adminKey);
         headers.add("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("cid", "TC0ONETIME");
+        params.add("cid", nullToEmpty(cid));
         params.add("tid", tid);
         params.add("partner_order_id", orderId);
-        params.add("partner_user_id", userId);
+        params.add("partner_user_id",  userId);
         params.add("pg_token", pgToken);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
@@ -85,9 +106,22 @@ public class KakaoPayService {
 
         if (response != null) response.setBuyerName(buyerName);
 
-        // 메모리 누수 방지: 승인 후 즉시 정리
+        // 메모리 누수 방지
         orderTidMap.remove(orderId);
         orderBuyerMap.remove(orderId);
         return response;
+    }
+
+    // ---------- helpers ----------
+    private static String ensureLeadingSlash(String path) {
+        if (path.isEmpty()) return "";
+        return path.startsWith("/") ? path : "/" + path;
+    }
+    private static String trimTrailingSlash(String url) {
+        if (url.endsWith("/")) return url.substring(0, url.length()-1);
+        return url;
+    }
+    private static String nullToEmpty(String s) {
+        return s == null ? "" : s;
     }
 }

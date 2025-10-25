@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.yedam.sales1.domain.Loan;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.domain.Payment;
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.PartnerRegistrationDTO;
 import com.yedam.sales1.repository.LoanRepository;
 import com.yedam.sales1.repository.PartnerPaymentRepository;
@@ -38,9 +39,17 @@ public class PartnerServiceImpl implements PartnerService {
 
 	@Override
 	public List<Partner> getAllPartner() {
-		return partnerRepository.findAll();
+    	String companyCode = getCompanyCodeFromAuthentication();
+		return partnerRepository.findAll(companyCode);
 	}
 
+	
+    @Override
+    public List<Partner> getFilterPartner(Partner searchVo) {
+    	String companyCode = getCompanyCodeFromAuthentication();
+        return partnerRepository.findByFilter(searchVo, companyCode);
+    }
+	
 	@Override
 	public Map<String, Object> getTableDataFromPartners(List<Partner> partners) {
 		List<Map<String, Object>> rows = new ArrayList<>();
@@ -57,7 +66,6 @@ public class PartnerServiceImpl implements PartnerService {
 			columns.add("업태");
 			columns.add("이메일");
 			columns.add("담당자");
-			columns.add("사용여부");
 			columns.add("비고");
 
 			for (Partner partner : partners) {
@@ -71,8 +79,7 @@ public class PartnerServiceImpl implements PartnerService {
 				row.put("업종", partner.getBusinessSector());
 				row.put("업태", partner.getBusinessType());
 				row.put("이메일", partner.getEmail());
-				row.put("담당자", partner.getManager());
-				row.put("사용여부", partner.getUsageStatus());
+				row.put("담당자", partner.getManagerEmp().getName());
 				row.put("비고", partner.getRemarks());
 				rows.add(row);
 			}
@@ -224,5 +231,11 @@ public class PartnerServiceImpl implements PartnerService {
 			}
 		}
 		return String.format("%s%04d", prefix, newNum);
+	}
+
+	@Override
+	public Partner findPartnerDetail(String partnerCode) {
+        return partnerRepository.findByPartnerCode(partnerCode);
+
 	}
 }

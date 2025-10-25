@@ -1,10 +1,12 @@
 package com.yedam.sales1.domain;
 
 import java.util.Date;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -54,6 +56,7 @@ public class Shipment {
     @Column(name = "POST_CODE")
     private Integer postCode;
 
+
     @Column(name = "ADDRESS", length = 1000)
     private String address;
 
@@ -65,4 +68,17 @@ public class Shipment {
 
     @Column(name = "COMPANY_CODE", length = 20, nullable = false)
     private String companyCode;
+    
+    
+	// 1. Partner 엔티티와 관계 매핑
+	@ManyToOne(fetch = FetchType.LAZY) // estimate 기준으로 N:1 관계
+	@JoinColumn(name = "PARTNER_CODE", referencedColumnName = "PARTNER_CODE", insertable = false, updatable = false)
+	private Partner partner;
+	
+
+
+	// 담당자 사원 연관 (사원 테이블의 PK가 EMP_CODE라고 가정)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "MANAGER", referencedColumnName = "EMP_CODE", insertable = false, updatable = false)
+	private com.yedam.hr.domain.Employee managerEmp;
 }

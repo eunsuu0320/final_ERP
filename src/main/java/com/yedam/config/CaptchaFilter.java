@@ -7,6 +7,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -14,16 +16,16 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Component
 public class CaptchaFilter extends OncePerRequestFilter {
 
-    private static final String SECRET_KEY = "6LdsS9MrAAAAAFxBOrnhIZNFvWLS05AahOl5TfCI";
-
+    @Value("${recaptcha.secret-key}")
+    private String SECRET_KEY;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getServletPath();
-
         // 로그인 요청일 때만 캡차 검증
         if ("/doLogin".equals(path) && "POST".equalsIgnoreCase(request.getMethod())) {
             String recaptchaResponse = request.getParameter("g-recaptcha-response");
@@ -43,7 +45,7 @@ public class CaptchaFilter extends OncePerRequestFilter {
         try {
             String verifyUrl = "https://www.google.com/recaptcha/api/siteverify";
             String params = "secret=" + SECRET_KEY + "&response=" + recaptchaResponse;
-
+            System.err.println(params+"********************");
             URL url = new URL(verifyUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");

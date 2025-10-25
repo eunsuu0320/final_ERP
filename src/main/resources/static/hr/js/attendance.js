@@ -294,7 +294,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 			const result = await res.text();
 			if (result === "success") {
 				alert("사원 근태 등록을 완료하였습니다.");
-				empAttInsertTable.clearData();
+				empAttInsertTable.getRows().forEach(row => {
+					row.update({
+						workDate: "", name: "", empCode: "",
+						attType: "", attId: "", holyIs: "",
+						workTime: "", note: ""
+					});
+				});
 				loadEmpAttendances();
 			} else {
 				alert("사원 근태 등록에 실패하였습니다. 잠시 후 다시 시도해주세요.");
@@ -351,23 +357,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	// 데이터 로드 함수
 	async function loadEmpAttendances() {
-		const res = await fetch(`/empAttendance?companyCode=${manager}`);
+		const res = await fetch(`/empAttendance?companyCode=${manager}&_=${Date.now()}`, {
+			cache: "no-store"
+		});
 		const data = await res.json();
-		empAttSelectTable.setData([...data]);
+		// setData 대신 replaceData가 안전합니다(가상 DOM/선택 상태 유지에도 유리)
+		if (typeof empAttSelectTable !== "undefined") {
+			empAttSelectTable.replaceData(data);
+		}
 	}
 
 	// 인쇄
 	const printBtn = document.getElementById("empAtt-print");
 	if (printBtn) {
 		printBtn.addEventListener("click", () => {
-			// ✅ 사원 근태 조회 테이블에서 선택 행 가져오기
+			// 사원 근태 조회 테이블에서 선택 행 가져오기
 			const selected = (typeof empAttSelectTable !== "undefined" && empAttSelectTable.getSelectedData)
 				? empAttSelectTable.getSelectedData()
 				: [];
 
 			if (selected.length === 0) { alert("인쇄할 근태 데이터를 선택하세요."); return; }
 
-			// (선택) 전표일자 표기를 위해 날짜 포맷
+			// 전표일자 표기를 위해 날짜 포맷
 			const fmtDateYMD = (v) => {
 				if (!v) return "";
 				const d = new Date(v);
@@ -379,7 +390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				return m ? `${m[1]}/${String(m[2]).padStart(2, "0")}/${String(m[3]).padStart(2, "0")}` : v;
 			};
 
-			// ✅ 행 렌더링(사원명 / 근태명칭 / 근태(일/시간) / 적요)
+			// 행 렌더링(사원명 / 근태명칭 / 근태(일/시간) / 적요)
 			const rows = selected.map(r => {
 				const empName = (typeof EMP_MAP !== "undefined" && EMP_MAP?.[r.empCode]) ? EMP_MAP[r.empCode] : (r.name ?? r.empCode ?? "");
 				const attName = (typeof ATT_MAP !== "undefined" && ATT_MAP?.[r.attId]) ? ATT_MAP[r.attId] : (r.attName ?? r.attId ?? "");
@@ -394,66 +405,94 @@ document.addEventListener("DOMContentLoaded", async () => {
         </tr>`;
 			}).join("");
 
-			// (선택) 상단 표기 값
+			// 상단 표기 값
 			const now = new Date().toISOString().slice(0, 16).replace("T", " ");
 			const count = selected.length;
 			const slipDate = fmtDateYMD(selected[0]?.workDate) || fmtDateYMD(new Date());
 
+			// 프린트용 HTML (부모가 print() 호출하므로 스크립트 삽입 불필요)
 			const html = `
-			<!doctype html>
-			<html>
-			<head>
-			  <meta charset="utf-8">
-			  <title>근태전표</title>
-			  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-			  <style>
-			    @page { size: A4 portrait; margin: 8mm; }
-			    html, body { height: 100%; }
-			    body { margin: 0; font-size: 12px; }
-			    .print-wrap { width: 100%; padding: 0; }
-			    .print-header { text-align: center; margin: 0 0 8px 0; }
-			    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
-			    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
-			    table.print th, table.print td {
-			      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
-			      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
-			    }
-			    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
-			    tbody tr:nth-child(even) td { background: #fcfcfc; }
-			    thead { display: table-header-group; }
-			    tfoot { display: table-footer-group; }
-			    tr { page-break-inside: avoid; }
-			    col.empcode{width:13%} col.name{width:12%} col.dept{width:13%} col.grade{width:10%}
-			    col.position{width:10%} col.phone{width:15%} col.email{width:17%} col.hire{width:10%}
-			  </style>
-			</head>
-			<body>
-			  <div class="print-wrap">
-			    <div class="print-header"><h3 class="m-0">근태전표</h3></div>
-			    <div class="meta"><div>전표일자 : ${slipDate}</div><div>선택건수: ${count} / 생성일시: ${now}</div></div>
-			    <table class="print">
-			      <colgroup>
-			        <col class="emp"><col class="att"><col class="time"><col class="note">
-			      </colgroup>
-			      <thead>
-			        <tr>
-			          <th>사원명</th>
-			          <th>근태명칭</th>
-			          <th>근태(일/시간)</th>
-			          <th>적요</th>
-			        </tr>
-			      </thead>
-			      <tbody>${rows}</tbody>
-			    </table>
-			  </div>
-			  <script>window.addEventListener('load', () => window.print());</script>
-			</body>
-			</html>`;
-			const w = window.open("", "_blank");
-			if (!w) { alert("팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요."); return; }
-			w.document.open();
-			w.document.write(html);
-			w.document.close();
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>근태전표</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @page { size: A4 portrait; margin: 8mm; }
+    html, body { height: 100%; }
+    body { margin: 0; font-size: 12px; }
+    .print-wrap { width: 100%; padding: 0; }
+    .print-header { text-align: center; margin: 0 0 8px 0; }
+    .meta { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; padding: 0 2mm; }
+    table.print { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    table.print th, table.print td {
+      border: 1px solid #dee2e6; padding: 6px 8px; vertical-align: middle;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all;
+    }
+    thead th { background: #f8f9fa; text-align: center; font-weight: 600; }
+    tbody tr:nth-child(even) td { background: #fcfcfc; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+  <div class="print-wrap">
+    <div class="print-header"><h3 class="m-0">근태전표</h3></div>
+    <div class="meta"><div>전표일자 : ${slipDate}</div><div>선택건수: ${count} / 생성일시: ${now}</div></div>
+    <table class="print">
+      <colgroup>
+        <col class="emp"><col class="att"><col class="time"><col class="note">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>사원명</th>
+          <th>근태명칭</th>
+          <th>근태(일/시간)</th>
+          <th>적요</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+</body>
+</html>`;
+
+			// 새 창 없이 히든 iframe에 렌더 후 인쇄
+			const iframe = document.createElement("iframe");
+			iframe.style.position = "fixed";
+			iframe.style.right = "0";
+			iframe.style.bottom = "0";
+			iframe.style.width = "0";
+			iframe.style.height = "0";
+			iframe.style.border = "0";
+			iframe.style.visibility = "hidden";
+			document.body.appendChild(iframe);
+
+			const cleanup = () => { try { iframe.remove(); } catch (_) { } };
+			const safeCleanupTimer = setTimeout(cleanup, 15000); // 비정상 상황 대비
+
+			const tryPrint = () => {
+				try {
+					iframe.contentWindow?.focus();
+					iframe.contentWindow.onafterprint = () => { clearTimeout(safeCleanupTimer); cleanup(); };
+					iframe.contentWindow.addEventListener?.("beforeunload", () => { clearTimeout(safeCleanupTimer); cleanup(); });
+					iframe.contentWindow?.print();
+				} catch (_) {
+					clearTimeout(safeCleanupTimer);
+					cleanup();
+				}
+			};
+
+			const doc = iframe.contentDocument || iframe.contentWindow?.document;
+			if (doc) {
+				doc.open(); doc.write(html); doc.close();
+				setTimeout(tryPrint, 120); // 스타일 로딩 여유
+			} else {
+				clearTimeout(safeCleanupTimer);
+				cleanup();
+			}
 		});
 	}
 
@@ -461,7 +500,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	const excelBtn = document.getElementById("empAtt-excel");
 	if (excelBtn) {
 		excelBtn.addEventListener("click", function() {
-			// 선택 행 안전하게 가져오기: empAttSelectTable 우선
+			// 선택 행 가져오기: empAttSelectTable 우선
 			const rows = (typeof empAttSelectTable !== "undefined" && empAttSelectTable?.getSelectedData)
 				? empAttSelectTable.getSelectedData()
 				: (typeof table !== "undefined" && table?.getSelectedData ? table.getSelectedData() : []);

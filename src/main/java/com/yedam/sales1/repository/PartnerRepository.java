@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.yedam.sales1.domain.Invoice;
 import com.yedam.sales1.domain.Partner;
 import com.yedam.sales1.dto.PartnerModalDto;
 
@@ -14,7 +15,9 @@ import com.yedam.sales1.dto.PartnerModalDto;
 public interface PartnerRepository extends
 		JpaRepository<Partner, String>{
 
-	List<Partner> findAll();
+	@Query("SELECT p FROM Partner p "
+			+ "WHERE p.companyCode = :companyCode ")
+	List<Partner> findAll(@Param("companyCode") String companyCode);
 	
 	@Query("SELECT MAX(p.partnerCode) FROM Partner p")
 	String findMaxPartnerCode();
@@ -23,6 +26,7 @@ public interface PartnerRepository extends
 	
 	Partner findByPartnerName(String partnerName);
 	
+
 	
 	
 	@Query("""
@@ -41,5 +45,14 @@ public interface PartnerRepository extends
 		    where p.companyCode = :companyCode
 		""")
 		List<PartnerModalDto> findPartnerModalDataByCompanyCode(@Param("companyCode") String companyCode);
+	
+	
+	
+	
+	
+	@Query("SELECT p FROM Partner p "
+			+ "WHERE (:#{#searchVo.partnerName} IS NULL OR p.partnerName = :#{#searchVo.partnerName}) "
+			+ "AND p.companyCode = :companyCode ")
+	List<Partner> findByFilter(@Param("searchVo") Partner searchVo, @Param("companyCode") String companyCode);
 
 }

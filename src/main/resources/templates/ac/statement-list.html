@@ -57,30 +57,41 @@
     /* 상단 검색 필드 폭 (모달은 100%) */
     .top-field { width: 280px; max-width: 36vw; }
 
-    /* 모달 백드롭: 살짝 어둡고(회색 느낌), 과도한 백색/블러 제거 */
-.modal-backdrop {
-  background-color: #000 !important;  /* 회색계열 기반 */
-}
+    /* 모달 백드롭 톤 */
+    .modal-backdrop { background-color: #000 !important; }
+    .modal-backdrop.show { opacity: .35 !important; }
+    .modal-backdrop.stack-top { background-color: #000 !important; opacity: .35 !important; }
 
-/* 실제 밝기(불투명도) 조절 포인트 */
-.modal-backdrop.show {
-  opacity: .35 !important;            /* 0.30~0.45 사이로 취향 조정 가능 */
-}
+    /* 상단 검색바: 라벨을 인풋 위로 */
+    .top-field-wrap{ display: flex; flex-direction: column; }
+    .top-field-wrap .form-label{ margin-bottom: 7px; }
 
-/* 스택되는 백드롭도 동일 톤 유지 */
-.modal-backdrop.stack-top {
-  background-color: #000 !important;
-  opacity: .35 !important;
-}
+    /* ===== Tabulator 헤더(칼럼 제목)만 가운데 정렬 ===== */
+    .tabulator .tabulator-header .tabulator-col .tabulator-col-content .tabulator-col-title{
+      width:100%;
+      text-align:center;
+      display:block;
+    }
+    .tabulator .tabulator-header .tabulator-col{
+      text-align:center;
+    }
 
-/* 상단 검색바: 라벨을 인풋 위로 */
-.top-field-wrap{
-  display: flex;
-  flex-direction: column;
-}
-.top-field-wrap .form-label{
-  margin-bottom: 7px; /* 라벨-인풋 간격 */
-}
+    /* 간단한 invalid 표시 (테두리만) */
+    .is-invalid{border-color:#dc3545 !important}
+
+    /* ★ invalid 느낌표 아이콘 제거 & 패딩 보정 (돋보기 겹침 방지) */
+    .form-control.is-invalid,
+    .was-validated .form-control:invalid,
+    .form-select.is-invalid,
+    .was-validated .form-select:invalid{
+      background-image: none !important;   /* 느낌표 아이콘 제거 */
+      padding-right: .75rem !important;     /* 기본 패딩 복원 */
+    }
+    /* input-with-icon에서는 돋보기 공간 유지 */
+    .input-with-icon .form-control.is-invalid,
+    .input-with-icon .was-validated .form-control:invalid{
+      padding-right: 40px !important;
+    }
   </style>
 </head>
 
@@ -100,22 +111,22 @@
           <a class="btn btn-outline-primary" th:href="@{/register}">일반전표 등록</a>
 
           <div class="btn-group btn-type ms-2" role="group" aria-label="type-filter">
-  <button type="button" class="btn btn-primary" data-type="ALL">
-    전체 <span class="badge rounded-pill bg-secondary ms-1" id="count-ALL">0</span>
-  </button>
-  <button type="button" class="btn btn-outline-primary" data-type="SALES">
-    매출 <span class="badge rounded-pill bg-secondary ms-1" id="count-SALES">0</span>
-  </button>
-  <button type="button" class="btn btn-outline-primary" data-type="BUY">
-    매입 <span class="badge rounded-pill bg-secondary ms-1" id="count-BUY">0</span>
-  </button>
-  <button type="button" class="btn btn-outline-primary" data-type="MONEY">
-    수금 <span class="badge rounded-pill bg-secondary ms-1" id="count-MONEY">0</span>
-  </button>
-  <button type="button" class="btn btn-outline-primary" data-type="PAYMENT">
-    지급 <span class="badge rounded-pill bg-secondary ms-1" id="count-PAYMENT">0</span>
-  </button>
-</div>
+            <button type="button" class="btn btn-primary" data-type="ALL">
+              전체 <span class="badge rounded-pill bg-secondary ms-1" id="count-ALL">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-type="SALES">
+              매출 <span class="badge rounded-pill bg-secondary ms-1" id="count-SALES">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-type="BUY">
+              매입 <span class="badge rounded-pill bg-secondary ms-1" id="count-BUY">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-type="MONEY">
+              수금 <span class="badge rounded-pill bg-secondary ms-1" id="count-MONEY">0</span>
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-type="PAYMENT">
+              지급 <span class="badge rounded-pill bg-secondary ms-1" id="count-PAYMENT">0</span>
+            </button>
+          </div>
 
           <div class="ms-auto d-flex align-items-center gap-2">
             <button id="btn-print" class="btn btn-secondary">인쇄</button>
@@ -125,27 +136,25 @@
 
         <!-- 검색 바 -->
         <div class="d-flex align-items-end flex-wrap gap-3 mb-2">
-          <!-- 거래처명 -->
-<div class="top-field-wrap">
-  <label class="form-label" for="partnerName">거래처명</label>
-  <div class="input-with-icon top-field">
-    <input id="partnerName" type="text" class="form-control" placeholder="조회 후 등록" readonly>
-    <button id="icon-find-partner" type="button" class="icon-btn" aria-label="거래처 검색">
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-    </button>
-  </div>
-</div>
+          <div class="top-field-wrap">
+            <label class="form-label" for="partnerName">거래처명</label>
+            <div class="input-with-icon top-field">
+              <input id="partnerName" type="text" class="form-control" placeholder="조회 후 등록" readonly>
+              <button id="icon-find-partner" type="button" class="icon-btn" aria-label="거래처 검색">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
 
-<!-- 전표번호 -->
-<div class="top-field-wrap">
-  <label class="form-label" for="voucherNo">전표번호</label>
-  <div class="input-with-icon top-field">
-    <input id="voucherNo" type="text" class="form-control">
-    <button id="btn-find-voucher" type="button" class="icon-btn" aria-label="전표 검색" style="display:none">
-      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-    </button>
-  </div>
-</div>
+          <div class="top-field-wrap">
+            <label class="form-label" for="voucherNo">전표번호</label>
+            <div class="input-with-icon top-field">
+              <input id="voucherNo" type="text" class="form-control">
+              <button id="btn-find-voucher" type="button" class="icon-btn" aria-label="전표 검색" style="display:none">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
 
           <div>
             <label class="form-label" for="fromDate">전표일자</label>
@@ -204,9 +213,8 @@
                 <input id="vf-resvId" type="hidden">
               </div>
 
-              <!-- 폭 늘림: 두 필드 모두 한 줄 전체 너비 -->
               <div class="col-6">
-                <label class="form-label vf-label" id="lbl-saleCode" for="vf-saleCode">판매코드</label>
+                <label class="form-label vf-label" id="lbl-saleCode" for="vf-saleCode">판매코드 *</label>
                 <div class="input-with-icon">
                   <input id="vf-saleCode" type="text" class="form-control" placeholder="">
                   <button id="vf-icon-find-saleCode" type="button" class="icon-btn" aria-label="판매/구매코드 찾기">
@@ -216,7 +224,7 @@
               </div>
 
               <div class="col-6">
-                <label class="form-label vf-label" for="vf-partnerName">거래처</label>
+                <label class="form-label vf-label" for="vf-partnerName">거래처 *</label>
                 <div class="input-with-icon">
                   <input id="vf-partnerName" type="text" class="form-control" placeholder="">
                   <button id="vf-icon-find-partner" type="button" class="icon-btn" aria-label="거래처 찾기">
@@ -254,7 +262,7 @@
               </div>
 
               <div class="col-12">
-                <label class="form-label vf-label" for="vf-supply">공급가액</label>
+                <label class="form-label vf-label" for="vf-supply">공급가액 *</label>
                 <input id="vf-supply" type="text" class="form-control vf-num" value="0">
               </div>
               <div class="col-12">
@@ -262,7 +270,7 @@
                 <input id="vf-vat" type="text" class="form-control vf-num" value="0" readonly>
               </div>
               <div class="col-12">
-                <label class="form-label vf-label" for="vf-total">총 금액</label>
+                <label class="form-label vf-label" for="vf-total">총 금액 *</label>
                 <input id="vf-total" type="text" class="form-control vf-num" value="0">
               </div>
               <div class="col-12">
@@ -293,6 +301,11 @@
     const fmt   = n => Number(n||0).toLocaleString();
     const unfmt = s => Number(String(s||'').replace(/[^\d.-]/g,''))||0;
 
+    function ymdLocal(d){
+      const tz = d.getTimezoneOffset() * 60000;
+      return new Date(d.getTime() - tz).toISOString().slice(0,10);
+    }
+
     /* 부가세 계산 */
     const FRACTION = { TAXABLE:{num:10,den:100}, ZERO:{num:0,den:100}, EXEMPT:{num:0,den:100} };
     const normType = (t)=>{ const x=String(t||'').toUpperCase(); return (x in FRACTION)?x:'TAXABLE'; };
@@ -322,21 +335,82 @@
     document.addEventListener('hidden.bs.modal', ()=>{
       const openModals = document.querySelectorAll('.modal.show');
       if (openModals.length > 0) {
-        document.body.classList.add('modal-open');          // 부모 모달 남아있으면 잠금 유지
+        document.body.classList.add('modal-open');
         const bds=[...document.querySelectorAll('.modal-backdrop')];
-        while (bds.length > 1) { bds.shift().remove(); }     // 중복 백드롭 정리
+        while (bds.length > 1) { bds.shift().remove(); }
       } else {
-        document.body.classList.remove('modal-open');        // 모두 닫혔을 때 원복
+        document.body.classList.remove('modal-open');
         document.body.style.removeProperty('padding-right');
         document.querySelectorAll('.modal-backdrop').forEach(b=>b.remove());
       }
     });
 
+    /* ---------- 세션 사용자 "이름"만 추출 ---------- */
+    function extractDisplayName(me){
+      try{
+        if (typeof me === 'string') me = { raw: me };
+
+        const directCandidates = [
+          me?.employeeName, me?.realName, me?.displayName, me?.name,
+          me?.user?.name, me?.profile?.name, me?.principal?.name,
+          me?.account?.name, me?.raw, me?.username, me?.userId, me?.employeeCode
+        ].filter(Boolean).map(String);
+
+        const tokens = [];
+        const pushTokens = (s)=>{
+          String(s).split(/[|:,/>\-]+/).forEach(t=>{
+            const trimmed = t.replace(/\(.*?\)|\[.*?]|<.*?>/g,'').trim();
+            if (trimmed) tokens.push(trimmed);
+          });
+        };
+        directCandidates.forEach(pushTokens);
+
+        const BAD_KEYWORDS = ['관리자','admin','ADMIN','ROLE','권한','팀','부','과장','차장','대리','사원','user','영업','개발','기획','재무','인사'];
+        const CODE_REGEXES = [
+          /^[A-Z]{1}\d{3,}$/u,
+          /^EMP\d{2,}$/u,
+          /^[A-Z0-9_-]{3,20}$/u
+        ];
+        const isBad = (t)=> BAD_KEYWORDS.some(k=>t.includes(k)) || CODE_REGEXES.some(r=>r.test(t));
+
+        const isKoreanName = (t)=> /^[가-힣]{2,4}$/.test(t);
+        const isEnglishName = (t)=> /^[A-Za-z][A-Za-z .'-]{1,39}$/.test(t) && !/\d/.test(t);
+
+        const kor = tokens.find(t=>isKoreanName(t) && !isBad(t));
+        if (kor) return kor;
+
+        const eng = tokens.find(t=>isEnglishName(t) && !isBad(t));
+        if (eng) return eng;
+
+        const lax = tokens.find(t=>!isBad(t) && t.length>=2 && t.length<=10);
+        return lax || '';
+      }catch(_){ return ''; }
+    }
+
+    function looksLikeCode(s){
+      const v=String(s||'').trim();
+      return /^[A-Z]{1}\d{3,}$/.test(v) || /^EMP\d{2,}$/.test(v);
+    }
+
     let currentUserName='';
     fetch('/api/me',{credentials:'same-origin'})
-      .then(r=>r.ok?r.json():{})
-      .then(j=>{currentUserName=j?.name||'';})
-      .catch(()=>{});
+      .then(async r=>{
+        const ct=(r.headers.get('content-type')||'').toLowerCase();
+        if (ct.includes('application/json')) return r.json();
+        return r.text().then(txt=>({ raw: txt }));
+      })
+      .then(j=>{
+        const name = extractDisplayName(j) || '';
+        currentUserName = name;
+
+        const $empInput = document.getElementById('vf-empName');
+        if ($empInput) {
+          if (!$empInput.value || looksLikeCode($empInput.value)) {
+            if (name) $empInput.value = name;
+          }
+        }
+      })
+      .catch(()=>{ /* no-op */ });
 
     /* ---------- 목록 테이블 ---------- */
     let currentType='ALL';
@@ -375,7 +449,6 @@
       return 0;
     }
 
- // Pageable/배열 응답 모두에서 총건수 추출
     function deriveTotalCount(js){
       if (Array.isArray(js)) return js.length;
       if (js && typeof js === 'object'){
@@ -385,7 +458,6 @@
       return 0;
     }
 
-    // 뱃지 텍스트 반영
     function setTypeBadges(totals){
       ['ALL','SALES','BUY','MONEY','PAYMENT'].forEach(k=>{
         const el = document.getElementById(`count-${k}`);
@@ -393,35 +465,28 @@
       });
     }
 
-    // 현재 화면의 필터(거래처/전표번호/기간)는 유지하고, type만 바꿔가며 카운트만 가볍게 조회
-    async function refreshTypeCounts(){
-      const base = paramsFor();           // keyword, voucherNo, fromDate, toDate 유지
-      const TYPES = ['ALL','SALES','BUY','MONEY','PAYMENT'];
-
-      async function fetchCount(type){
-        const q = new URLSearchParams({
-          ...base,
-          page: 0,
-          size: 1,                         // 내용은 1개만 받고
-        });
-        q.set('type', type);               // 타입만 바꿔서
-        q.append('sort','voucherNo,desc'); // 서버 정렬 형식 유지
-
-        try{
-          const js = await fetchPageJson(`/api/statements?${q.toString()}`);
-          return deriveTotalCount(js);     // totalElements 등에서 총건수 뽑기
-        }catch(_){ return 0; }
-      }
-
-      const totals = { ALL:0, SALES:0, BUY:0, MONEY:0, PAYMENT:0 };
-      const results = await Promise.all(TYPES.map(fetchCount));
-      TYPES.forEach((t,i)=> totals[t] = results[i] || 0);
-      setTypeBadges(totals);
-    }
-    
     let allSelected=false;
     let lastSorters = [{ field:'voucherNo', dir:'desc' }];
 
+    let lastAllRows = [];  // 전체(ALL) 기준으로 마지막 조회 데이터 유지
+
+    function groupCounts(rows){
+      const totals = { ALL: 0, SALES: 0, BUY: 0, MONEY: 0, PAYMENT: 0 };
+      if (!Array.isArray(rows)) return totals;
+      totals.ALL = rows.length;
+      for (const r of rows) {
+        const t = String(r?.type || '').toUpperCase();
+        if (t in totals) totals[t] += 1;
+      }
+      return totals;
+    }
+
+    function refreshTypeCounts(){
+      // 마지막 ALL 데이터로 칩 갱신
+      const totals = groupCounts(lastAllRows);
+      setTypeBadges(totals);
+    }
+    
     const mainTable=new Tabulator("#employee-table",{
       layout:"fitColumns",
       pagination:true, paginationMode:"local",
@@ -434,19 +499,19 @@
           headerSort:false,width:55,hozAlign:"center",headerHozAlign:"center",
           headerClick:()=>{ if(!allSelected){ mainTable.selectRow("visible"); } else { mainTable.deselectRow(); } allSelected=!allSelected; }
         },
-        { title:"전표번호", field:"voucherNo", hozAlign:"center", width:130,
+        { title:"전표번호", field:"voucherNo", hozAlign:"center", width:130, headerHozAlign:"center",
           sorter:(a,b)=>compareVoucherAsc(a,b)
         },
-        { title:"유형", field:"type", hozAlign:"center", width:100,
+        { title:"유형", field:"type", hozAlign:"center", width:100, headerHozAlign:"center",
           formatter:(c)=>{ const t=c.getValue(); const map={SALES:{label:"매출",cls:"bg-primary"}, BUY:{label:"매입",cls:"bg-success"}, MONEY:{label:"수금",cls:"bg-info"}, PAYMENT:{label:"지급",cls:"bg-warning"}}; const m=map[t]||{label:t||"기타",cls:"bg-secondary"}; return `<span class="badge ${m.cls}">${m.label}</span>`; }
         },
-        {title:"거래처명",field:"partnerName",minWidth:180},
-        {title:"총액",field:"amountTotal",hozAlign:"right",minWidth:110,formatter:(c)=>fmt(c.getValue())},
-        {title:"적요",field:"remark",minWidth:220},
-        {title:"전표일자",field:"voucherDate",hozAlign:"center",width:120,
+        {title:"거래처명",field:"partnerName",minWidth:180, headerHozAlign:"center"},
+        {title:"총액",field:"amountTotal",hozAlign:"right",minWidth:110, headerHozAlign:"center",formatter:(c)=>fmt(c.getValue())},
+        {title:"적요",field:"remark",minWidth:220, headerHozAlign:"center"},
+        {title:"전표일자",field:"voucherDate",hozAlign:"center",width:120, headerHozAlign:"center",
           formatter:(c)=>{const v=c.getValue();if(!v) return "";const d=new Date(v);return isNaN(d)?String(v).slice(0,10):d.toISOString().slice(0,10);}
         },
-        {title:"제품명", field:"productName", visible:false},
+        {title:"제품명", field:"productName", visible:false, headerHozAlign:"center"},
       ],
     });
 
@@ -461,62 +526,82 @@
 
     mainTable.on("tableBuilt",()=>requestAnimationFrame(()=>mainTable.redraw(true)));
     window.addEventListener('resize',()=>mainTable.redraw(true));
-
+	
     const FETCH_PAGE_SIZE = 500;
+    
+    
     async function loadAllData(){
-      showLoading();
-      try{
-        const base=paramsFor();
+    	  showLoading();
+    	  try{
+    	    const base=paramsFor();
 
-        const qs1=new URLSearchParams({...base, page:0, size:FETCH_PAGE_SIZE});
-        qs1.append('sort','voucherNo,desc');
-        const first=await fetchPageJson(`/api/statements?${qs1.toString()}`);
+    	    // ★ 집계/배지용으로는 항상 ALL 기준으로 불러오도록 type 제거
+    	    const { type: _ignored, ...baseNoType } = base;
 
-        const firstRows = Array.isArray(first) ? first : (first.content ?? []);
-        const totalPages = Array.isArray(first) ? 1 : Math.max(1, first.totalPages ?? 1);
-        const sizeUsed   = Array.isArray(first) ? firstRows.length : (first.size ?? FETCH_PAGE_SIZE);
+    	    const qs1=new URLSearchParams({...baseNoType, page:0, size:FETCH_PAGE_SIZE});
+    	    qs1.append('sort','voucherNo,desc');
+    	    const first=await fetchPageJson(`/api/statements?${qs1.toString()}`);
 
-        let all=[...firstRows];
+    	    const firstRows = Array.isArray(first) ? first : (first.content ?? []);
+    	    const totalPages = Array.isArray(first) ? 1 : Math.max(1, first.totalPages ?? 1);
+    	    const sizeUsed   = Array.isArray(first) ? firstRows.length : (first.size ?? FETCH_PAGE_SIZE);
 
-        for(let p=1; p<totalPages; p++){
-          const qsp=new URLSearchParams({...base, page:p, size:sizeUsed});
-          qsp.append('sort','voucherNo,desc');
-          const js=await fetchPageJson(`/api/statements?${qsp.toString()}`);
-          const rows = Array.isArray(js) ? js : (js.content ?? []);
-          all = all.concat(rows);
-        }
+    	    let all=[...firstRows];
 
-        if (lastSorters && lastSorters.length){
-          const s = lastSorters[0];
-          if (s.field === 'voucherNo'){
-            all.sort((a,b)=> {
-              const cmp = compareVoucherAsc(a.voucherNo, b.voucherNo);
-              return s.dir === 'asc' ? cmp : -cmp;
-            });
-          } else {
-            all.sort((a,b)=>{
-              const av=a[s.field], bv=b[s.field];
-              if (typeof av === 'number' && typeof bv === 'number') return s.dir==='asc' ? av-bv : bv-av;
-              return s.dir==='asc' ? String(av??'').localeCompare(String(bv??'')) : String(bv??'').localeCompare(String(av??''));
-            });
-          }
-        } else {
-          all.sort((a,b)=> -compareVoucherAsc(a.voucherNo, b.voucherNo)); // 기본 DESC
-        }
+    	    for(let p=1; p<totalPages; p++){
+    	      const qsp=new URLSearchParams({...baseNoType, page:p, size:sizeUsed});
+    	      qsp.append('sort','voucherNo,desc');
+    	      const js=await fetchPageJson(`/api/statements?${qsp.toString()}`);
+    	      const rows = Array.isArray(js) ? js : (js.content ?? []);
+    	      all = all.concat(rows);
+    	    }
 
-        await mainTable.setData(all);
-        
-        if (lastSorters && lastSorters.length){
-          mainTable.setSort(lastSorters.map(s => ({ column:s.field, dir:s.dir })));
-        } else {
-          mainTable.setSort([{column:'voucherNo', dir:'desc'}]);
-        }
-        mainTable.setPage(1);
-      } catch(e){
-        console.error(e);
-        toast('데이터 로드 실패: ' + (e.message||''));
-      } finally { hideLoading();  refreshTypeCounts(); }
-    }
+    	    // 정렬 유지
+    	    if (lastSorters && lastSorters.length){
+    	      const s = lastSorters[0];
+    	      if (s.field === 'voucherNo'){
+    	        all.sort((a,b)=> {
+    	          const cmp = compareVoucherAsc(a.voucherNo, b.voucherNo);
+    	          return s.dir === 'asc' ? cmp : -cmp;
+    	        });
+    	      } else {
+    	        all.sort((a,b)=>{
+    	          const av=a[s.field], bv=b[s.field];
+    	          if (typeof av === 'number' && typeof bv === 'number') return s.dir==='asc' ? av-bv : bv-av;
+    	          return s.dir==='asc' ? String(av??'').localeCompare(String(bv??'')) : String(bv??'').localeCompare(String(av??'')); 
+    	        });
+    	      }
+    	    } else {
+    	      all.sort((a,b)=> -compareVoucherAsc(a.voucherNo, b.voucherNo));
+    	    }
+
+    	    // ★ 전체 데이터 저장(배지 계산용)
+    	    lastAllRows = all;
+
+    	    // ★ 현재 탭 필터링 후 테이블 반영
+    	    const visible = (currentType==='ALL') ? all : all.filter(r => String(r.type||'').toUpperCase() === currentType);
+    	    await mainTable.setData(visible);
+
+    	    if (lastSorters && lastSorters.length){
+    	      mainTable.setSort(lastSorters.map(s => ({ column:s.field, dir:s.dir })));
+    	    } else {
+    	      mainTable.setSort([{column:'voucherNo', dir:'desc'}]);
+    	    }
+    	    mainTable.setPage(1);
+
+    	    // ★ 칩 배지 갱신
+    	    refreshTypeCounts();
+
+    	  } catch(e){
+    	    console.error(e);
+    	    toast('데이터 로드 실패: ' + (e.message||''));
+    	  } finally {
+    	    hideLoading();
+    	  }
+    	}
+
+    
+
     loadAllData();
 
     /* 필터/버튼 핸들러 */
@@ -604,6 +689,7 @@
       const css = `
         <style>
           @page { size: A4; margin: 12mm; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
           body { font-family: 'Malgun Gothic', system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans KR', sans-serif; color:#222; }
           .page { page-break-after: always; }
           .title { text-align:center; font-size:28px; font-weight:700; letter-spacing:4px; margin-bottom:8px; }
@@ -675,9 +761,7 @@
             <td class="r">${x.credit?fmt(x.credit):''}</td>
           </tr>`
         )).join('');
-        const empty = Array.from({length:Math.max(0,7 - lines.length)}).map(()=>(
-          `<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`
-        )).join('');
+        const empty = Array.from({length:Math.max(0,7 - lines.length)}).map(()=>(`<tr><td>&nbsp;</td><td></td><td></td><td></td></tr>`)).join('');
 
         return `
           <div class="page">
@@ -708,16 +792,50 @@
           </div>
         `;
       }).join('');
-      return `<!doctype html><html><head><meta charset="utf-8">${css}</head><body>${pages}</body></html>`;
+      return `<!doctype html><html><head><meta charset="utf-8"><title>전표 인쇄</title>${css}</head><body>${pages}</body></html>`;
     }
 
     document.getElementById('btn-print')?.addEventListener('click', () => {
       const selected = mainTable.getSelectedData();
-      if (!selected || selected.length === 0){ toast('인쇄할 전표를 체크박스로 선택하세요.'); return; }
+      if (!selected || selected.length === 0){
+        toast('인쇄할 전표를 체크박스로 선택하세요.');
+        return;
+      }
+
       const html = buildVoucherHTML(selected);
-      const w = window.open('', '_blank'); if (!w) { toast('팝업이 차단되었습니다.'); return; }
-      w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
+
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
+
+      const cleanup = () => { try { iframe.remove(); } catch(_) {} };
+      const doPrint = () => { try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(_) {} };
+
+      iframe.onload = () => setTimeout(doPrint, 50);
+      iframe.srcdoc = html;
+
+      setTimeout(() => {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        const empty = !doc || !doc.body || !doc.body.childNodes.length;
+        if (empty) {
+          try {
+            const d = iframe.contentWindow.document;
+            d.open(); d.write(html); d.close();
+            setTimeout(doPrint, 50);
+          } catch(_) {}
+        }
+      }, 120);
+
+      iframe.contentWindow.onafterprint = cleanup;
+      iframe.contentWindow.addEventListener?.('beforeunload', cleanup);
     });
+
 
     /* ---------- 전표 등록 모달 ---------- */
     const vfEl    = document.getElementById('voucherFormModal');
@@ -790,10 +908,6 @@
       $supply.addEventListener('blur', (e) => {
         e.stopImmediatePropagation();
         const raw = unfmt($supply.value);
-        if (lastCalc.mode === 'TOTAL' && raw === lastCalc.supply) {
-          $supply.value = fmt(lastCalc.supply);
-          return;
-        }
         const p = computeFromSupply(raw, $taxSel.value);
         lastCalc.mode = 'SUPPLY';
         syncView(p);
@@ -817,10 +931,6 @@
       $total.addEventListener('blur', (e) => {
         e.stopImmediatePropagation();
         const raw = unfmt($total.value);
-        if (lastCalc.mode === 'SUPPLY' && raw === lastCalc.total) {
-          $total.value = fmt(lastCalc.total);
-          return;
-        }
         const p = computeFromTotal(raw, $taxSel.value);
         lastCalc.mode = 'TOTAL';
         syncView(p);
@@ -868,12 +978,12 @@
 
       if (type==='BUY') {
         $title.textContent='매입전표 등록';
-        if($lblSaleCode) $lblSaleCode.textContent='구매코드';
+        if($lblSaleCode) $lblSaleCode.textContent='구매코드 *';
         if($lblSaleDate) $lblSaleDate.textContent='구매일자';
         if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
       } else {
         $title.textContent='매출전표 등록';
-        if($lblSaleCode) $lblSaleCode.textContent='판매코드';
+        if($lblSaleCode) $lblSaleCode.textContent='판매코드 *';
         if($lblSaleDate) $lblSaleDate.textContent='판매일자';
         if($lblVoucherDate) $lblVoucherDate.textContent='전표일자';
       }
@@ -885,7 +995,13 @@
       fetchNextVoucherNo(type, today);
 
       if($saleCode) $saleCode.value=''; if($partner) $partner.value=''; if($remark) $remark.value='';
-      if($emp) $emp.value=(typeof currentUserName==='string'?currentUserName:'');
+      if($emp){
+        if (currentUserName) {
+          if (!$emp.value || looksLikeCode($emp.value)) $emp.value = currentUserName;
+        } else {
+          if (looksLikeCode($emp.value)) $emp.value = '';
+        }
+      }
       if($taxSel) $taxSel.value='TAXABLE';
 
       vfBindings = rewireNumericFields();
@@ -935,20 +1051,105 @@
     }
     /* ---------- 전표 등록 모달 끝 ---------- */
 
+    // ★ 유효성 검사 (VAT 제외)
+    function clearInvalid(...els){
+      els.forEach(el=>{
+        el?.classList?.remove('is-invalid');
+        el?.removeAttribute?.('aria-invalid');
+        el?.removeAttribute?.('data-error');
+      });
+    }
+    function markInvalid(el, msg){
+      if(!el) return;
+      el.classList.add('is-invalid');
+      el.setAttribute('aria-invalid','true');
+      if(msg) el.setAttribute('data-error', msg);
+    }
+    function validateForm(){
+      const errs = [];
+      const $voucherDate = document.getElementById('vf-voucherDate');
+      const $saleDate    = document.getElementById('vf-saleDate');
+      const $partner     = document.getElementById('vf-partnerName');
+      const $saleCode    = document.getElementById('vf-saleCode');
+      const $typeBtn     = document.getElementById('vf-title');
+      const $supply      = document.getElementById('vf-supply');
+      const $total       = document.getElementById('vf-total');
+      const $taxType     = document.getElementById('vf-taxType');
+
+      clearInvalid($voucherDate,$saleDate,$partner,$saleCode,$supply,$total,$taxType);
+
+      const titleTxt = ($typeBtn?.textContent||'').toUpperCase();
+      const isBuy = titleTxt.includes('매입'); // 저장 로직의 isBuy 판별과 동일
+
+      // 1) 날짜 필수
+      if (!($voucherDate?.value)) { errs.push({el:$voucherDate, msg:'전표일자를 입력하세요.'}); }
+      if (!($saleDate?.value))    { errs.push({el:$saleDate,    msg:(isBuy?'구매일자':'판매일자')+'를 입력하세요.'}); }
+
+      // 2) 거래처 필수
+      if (!($partner?.value?.trim())) { errs.push({el:$partner, msg:'거래처를 선택하세요.'}); }
+
+      // 3) 코드 필수 (매출/매입 모두)
+      if (!($saleCode?.value?.trim())) {
+        errs.push({el:$saleCode, msg:(isBuy?'구매코드':'판매코드')+'를 선택하세요.'});
+      }
+
+      // 4) 금액 검증 (★ VAT 제외: 공급가액/총액 중 하나만 양수면 통과)
+      const supplyVal = unfmt($supply?.value);
+      const totalVal  = unfmt($total?.value);
+      const validAmount = (Number.isFinite(supplyVal) && supplyVal>0) || (Number.isFinite(totalVal) && totalVal>0);
+      if (!validAmount) {
+        errs.push({el:$supply, msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+        errs.push({el:$total,  msg:'공급가액 또는 총금액 중 하나는 0보다 커야 합니다.'});
+      }
+
+      // 5) 부가세유형 값 유효 (포맷만 확인)
+      const taxVal = ($taxType?.value||'').toUpperCase();
+      if (!['TAXABLE','ZERO','EXEMPT'].includes(taxVal)) {
+        errs.push({el:$taxType, msg:'부가세유형이 올바르지 않습니다.'});
+      }
+
+      if (errs.length){
+        // 첫 에러에 포커스, 표시
+        errs.forEach(e=>markInvalid(e.el, e.msg));
+        const first = errs[0];
+        first?.el?.focus?.();
+        toast('입력값을 확인하세요: ' + (first?.msg||'필수항목 누락'));
+        return false;
+      }
+      return true;
+    }
+
+    // 입력 시 invalid 해제
+    ['vf-voucherDate','vf-saleDate','vf-partnerName','vf-saleCode','vf-supply','vf-total','vf-taxType']
+      .forEach(id=>{
+        const el = document.getElementById(id);
+        el?.addEventListener('input', ()=>clearInvalid(el));
+        el?.addEventListener('change', ()=>clearInvalid(el));
+      });
+
     // 저장 버튼
     const $saveBtn = document.getElementById('vf-save');
     $saveBtn?.addEventListener('click', async () => {
+      // ★ 저장 전 유효성 검사 (VAT 제외)
+      if (!validateForm()) return;
+
       const isBuy = document.getElementById('vf-title').textContent.includes('매입');
+
+      // ★ 담당자 이름 값 확보
+      const empNameInput = document.getElementById('vf-empName')?.value || '';
+      const employeeName = currentUserName || empNameInput || null;
+
       const body = isBuy
         ? {
             reservationId: (document.getElementById('vf-resvId')?.value || null),
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             buyCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
-            employee: document.getElementById('vf-empName').value || null,
+            employee: employeeName,
+            employeeName: employeeName,
             taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
             amountSupply: unfmt(document.getElementById('vf-supply').value),
-            amountVat:    unfmt(document.getElementById('vf-vat').value),
+            amountVat:    unfmt(document.getElementById('vf-vat').value),   // 존재하지만 검증은 안 함
             amountTotal:  unfmt(document.getElementById('vf-total').value),
             remark: document.getElementById('vf-remark').value || null,
           }
@@ -957,10 +1158,11 @@
             voucherDate: document.getElementById('vf-voucherDate').value || null,
             salesCode: document.getElementById('vf-saleCode').value || null,
             partnerName: document.getElementById('vf-partnerName').value || null,
-            employee: document.getElementById('vf-empName').value || null,
+            employee: employeeName,
+            employeeName: employeeName,
             taxCode: document.getElementById('vf-taxType').value || 'TAXABLE',
             amountSupply: unfmt(document.getElementById('vf-supply').value),
-            amountVat:    unfmt(document.getElementById('vf-vat').value),
+            amountVat:    unfmt(document.getElementById('vf-vat').value),   // 존재하지만 검증은 안 함
             amountTotal:  unfmt(document.getElementById('vf-total').value),
             remark: document.getElementById('vf-remark').value || null,
           };

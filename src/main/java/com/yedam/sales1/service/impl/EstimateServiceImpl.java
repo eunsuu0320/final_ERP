@@ -1,13 +1,10 @@
 package com.yedam.sales1.service.impl;
 
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -17,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.yedam.sales1.domain.Estimate;
 import com.yedam.sales1.domain.EstimateDetail;
 import com.yedam.sales1.domain.Partner;
+import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.dto.EstimateRegistrationDTO;
 import com.yedam.sales1.repository.EstimateDetailRepository;
 import com.yedam.sales1.repository.EstimateRepository;
@@ -47,42 +45,61 @@ public class EstimateServiceImpl implements EstimateService {
 	// =============================================================
 	@Override
 	public List<Estimate> getAllEstimate() {
-		return estimateRepository.findAll();
+		String companyCode = getCompanyCodeFromAuthentication();
+
+		return estimateRepository.findAllEstimates(companyCode);
 	}
+	
+	
+    @Override
+    public List<Estimate> getFilterEstimate(Estimate searchVo) {
+        return estimateRepository.findByFilter(searchVo);
+    }
 
 	@Override
 	public Map<String, Object> getTableDataFromEstimate(List<Estimate> estimates) {
-		List<Map<String, Object>> rows = new ArrayList<>();
-		List<String> columns = new ArrayList<>();
+	    List<Map<String, Object>> rows = new ArrayList<>();
+	    List<String> columns = List.of(
+	        "견적서고유코드", "견적서코드", "등록일자", "거래처명",
+	        "품목명", "유효기간", "견적금액합계", "담당자", "비고", "진행상태"
+	    );
 
-		if (!estimates.isEmpty()) {
-			// 컬럼 정의
-			columns.add("견적서코드");
-			columns.add("등록일자");
-			columns.add("거래처명");
-			columns.add("품목명");
-			columns.add("유효기간");
-			columns.add("견적금액합계");
-			columns.add("담당자");
-			columns.add("진행상태");
+	    for (Estimate estimate : estimates) {
+	        // 🔹 품목명 리스트 조회
+	        List<String> productNames = estimateDetailRepository.findProductNamesByEstimateUniqueCode(
+	            estimate.getEstimateUniqueCode()
+	        );
 
-			for (Estimate estimate : estimates) {
-				Map<String, Object> row = new HashMap<>();
-				row.put("견적서코드", estimate.getEstimateCode());
-				// 날짜 포맷팅은 필요에 따라 프론트엔드 또는 DTO에서 처리해야 합니다. 여기서는 Date 객체 그대로 전달합니다.
-				row.put("등록일자", estimate.getCreateDate());
-				row.put("거래처명", estimate.getPartnerCode()); // 실제 거래처 이름을 조회해야 할 수 있습니다. (현재는 코드)
-				row.put("품목명", estimate.getPartnerCode()); // 대표 품목명 조회 로직이 필요할 수 있습니다. (현재는 임시 값)
-				row.put("유효기간", estimate.getExpiryDate());
-				row.put("견적금액합계", estimate.getTotalAmount());
-				row.put("담당자", estimate.getManager());
-				row.put("진행상태", estimate.getStatus());
-				rows.add(row);
-			}
-		}
+	        // 🔹 대표 품목명 + 외 n건 처리
+	        String productSummary = "";
+	        if (productNames.isEmpty()) {
+	            productSummary = "";
+	        } else if (productNames.size() == 1) {
+	            productSummary = productNames.get(0);
+	        } else {
+	            productSummary = productNames.get(0) + " 외 " + (productNames.size() - 1) + "건";
+	        }
 
-		return Map.of("columns", columns, "rows", rows);
+	        Map<String, Object> row = new HashMap<>();
+	        row.put("견적서고유코드", estimate.getEstimateUniqueCode());
+	        row.put("견적서코드", estimate.getEstimateCode());
+	        row.put("등록일자", estimate.getCreateDate());
+	        row.put("거래처명", estimate.getPartner().getPartnerName());
+	        row.put("품목명", productSummary);
+	        row.put("유효기간", estimate.getExpiryDate());
+	        row.put("견적금액합계", estimate.getTotalAmount());
+	        row.put("담당자", estimate.getManagerEmp().getName());
+	        row.put("비고", estimate.getRemarks());
+	        row.put("진행상태", estimate.getStatus());
+	        rows.add(row);
+	    }
+
+	    return Map.of("columns", columns, "rows", rows);
 	}
+
+
+
+
 
 	@Override
 	@Transactional
@@ -189,15 +206,10 @@ public class EstimateServiceImpl implements EstimateService {
 	/** 헬퍼: Estimate 엔티티 생성 */
 	private Estimate createEstimateEntity(EstimateRegistrationDTO dto, Double totalAmount) {
 
-		return Estimate.builder().partnerCode(dto.getPartnerCode())
-				.deliveryDate(dto.getDeliveryDate())
+		return Estimate.builder().partnerCode(dto.getPartnerCode()).deliveryDate(dto.getDeliveryDate())
 				.expiryDate(java.time.LocalDate.now().plusDays(dto.getValidPeriod()).toString())
-				.totalAmount(totalAmount)
-				.status("미확인")
-				.postCode(dto.getPostCode())
-				.address(dto.getAddress())
-				.payCondition(dto.getPayCondition())
-				.remarks(dto.getRemarks()).build();
+				.totalAmount(totalAmount).status("미확인").postCode(dto.getPostCode()).address(dto.getAddress())
+				.payCondition(dto.getPayCondition()).remarks(dto.getRemarks()).build();
 	}
 
 	/** 헬퍼: 총 금액 계산 로직 (보안 및 신뢰성 확보) */
@@ -268,6 +280,12 @@ public class EstimateServiceImpl implements EstimateService {
 		}
 
 		return "DEFAULT";
+	}
+
+	@Override
+	public Estimate getEstimateByEstimateUniqueCode(Long estimateUniqueCode) {
+		// TODO Auto-generated method stub
+        return estimateRepository.findByEstimateUniqueCode(estimateUniqueCode);
 	}
 
 }

@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -13,6 +17,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -71,6 +76,15 @@ public class Price {
     @Temporal(TemporalType.DATE)
     private Date endDate;
     
+    
+    
+    
+    
+    @Transient
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date validDate;
+    
+    @JsonIgnore
     @OneToMany(mappedBy = "price", fetch = FetchType.LAZY) 
     private List<PriceDetail> priceDetails = new ArrayList<>();
 

@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import jakarta.persistence.Transient;
+
 
 
 @Entity
@@ -48,5 +50,23 @@ public class OrderDetail {
 
     @Column(name = "COMPANY_CODE", length = 20, nullable = false)
     private String companyCode; // COMPANY_CODE (VARCHAR2(20) NOT NULL)
+    
+    @Transient
+    private String productName;
+
+    @Transient
+    private String productSize;
+    
+    @Transient
+    private Integer completeQuantity; // (quantity - nonShipment)
+
+    @Transient
+    private Integer stock; // 재고 (Product 테이블에서 조회)
+
+    @Transient
+    private String unit;
+    
+	@Column(name = "NON_SHIPMENT")
+	private Integer nonShipment; 
 
 }

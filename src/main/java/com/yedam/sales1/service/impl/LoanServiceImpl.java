@@ -104,4 +104,10 @@ public class LoanServiceImpl implements LoanService {
 		}
 		return String.format("%s%04d", prefix, newNum);
 	}
+
+	@Override
+	public Loan findLoanDetailByPartner(String partnerCode) {
+        return loanRepository.findByPartnerCode(partnerCode);
+
+	}
 }

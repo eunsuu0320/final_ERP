@@ -20,7 +20,7 @@ const modalConfigs = {
 			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
 			{ title: "거래처명", field: "partnerName", minWidth: 200 },
 			{ title: "연락처", field: "tel", width: 140 },
-			{ title: "담당자", field: "picName", width: 120 }
+			
 
 		],
 		selectable: 1,
@@ -147,10 +147,6 @@ const modalConfigs = {
 			{ title: "품목명", field: "productName", minWidth: 200 },
 			{ title: "거래처", field: "partnerName", minWidth: 160 },
 			{
-				title: "단가", field: "unitPrice", width: 110, hozAlign: "right",
-				formatter: (c) => Number(c.getValue() || 0).toLocaleString()
-			},
-			{
 				title: "판매일자", field: "salesDate", width: 120, hozAlign: "center",
 				formatter: (cell) => { const v = cell.getValue(); if (!v) return ""; const d = new Date(v); return isNaN(d) ? v : d.toISOString().slice(0, 10); }
 			},
@@ -216,8 +212,10 @@ const modalConfigs = {
 		columns: [
 			{ title: "견적서코드", field: "estimateCode", hozAlign: "center" },
 			{ title: "거래처코드", field: "partnerCode", hozAlign: "center" },
-			{ title: "납기일", field: "expiryDate", hozAlign: "center" },
+			{ title: "거래처", field: "partnerName", hozAlign: "center" },
+			{ title: "납기일", field: "deliveryDate", hozAlign: "center" },
 			{ title: "견적금액합계", field: "totalAmount", hozAlign: "center" },
+			{ title: "담당자", field: "managerName", hozAlign: "center" },
 			{ title: "비고", field: "remarks", hozAlign: "center" },
 
 
@@ -230,12 +228,11 @@ const modalConfigs = {
 		url: "/api/modal/productCode",
 		title: "품목 검색",
 		columns: [
-			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
-			{ title: "품목그룹", field: "productGroup", width: 200, hozAlign: "center" },
-			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
+			{ title: "품목코드", field: "productCode", hozAlign: "center" },
+			{ title: "품목그룹", field: "productGroup", hozAlign: "center" },
+			{ title: "품목명", field: "productName", hozAlign: "center" },
 			{
 				title: "규격/단위",
-				width: 200,
 				hozAlign: "center",
 				formatter: function(cell) {
 					const data = cell.getRow().getData();
@@ -254,22 +251,36 @@ const modalConfigs = {
 				}
 			},
 			{
-				title: "기본단가",
-				field: "price",
-				width: 200,
+				title: "입고단가 (원)",
+				field: "inPrice",
 				hozAlign: "center", // 금액은 우측 정렬이 가독성이 좋습니다.
 				// 콤마 포맷터 적용
 				formatter: function(cell) {
 					const price = cell.getValue();
 					// 값이 유효한 숫자인지 확인
 					if (price === null || price === undefined || isNaN(price) || price === '') {
-						return '';
+						return '-';
+					}
+					// toLocaleString()을 사용하여 콤마를 적용합니다.
+					return Number(price).toLocaleString('ko-KR');
+				}
+			}, 
+			{
+				title: "출고단가 (원)",
+				field: "outPrice",
+				hozAlign: "center", // 금액은 우측 정렬이 가독성이 좋습니다.
+				// 콤마 포맷터 적용
+				formatter: function(cell) {
+					const price = cell.getValue();
+					// 값이 유효한 숫자인지 확인
+					if (price === null || price === undefined || isNaN(price) || price === '') {
+						return '-';
 					}
 					// toLocaleString()을 사용하여 콤마를 적용합니다.
 					return Number(price).toLocaleString('ko-KR');
 				}
 			},
-			{ title: "비고", field: "remarks", width: 280, hozAlign: "center" },
+			{ title: "비고", field: "remarks", hozAlign: "center" },
 
 		],
 		selectable: 1,
@@ -280,8 +291,8 @@ const modalConfigs = {
 		url: "/api/modal/productCode",
 		title: "품목 검색",
 		columns: [
-			{ title: "품목코드", field: "productCode", width: 200, hozAlign: "center" },
-			{ title: "품목명", field: "productName", width: 200, hozAlign: "center" },
+			{ title: "품목코드", field: "productCode", hozAlign: "center" },
+			{ title: "품목명", field: "productName", hozAlign: "center" },
 		],
 		selectable: 1,
 	},
@@ -301,23 +312,37 @@ const modalConfigs = {
 		url: "/api/modal/salesPartner",
 		title: "거래처 검색",
 		columns: [
-			{ title: "거래처코드", field: "partnerCode", width: 140, hozAlign: "center" },
-			{ title: "거래처명", field: "partnerName", minWidth: 200 },
-			{ title: "연락처", field: "partnerPhone", width: 140 },
-			{ title: "담당자", field: "name", width: 120 },
+			{ title: "거래처코드", field: "partnerCode", hozAlign: "center" },
+			{ title: "거래처명", field: "partnerName" },
+			{ title: "연락처", field: "partnerPhone" },
+			{ title: "담당자", field: "name" },
 			{ title: "우편번호", field: "postCode", hozAlign: "center" },
 			{ title: "주소", field: "address", hozAlign: "center" }
 
 		],
 		selectable: 1,
 	},
+	
+	orders: {
+		url: "/api/modal/order",
+		title: "주문서 검색",
+		columns: [
+			{ title: "주문서코드", field: "orderCode", hozAlign: "center" },
+			{ title: "거래처코드", field: "partnerCode", hozAlign: "center" },
+			{ title: "거래처", field: "partnerName", hozAlign: "center" },
+			{ title: "주문일", field: "createDate", hozAlign: "center" },
+			{ title: "납기일", field: "deliveryDate", hozAlign: "center" },
+			{ title: "배송지 우편번호", field: "postCode", hozAlign: "center" },
+			{ title: "배송지 주소", field: "address", hozAlign: "center" },
+			{ title: "담당자", field: "managerName", hozAlign: "center" },
+			{ title: "비고", field: "remarks", hozAlign: "center" },
 
 
-
+		],
+		selectable: 1,
+	},
 
 };
-
-
 
 
 let table; // Tabulator 인스턴스 전역 변수
@@ -367,15 +392,7 @@ function openModal(type, onSelect, commonGroup) {
 				}
 			}
 		],
-		ajaxResponse: function(url, params, response) {
-			if (type === "estimate") {
-				const filtered = response.filter(item => item.isCurrentVersion === 'Y');
-				console.log("원본 데이터:", response);       // 서버에서 넘어온 전체 데이터
-				console.log("필터링 후 데이터:", filtered); // isCurrentVersion='Y'만 남긴 데이터
-				return filtered;
-			}
-			return response;
-		}
+
 
 	});
 

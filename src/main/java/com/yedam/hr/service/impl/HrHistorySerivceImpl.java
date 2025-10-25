@@ -1,66 +1,69 @@
 package com.yedam.hr.service.impl;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.yedam.hr.domain.HrHistory;
+import com.yedam.hr.domain.Employee;
 import com.yedam.hr.dto.HrHistoryDTO;
 import com.yedam.hr.repository.EmployeeRepository;
 import com.yedam.hr.repository.HrHistoryRepository;
 import com.yedam.hr.service.HrHistorySerivce;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class HrHistorySerivceImpl implements HrHistorySerivce {
 
     private final HrHistoryRepository historyRepository;
     private final EmployeeRepository employeeRepository;
 
+    private static String sv(String s){ return s == null ? "" : s.trim(); }
+
+    private Map<String, String> buildNameMap(Collection<String> codes){
+        if (codes == null || codes.isEmpty()) return Collections.emptyMap();
+        // findAllById 한 번으로 이름 벌크 로딩 → N+1 제거
+        return employeeRepository.findAllById(codes)
+                .stream()
+                .collect(Collectors.toMap(Employee::getEmpCode, Employee::getName, (a,b)->a));
+    }
+
+    private HrHistoryDTO toDto(HrHistory h, Map<String,String> nameMap){
+        String empName = nameMap.getOrDefault(sv(h.getEmpCode()), "(없음)");
+        String mgrName = nameMap.getOrDefault(sv(h.getManager()),  "(없음)");
+        return new HrHistoryDTO(
+                h.getCompanyCode(),
+                h.getEventType(),
+                h.getEventDetail(),
+                mgrName,
+                h.getCreatedAt(),
+                h.getEmpCode(),
+                empName
+        );
+    }
+
     @Override
     public List<HrHistoryDTO> findByCompanyCode(String companyCode) {
+        // 1) 전량 조회 (현행 유지)
         List<HrHistory> list = historyRepository.findByCompanyCodeOrderByCreatedAtDesc(companyCode);
 
-        // ★ 문제 요약 로그 (무엇이 null/미존재인지 바로 확인)
+        // 2) 필요한 사번(대상/담당자) 수집
+        Set<String> codes = new HashSet<>();
         for (HrHistory h : list) {
-            String manager = h.getManager();
-            boolean managerBlank = (manager == null) || manager.trim().isEmpty();
-
-            if (managerBlank) {
-                log.warn("[HIST-{}] manager가 비어있음 company={}, empCode={}",
-                        h.getHistoryId(), h.getCompanyCode(), h.getEmpCode());
-            } else {
-                String key = manager.trim();
-                boolean exists = employeeRepository.findById(key).isPresent();
-                if (!exists) {
-                    log.warn("[HIST-{}] manager 사번 미존재 company={}, manager='{}', trimmed='{}'",
-                            h.getHistoryId(), h.getCompanyCode(), manager, key);
-                }
-            }
-
-            // 참고: 레포가 INNER JOIN이면 employee는 거의 항상 존재
-            if (h.getEmployee() == null) {
-                log.warn("[HIST-{}] employee(대상 사원) 누락 company={}, empCode={}",
-                        h.getHistoryId(), h.getCompanyCode(), h.getEmpCode());
-            }
+            if (h.getEmpCode() != null) codes.add(h.getEmpCode().trim());
+            if (h.getManager()  != null) codes.add(h.getManager().trim());
         }
 
-        // ↓ 임시: 예외 대신 값 내려보며 로그 확인(문제 파악용)
-        return list.stream().map(h -> {
-            String managerCode = (h.getManager() == null ? "" : h.getManager().trim());
-            String managerName = employeeRepository.findById(managerCode)
-                    .map(emp -> emp.getName())
-                    .orElse("(없음)"); // ← 일단 로그만 보려고 임시
-            String empName = (h.getEmployee() == null) ? "(없음)" : h.getEmployee().getName();
+        // 3) 벌크 로딩으로 이름 맵 구성
+        Map<String,String> nameMap = buildNameMap(codes);
 
-            return new HrHistoryDTO(
-                h.getCompanyCode(), h.getEventType(), h.getEventDetail(),
-                managerName, h.getCreatedAt(), h.getEmpCode(), empName
-            );
-        }).toList();
+        // 4) DTO 변환 (연관 LAZY 접근 금지)
+        return list.stream().map(h -> toDto(h, nameMap)).toList();
     }
 }

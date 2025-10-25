@@ -6,10 +6,8 @@
 <head>
 <!-- Tabulator CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
 
-<link
-	href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css"
-	rel="stylesheet">
 <!-- Custom CSS -->
 <style>
 .flex-container {
@@ -26,11 +24,11 @@
 }
 
 .table-box.left {
-  flex: 0 0 50%; /* 왼쪽 40% */
+  flex: 0 0 50%;
 }
 
 .table-box.right {
-  flex: 0 0 50%; /* 오른쪽 60% */
+  flex: 0 0 50%;
 }
 
 .table-header {
@@ -42,90 +40,124 @@
 }
 
 .table-header h3 {
-  margin: 0;          /* h3 기본 margin 제거 */
+  margin: 0;
   display: flex;
-  align-items: center; /* 버튼 높이에 맞춰 정렬 */
+  align-items: center;
 }
 
+/* === 공용 오버레이 === */
+.position-relative { position: relative; }
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1055;
+  pointer-events: all; /* 클릭 차단 */
+}
+.loading-overlay.d-none { display: none; }
 </style>
+
 <meta name="_csrf" th:content="${_csrf.token}" />
 <meta name="_csrf_header" th:content="${_csrf.headerName}" />
 </head>
+
 <body layout:fragment="content">
 	<div id="layoutSidenav_content">
 		<main>
 			<div class="container-fluid px-4">
-			  <h2>사원별 영업계획등록</h2>
-			<div class="input-group mb-3" style="width: auto; position: relative; display: inline-flex; align-items: center;"></div>
-    			
-    			<div class="flex-container">
-			    <!-- 왼쪽: 사원 목록 -->
-			    <div class="table-box left">
-			      <div class="table-header">
-			        <h3 class="mb-0">사원 목록</h3>
-			        
-			        <div class="input-group mb-3" style="width: auto; position: relative; display: flex; align-items: center; gap: 5px; margin-top: 17px;">
-					    
-					    <input id="employeeName" type="text" class="form-control" 
-					           placeholder="사원명 입력" 
-					           style="width: 200px; padding-right: 25px; height: 38px;"> <!-- 버튼과 같은 높이 -->
-					
-						<input type="hidden" id="employCode" name="employCode">
-						<input type="hidden" id="espCode" name="espCode">
-					    <i class="fas fa-search" id="search-icon" 
-					       style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;" 
-					       onclick="openModal('employee', function(selected) {
-			                    document.getElementById('employCode').value = selected.empNo;
-			                    document.getElementById('employeeName').value = selected.name;})"></i>
-					
-					    <button id="btn-search" class="btn btn-warning" type="button" style="height: 38px;">검색</button>
-					</div>
-			      </div>
-			      <!-- 사원별 영업매출 테이블 -->
-			      <div id="empPlanList-table"></div>
-			    </div>
-			
-			    <!-- 오른쪽: 영업계획 입력 -->
-			    <div class="table-box right">
-			      <div class="table-header">
-			        <h3 id="plan-title" class="mb-0">영업계획</h3>
-			         <div style="display: flex; align-items: center; gap: 5px;">
+			 <h2 class="mt-4">사원별 영업계획목록</h2>
 
-        <!-- 기존 버튼 -->
-        <button type="button" class="btn btn-primary" id="btn-update-sales" style="height: 38px;">저장</button>
-        <button type="button" class="btn btn-outline-dark" id="btn-cancel-update" style="height: 38px;">초기화</button>
-    </div>
-</div>
+			<div class="flex-container">
+			  <!-- 왼쪽: 사원 목록 -->
+			  <div class="table-box left">
+			    <div class="table-header">
+			      <h3 class="mb-0">사원 목록</h3>
+
+			      <div class="input-group mb-3" style="width: auto; position: relative; display: flex; align-items: center; gap: 5px; margin-top: 17px;">
+			        <input id="employeeName" type="text" class="form-control"
+			               placeholder="사원명 입력"
+			               style="width: 200px; padding-right: 25px; height: 38px;">
+			        <input type="hidden" id="employCode" name="employCode">
+			        <input type="hidden" id="espCode" name="espCode">
+			        <i class="fas fa-search" id="search-icon"
+			           style="position: absolute; right: 70px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 16px;"
+			           onclick="openModal('employee', function(selected) {
+			             document.getElementById('employCode').value = selected.empNo;
+			             document.getElementById('employeeName').value = selected.name;
+			           })"></i>
+			        <button id="btn-search" class="btn btn-warning" type="button" style="height: 38px;">검색</button>
+			      </div>
+			    </div>
+			    <!-- 사원별 영업매출 테이블 -->
+			    <div id="empPlanList-table"></div>
+			  </div>
+
+			  <!-- 오른쪽: 영업계획 입력 -->
+			  <div class="table-box right">
+			    <div class="table-header">
+			      <h3 id="plan-title" class="mb-0">영업계획</h3>
+			      <div style="display: flex; align-items: center; gap: 5px;">
+			        <button type="button" class="btn btn-primary" id="btn-update-sales" style="height: 38px;">저장</button>
+			        <button type="button" class="btn btn-outline-dark" id="btn-cancel-update" style="height: 38px;">초기화</button>
+			      </div>
+			    </div>
+
+			    <!-- ▼ 등록 패널에 오버레이를 덮기 위해 position-relative 래퍼 -->
+			    <div class="position-relative">
 			      <div id="plan-table"></div>
+
+			      <!-- 등록(오른쪽 패널) 진행중 오버레이 -->
+			      <div id="emp-save-loading" class="loading-overlay d-none">
+			        <div class="text-center">
+			          <div class="spinner-border" role="status" aria-hidden="true"></div>
+			          <div class="mt-2 fw-semibold">로딩 중…</div>
+			        </div>
+			      </div>
 			    </div>
 			  </div>
 			</div>
-			 <!-- 수정 모달 -->
+
+			<!-- 수정 모달 -->
             <div class="modal fade" id="modifySalesModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">사원별 영업계획 수정</h5>
-                            <div class="ms-auto d-flex gap-2">
-                                <button type="button" class="btn btn-primary" id="btn-update-sales">저장</button>
-                                <button type="button" class="btn btn-outline-dark" id="btn-cancel-update">초기화</button>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                        </div>
-                        <div class="modal-body">
-                            <div id="empListTable"></div>
-                        </div>
+              <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">사원별 영업계획 수정</h5>
+                    <div class="ms-auto d-flex gap-2">
+                      <button type="button" class="btn btn-primary" id="btn-update-sales">저장</button>
+                      <button type="button" class="btn btn-outline-dark" id="btn-cancel-update">초기화</button>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+                  </div>
+
+                  <!-- ▼ 모달에도 오버레이 덮을 수 있도록 position-relative -->
+                  <div class="modal-body position-relative">
+                    <div id="empListTable"></div>
+
+                    <!-- 수정(모달) 진행중 오버레이 -->
+                    <div id="emp-update-loading" class="loading-overlay d-none">
+                      <div class="text-center">
+                        <div class="spinner-border" role="status" aria-hidden="true"></div>
+                        <div class="mt-2 fw-semibold">로딩 중…</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
             </div>
-			
-		</main>	
+
+			</div>
+		</main>
 	</div>
+
 	<div th:replace="common/modal :: commonModal"></div>
+
 	<!-- Tabulator JS -->
 	<script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 	<!-- 기존 JS 파일 연결 -->
 	<script th:src="@{/sales2/js/empList.js}"></script>
-	<!-- 공통 모달 -->
 </body>
 </html>

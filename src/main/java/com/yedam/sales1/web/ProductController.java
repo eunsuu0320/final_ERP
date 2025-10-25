@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody; // JSON 응답을 명시적으로 위해 추가할 수 있습니다.
 import org.springframework.web.multipart.MultipartFile;
 
+import com.yedam.common.ScreenPerm;
 import com.yedam.sales1.domain.Product;
 import com.yedam.sales1.service.ProductService;
 
@@ -31,6 +32,7 @@ public class ProductController {
 	/**
 	 * 초기 페이지 로딩: JSP 뷰를 반환하며, Model에 초기 데이터(컬럼/로우)를 담아 전달합니다.
 	 */
+	@ScreenPerm(screen = "SAL_ITEM", action = ScreenPerm.Action.READ)
 	@GetMapping("productList")
 	public String productList(Model model) {
 		List<Product> products = productService.getAllProduct();
@@ -45,6 +47,7 @@ public class ProductController {
 	}
 
 	// (품목 등록/수정 API - 기존 코드 유지)
+	@ScreenPerm(screen = "SAL_ITEM", action = ScreenPerm.Action.CREATE)
 	@PostMapping("api/registProduct")
 	public ResponseEntity<Product> registProduct(@ModelAttribute Product product,
 			@RequestParam(value = "productImage", required = false) MultipartFile file) {
@@ -54,6 +57,7 @@ public class ProductController {
 		return ResponseEntity.ok(saved);
 	}
 
+	@ScreenPerm(screen = "SAL_ITEM", action = ScreenPerm.Action.UPDATE)
 	@PostMapping("api/modifyProduct")
 	public ResponseEntity<Product> modifyProduct(@ModelAttribute Product product,
 			@RequestParam(value = "productImage", required = false) MultipartFile file) {
@@ -76,19 +80,6 @@ public class ProductController {
 		}
 	}
 
-	// (품목 이력 조회 API - 기존 코드 유지)
-	@GetMapping("api/product/history")
-	public ResponseEntity<Product> getProductHistory(@RequestParam String productCode) {
-		System.out.println("controller 확인");
-		System.out.println("조회 productCode: " + productCode);
-
-		Product product = productService.getProductByProductCode(productCode);
-		if (product != null) {
-			return ResponseEntity.ok(product);
-		} else {
-			return ResponseEntity.notFound().build();
-		}
-	}
 
 	/**
 	 * 품목 필터링 및 전체 조회 API (초기화 및 검색 기능 모두 이 API를 사용합니다.)

@@ -2,9 +2,11 @@ package com.yedam.hr.service.impl;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,9 @@ import com.yedam.hr.repository.HrPDFRepository;
 import com.yedam.hr.repository.HrSignRepository;
 import com.yedam.hr.service.HrService;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Service
 public class HrServiceImpl implements HrService {
 
@@ -38,6 +43,10 @@ public class HrServiceImpl implements HrService {
 	@Autowired HrSignRepository hrSignRepository;
 	@Autowired HrPDFRepository hrPDFRepository;
 	@Autowired HrHistoryRepository hrHistoryRepository;
+	@Autowired JdbcTemplate jdbcTemplate;
+
+	@PersistenceContext
+	  private EntityManager em;
 
 	@Override
 	public List<Employee> findByCompanyCode(String companyCode) {
@@ -179,129 +188,241 @@ public class HrServiceImpl implements HrService {
 		return employeeRepository.findByCompanyCodeAndEmpCode(companyCode, empCode);
 	}
 
-	// 단 건 수정
 	@Override
+	@Transactional
 	public void updateEmployee(Employee employee, MultipartFile signImg, MultipartFile pdfFile) {
-		// 로그인 사용자 아이디 넣기 (지금은 admin, 나중에 로그인 값으로 교체)
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		String manager = auth.getName().split(":")[2];
+	    // 로그인 사용자
+	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	    String manager = auth.getName().split(":")[2];
 
-		// 1. 기존 사원 정보 조회
-		Employee existing = employeeRepository.findById(employee.getEmpCode())
-				.orElseThrow(() -> new RuntimeException("해당 사원이 존재하지 않습니다."));
+	    // 1) 기존 사원 조회
+	    Employee existing = employeeRepository.findById(employee.getEmpCode())
+	            .orElseThrow(() -> new RuntimeException("해당 사원이 존재하지 않습니다."));
 
-		// 2. 수정할 필드만 덮어쓰기 (null은 무시 → 기존 값 유지)
-		if (employee.getName() != null)
-			existing.setName(employee.getName());
-		if (employee.getPhone() != null)
-			existing.setPhone(employee.getPhone());
-		if (employee.getBirth() != null)
-			existing.setBirth(employee.getBirth());
-		if (employee.getEmail() != null)
-			existing.setEmail(employee.getEmail());
-		if (employee.getDept() != null)
-			existing.setDept(employee.getDept());
-		if (employee.getPosition() != null)
-			existing.setPosition(employee.getPosition());
-		if (employee.getGrade() != null)
-			existing.setGrade(employee.getGrade());
-		if (employee.getSalary() != null)
-			existing.setSalary(employee.getSalary());
-		if (employee.getHireDate() != null)
-			existing.setHireDate(employee.getHireDate());
-		if (employee.getResignDate() != null)
-			existing.setResignDate(employee.getResignDate());
-		if (employee.getHolyDays() != null)
-			existing.setHolyDays(employee.getHolyDays());
-		if (employee.getDepCnt() != null)
-			existing.setDepCnt(employee.getDepCnt());
-		if (employee.getResignReason() != null)
-			existing.setResignReason(employee.getResignReason());
-		if (employee.getBankCode() != null)
-			existing.setBankCode(employee.getBankCode());
-		if (employee.getAccHolder() != null)
-			existing.setAccHolder(employee.getAccHolder());
-		if (employee.getAccNo() != null)
-			existing.setAccNo(employee.getAccNo());
-		if (employee.getPostalCode() != null)
-			existing.setPostalCode(employee.getPostalCode());
-		if (employee.getAddress() != null)
-			existing.setAddress(employee.getAddress());
-		// ⚠ companyCode는 덮어쓰지 않음 (DB 값 유지)
+	    // 2) 수정 전 원본 값 보관
+	    String  oldName         = existing.getName();
+	    String  oldPhone        = existing.getPhone();
+	    var     oldBirth        = existing.getBirth();       // LocalDate
+	    String  oldEmail        = existing.getEmail();
+	    String  oldDept         = existing.getDept();
+	    String  oldPosition     = existing.getPosition();
+	    String  oldGrade        = existing.getGrade();
+	    Integer oldSalary       = existing.getSalary();
+	    var     oldHireDate     = existing.getHireDate();
+	    var     oldResignDate   = existing.getResignDate();
+	    Integer oldHolyDays     = existing.getHolyDays();
+	    Integer oldDepCnt       = existing.getDepCnt();
+	    String  oldResignReason = existing.getResignReason();
+	    String  oldBankCode     = existing.getBankCode();
+	    String  oldAccHolder    = existing.getAccHolder();
+	    String  oldAccNo        = existing.getAccNo();
+	    Integer oldPostalCode   = existing.getPostalCode();
+	    String  oldAddress      = existing.getAddress();
 
-		// 3. 사원 정보 저장
-		employeeRepository.save(existing);
+	    // 3) 변경 적용 (문자열: null/blank 무시, 숫자/날짜: null만 무시)
+	    if (employee.getName()        != null && !employee.getName().trim().isEmpty())        existing.setName(employee.getName().trim());
+	    if (employee.getPhone()       != null && !employee.getPhone().trim().isEmpty())       existing.setPhone(employee.getPhone().trim());
+	    if (employee.getBirth()       != null)                                                existing.setBirth(employee.getBirth());
+	    if (employee.getEmail()       != null && !employee.getEmail().trim().isEmpty())       existing.setEmail(employee.getEmail().trim());
+	    if (employee.getDept()        != null && !employee.getDept().trim().isEmpty())        existing.setDept(employee.getDept().trim());
+	    if (employee.getPosition()    != null && !employee.getPosition().trim().isEmpty())    existing.setPosition(employee.getPosition().trim());
+	    if (employee.getGrade()       != null && !employee.getGrade().trim().isEmpty())       existing.setGrade(employee.getGrade().trim());
+	    if (employee.getSalary()      != null)                                                existing.setSalary(employee.getSalary());
+	    if (employee.getHireDate()    != null)                                                existing.setHireDate(employee.getHireDate());
+	    if (employee.getResignDate()  != null)                                                existing.setResignDate(employee.getResignDate());
+	    if (employee.getHolyDays()    != null)                                                existing.setHolyDays(employee.getHolyDays());
+	    if (employee.getDepCnt()      != null)                                                existing.setDepCnt(employee.getDepCnt());
+	    if (employee.getResignReason()!= null && !employee.getResignReason().trim().isEmpty())existing.setResignReason(employee.getResignReason().trim());
+	    if (employee.getBankCode()    != null && !employee.getBankCode().trim().isEmpty())    existing.setBankCode(employee.getBankCode().trim());
+	    if (employee.getAccHolder()   != null && !employee.getAccHolder().trim().isEmpty())   existing.setAccHolder(employee.getAccHolder().trim());
+	    if (employee.getAccNo()       != null && !employee.getAccNo().trim().isEmpty())       existing.setAccNo(employee.getAccNo().trim());
+	    if (employee.getPostalCode()  != null)                                                existing.setPostalCode(employee.getPostalCode());
+	    if (employee.getAddress()     != null && !employee.getAddress().trim().isEmpty())     existing.setAddress(employee.getAddress().trim());
+	    // companyCode는 유지
 
-		// 4. 선택적으로 서명 이미지 저장 (있으면 갱신)
-		HrSign sign = hrSignRepository.findByEmpCode(existing.getEmpCode()).orElse(null);
+	    em.createNativeQuery("begin dbms_session.set_identifier(?); end;")
+	      .setParameter(1, manager)
+	      .executeUpdate();
 
-		if (signImg != null && !signImg.isEmpty()) {
-			try {
-				String uploadDir = System.getProperty("user.dir") + "/uploads/hr/sign/";
-				File dir = new File(uploadDir);
-				if (!dir.exists())
-					dir.mkdirs();
+	    // 4) 저장
+	    employeeRepository.save(existing);
 
-				String uuid = UUID.randomUUID().toString().substring(0, 4);
-				String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-				String signFileName = uuid + "_" + existing.getEmpCode() + "_" + safeName + ".png";
+	    // 5) 선택: 서명 이미지 저장
+	    HrSign sign = hrSignRepository.findByEmpCode(existing.getEmpCode()).orElse(null);
+	    boolean signUpdated = false;
 
-				File signFile = new File(uploadDir, signFileName);
-				signImg.transferTo(signFile);
+	    if (signImg != null && !signImg.isEmpty()) {
+	        try {
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/hr/sign/";
+	            File dir = new File(uploadDir);
+	            if (!dir.exists()) dir.mkdirs();
 
-				String signPath = "/hr/sign/" + signFileName; // DB에 저장될 경로
+	            String uuid = UUID.randomUUID().toString().substring(0, 4);
+	            String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
+	            String signFileName = uuid + "_" + existing.getEmpCode() + "_" + safeName + ".png";
 
-				if (sign == null) {
-					sign = new HrSign();
-				}
-				sign.setCompanyCode(existing.getCompanyCode());
-				sign.setEmpCode(existing.getEmpCode());
-				sign.setEmpName(existing.getName());
-				sign.setEmpDept(existing.getDept());
-				sign.setImg(signPath);
-				sign = hrSignRepository.save(sign);
+	            File signFile = new File(uploadDir, signFileName);
+	            signImg.transferTo(signFile);
 
-			} catch (Exception e) {
-				throw new RuntimeException("서명 이미지 저장 중 오류", e);
-			}
-		}
+	            String signPath = "/hr/sign/" + signFileName;
 
-		// 5. 선택적으로 PDF 저장 (있으면 갱신)
-		if (pdfFile != null && !pdfFile.isEmpty()) {
-			try {
-				String uploadDir = System.getProperty("user.dir") + "/uploads/hr/pdf/";
-				File dir = new File(uploadDir);
-				if (!dir.exists())
-					dir.mkdirs();
+	            if (sign == null) {
+	                sign = new HrSign();
+	            }
+	            sign.setCompanyCode(existing.getCompanyCode());
+	            sign.setEmpCode(existing.getEmpCode());
+	            sign.setEmpName(existing.getName());
+	            sign.setEmpDept(existing.getDept());
+	            sign.setImg(signPath);
+	            sign = hrSignRepository.save(sign);
+	            signUpdated = true;
+	        } catch (Exception e) {
+//	            throw new RuntimeException("서명 이미지 저장 중 오류", e);
+	        	System.out.println(e + "서명 저장 실패");
+	        }
+	    }
 
-				String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
-				String pdfFileName = existing.getEmpCode() + "_" + safeName + "_contract.pdf";
+	    // 6) 선택: PDF 저장
+	    boolean pdfUpdated = false;
+	    if (pdfFile != null && !pdfFile.isEmpty()) {
+	        try {
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/hr/pdf/";
+	            File dir = new File(uploadDir);
+	            if (!dir.exists()) dir.mkdirs();
 
-				String pdfPath = "/hr/pdf/" + pdfFileName; // DB 저장용 경로
-				String outputPath = uploadDir + pdfFileName;
+	            String safeName = existing.getName().replaceAll("[^a-zA-Z0-9가-힣]", "_");
+	            String pdfFileName = existing.getEmpCode() + "_" + safeName + "_contract.pdf";
 
-				pdfFile.transferTo(new File(outputPath));
+	            String pdfPath = "/hr/pdf/" + pdfFileName;
+	            String outputPath = uploadDir + pdfFileName;
 
-				HrPDF pdf = hrPDFRepository.findBySignId(sign.getSignId()) // ✅ signId로 조회
-						.orElse(new HrPDF());
+	            pdfFile.transferTo(new File(outputPath));
 
-				pdf.setSignId(sign.getSignId());
-				pdf.setPdf(pdfPath);
-				hrPDFRepository.save(pdf);
+	            HrPDF pdf = hrPDFRepository.findBySignId(sign != null ? sign.getSignId() : null)
+	                    .orElse(new HrPDF());
 
-			} catch (Exception e) {
-				throw new RuntimeException("PDF 저장 중 오류", e);
-			}
-		}
+	            pdf.setSignId(sign != null ? sign.getSignId() : null);
+	            pdf.setPdf(pdfPath);
+	            hrPDFRepository.save(pdf);
+	            pdfUpdated = true;
+	        } catch (Exception e) {
+//	            throw new RuntimeException("PDF 저장 중 오류", e);
+	        	System.out.println(e + "pdf 저장 실패");
+	        }
+	    }
 
-		// Employee 수정 저장 완료 후
-		HrHistory history = new HrHistory();
-		history.setCompanyCode(existing.getCompanyCode());
-		history.setEmpCode(existing.getEmpCode());
-		history.setEventType("수정");
-		history.setEventDetail("사원 정보 수정");
-		history.setManager(manager);
-		hrHistoryRepository.save(history);
+	    // 7) 변경 내역 문자열 생성(수정 전 → 수정 후) - 문자열은 blank면 비교/로그 스킵
+	    StringBuilder detail = new StringBuilder();
+	    int changed = 0;
 
+	    if (employee.getName()        != null && !employee.getName().trim().isEmpty() &&
+	        !Objects.equals(oldName, employee.getName().trim())) {
+	        detail.append("성명 : '").append(String.valueOf(oldName)).append("'→'")
+	              .append(employee.getName().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getPhone()       != null && !employee.getPhone().trim().isEmpty() &&
+	        !Objects.equals(oldPhone, employee.getPhone().trim())) {
+	        detail.append("전화 : '").append(String.valueOf(oldPhone)).append("'→'")
+	              .append(employee.getPhone().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getBirth()       != null && !Objects.equals(oldBirth, employee.getBirth())) {
+	        detail.append("생년월일 : '").append(String.valueOf(oldBirth)).append("'→'")
+	              .append(String.valueOf(employee.getBirth())).append("'");
+	        changed++;
+	    }
+	    if (employee.getEmail()       != null && !employee.getEmail().trim().isEmpty() &&
+	        !Objects.equals(oldEmail, employee.getEmail().trim())) {
+	        detail.append("이메일 : '").append(String.valueOf(oldEmail)).append("'→'")
+	              .append(employee.getEmail().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getDept()        != null && !employee.getDept().trim().isEmpty() &&
+	        !Objects.equals(oldDept, employee.getDept().trim())) {
+	        detail.append("부서 : '").append(String.valueOf(oldDept)).append("'→'")
+	              .append(employee.getDept().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getPosition()    != null && !employee.getPosition().trim().isEmpty() &&
+	        !Objects.equals(oldPosition, employee.getPosition().trim())) {
+	        detail.append("직책 : '").append(String.valueOf(oldPosition)).append("'→'")
+	              .append(employee.getPosition().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getGrade()       != null && !employee.getGrade().trim().isEmpty() &&
+	        !Objects.equals(oldGrade, employee.getGrade().trim())) {
+	        detail.append("직급 : '").append(String.valueOf(oldGrade)).append("'→'")
+	              .append(employee.getGrade().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getSalary()      != null && !Objects.equals(oldSalary, employee.getSalary())) {
+	        detail.append("급여 : '").append(String.valueOf(oldSalary)).append("'→'")
+	              .append(String.valueOf(employee.getSalary())).append("'");
+	        changed++;
+	    }
+	    if (employee.getHireDate()    != null && !Objects.equals(oldHireDate, employee.getHireDate())) {
+	        detail.append("입사일 : '").append(String.valueOf(oldHireDate)).append("'→'")
+	              .append(String.valueOf(employee.getHireDate())).append("'");
+	        changed++;
+	    }
+	    if (employee.getResignDate()  != null && !Objects.equals(oldResignDate, employee.getResignDate())) {
+	        detail.append("퇴사일 : '").append(String.valueOf(oldResignDate)).append("'→'")
+	              .append(String.valueOf(employee.getResignDate())).append("'");
+	        changed++;
+	    }
+	    if (employee.getHolyDays()    != null && !Objects.equals(oldHolyDays, employee.getHolyDays())) {
+	        detail.append("연차 : '").append(String.valueOf(oldHolyDays)).append("'→'")
+	              .append(String.valueOf(employee.getHolyDays())).append("'");
+	        changed++;
+	    }
+	    if (employee.getDepCnt()      != null && !Objects.equals(oldDepCnt, employee.getDepCnt())) {
+	        detail.append("부양가족수 : '").append(String.valueOf(oldDepCnt)).append("'→'")
+	              .append(String.valueOf(employee.getDepCnt())).append("'");
+	        changed++;
+	    }
+	    if (employee.getResignReason()!= null && !employee.getResignReason().trim().isEmpty() &&
+	        !Objects.equals(oldResignReason, employee.getResignReason().trim())) {
+	        detail.append("퇴사사유 : '").append(String.valueOf(oldResignReason)).append("'→'")
+	              .append(employee.getResignReason().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getBankCode()    != null && !employee.getBankCode().trim().isEmpty() &&
+	        !Objects.equals(oldBankCode, employee.getBankCode().trim())) {
+	        detail.append("은행 : '").append(String.valueOf(oldBankCode)).append("'→'")
+	              .append(employee.getBankCode().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getAccHolder()   != null && !employee.getAccHolder().trim().isEmpty() &&
+	        !Objects.equals(oldAccHolder, employee.getAccHolder().trim())) {
+	        detail.append("예금주 : '").append(String.valueOf(oldAccHolder)).append("'→'")
+	              .append(employee.getAccHolder().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getAccNo()       != null && !employee.getAccNo().trim().isEmpty() &&
+	        !Objects.equals(oldAccNo, employee.getAccNo().trim())) {
+	        detail.append("계좌번호 : '").append(String.valueOf(oldAccNo)).append("'→'")
+	              .append(employee.getAccNo().trim()).append("'");
+	        changed++;
+	    }
+	    if (employee.getPostalCode()  != null && !Objects.equals(oldPostalCode, employee.getPostalCode())) {
+	        detail.append("우편번호 : '").append(String.valueOf(oldPostalCode)).append("'→'")
+	              .append(String.valueOf(employee.getPostalCode())).append("'");
+	        changed++;
+	    }
+	    if (employee.getAddress()     != null && !employee.getAddress().trim().isEmpty() &&
+	        !Objects.equals(oldAddress, employee.getAddress().trim())) {
+	        detail.append("주소 :'").append(String.valueOf(oldAddress)).append("'→'")
+	              .append(employee.getAddress().trim()).append("'");
+	        changed++;
+	    }
+
+	    if (signUpdated) detail.append("서명이미지 : 업데이트됨");
+	    if (pdfUpdated)  detail.append("계약서PDF : 업데이트됨");
+	    if (changed == 0 && !signUpdated && !pdfUpdated) {
+	        detail.append(" (변경 항목 없음)");
+	    }
+
+	    em.createNativeQuery("begin pkg_hr_audit.flush; end;").executeUpdate();
 	}
 }

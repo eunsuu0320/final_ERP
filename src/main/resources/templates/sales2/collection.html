@@ -29,31 +29,35 @@
     }
     /* 조회 버튼 사이즈 업 */
 	.btn-view-invoices {
-	  padding: 5px 15px;      /* 여백 확대 */
-	  font-size: 0.95rem;     /* 글자 조금 키움 */
+	  padding: 5px 15px;
+	  font-size: 0.95rem;
 	  line-height: 1.25;
-	  border-width: 2px;      /* 테두리 살짝 두껍게 */
+	  border-width: 2px;
 	}
-	/* 조회 버튼 활성 상태(꽉 찬 파란색) */
 	.btn-view-invoices.active {
 	  color: #fff;
 	  background-color: #0d6efd;
 	  border-color: #0d6efd;
 	}
-	/* 선택된 행을 hover처럼 연한 회색으로 */
-	#sales-table .tabulator-row.row-active {
-	  background-color: #dee2e6 !important; /* 부트스트랩의 gray-200 느낌 */
-	}
-	
-	/* 혹시 셀에 배경색이 따로 입혀져 있으면 행 배경을 따르도록 */
-	#sales-table .tabulator-row.row-active .tabulator-cell {
-	  background-color: transparent !important;
-	}
+	#sales-table .tabulator-row.row-active { background-color: #dee2e6 !important; }
+	#sales-table .tabulator-row.row-active .tabulator-cell { background-color: transparent !important; }
+	#sales-table { pointer-events: auto; }
 
-	
-	
-    
+    /* === 공용 오버레이 === */
+    .position-relative { position: relative; }
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1055;
+      pointer-events: all; /* 클릭 차단 */
+    }
+    .loading-overlay.d-none { display: none; }
   </style>
+  
 </head>
 
 <body layout:fragment="content">
@@ -80,8 +84,8 @@
 
         <!-- 버튼 그룹 -->
         <div class="d-flex gap-2">
-           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(table, '수금관리')">Excel</button>
-           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(table, '수금관리')">PDF</button>
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportExcel(collectionTable, '수금관리')">Excel</button>
+           <button class="btn btn-secondary me-2" onclick="ExportHelper.exportPDF(collectionTable, '수금관리')">PDF</button>
         </div>
       </div>
 
@@ -92,10 +96,9 @@
         총 거래처: <span class="text-primary">0건</span>
       </div>
 	
-	<!-- 청구내역 섹션 (Tabulator) -->
-	<h5 class="mt-4" id="invoice-title">청구내역</h5>
-	<div id="invoice-table" style="height:260px;"></div>
-	      
+	  <!-- 청구내역 섹션 (Tabulator) -->
+	  <h5 class="mt-4" id="invoice-title">청구내역</h5>
+	  <div id="invoice-table" style="height:260px;"></div>
 	      
       <!-- 수금 등록 모달 -->
       <div class="modal fade" id="insertCollectionModal" tabindex="-1" aria-labelledby="insertCollectionModalLabel" aria-hidden="true">
@@ -103,10 +106,7 @@
           <div class="modal-content">
 
             <div class="modal-header d-flex justify-content-between align-items-center">
-			  <h5 class="modal-
-
-
- fw-bold" id="insertCollectionModalLabel">수금 등록</h5>
+			  <h5 class="modal- fw-bold" id="insertCollectionModalLabel">수금 등록</h5>
 			  
 			  <div class="d-flex align-items-center gap-2">
 			    <button id="btnSave" class="btn btn-primary">수금등록</button>
@@ -114,20 +114,18 @@
 			  </div>
 			</div>
 
-            
-            <div class="modal-body">
-            <input type="hidden" id="outstandingAmt">
+            <!-- ▼▼ 오버레이를 덮기 위해 position-relative 래퍼 ▼▼ -->
+            <div class="modal-body position-relative">
+              <input type="hidden" id="outstandingDate">
               <div class="row mb-3">
                 <div class="col-md-4">
                   <label class="form-label">*수금일자</label>
-                  <input type="date" id="moneyDate" class="form-control" value="2025-10-10">
+                  <input type="date" id="moneyDate" class="form-control" th:value="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}" />
                 </div>  
-                              
                 <div class="col-md-4">
                   <label class="form-label">*거래처</label>
                   <input type="text" id="modalPartnerName" class="form-control" readonly>
                 </div>
-                
                 <div class="col-md-4">
                   <label class="form-label">*담당자</label>
                   <input type="text" id="managerName" class="form-control" readonly>
@@ -168,10 +166,16 @@
               </div>
 
               <!-- 수금 처리 결과 Tabulator -->
-              <h6 class="fw-bold mb-2">수금 처리 결과</h6>
               <div id="resultTable"></div>
 
-            </div>
+              <!-- ▲▲ 등록 진행중 오버레이 ▲▲ -->
+              <div id="collection-loading" class="loading-overlay d-none">
+                <div class="text-center">
+                  <div class="spinner-border" role="status" aria-hidden="true"></div>
+                  <div class="mt-2 fw-semibold">로딩 중…</div>
+                </div>
+              </div>
+            </div><!-- /modal-body -->
           </div>
         </div>
       </div>
@@ -194,4 +198,3 @@
 
 </body>
 </html>
-

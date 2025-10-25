@@ -23,14 +23,12 @@
       padding: 12px;
     }
 
-    /* 테이블 래퍼: 좁을 땐 가로 스크롤 허용 */
-    .table-wrapper {
-      overflow-x: auto;
-    }
+    /* 테이블 래퍼: 좁을 땐 가로 스크롤 허 용 */
+    .table-wrapper { overflow-x: auto; }
 
-    /* 유의사항 사이드 카드 */
+    /* ✅ 사이드 카드 — 배경색을 더 진하게 변경 */
     .side-card {
-      background: #f8f9fa;
+      background: #e9ecef; /* 기존 #f8f9fa → 더 진한 회색 */
       border-radius: .5rem;
       padding: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.05);
@@ -43,24 +41,34 @@
 
     /* 좁은 화면에서 테이블 높이 조금 더 줄여줌 */
     @media (max-width: 992px) {
-      .tabulator {
-        min-height: 360px;
-      }
+      .tabulator { min-height: 360px; }
     }
-    
+
     /* 양쪽 섹션 헤더(제목/드롭박스 라인)의 높이를 동일하게 */
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;   /* ← 이 값이 양쪽 헤더의 "세로 높이"를 통일 */
-  margin-bottom: 12px; /* 테이블과 간격도 동일하게 */
-}
-.section-header .form-select-sm {
-  /* 부트스트랩 작은 셀렉트 높이 보정(브라우저별 차이 최소화) */
-  height: calc(1.5em + .5rem + 2px);
-}
-    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      margin-bottom: 12px;
+    }
+    .section-header .form-select-sm {
+      height: calc(1.5em + .5rem + 2px);
+    }
+
+    /* === 등록/수정 중 오버레이 === */
+    .modal-body.position-relative { position: relative; } /* 오버레이 기준을 위해 */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1055;           /* 모달 내부 최상단 */
+      pointer-events: all;     /* 클릭 차단 */
+    }
+    .loading-overlay.d-none { display: none; }
   </style>
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -70,9 +78,9 @@
 <div id="layoutSidenav_content">
   <main>
     <div class="container-fluid px-4">
-      <h1 class="mt-4">영업계획목록</h1>
+      <h2 class="mt-4">영업계획목록</h2>
 
-      <!-- ✅ 반응형 그리드: lg 이상에선 9:3, md에선 8:4, sm에선 12:12(세로 스택) -->
+      <!-- ✅ 반응형 그리드: lg 이상에선 9:3, md에선 8:4, sm에선 12:12 -->
       <div class="row g-3 align-items-start">
         <!-- 테이블 영역 -->
         <div class="col-12 col-md-8 col-lg-9 order-1">
@@ -90,28 +98,34 @@
           </div>
         </div>
 
-        <!-- 유의사항 영역 -->
+        <!-- ✅ 유의사항 영역: 카드 2개로 분리 + 배경 진하게 -->
         <div class="col-12 col-md-4 col-lg-3 order-2">
-          <div class="side-card">
-            <h5 class="text-danger fw-bold mb-3">유의사항</h5>
+          <div class="d-flex flex-column gap-3">
 
-            <div class="mb-4">
-              <strong class="d-block mb-2">미수금 상위 5 거래처</strong>
+            <!-- 카드 1: 미수금 Top5 -->
+            <div class="side-card">
+              <h5 class="text-danger fw-bold mb-3">미수금 상위 5 거래처</h5>
               <table class="table table-borderless mb-0">
                 <tbody id="top-ar-body"></tbody>
               </table>
             </div>
 
-            <div>
-              <strong class="d-block mb-2">여신초과 거래처</strong>
+            <!-- 카드 2: 여신기간 초과 Top5 -->
+            <div class="side-card">
+              <h5 class="text-danger fw-bold mb-3">여신기간 초과 거래처</h5>
               <table class="table table-borderless mb-0">
+              
                 <tbody>
                 <tr><td>거래처 f</td></tr>
+                <tbody id="credit-over-body">
+                  <tr><td class="text-muted">로딩 중…</td></tr>
                 </tbody>
               </table>
             </div>
+
           </div>
         </div>
+        <!-- /유의사항 영역 -->
       </div>
 
       <!-- 등록 모달 -->
@@ -126,45 +140,56 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
             </div>
-            
-            <div class="modal-body">
 
-  <!-- ✅ 상단 한 줄 헤더(좌: 작년, 우: 올해+드롭박스) -->
-  <div class="row g-2 align-items-center mb-2">
-    <div class="col-12 col-lg-6">
-      <div class="section-header">
-        <h5 class="mb-0">작년 영업매출</h5>
-        <div class="ms-auto"></div>
-      </div>
-    </div>
+            <!-- ▼ position-relative 추가 (오버레이 기준) -->
+            <div class="modal-body position-relative">
+              <!-- ✅ 상단 한 줄 헤더(좌: 작년, 우: 올해+드롭박스) -->
+              <div class="row g-2 align-items-center mb-2">
+                <div class="col-12 col-lg-6">
+                  <div class="section-header">
+                    <h5 class="mb-0">작년 영업매출</h5>
+                    <div class="ms-auto"></div>
+                  </div>
+                </div>
 
-    <div class="col-12 col-lg-6">
-      <div class="section-header">
-        <h5 class="mb-0">올해 영업계획 등록</h5>
-        <div class="ms-auto">
-          <select id="combo-option" class="form-select form-select-sm" style="width:120px;">
-            <option value="">선택</option>
-            <option>5%</option>
-            <option>10%</option>
-            <option>15%</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
+                <div class="col-12 col-lg-6">
+                  <div class="section-header">
+                    <h5 class="mb-0">올해 영업계획 등록</h5>
+                    <div class="ms-auto">
+                      <select id="combo-option" class="form-select form-select-sm" style="width:120px;">
+                        <option value="">선택</option>
+                        <option>5%</option>
+                        <option>10%</option>
+                        <option>15%</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-  <!-- ✅ 테이블 2개 (헤더 아래에서 시작 라인 일치) -->
-  <div class="row g-3">
-    <div class="col-12 col-lg-6">
-      <div id="lastYearTable"></div>
-    </div>
-    <div class="col-12 col-lg-6">
-      <div id="thisYearTable"></div>
-    </div>
-  </div>
+              <!-- ✅ 테이블 2개 (헤더 아래에서 시작 라인 일치) -->
+              <div class="row g-3">
+                <div class="col-12 col-lg-6">
+                  <div id="lastYearTable"></div>
+                </div>
+                <div class="col-12 col-lg-6">
+                  <div id="thisYearTable"></div>
+                </div>
+              </div>
 
-</div>
-ㄴ
+              <!-- 등록 진행중 오버레이 -->
+              <div id="save-loading" class="loading-overlay d-none">
+                <div class="text-center">
+                  <div class="spinner-border" role="status" aria-hidden="true"></div>
+                  <div class="mt-2 fw-semibold">로딩 중…</div>
+                </div>
+              </div>
+            </div><!-- /modal-body -->
+
+          </div><!-- /modal-content -->
+        </div><!-- /modal-dialog -->
+      </div><!-- /insertSalesModal -->
+
       <!-- 수정 모달 -->
       <div class="modal fade" id="modifySalesModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -177,9 +202,21 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
             </div>
-            <div class="modal-body">
+
+            <!-- ▼▼▼ position-relative + 오버레이 추가 ▼▼▼ -->
+            <div class="modal-body position-relative">
               <div id="editYearTable"></div>
+
+              <!-- 수정 진행중 오버레이 -->
+              <div id="update-loading" class="loading-overlay d-none">
+                <div class="text-center">
+                  <div class="spinner-border" role="status" aria-hidden="true"></div>
+                  <div class="mt-2 fw-semibold">로딩 중…</div>
+                </div>
+              </div>
             </div>
+            <!-- ▲▲▲ 여기까지 추가 ▲▲▲ -->
+
           </div>
         </div>
       </div>
@@ -188,9 +225,8 @@
   </main>
 </div>
 
-<!-- Tabulator JS -->
+<!-- 외부 스크립트 include만 유지 -->
 <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
-<!-- 기존 JS 파일 -->
 <script th:src="@{/sales2/js/salesList.js}"></script>
 </body>
 </html>

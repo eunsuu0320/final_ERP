@@ -83,20 +83,20 @@ public class Partner {
 	@Column(name = "COMPANY_CODE")
 	private String companyCode; // 회사코드
 
-	//담당자 사원 연관 (사원 테이블의 PK가 EMP_CODE라고 가정)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MANAGER", referencedColumnName = "EMP_CODE", insertable = false, updatable = false)
-    private com.yedam.hr.domain.Employee managerEmp;
+	// 담당자 사원 연관 (사원 테이블의 PK가 EMP_CODE라고 가정)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "MANAGER", referencedColumnName = "EMP_CODE", insertable = false, updatable = false)
+	private com.yedam.hr.domain.Employee managerEmp;
 
-    // 거래처→주문(역방향)
-    @OneToMany(mappedBy = "partner")
-    private List<Orders> orders = new ArrayList<>();
+	// 거래처→주문(역방향)
+	@OneToMany(mappedBy = "partner")
+	private List<Orders> orders = new ArrayList<>();
 
-    // 거래처→수금(역방향) : 아래 Collection 엔티티에 partner 연관 추가해야 활성화됨
-    @OneToMany(mappedBy = "partner")
-    private List<CollectionEntity> collections = new ArrayList<>();
-	
-	
+	// 거래처→수금(역방향) : 아래 Collection 엔티티에 partner 연관 추가해야 활성화됨
+	@OneToMany(mappedBy = "partner")
+	private List<CollectionEntity> collections = new ArrayList<>();
+
+
 	@PrePersist
 	protected void onCreate() {
 		this.createDate = new Date();

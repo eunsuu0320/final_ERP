@@ -27,52 +27,31 @@
 				<div class="searchTool d-flex align-items-center mb-3">
 					<div class="d-flex">
 
-						<div class="me-5">
-							<label for="partnerNameSearch" class="me-3">거래처명</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="hidden" id="partnerCode" name="partnerCode">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="partnerName">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openModal('partner', function(selected) {
-					                    document.getElementById('partnerName').value=selected.partnerName;
-									document.getElementById('partnerCode').value=selected.partnerCode;})">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
+
+
+						<div class="d-flex align-items-end">
+							<div class="me-5 flex-fill">
+								<label for="priceGroupCodeSearch" class="me-3">단가그룹코드</label> <input
+									type="text" class="form-control form-control-sm"
+									placeholder="검색어 입력" id="priceGroupCodeSearch">
+
+							</div>
+
+
+
+							<div class="me-5 flex-fill">
+								<label for="priceGroupNameSearch" class="me-3">단가그룹명</label> <input
+									type="text" class="form-control form-control-sm"
+									placeholder="검색어 입력" id="priceGroupNameSearch">
+							</div>
+
+							<div class="me-5 flex-fill">
+								<label for="validDateSearch" class="me-3">기준일자</label> <input
+									type="date" class="form-control form-control-sm"
+									id="validDateSearch">
 							</div>
 						</div>
 
-
-						<div class="me-5">
-							<label for="productNameSearch" class="me-3">품목명</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="productNameSearch">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</div>
-
-
-						<div class="me-5">
-							<label for="priceGroupSearch" class="me-3">단가그룹</label>
-							<div class="d-flex align-items-center">
-								<div class="input-group input-group-sm">
-									<input type="text" class="form-control w-auto"
-										placeholder="검색어 입력" id="priceGroupSearch">
-									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
-										<i class="bi bi-search"></i>
-									</button>
-								</div>
-							</div>
-						</div>
 
 					</div>
 					<div class="d-flex flex-column align-items-start ms-3">
@@ -102,20 +81,37 @@
 
 					<div class="d-flex align-items-center">
 						<button class="btn btn-primary me-2"
-							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
+							onclick="showDetailModal('regist')">단가그룹등록</button>
 					</div>
 				</div>
 
 				<div class="mb-2">
+
+					<!-- 🔹 전체 선택 체크박스 추가 -->
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> 
 					<label th:each="col : ${columns}" class="me-2"> <input
 						type="checkbox" id="colCheckbox" class="colCheckbox"
 						th:value="${col}" th:checked="false" /> <span th:text="${col}"></span>
 					</label>
 				</div>
 
+				<div id="priceTableContainer"
+					style="position: relative; min-height: 420px;">
 
+					<!-- 회색 불투명 로딩 오버레이 -->
+					<div id="loading-overlay"
+						style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #ffffff; z-index: 10; display: flex; align-items: center; justify-content: center; flex-direction: column; font-family: 'Noto Sans KR', sans-serif; color: #333;">
+						<div class="spinner-border text-primary" role="status"
+							style="width: 3rem; height: 3rem;"></div>
+						<p class="mt-3 fw-bold">데이터를 불러오는 중...</p>
+					</div>
+
+					<!-- Tabulator가 붙는 실제 테이블 영역 -->
+					<div id="productTable"
+						style="min-height: 400px; border: 1px solid #dee2e6;"></div>
+				</div>
 
 
 
@@ -176,23 +172,43 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">할인율*</label>
 										<div class="col-sm-9">
-											<input type="number" class="form-control" name="discountPct"
-												required>%
+											<div class="input-group" style="max-width: 200px;">
+												<!-- ✅ 인풋 크기 조정 -->
+												<input type="number" class="form-control text-end"
+													name="discountPct" required> <span
+													class="input-group-text">%</span>
+												<!-- ✅ % 표시 -->
+											</div>
 										</div>
 									</div>
+
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">단가유형*</label>
 										<div class="col-sm-9 d-flex align-items-center">
 											<div class="form-check me-3">
 												<input class="form-check-input" type="radio"
-													name="priceType1" id="priceType1" value="거래처단가"> <label
+													name="priceType" id="priceType1" value="거래처단가"> <label
 													class="form-check-label" for="priceType1">거래처단가</label>
 											</div>
 											<div class="form-check">
 												<input class="form-check-input" type="radio"
-													name="priceType2" id="priceType2" value="품목단가"> <label
+													name="priceType" id="priceType2" value="품목단가"> <label
 													class="form-check-label" for="priceType2">품목단가</label>
 											</div>
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label for="startPriceDate" class="col-sm-3 col-form-label">단가적용시작일</label>
+										<div class="col-sm-9">
+											<input type="date" class="form-control" id="startPriceDate"
+												name="startDate" style="max-width: 300px;">
+										</div>
+									</div>
+									<div class="row mb-3">
+										<label for="endPriceDate" class="col-sm-3 col-form-label">단가적용종료일</label>
+										<div class="col-sm-9">
+											<input type="date" class="form-control" id="endPriceDate"
+												name="endDate" style="max-width: 300px;">
 										</div>
 									</div>
 
@@ -243,20 +259,7 @@
 										</div>
 									</div>
 
-									<!-- 등급 검색 (col-md-4) -->
-									<div class="col-md-4 mb-3">
-										<label for="partnerLevelSearch" class="form-label me-3">등급</label>
-										<div class="d-flex align-items-center">
-											<div class="input-group input-group-sm">
-												<input type="text" class="form-control modalSearchCondition"
-													placeholder="검색어 입력" id="partnerLevelNameDisplay">
-												<button class="btn btn-outline-secondary modalSearchBtn"
-													type="button">
-													<i class="bi bi-search"></i>
-												</button>
-											</div>
-										</div>
-									</div>
+
 
 									<!-- 검색초기화 버튼 (col-md-4, 수직 정렬을 위해 d-flex align-items-end 적용) -->
 									<div class="col-md-4 mb-3 d-flex align-items-end">

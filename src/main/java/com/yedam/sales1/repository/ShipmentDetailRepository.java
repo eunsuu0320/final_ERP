@@ -4,22 +4,47 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.yedam.sales1.domain.ShipmentDetail;
 
 @Repository
-public interface ShipmentDetailRepository extends
-		JpaRepository<ShipmentDetail, String>{
+public interface ShipmentDetailRepository extends JpaRepository<ShipmentDetail, String> {
 
-	// JpaRepository에 이미 정의되어 있으므로 생략 가능합니다.
-	List<ShipmentDetail> findAll();
+	@Query("SELECT sd  FROM ShipmentDetail sd WHERE sd.companyCode = :companyCode")
+	List<ShipmentDetail> findAll(@Param("companyCode") String companyCode);
 
-	// ⭐ [수정] ShipmentCode의 타입이 String이므로 Long 대신 String을 사용합니다.
-	// 이 메서드는 단일 ShipmentCode에 해당하는 모든 상세 항목을 가져와야 하므로 List를 반환해야 합니다.
 	List<ShipmentDetail> findByShipmentCode(String shipmentCode);
 
 	@Query("SELECT MAX(sd.shipmentDetailCode) FROM ShipmentDetail sd")
 	String findMaxShipmentDetailCode();
+
+	@Query("""
+			    SELECT SUM(od.price * sd.nowQuantity)
+			    FROM ShipmentDetail sd
+			    JOIN OrderDetail od ON sd.orderDetailCode = od.orderDetailCode
+			    WHERE sd.shipmentCode = :shipmentCode
+			""")
+	Double calcShipmentAmount(@Param("shipmentCode") String shipmentCode);
+
+
+
+	@Query(value = """
+			SELECT SUM(NVL(od.price, 0) * NVL(sd.now_quantity, 0))
+			  FROM shipment_detail sd
+			  JOIN order_detail od ON sd.order_detail_code = od.order_detail_code
+			 WHERE sd.shipment_code = :shipmentCode
+			""", nativeQuery = true)
+	Double calcShipmentAmountByShipment(@Param("shipmentCode") String shipmentCode);
+	
+	
+	@Query("""
+		    SELECT DISTINCT p.productName
+		    FROM ShipmentDetail d
+		    JOIN Product p ON d.productCode = p.productCode
+		    WHERE d.shipmentCode = :shipmentCode
+		    """)
+		List<String> findProductNamesByShipmentCode(@Param("shipmentCode") String shipmentCode);
 
 }

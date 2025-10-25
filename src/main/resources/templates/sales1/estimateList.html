@@ -33,13 +33,13 @@
 
 							<div>
 								<div class="input-group input-group-sm">
-									<input type="hidden" id="partnerCodeSearch" name="partnerCode">
 									<input type="text" class="form-control" placeholder="검색어 입력"
-										id="partnerNameSearch" style="width: 150px;">
+										id="partnerNameSearch" name="partnerNameSearch"
+										style="width: 150px;">
 									<button class="btn btn-outline-secondary" type="button"
-										onclick="openModal('partner', function(selected) {
+										onclick="openModal('salesPartner', function(selected) {
                     document.getElementById('partnerNameSearch').value = selected.partnerName;
-                    document.getElementById('partnerCodeSearch').value = selected.partnerCode;
+
                 })">
 										<i class="bi bi-search"></i>
 									</button>
@@ -53,9 +53,12 @@
 							<div>
 								<div class="input-group input-group-sm">
 									<input type="text" class="form-control" placeholder="검색어 입력"
-										id="managerSearch" style="width: 150px;">
+										id="managerSearch" name="managerSearch" style="width: 150px;">
 									<button class="btn btn-outline-secondary" type="button"
-										onclick="openSalesModal()">
+										onclick="openModal('salesEmployee', function(selected) {
+						                    document.getElementById('managerSearch').value = selected.name;
+
+					                })">
 										<i class="bi bi-search"></i>
 									</button>
 								</div>
@@ -63,14 +66,15 @@
 						</div>
 
 						<div class="me-5">
-							<label for="startDate" class="form-label fw-bold">유효기간</label>
+							<label for="quoteDateSearch" class="form-label fw-bold">유효기간</label>
 
 							<div class="d-flex align-items-center">
 								<input type="date" class="form-control form-control-sm"
-									id="startDate" name="startDate" style="width: 130px;">
-								<span class="mx-2">~</span> <input type="date"
-									class="form-control form-control-sm" id="endDate"
-									name="endDate" style="width: 130px;">
+									id="quoteDateSearch1" name="quoteDateSearch"
+									style="width: 130px;"> <span class="mx-2">~</span> <input
+									type="date" class="form-control form-control-sm"
+									id="quoteDateSearch2" name="quoteDateSearch"
+									style="width: 130px;">
 							</div>
 						</div>
 
@@ -106,18 +110,21 @@
 					<div class="d-flex align-items-center">
 						<button class="btn btn-primary me-2"
 							onclick="showDetailModal('regist')">신규</button>
-						<button class="btn btn-danger me-2" id="deleteSelected">삭제</button>
-						<button class="btn btn-secondary me-2" onclick="getHirtory()">이력조회</button>
-						<button class="btn btn-secondary me-2" onclick="getExcel()">Excel</button>
+
 					</div>
 				</div>
 
 				<div class="mb-2">
-					<label th:each="col : ${columns}" class="me-2"> <input
-						type="checkbox" class="colCheckbox" th:value="${col}"
+					<!-- 🔹 전체 선택 체크박스 추가 -->
+					<label class="me-2"> <input type="checkbox"
+						id="selectAllColumns" /> <span>전체</span>
+					</label> <label th:each="col : ${columns}" th:if="${col != '견적서고유코드'}"
+						class="me-2"> <input type="checkbox" class="colCheckbox"
+						th:value="${col}"
 						th:checked="${col == '견적서코드' or col == '등록일자' or col == '거래처명' or col == '품목명' or col == '유효기간' or col == '견적금액합계' or col == '담당자' or col == '진행상태'}" />
 						<span th:text="${col}"></span>
 					</label>
+
 				</div>
 
 
@@ -147,7 +154,7 @@
 										<h6 class="mt-4 mb-2 fw-bold">1. 기본정보</h6>
 
 										<div class="col-6 d-flex align-items-center">
-											<label for="partnerNameModal"
+											<label for="partnerName"
 												class="col-form-label fw-bold text-nowrap"
 												style="width: 120px;">거래처</label>
 
@@ -156,11 +163,16 @@
 												<input type="hidden" id="partnerCodeModal"
 													name="partnerCode"> <input type="text"
 													class="form-control" placeholder="검색어 입력"
-													id="partnerNameModal">
-												<button class="btn btn-outline-secondary" type="button"
-													onclick="openModal('partner', function(selected) {
-                document.getElementById('partnerNameModal').value = selected.partnerName;
+													name="partnerName" id="partnerName">
+												<button class="btn btn-outline-secondary"
+													id="partnerModalBtn" type="button"
+													onclick="openModal('salesPartner', function(selected) {
+                document.getElementById('partnerName').value = selected.partnerName;
                 document.getElementById('partnerCodeModal').value = selected.partnerCode;
+                document.getElementById('managerName').value = selected.name;
+                document.getElementById('manager').value = selected.manager;                
+                document.getElementById('zipcode').value = selected.postCode;
+                document.getElementById('address').value = selected.address;
             })">
 													<i class="bi bi-search"></i>
 												</button>
@@ -174,18 +186,47 @@
 
 											<div class="input-group input-group-sm"
 												style="max-width: 400px;">
-												<input type="hidden" id="empCode" name="empCode"> <input
-													type="text" class="form-control" id="manager"
-													name="manager">
+												<input type="hidden" id="manager" name="manager"> <input
+													type="text" class="form-control" id="managerName"
+													name="managerName">
 												<button class="btn btn-outline-secondary" type="button"
 													onclick="openModal('salesEmployee', function(selected) {
-                document.getElementById('manager').value = selected.name;
-				document.getElementById('empCode').value = selected.empCode;
+                document.getElementById('managerName').value = selected.name;
+				document.getElementById('manager').value = selected.empCode;
 
 
             })">
 													<i class="bi bi-search"></i>
 												</button>
+											</div>
+										</div>
+
+
+
+										<div class="col-12 d-flex flex-column">
+
+											<div class="d-flex align-items-center mb-2">
+												<label for="zipcode"
+													class="col-form-label fw-bold text-nowrap"
+													style="width: 120px;">납품장소</label>
+
+												<div class="input-group input-group-sm"
+													style="max-width: 400px;">
+													<input type="text" class="form-control" name="postCode"
+														id="zipcode" placeholder="우편번호" readonly>
+													<button class="btn btn-outline-secondary" type="button"
+														onclick="execDaumPostcode()">
+														<i class="bi bi-search"></i>
+													</button>
+												</div>
+											</div>
+
+											<div class="d-flex align-items-center">
+												<div style="width: 120px;"></div>
+
+												<input type="text" class="form-control form-control-sm"
+													name="address" id="address" placeholder="상세 주소"
+													style="max-width: 962px;">
 											</div>
 										</div>
 
@@ -210,41 +251,14 @@
 												style="max-width: 400px;"></input>
 										</div>
 
-										<div class="col-12 d-flex flex-column">
-
-											<div class="d-flex align-items-center mb-2">
-												<label for="zipcode"
-													class="col-form-label fw-bold text-nowrap"
-													style="width: 120px;">납품장소</label>
-
-												<div class="input-group input-group-sm"
-													style="max-width: 400px;">
-													<input type="text" class="form-control" name="postCode"
-														id="zipcode" placeholder="우편번호" readonly>
-													<button class="btn btn-outline-secondary" type="button"
-														onclick="execDaumPostcode()">
-														<i class="bi bi-search"></i>
-													</button>
-												</div>
-											</div>
-
-											<div class="d-flex align-items-center">
-												<div style="width: 135px;"></div>
-
-												<input type="text" class="form-control form-control-sm"
-													name="address" id="address" placeholder="상세 주소"
-													style="flex-grow: 1;">
-											</div>
-										</div>
-
 
 										<div class="col-12 d-flex align-items-start">
 											<label for="quoteRemarks"
 												class="col-form-label fw-bold text-nowrap pt-1"
-												style="width: 135px;">비고</label>
+												style="width: 120px;">비고</label>
 											<textarea class="form-control form-control-sm"
 												id="quoteRemarks" name="remarks" rows="2"
-												style="max-width: 1000px;"></textarea>
+												style="max-width: 962px;"></textarea>
 										</div>
 									</div>
 								</form>
@@ -283,21 +297,21 @@
 													<div class="input-group input-group-sm">
 														<!-- 읽기 전용 품목 코드 Input -->
 														<input type="text" class="form-control item-input"
-															name="itemCode" id="itemCode" readonly>
+															name="itemCode" id="productCode" readonly>
 
 														<!-- 검색 버튼을 Input Group에 붙임 -->
 														<button class="btn btn-outline-secondary" type="button"
 															onclick="openModal('productCode', function(selected) {
                 // ID를 사용하여 값을 설정합니다.
-                document.getElementById('itemCode').value = selected.productCode;
-                document.getElementById('itemName').value = selected.productName; 
+                document.getElementById('productCode').value = selected.productCode;
+                document.getElementById('productName').value = selected.productName; 
                 
                 // 사용자가 요청한 itemSpec 로직을 적용했습니다.
     			const itemSpecValue = [selected.productSize, selected.unit]
      				   .filter(val => val && String(val).trim() !== '') // 값이 존재하고 빈 문자열이 아닌 경우만 필터링
        					 .join(' ');
-				document.getElementById('itemSpec').value=itemSpecValue;
-				document.getElementById('price').value=selected.price.toLocaleString('ko-KR');
+				document.getElementById('productSpec').value=itemSpecValue;
+				document.getElementById('price').value=selected.outPrice.toLocaleString('ko-KR');
             })">
 															<!-- 부트스트랩 아이콘 (bi bi-search) -->
 															<i class="bi bi-search"></i>
@@ -306,34 +320,28 @@
 												</td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemName" id="itemName"
-													style="background-color: lightgray;" readonly></td>
+													name="productName" id="productName" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
-													name="itemSpec" id="itemSpec"
-													style="background-color: lightgray;" readonly></td>
+													name="productSpec" id="productSpec" disabled></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="price" id="price" value="0"
-													oninput="calculateRow(this)"></td>
+													name="price" id="price" oninput="calculateRow(this)"></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="quantity" value="0" oninput="calculateRow(this)"></td>
+													name="quantity" id="quantity" oninput="calculateRow(this)"></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="supplyAmount" value="0"
-													style="background-color: lightgray;" readonly></td>
+													name="supplyAmount" disabled></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="taxAmount" value="0"
-													style="background-color: lightgray;" readonly></td>
+													name="taxAmount" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="finalAmount" value="0"
-													style="background-color: lightgray;" readonly></td>
+													name="finalAmount" disabled></td>
 
 												<td><input type="text"
 													class="form-control form-control-sm item-input"
@@ -344,8 +352,8 @@
 										<tfoot id="itemDetailFooter">
 											<tr class="table-warning fw-bold">
 												<td colspan="4" class="text-end">합계</td>
-												<td class="text-end" id="totalQuantity">0 개</td>
 												<td class="text-end"></td>
+												<td class="text-end" id="totalQuantity">0 개</td>
 												<td class="text-end" id="totalSupplyAmount">0 원</td>
 												<td class="text-end" id="totalTaxAmount">0 원</td>
 												<td></td>
@@ -371,7 +379,7 @@
 			</div>
 		</main>
 	</div>
-	<div id="modalOverlay" class="modal-overlay" style="display: none;"></div>
+
 
 	<div id="postcodeLayer" class="postcode-layer">
 		<div class="close-btn text-end p-2">

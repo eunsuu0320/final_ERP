@@ -24,10 +24,11 @@ import com.yedam.common.domain.SystemUser;
 import com.yedam.common.domain.payment.PayRequest;
 import com.yedam.common.service.ContractPdfService;
 import com.yedam.common.service.KakaoPayService;
-import com.yedam.common.service.NaverPayService;
 import com.yedam.common.service.PaymentService;
 import com.yedam.common.service.RoleService;
+import com.yedam.common.service.TossPayService;
 import com.yedam.common.service.UserService;
+import com.yedam.common.repository.InitCommonCodeRepository;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -37,328 +38,391 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/pay")
 public class PayController {
 
-	@Autowired KakaoPayService kakaoPayService;
-	@Autowired NaverPayService naverPayService;
-	@Autowired PaymentService paymentService;
-	@Autowired UserService userService;
-	@Autowired ContractPdfService contractPdfService;
-	@Autowired RoleService roleService;
+    @Autowired KakaoPayService kakaoPayService;
+    @Autowired PaymentService paymentService;
+    @Autowired UserService userService;
+    @Autowired ContractPdfService contractPdfService;
+    @Autowired RoleService roleService;
+    @Autowired TossPayService tossPayService;
+    @Autowired InitCommonCodeRepository initCommonCodeRepository;
 
-	// 결제 준비 때 저장했다가 성공 콜백에서 사용 (키: orderId)
-	private final Map<String, PayRequestWrapper> payRequestStore = new ConcurrentHashMap<>();
+    // 결제 준비 때 저장했다가 성공 콜백에서 사용 (키: orderId)
+    private final Map<String, PayRequestWrapper> payRequestStore = new ConcurrentHashMap<>();
 
-	// 계약서 PDF 치환변수 캐시(다운로드 시 사용) (키: subscriptionCode)
-	private final Map<String, Map<String, String>> contractVarsCache = new ConcurrentHashMap<>();
+    // 계약서 PDF 치환변수 캐시(다운로드 시 사용) (키: subscriptionCode)
+    private final Map<String, Map<String, String>> contractVarsCache = new ConcurrentHashMap<>();
 
-	// 팝업에서 부모로 postMessage 후 즉시 닫는 HTML
-	private String popupAutoCloseHtml(String type, String status, String subscriptionCode, String companyCode,
-			String masterId) {
-		String payload = String.format("{type:'%s',status:'%s',subscriptionCode:'%s',companyCode:'%s',masterId:'%s'}",
-				type, status, subscriptionCode == null ? "" : subscriptionCode, companyCode == null ? "" : companyCode,
-				masterId == null ? "" : masterId);
-		return "<!doctype html><meta charset='utf-8'><title>closing…</title>"
-				+ "<script>(function(){try{if(window.opener){window.opener.postMessage(" + payload
-				+ ",'*');}}catch(e){} window.close();})();</script>";
-	}
+    // 팝업에서 부모로 postMessage 후 즉시 닫는 HTML (방법 A: buyerName/total/vat 포함)
+    private String popupAutoCloseHtml(
+            String type, String status,
+            String subscriptionCode, String companyCode, String masterId,
+            String buyerName, Long total, Long vat
+    ) {
+        String payload = String.format(
+            "{type:'%s',status:'%s',subscriptionCode:'%s',companyCode:'%s',masterId:'%s',buyerName:'%s',total:%d,vat:%d}",
+            safe(type), safe(status),
+            subscriptionCode == null ? "" : subscriptionCode,
+            companyCode == null ? "" : companyCode,
+            masterId == null ? "" : masterId,
+            buyerName == null ? "" : escapeJs(buyerName),
+            total == null ? 0L : total,
+            vat == null ? 0L : vat
+        );
+        return "<!doctype html><meta charset='utf-8'><title>closing…</title>"
+             + "<script>(function(){try{if(window.opener){window.opener.postMessage("
+             + payload + ",'*');}}catch(e){} window.close();})();</script>";
+    }
 
-	@PostMapping("/ready")
-	@ResponseBody
-	public Object payReady(@RequestBody PayRequestWrapper wrapper, @AuthenticationPrincipal User user) {
-		PayRequest payRequest = wrapper.getPayRequest();
-		String userId = (user != null) ? user.getUsername() : "GUEST";
-		payRequest.setUserId(userId);
+    @PostMapping("/ready")
+    @ResponseBody
+    public Object payReady(@RequestBody PayRequestWrapper wrapper, @AuthenticationPrincipal User user) {
+        PayRequest payRequest = wrapper.getPayRequest();
+        String userId = (user != null) ? user.getUsername() : "GUEST";
+        payRequest.setUserId(userId);
 
-		// orderId 기준으로 결제+회사+유저 보관 (PG 콜백에서 조회)
-		payRequestStore.put(payRequest.getOrderId(), wrapper);
+        // orderId 기준으로 결제+회사+유저 보관 (PG 콜백에서 조회)
+        payRequestStore.put(payRequest.getOrderId(), wrapper);
 
-		if ("KAKAO".equalsIgnoreCase(payRequest.getPayMethod())) {
-			return kakaoPayService.kakaoPayReady(payRequest);
-		} else if ("NAVER".equalsIgnoreCase(payRequest.getPayMethod())) {
-			return naverPayService.naverPayReady(payRequest);
-		} else {
-			throw new IllegalArgumentException("지원하지 않는 결제수단: " + payRequest.getPayMethod());
-		}
-	}
+        if ("KAKAO".equalsIgnoreCase(payRequest.getPayMethod())) {
+            return kakaoPayService.kakaoPayReady(payRequest);
+        } else if ("NAVER".equalsIgnoreCase(payRequest.getPayMethod())) {
+            throw new IllegalArgumentException("지원하지 않는 결제수단: " + payRequest.getPayMethod());
+        } else if ("TOSS".equalsIgnoreCase(payRequest.getPayMethod())) {
+            var params = tossPayService.buildCheckoutParams(
+                payRequest.getOrderId(),
+                payRequest.getItemName(),
+                payRequest.getAmount()
+            );
+            // 팝업용 서버 엔드포인트로 리디렉트
+            String redirectUrl = "/pay/toss/checkout?orderId=" + payRequest.getOrderId();
+            return Map.of("redirectUrl", redirectUrl);
+        } else {
+            throw new IllegalArgumentException("지원하지 않는 결제수단: " + payRequest.getPayMethod());
+        }
+    }
 
-	// ---------- Kakao ----------
-	@GetMapping(value = "/kakao/success", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String kakaoPaySuccess(@RequestParam("pg_token") String pgToken, @RequestParam("orderId") String orderId,
-			@AuthenticationPrincipal User user) {
-		String userId = (user != null) ? user.getUsername() : "GUEST";
+    // ---------- Kakao ----------
+    @GetMapping(value = "/kakao/success", produces = "text/html; charset=UTF-8")
+    @ResponseBody
+    public String kakaoPaySuccess(@RequestParam("pg_token") String pgToken,
+                                  @RequestParam("orderId") String orderId,
+                                  @AuthenticationPrincipal User user) {
+        String userId = (user != null) ? user.getUsername() : "GUEST";
 
-		// 1) 승인
-		kakaoPayService.kakaoPayApprove(orderId, pgToken, userId);
+        // 1) 승인
+        kakaoPayService.kakaoPayApprove(orderId, pgToken, userId);
 
-		// 2) 회사/구독/계정 저장 후 정보 준비
-		String companyCode = null;
-		String masterId = null;
-		String subscriptionCode = null;
+        // 2) 회사/구독/계정 저장 후 정보 준비
+        String companyCode = null;
+        String masterId = null;
+        String subscriptionCode = null;
+        boolean isNewCompany = false;
 
-		boolean isNewCompany = false;
+        // 방법 A용: 화면에 뿌릴 값
+        String buyerName = null;
+        Long totalL = null;
+        Long vatL = null;
 
-		PayRequestWrapper wrapper = payRequestStore.remove(orderId);
-		if (wrapper != null) {
-			// ⬇︎ 변경: saveCompanyInfo(...) → ensureCompanyForSubscription(...)
-			var _ens = paymentService.ensureCompanyForSubscription(wrapper.getCompanyInfo());
-			Company savedCompany = _ens.getCompany();
-			isNewCompany = _ens.isNew(); // ★ 값 대입
-			if (savedCompany != null)
-				companyCode = savedCompany.getCompanyCode();
+        PayRequestWrapper wrapper = payRequestStore.remove(orderId);
+        if (wrapper != null) {
+            var _ens = paymentService.ensureCompanyForSubscription(wrapper.getCompanyInfo());
+            Company savedCompany = _ens.getCompany();
+            isNewCompany = _ens.isNew();
+            if (savedCompany != null) companyCode = savedCompany.getCompanyCode();
 
-			// 이하 동일
-			Subscription sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
-			if (sub != null)
-				subscriptionCode = sub.getSubscriptionCode();
+            // 신규 회사면 기본 공통코드 초기화
+            if (isNewCompany && companyCode != null) {
+                try { initCommonCodeRepository.initDefaultsFromC001(companyCode); } catch (Exception ignore) {}
+            }
 
-			try {
-				if (isNewCompany) { // ★ 이제 정상 동작
-					SystemUser su = wrapper.getSystemUser();
-					if (su != null && su.getUserId() != null && su.getUserPw() != null) {
-						String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
-						String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank()) ? null
-								: su.getEmpCode();
+            Subscription sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
+            if (sub != null) subscriptionCode = sub.getSubscriptionCode();
 
-						userService.createMasterUser(companyCode, su.getUserId(), su.getUserPw(), roleCode, empCode,
-								su.getRemk());
-						masterId = su.getUserId();
+            try {
+                if (isNewCompany) {
+                    SystemUser su = wrapper.getSystemUser();
+                    if (su != null && su.getUserId() != null && su.getUserPw() != null) {
+                        String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
+                        String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank()) ? null : su.getEmpCode();
 
-						userService.sendWelcomeMail(wrapper.getContactEmail(), companyCode, su.getUserId(),
-								su.getUserPw());
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+                        userService.createMasterUser(companyCode, su.getUserId(), su.getUserPw(), roleCode, empCode, su.getRemk());
+                        masterId = su.getUserId();
 
-			// PDF 변수 캐시 (키: subscriptionCode)
-			Map<String, String> vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
-			if (subscriptionCode != null) {
-				contractVarsCache.put(subscriptionCode, vars);
-			}
-		}
+                        userService.sendWelcomeMail(wrapper.getContactEmail(), companyCode, su.getUserId(), su.getUserPw());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-		// 3) 부모로 알림(회사코드/마스터ID/구독코드 포함) + 팝업 닫기
-		return popupAutoCloseHtml("KAKAOPAY_RESULT", "success", subscriptionCode, companyCode, masterId);
-	}
+            // 방법 A: 프론트로 넘길 요약값 세팅
+            PayRequest pr = wrapper.getPayRequest();
+            if (pr != null) {
+                buyerName = pr.getBuyerName();
+                totalL = (long) pr.getAmount();
+                vatL = Math.round(totalL * 0.1);
+            }
 
-	@GetMapping(value = "/kakao/cancel", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String kakaoCancel() {
-		return popupAutoCloseHtml("KAKAOPAY_RESULT", "cancel", null, null, null);
-	}
+            // PDF 변수 캐시
+            Map<String, String> vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
+            if (subscriptionCode != null) {
+                contractVarsCache.put(subscriptionCode, vars);
+            }
+        }
 
-	@GetMapping(value = "/kakao/fail", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String kakaoFail() {
-		return popupAutoCloseHtml("KAKAOPAY_RESULT", "fail", null, null, null);
-	}
+        // 3) 부모로 알림(회사코드/마스터ID/구독코드 + buyerName/total/vat 포함) + 팝업 닫기
+        return popupAutoCloseHtml("KAKAOPAY_RESULT", "success",
+                subscriptionCode, companyCode, masterId,
+                buyerName, totalL, vatL);
+    }
 
-	// ---------- Naver ----------
-	@GetMapping(value = "/naver/success", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String naverPaySuccess(@RequestParam("orderId") String orderId) {
-		// 1) 승인
-		naverPayService.naverPayApprove(orderId);
+    @GetMapping(value = "/kakao/cancel", produces = "text/html; charset=UTF-8")
+    @ResponseBody
+    public String kakaoCancel() {
+        return popupAutoCloseHtml("KAKAOPAY_RESULT", "cancel", null, null, null, null, null, null);
+    }
 
-		// 2) 회사/구독/계정 저장 후 정보 준비
-		String companyCode = null;
-		String masterId = null;
-		String subscriptionCode = null;
+    @GetMapping(value = "/kakao/fail", produces = "text/html; charset=UTF-8")
+    @ResponseBody
+    public String kakaoFail() {
+        return popupAutoCloseHtml("KAKAOPAY_RESULT", "fail", null, null, null, null, null, null);
+    }
 
-		boolean isNewCompany = false;
+    // ---------- Toss: 결제창 (팝업에서 열 HTML 반환) ----------
+    @GetMapping(value="/toss/checkout", produces="text/html; charset=UTF-8")
+    @ResponseBody
+    public String tossCheckout(@RequestParam("orderId") String orderId) {
+        var wrapper = payRequestStore.get(orderId);
+        if (wrapper == null) {
+            return popupAutoCloseHtml("TOSS_RESULT", "fail", null, null, null, null, null, null);
+        }
+        var params = tossPayService.buildCheckoutParams(
+                wrapper.getPayRequest().getOrderId(),
+                wrapper.getPayRequest().getItemName(),
+                wrapper.getPayRequest().getAmount()
+        );
+        String html = """
+        <!doctype html>
+        <meta charset="utf-8"/>
+        <title>TossPay</title>
+        <script src="https://js.tosspayments.com/v1"></script>
+        <script>
+          (async function(){
+            const tossPayments = TossPayments('%s');
+            try{
+              await tossPayments.requestPayment('카드', {
+                amount:%s,
+                orderId:'%s',
+                orderName:'%s',
+                successUrl:'%s',
+                failUrl:'%s'
+              });
+            }catch(e){
+              alert('결제창 호출 실패: ' + (e && e.message ? e.message : e));
+              window.close();
+            }
+          })();
+        </script>
+        """.formatted(
+          params.get("clientKey"),
+          params.get("amount"),
+          params.get("orderId"),
+          escapeJs(params.get("orderName")),
+          params.get("successUrl"),
+          params.get("failUrl")
+        );
+        return html;
+    }
 
-		PayRequestWrapper wrapper = payRequestStore.remove(orderId);
-		if (wrapper != null) {
-			// ⬇︎ 변경: saveCompanyInfo(...) → ensureCompanyForSubscription(...)
-			var _ens = paymentService.ensureCompanyForSubscription(wrapper.getCompanyInfo());
-			Company savedCompany = _ens.getCompany();
-			isNewCompany = _ens.isNew(); // ★ 값 대입
-			if (savedCompany != null)
-				companyCode = savedCompany.getCompanyCode();
+    // ---------- Toss: 성공 콜백 ----------
+    @GetMapping(value="/toss/success", produces="text/html; charset=UTF-8")
+    @ResponseBody
+    public String tossSuccess(@RequestParam("orderId") String orderId,
+                              @RequestParam("paymentKey") String paymentKey,
+                              @RequestParam("amount") Long amount) {
 
-			Subscription sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
-			if (sub != null)
-				subscriptionCode = sub.getSubscriptionCode();
+        try {
+            // 1) 승인(confirm)
+            tossPayService.confirm(paymentKey, orderId, amount);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return popupAutoCloseHtml("TOSS_RESULT", "fail", null, null, null, null, null, null);
+        }
 
-			try {
-				if (isNewCompany) {
-					SystemUser su = wrapper.getSystemUser();
-					if (su != null && su.getUserId() != null && su.getUserPw() != null) {
-						String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
-						String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank()) ? null
-								: su.getEmpCode();
+        String companyCode = null;
+        String masterId = null;
+        String subscriptionCode = null;
+        boolean isNewCompany = false;
 
-						userService.createMasterUser(companyCode, su.getUserId(), su.getUserPw(), roleCode, empCode,
-								su.getRemk());
-						masterId = su.getUserId();
+        // 방법 A용
+        String buyerName = null;
+        Long totalL = null;
+        Long vatL = null;
 
-						userService.sendWelcomeMail(wrapper.getContactEmail(), companyCode, su.getUserId(),
-								su.getUserPw());
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+        PayRequestWrapper wrapper = payRequestStore.remove(orderId);
+        Company savedCompany = null;
+        if (wrapper != null) {
+            var _ens = paymentService.ensureCompanyForSubscription(wrapper.getCompanyInfo());
+            savedCompany = _ens.getCompany();
+            isNewCompany = _ens.isNew();
+            if (savedCompany != null) companyCode = savedCompany.getCompanyCode();
 
-			Map<String, String> vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
-			if (subscriptionCode != null) {
-				contractVarsCache.put(subscriptionCode, vars);
-			}
-		}
+            if (isNewCompany && companyCode != null) {
+                try { initCommonCodeRepository.initDefaultsFromC001(companyCode); } catch (Exception ignore) {}
+            }
 
-		return popupAutoCloseHtml("NAVERPAY_RESULT", "success", subscriptionCode, companyCode, masterId);
-	}
+            var sub = paymentService.saveSubscriptionInfo(wrapper.getPayRequest(), companyCode);
+            if (sub != null) subscriptionCode = sub.getSubscriptionCode();
 
-	@GetMapping(value = "/naver/cancel", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String naverCancel() {
-		return popupAutoCloseHtml("NAVERPAY_RESULT", "cancel", null, null, null);
-	}
+            try {
+                if (isNewCompany) {
+                    var su = wrapper.getSystemUser();
+                    if (su != null && su.getUserId() != null && su.getUserPw() != null) {
+                        String roleCode = roleService.ensureDefaultsAndGetMasterRoleCode(companyCode, "MASTER");
+                        String empCode = (su.getEmpCode() == null || su.getEmpCode().isBlank()) ? null : su.getEmpCode();
 
-	@GetMapping(value = "/naver/fail", produces = "text/html; charset=UTF-8")
-	@ResponseBody
-	public String naverFail() {
-		return popupAutoCloseHtml("NAVERPAY_RESULT", "fail", null, null, null);
-	}
+                        userService.createMasterUser(companyCode, su.getUserId(), su.getUserPw(), roleCode, empCode, su.getRemk());
+                        masterId = su.getUserId();
 
-	// ---------- 성공 화면 렌더 (subscriptionCode 표시) ----------
-	@GetMapping("/complete")
-	public String payComplete(@RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
-			@RequestParam(value = "buyerName", required = false) String buyerName,
-			@RequestParam(value = "total", required = false) Long total,
-			@RequestParam(value = "vat", required = false) Long vat,
-			@RequestParam(value = "companyCode", required = false) String companyCode,
-			@RequestParam(value = "masterId", required = false) String masterId, org.springframework.ui.Model model) {
-		SuccessViewInfo info = new SuccessViewInfo(subscriptionCode == null ? "" : subscriptionCode,
-				buyerName == null ? "" : buyerName, new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
-				companyCode == null ? "" : companyCode, masterId == null ? "" : masterId);
-		model.addAttribute("info", info);
-		return "common/success";
-	}
+                        userService.sendWelcomeMail(wrapper.getContactEmail(), companyCode, su.getUserId(), su.getUserPw());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-	// ---------- 계약서 다운로드 (키: subscriptionCode) ----------
-	@GetMapping("/contract/download")
-	public void downloadContract(@RequestParam("subscriptionCode") String subscriptionCode, HttpServletResponse resp)
-			throws Exception {
-		Map<String, String> vars = contractVarsCache.get(subscriptionCode);
-		if (vars == null) {
-			resp.sendError(404, "No contract data for this subscriptionCode");
-			return;
-		}
-		byte[] pdf = contractPdfService.generateBytesFromTemplate("common/contract-pdf.html", vars);
+            // 방법 A: 프론트로 넘길 요약값
+            PayRequest pr = wrapper.getPayRequest();
+            if (pr != null) {
+                buyerName = pr.getBuyerName();
+                totalL = (long) pr.getAmount();
+                vatL = Math.round(totalL * 0.1);
+            }
 
-		String fileName = ("contract_" + vars.getOrDefault("companyCode", "") + "_" + subscriptionCode + ".pdf")
-				.replaceAll("[\\\\/:*?\"<>|\\s]+", "_");
+            Map<String,String> vars = buildContractVars(wrapper, savedCompany, subscriptionCode);
+            if (subscriptionCode != null) contractVarsCache.put(subscriptionCode, vars);
+        }
 
-		resp.setContentType("application/pdf");
-		resp.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-		resp.setContentLength(pdf.length);
-		try (var os = resp.getOutputStream()) {
-			os.write(pdf);
-			os.flush();
-		}
-	}
+        return popupAutoCloseHtml("TOSS_RESULT", "success",
+                subscriptionCode, companyCode, masterId,
+                buyerName, totalL, vatL);
+    }
 
-	// ===== 뷰 DTO =====
-	public static class SuccessViewInfo {
-		private final String subscriptionCode;
-		private final String buyerName;
-		private final AmountInfo amount;
-		private final String companyCode;
-		private final String masterId;
+    // ---------- 성공 화면 렌더 ----------
+    @GetMapping("/complete")
+    public String payComplete(@RequestParam(value = "subscriptionCode", required = false) String subscriptionCode,
+                              @RequestParam(value = "buyerName", required = false) String buyerName,
+                              @RequestParam(value = "total", required = false) Long total,
+                              @RequestParam(value = "vat", required = false) Long vat,
+                              @RequestParam(value = "companyCode", required = false) String companyCode,
+                              @RequestParam(value = "masterId", required = false) String masterId,
+                              org.springframework.ui.Model model) {
+        SuccessViewInfo info = new SuccessViewInfo(
+            subscriptionCode == null ? "" : subscriptionCode,
+            buyerName == null ? "" : buyerName,
+            new AmountInfo(total == null ? 0L : total, vat == null ? 0L : vat),
+            companyCode == null ? "" : companyCode,
+            masterId == null ? "" : masterId
+        );
+        model.addAttribute("info", info);
+        return "common/success";
+    }
 
-		public SuccessViewInfo(String subscriptionCode, String buyerName, AmountInfo amount, String companyCode,
-				String masterId) {
-			this.subscriptionCode = subscriptionCode;
-			this.buyerName = buyerName;
-			this.amount = amount;
-			this.companyCode = companyCode;
-			this.masterId = masterId;
-		}
+    // ---------- 계약서 다운로드 ----------
+    @GetMapping("/contract/download")
+    public void downloadContract(@RequestParam("subscriptionCode") String subscriptionCode,
+                                 HttpServletResponse resp) throws Exception {
+        Map<String, String> vars = contractVarsCache.get(subscriptionCode);
+        if (vars == null) {
+            resp.sendError(404, "No contract data for this subscriptionCode");
+            return;
+        }
+        byte[] pdf = contractPdfService.generateBytesFromTemplate("common/contract-pdf.html", vars);
 
-		public String getSubscriptionCode() {
-			return subscriptionCode;
-		}
+        String fileName = ("contract_" + vars.getOrDefault("companyCode", "") + "_" + subscriptionCode + ".pdf")
+                .replaceAll("[\\\\/:*?\"<>|\\s]+", "_");
 
-		public String getBuyerName() {
-			return buyerName;
-		}
+        resp.setContentType("application/pdf");
+        resp.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+        resp.setContentLength(pdf.length);
+        try (var os = resp.getOutputStream()) {
+            os.write(pdf);
+            os.flush();
+        }
+    }
 
-		public AmountInfo getAmount() {
-			return amount;
-		}
+    // ===== 뷰 DTO =====
+    public static class SuccessViewInfo {
+        private final String subscriptionCode;
+        private final String buyerName;
+        private final AmountInfo amount;
+        private final String companyCode;
+        private final String masterId;
 
-		public String getCompanyCode() {
-			return companyCode;
-		}
+        public SuccessViewInfo(String subscriptionCode, String buyerName, AmountInfo amount, String companyCode, String masterId) {
+            this.subscriptionCode = subscriptionCode;
+            this.buyerName = buyerName;
+            this.amount = amount;
+            this.companyCode = companyCode;
+            this.masterId = masterId;
+        }
+        public String getSubscriptionCode() { return subscriptionCode; }
+        public String getBuyerName() { return buyerName; }
+        public AmountInfo getAmount() { return amount; }
+        public String getCompanyCode() { return companyCode; }
+        public String getMasterId() { return masterId; }
+    }
 
-		public String getMasterId() {
-			return masterId;
-		}
-	}
+    public static class AmountInfo {
+        private final Long total;
+        private final Long vat;
+        public AmountInfo(Long total, Long vat) { this.total = total; this.vat = vat; }
+        public Long getTotal() { return total; }
+        public Long getVat() { return vat; }
+    }
 
-	public static class AmountInfo {
-		private final Long total;
-		private final Long vat;
+    private Map<String, String> buildContractVars(PayRequestWrapper wrapper, Company savedCompany, String subscriptionCode) {
+        var pay = wrapper.getPayRequest();
+        var com = wrapper.getCompanyInfo();
 
-		public AmountInfo(Long total, Long vat) {
-			this.total = total;
-			this.vat = vat;
-		}
+        LocalDate start = LocalDate.now();
+        int months = 1;
+        try {
+            if (pay.getSubPeriod() != null && pay.getSubPeriod().contains("개월")) {
+                months = Integer.parseInt(pay.getSubPeriod().replace("개월", "").trim());
+            }
+        } catch (Exception ignore) {}
+        LocalDate end = start.plusMonths(months);
 
-		public Long getTotal() {
-			return total;
-		}
+        long total = (long) pay.getAmount();
+        long vat = Math.round(total * 0.1);
 
-		public Long getVat() {
-			return vat;
-		}
-	}
+        DateTimeFormatter df = DateTimeFormatter.ISO_LOCAL_DATE;
 
-	private Map<String, String> buildContractVars(PayRequestWrapper wrapper, Company savedCompany,
-			String subscriptionCode) {
-		var pay = wrapper.getPayRequest();
-		var com = wrapper.getCompanyInfo();
+        Map<String, String> vars = new HashMap<>();
+        vars.put("contractDate", df.format(start));
+        vars.put("companyName", nvl(com.getCompanyName()));
+        vars.put("ceoName", nvl(com.getCeoName()));
+        vars.put("bizRegNo", nvl(com.getBizRegNo()));
+        vars.put("fullAddress", nvl(com.getRoadAddress()) + " " + nvl(com.getAddressDetail()));
+        vars.put("tel", nvl(com.getTel()));
+        vars.put("subPeriod", nvl(pay.getSubPeriod()));
+        vars.put("startDate", df.format(start));
+        vars.put("endDate", df.format(end));
+        vars.put("total", String.format("%,d", total));
+        vars.put("vat", String.format("%,d", vat));
+        vars.put("subscriptionCode", nvl(subscriptionCode));
+        vars.put("buyerName", nvl(pay.getBuyerName()));
+        vars.put("signatureDataUrl", nvl(wrapper.getSignatureDataUrl()));
+        vars.put("companyCode", savedCompany != null ? nvl(savedCompany.getCompanyCode()) : "");
+        return vars;
+    }
 
-		LocalDate start = LocalDate.now();
-		int months = 1;
-		try {
-			if (pay.getSubPeriod() != null && pay.getSubPeriod().contains("개월")) {
-				months = Integer.parseInt(pay.getSubPeriod().replace("개월", "").trim());
-			}
-		} catch (Exception ignore) {
-		}
-		LocalDate end = start.plusMonths(months);
+    private static String nvl(String s) { return (s == null) ? "" : s; }
+    private static String safe(String s) { return (s == null) ? "" : s; }
 
-		long total = (long) pay.getAmount();
-		long vat = Math.round(total * 0.1);
-
-		DateTimeFormatter df = DateTimeFormatter.ISO_LOCAL_DATE;
-
-		Map<String, String> vars = new HashMap<>();
-		vars.put("contractDate", df.format(start));
-		vars.put("companyName", nvl(com.getCompanyName()));
-		vars.put("ceoName", nvl(com.getCeoName()));
-		vars.put("bizRegNo", nvl(com.getBizRegNo()));
-		vars.put("fullAddress", nvl(com.getRoadAddress()) + " " + nvl(com.getAddressDetail()));
-		vars.put("tel", nvl(com.getTel()));
-
-		vars.put("subPeriod", nvl(pay.getSubPeriod()));
-		vars.put("startDate", df.format(start));
-		vars.put("endDate", df.format(end));
-
-		vars.put("total", String.format("%,d", total));
-		vars.put("vat", String.format("%,d", vat));
-		vars.put("subscriptionCode", nvl(subscriptionCode));
-		vars.put("buyerName", nvl(pay.getBuyerName()));
-
-		vars.put("signatureDataUrl", nvl(wrapper.getSignatureDataUrl()));
-		vars.put("companyCode", nvl(savedCompany.getCompanyCode()));
-		return vars;
-	}
-
-	private static String nvl(String s) {
-		return (s == null) ? "" : s;
-	}
+    private static String escapeJs(String s){
+        if (s == null) return "";
+        return s.replace("\\","\\\\").replace("'","\\'").replace("\"","\\\"");
+    }
 }

@@ -1,72 +1,87 @@
 <!DOCTYPE html>
 <html xmlns:th="https://www.thymeleaf.org"
-	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-	layout:decorate="~{layout/main}">
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
 <head>
-<meta charset="UTF-8">
-<title>사원 관리</title>
-<link href="/hr/css/employee.css" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <title>사원 관리</title>
+  <link href="/hr/css/employee.css" rel="stylesheet" />
+  <style>
+    /* 모달 내부 로딩 오버레이 */
+    #historyModal .modal-body { position: relative; }
+    #history-loading.loading-overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.6);
+      z-index:1056;
+    }
+    #history-loading.d-none{ display:none; }
+  </style>
 </head>
 <body layout:fragment="content">
-	<div id="layoutSidenav_content">
-		<main>
-			<div class="container-fluid px-4">
-				<h1 class="mt-4">사원 관리</h1>
+  <div id="layoutSidenav_content">
+    <main>
+      <div class="container-fluid px-4">
+        <h1 class="mt-4">사원 관리</h1>
 
-				<!-- ✅ companyCode는 한 번만 -->
-				<input type="hidden" id="companyCode"
-					th:value="${#authentication.name.split(':')[0]}">
+        <!-- companyCode는 한 번만 -->
+        <input type="hidden" id="companyCode"
+               th:value="${#authentication.name.split(':')[0]}">
 
-				<div class="d-flex align-items-center mb-3">
-					<select id="sel-field" class="form-select w-auto me-2">
-						<option value="empCode">사원번호</option>
-						<option value="name">성명</option>
-						<option value="dept">부서명</option>
-					</select> <input id="txt-search" type="text"
-						class="form-control w-auto me-2" placeholder="검색어 입력">
-					<button id="btn-search" class="btn btn-warning me-2">검색</button>
+        <div class="d-flex align-items-center mb-3">
+          <select id="sel-field" class="form-select w-auto me-2">
+            <option value="empCode">사원번호</option>
+            <option value="name">성명</option>
+            <option value="dept">부서명</option>
+          </select>
+          <input id="txt-search" type="text" class="form-control w-auto me-2" placeholder="검색어 입력">
+          <button id="btn-search" class="btn btn-warning me-2">검색</button>
 
-					<div class="ms-auto d-flex">
-						<button id="btn-new" class="btn btn-primary me-2">신규</button>
-						<button id="btn-update" class="btn btn-success me-2">수정</button>
-						<button class="btn btn-secondary me-2">인쇄</button>
-						<!-- ❌ 중복된 companyCode input 제거 -->
-						<button id="btn-history" class="btn btn-dark">이력조회</button>
-					</div>
-				</div>
+          <div class="ms-auto d-flex">
+            <button id="btn-new" class="btn btn-primary me-2">신규</button>
+            <button id="btn-update" class="btn btn-success me-2">수정</button>
+            <button class="btn btn-secondary me-2">인쇄</button>
+            <button id="btn-history" class="btn btn-dark">이력조회</button>
+          </div>
+        </div>
 
-				<!-- 사원등록 모달 include -->
-				<div th:replace="hr/employeeModal :: empModal"></div>
+        <!-- 사원등록 모달 include -->
+        <div th:replace="hr/employeeModal :: empModal"></div>
 
-				<!-- 사원 테이블 -->
-				<div id="employee-table"></div>
+        <!-- 사원 테이블 -->
+        <div id="employee-table"></div>
 
-				<!-- 이력조회 모달 -->
-				<div class="modal fade" id="historyModal"
-					tabindex="-1" aria-hidden="true">
-					<div class="modal-dialog modal-xl modal-dialog-centered">
-						<div class="modal-content shadow-lg">
-							<div class="modal-header">
-								<h5 class="modal-title">사원 이력 조회</h5>
-								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-							</div>
-							<div class="modal-body">
-								<div id="history-table"></div>
-							</div>
-						</div>
-					</div>
-				</div>
+        <!-- 이력조회 모달 -->
+        <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+              <div class="modal-header">
+                <h5 class="modal-title">사원 이력 조회</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <!-- 모달 전용 로딩 오버레이(초기 숨김) -->
+                <div id="history-loading" class="loading-overlay d-none">
+                  <div class="text-center">
+                    <div class="spinner-border" role="status" aria-hidden="true"></div>
+                    <div class="mt-2 fw-semibold">이력 불러오는 중...</div>
+                  </div>
+                </div>
+                <div id="history-table"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-			</div>
-		</main>
-	</div>
+      </div>
+    </main>
+  </div>
 
-	<div th:replace="common/modal :: commonModal"></div>
-	<script
-		src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-	<script src="/hr/js/employee.js"></script>
+  <div th:replace="common/modal :: commonModal"></div>
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script src="/hr/js/employee.js"></script>
 
-	<script>
+  <script>
     // 우편번호 검색 전역 노출
     window.execDaumPostcode = function() {
       new daum.Postcode({
@@ -84,11 +99,15 @@
       paginationSize: 10,
       placeholder: "이력 데이터가 없습니다.",
       movableColumns: true,
+      virtualDom: true,
+      progressiveRender: true,
+      progressiveRenderSize: 200,
+      progressiveRenderMargin: 200,
       columns: [
-        { title: "이력", field: "eventType", hozAlign: "center", width: 120 },
-        { title: "사원", field: "name", hozAlign: "center", width: 120 },
+        { title: "이력",     field: "eventType",  hozAlign: "center", width: 120 },
+        { title: "사원",     field: "name",       hozAlign: "center", width: 120 },
         { title: "상세내용", field: "eventDetail" },
-        { title: "담당자", field: "manager", hozAlign: "center", width: 120 },
+        { title: "담당자",   field: "manager",    hozAlign: "center", width: 120 },
         {
           title: "작업 일시",
           field: "createdAt",
@@ -103,74 +122,91 @@
       ],
     });
 
-    // 모달 표시 시 리사이즈/리렌더
-    document.getElementById("historyModal")
-      .addEventListener("shown.bs.modal", () => historyTable.redraw(true));
+    // 데이터가 테이블에 로드/렌더 완료되면 오버레이를 무조건 내림 (안전망)
+    historyTable.on("dataLoaded", () => hideHistoryLoading());
+    historyTable.on("dataProcessed", () => hideHistoryLoading());
 
-    // 공통: companyCode 읽기
+    // 모달 표시/닫힘 훅
+    const historyModalEl = document.getElementById("historyModal");
+    historyModalEl.addEventListener("shown.bs.modal", () => historyTable.redraw(true));
+    historyModalEl.addEventListener("hidden.bs.modal", () => {
+      hideHistoryLoading();
+      try { typeof hideGlobalLoading === "function" && hideGlobalLoading(); } catch(_) {}
+    });
+
     function getCompanyCode() {
       return document.getElementById("companyCode")?.value || "";
     }
 
+    // ===== 모달 전용 로딩 오버레이 컨트롤 =====
+    function showHistoryLoading(message) {
+      const el = document.getElementById("history-loading");
+      if (!el) return;
+      if (message) {
+        const label = el.querySelector(".fw-semibold");
+        if (label) label.textContent = message;
+      }
+      el.classList.remove("d-none");
+    }
+    function hideHistoryLoading() {
+      const el = document.getElementById("history-loading");
+      if (!el) return;
+      el.classList.add("d-none");
+    }
+
+    // 요청 중복/레이스 방지 플래그
+    let historyLoadingInFlight = false;
+
+    // ===== 이력 모달 열기 =====
     async function openHistoryModal(companyCode) {
-    	  const url = `/api/history/${encodeURIComponent(companyCode)}`;
-    	  const historyModalEl = document.getElementById("historyModal");
-    	  const modal = bootstrap.Modal.getOrCreateInstance(historyModalEl);
+      if (historyLoadingInFlight) return;       // 중복 요청 차단
+      historyLoadingInFlight = true;
+      historyTable.clearData();
 
-    	  if (!historyModalEl.classList.contains("show")) modal.show();
-    	  setTimeout(() => modal.handleUpdate && modal.handleUpdate(), 0);
+      const url = `/api/history/${encodeURIComponent(companyCode)}`;
+      const modal = bootstrap.Modal.getOrCreateInstance(historyModalEl);
 
-    	  // 전역 로딩 표시
-    	  showGlobalLoading("이력 불러오는 중...");
+      if (!historyModalEl.classList.contains("show")) modal.show();
+      setTimeout(() => modal.handleUpdate && modal.handleUpdate(), 0);
 
-    	  try {
-    	    const res = await fetch(url, { headers: { "Accept": "application/json" } });
-    	    if (!res.ok) {
-    	      const text = await res.text().catch(() => "");
-    	      console.error("[history] HTTP", res.status, text?.slice(0, 300));
-    	      alert("이력 조회 실패: 서버 오류가 발생했습니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
+      showHistoryLoading("이력 불러오는 중...");
+      try {
+        const res = await fetch(url, { headers: { "Accept": "application/json" } });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("[history] HTTP", res.status, text?.slice(0, 300));
+          alert("이력 조회 실패: 서버 오류가 발생했습니다.");
+          await historyTable.setData([]);      // <-- (A) Tabulator 데이터 로드(빈 배열)
+          return;
+        }
 
-    	    const raw = await res.text();
-    	    let payload;
-    	    try { payload = JSON.parse(raw); } catch {
-    	      alert("이력 조회 실패: 응답 형식이 올바르지 않습니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
+        // 컨트롤러가 항상 배열(List<HrHistoryDTO>)을 반환하므로 단순 처리
+        const rows = await res.json();
+        if (!Array.isArray(rows)) {
+          alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
+          await historyTable.setData([]);      // <-- (B) Tabulator 데이터 로드(빈 배열)
+          return;
+        }
 
-    	    const rows = Array.isArray(payload) ? payload
-    	               : Array.isArray(payload?.data) ? payload.data
-    	               : Array.isArray(payload?.list) ? payload.list
-    	               : Array.isArray(payload?.content) ? payload.content
-    	               : null;
+        await historyTable.setData(rows);       // <-- (C) Tabulator 데이터 로드(정상 데이터)
+        setTimeout(hideHistoryLoading, 0);
+      } catch (err) {
+        console.error("[history] 예외:", err);
+        alert("이력 조회 중 오류가 발생했습니다.");
+        await historyTable.setData([]);        // <-- (D) Tabulator 데이터 로드(빈 배열)
+      } finally {
+        hideHistoryLoading();
+        try { typeof hideGlobalLoading === "function" && hideGlobalLoading(); } catch(_) {}
+        const modal2 = bootstrap.Modal.getOrCreateInstance(historyModalEl);
+        modal2.handleUpdate && modal2.handleUpdate();
+        historyLoadingInFlight = false;
+      }
+    }
 
-    	    if (!Array.isArray(rows)) {
-    	      alert("이력 조회 실패: 응답이 목록 형식이 아닙니다.");
-    	      await historyTable.setData([]);
-    	      return;
-    	    }
-
-    	    await historyTable.setData(rows);
-    	  } catch (err) {
-    	    console.error("[history] 예외:", err);
-    	    alert("이력 조회 중 오류가 발생했습니다.");
-    	    await historyTable.setData([]);
-    	  } finally {
-    	    hideGlobalLoading();
-    	    modal.handleUpdate && modal.handleUpdate();
-    	  }
-    	}
-
-    // 버튼 클릭 → 이력조회
+    // 버튼 연결
     document.getElementById("btn-history")?.addEventListener("click", () => {
       const cc = getCompanyCode();
-      if (!cc) {
-        alert("회사코드를 찾을 수 없습니다.");
-        return;
-      }
+      if (!cc) { alert("회사코드를 찾을 수 없습니다."); return; }
       openHistoryModal(cc);
     });
   </script>

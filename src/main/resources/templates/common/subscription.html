@@ -4,1324 +4,789 @@
 <meta charset="UTF-8" />
 <title>구독 신청</title>
 
-<!-- Icons & Font (기존 그대로) -->
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link
-	href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css"
-	rel="stylesheet">
+<!-- Icons & Font -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet">
 
 <style>
-/* ===== Theme (index 느낌 반영) ===== */
-:root {
-	--bg: #0b0c10;
-	--bg-grad-1: #1a1443;
-	--bg-grad-2: #0a3a57;
-	--bg-grad-3: #1a2148;
-	--card: #ffffff;
-	--text: #0f172a;
-	--muted: #64748b;
-	--line: #e5e7eb;
-	--accent: #2563eb;
-	--accent-2: #22d3ee;
-	--accent-dark: #1e40af;
-	--success: #16a34a;
-	--danger: #dc2626;
-	--glass: rgba(255, 255, 255, .08);
-	--border: rgba(255, 255, 255, .18);
-	--shadow: 0 10px 28px rgba(2, 6, 23, .16);
-	--soft-shadow: 0 8px 24px rgba(37, 99, 235, .15);
-	--radius: 14px;
+/* ===== Theme ===== */
+:root{
+  --bg:#0b0c10; --bg-grad-1:#1a1443; --bg-grad-2:#0a3a57; --bg-grad-3:#1a2148;
+  --card:#ffffff; --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+  --accent:#2563eb; --accent-2:#22d3ee; --accent-dark:#1e40af;
+  --success:#16a34a; --danger:#dc2626; --border:rgba(255,255,255,.18);
+  --shadow:0 10px 28px rgba(2,6,23,.16); --radius:14px;
+}
+*{ box-sizing:border-box }
+html,body{ height:100% }
+body{
+  font-family:'SUIT',system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif;
+  margin:0;color:var(--text);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, var(--bg-grad-1) 0%, transparent 60%),
+    radial-gradient(900px 400px at 90% 10%, var(--bg-grad-2) 0%, transparent 60%),
+    radial-gradient(1000px 600px at 50% 120%, var(--bg-grad-3) 0%, transparent 60%),
+    var(--bg);
+  padding:32px 0 56px; background-attachment:fixed;
 }
 
-* {
-	box-sizing: border-box
+/* Header */
+.app-header{
+  width:min(1050px,94%); margin:0 auto 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:14px 16px; border:1px solid rgba(255,255,255,.12); border-radius:var(--radius);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+  box-shadow:var(--shadow); color:#e9ecf1;
+}
+.app-title{ display:flex; align-items:center; gap:12px }
+.app-title h1{ margin:0; font-weight:900; font-size:22px; letter-spacing:.2px }
+.chip{
+  display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px;
+  line-height:1; font-weight:800; color:#e9ecf1; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+}
+.chip i{ color:#cbd5e1 }
+
+/* Container */
+.container{
+  width:min(1050px,94%); margin:0 auto; border-radius:20px; border:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.94));
+  box-shadow:var(--shadow); padding:20px; position:relative; overflow-x:hidden;
 }
 
-html, body {
-	height: 100%
+/* Stepper */
+.stepper{ display:flex; align-items:flex-start; justify-content:center; gap:18px; margin-bottom:8px }
+.step{ display:flex; flex-direction:column; align-items:center; color:#0b1220 }
+.circle{
+  width:42px;height:42px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  background:#e5e7eb;color:#111827;font-weight:900;border:1px solid #d1d5db;transition:.25s ease;
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.05);
 }
+.circle.active{
+  background:linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color:#fff;border-color:transparent; box-shadow:0 8px 20px rgba(37,99,235,.35);
+}
+.line{ width:220px;height:2px;background:#d1d5db;margin-top:21px;flex:0 0 auto;border-radius:2px }
+.step-label{ margin-top:6px;font-size:12px;color:#1f2937;font-weight:800 }
 
-body {
-	font-family: 'SUIT', system-ui, -apple-system, Segoe UI, Roboto,
-		Noto Sans KR, sans-serif;
-	margin: 0;
-	color: var(--text);
-	/* index와 동일 계열 배경 */
-	background: radial-gradient(1200px 500px at 10% -10%, var(--bg-grad-1)
-		0%, transparent 60%),
-		radial-gradient(900px 400px at 90% 10%, var(--bg-grad-2) 0%,
-		transparent 60%),
-		radial-gradient(1000px 600px at 50% 120%, var(--bg-grad-3) 0%,
-		transparent 60%), var(--bg);
-	padding: 32px 0 56px;
-	background-attachment: fixed;
-}
+/* Pages */
+.pages-wrapper{ position:relative;width:100%;overflow:hidden;transition:height .3s ease; }
+.page{ position:absolute;top:0;left:0;width:100%;transform:translateX(100%);transition:transform .5s ease-in-out; }
+.page.active{ transform:translateX(0) }
+.page.hidden-left{ transform:translateX(-100%) }
+.page.hidden-right{ transform:translateX(100%) }
 
-/* ===== App header - 유리/그라디언트 보정 ===== */
-.app-header {
-	width: min(1050px, 94%);
-	margin: 0 auto 14px;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 14px 16px;
-	border: 1px solid rgba(255, 255, 255, .12);
-	border-radius: var(--radius);
-	backdrop-filter: blur(8px);
-	-webkit-backdrop-filter: blur(8px);
-	background: linear-gradient(180deg, rgba(255, 255, 255, .08),
-		rgba(255, 255, 255, .04));
-	box-shadow: var(--shadow);
-	color: #e9ecf1;
-}
+/* Content */
+.form-sections{ display:flex; gap:0 }
+.section.sub-info{ flex:1.3;border-right:1px solid var(--line);padding:20px;background:#f8fafc }
+.section.user-info{ flex:2;padding:20px }
+.section h3{ font-size:16px;font-weight:900;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid var(--accent-dark);color:#111827 }
+.section h4{ margin:22px 0 10px;font-size:14px;color:#111827 }
 
-.app-title {
-	display: flex;
-	align-items: center;
-	gap: 12px
+/* Services */
+.services{ margin-top:10px }
+.service{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e2e8f0;border-radius:12px;
+  padding:10px 14px;margin:10px 0;font-size:14px;background:#fff;transition:.2s ease;box-shadow:0 2px 10px rgba(2,6,23,.06);
 }
-
-.app-title h1 {
-	margin: 0;
-	font-weight: 900;
-	font-size: 22px;
-	letter-spacing: .2px
-}
-
-.badge-live {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 7px 12px;
-	border-radius: 999px;
-	font-weight: 800;
-	color: #dbeafe;
-	background: rgba(37, 99, 235, .18);
-	border: 1px solid rgba(37, 99, 235, .25);
-}
-
-.badge-live .dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: var(--success);
-	box-shadow: 0 0 0 4px rgba(22, 163, 74, .2)
-}
-
-.chip {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	padding: 7px 12px;
-	border-radius: 999px;
-	line-height: 1;
-	font-weight: 800;
-	color: #e9ecf1;
-	background: rgba(255, 255, 255, .08);
-	border: 1px solid rgba(255, 255, 255, .18);
-}
-
-.chip i {
-	color: #cbd5e1
-}
-
-/* ===== Container ===== */
-.container {
-	width: min(1050px, 94%);
-	margin: 0 auto;
-	border-radius: 20px;
-	border: 1px solid rgba(255, 255, 255, .12);
-	background: linear-gradient(180deg, rgba(255, 255, 255, .98),
-		rgba(255, 255, 255, .94));
-	box-shadow: var(--shadow);
-	padding: 20px;
-	position: relative;
-	overflow-x: hidden;
-}
-
-/* ===== Stepper ===== */
-.stepper {
-	display: flex;
-	align-items: flex-start;
-	justify-content: center;
-	gap: 18px;
-	margin-bottom: 8px
-}
-
-.step {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	color: #0b1220
-}
-
-.circle {
-	width: 42px;
-	height: 42px;
-	border-radius: 999px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #e5e7eb;
-	color: #111827;
-	font-weight: 900;
-	border: 1px solid #d1d5db;
-	transition: .25s ease;
-	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .05);
-}
-
-.circle.active {
-	background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2)
-		100%);
-	color: #fff;
-	border-color: transparent;
-	box-shadow: 0 8px 20px rgba(37, 99, 235, .35);
-}
-
-.line {
-	width: 220px;
-	height: 2px;
-	background: #d1d5db;
-	margin-top: 21px;
-	flex: 0 0 auto;
-	border-radius: 2px
-}
-
-.step-label {
-	margin-top: 6px;
-	font-size: 12px;
-	color: #1f2937;
-	font-weight: 800
-}
-
-/* ===== Pages wrapper ===== */
-.pages-wrapper {
-	position: relative;
-	width: 100%;
-	overflow: hidden;
-	transition: height .3s ease;
-}
-
-.page {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	transform: translateX(100%);
-	transition: transform .5s ease-in-out;
-	will-change: transform;
-}
-
-.page.active {
-	transform: translateX(0)
-}
-
-.page.hidden-left {
-	transform: translateX(-100%)
-}
-
-.page.hidden-right {
-	transform: translateX(100%)
-}
-
-/* ===== Content ===== */
-.form-sections {
-	display: flex;
-	gap: 0
-}
-
-.section.sub-info {
-	flex: 1.3;
-	border-right: 1px solid var(--line);
-	padding: 20px;
-	background: #f8fafc
-}
-
-.section.user-info {
-	flex: 2;
-	padding: 20px
-}
-
-.section h3 {
-	font-size: 16px;
-	font-weight: 900;
-	margin: 0 0 14px;
-	padding-bottom: 8px;
-	border-bottom: 2px solid var(--accent-dark);
-	color: #111827
-}
-
-.section h4 {
-	margin: 22px 0 10px;
-	font-size: 14px;
-	color: #111827
-}
-
-/* 포함 서비스 */
-.services {
-	margin-top: 10px
-}
-
-.service {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	border: 1px solid #e2e8f0;
-	border-radius: 12px;
-	padding: 10px 14px;
-	margin: 10px 0;
-	font-size: 14px;
-	background: #fff;
-	transition: .2s ease;
-	box-shadow: 0 2px 10px rgba(2, 6, 23, .06);
-}
-
-.service:hover {
-	background: #eef2ff;
-	transform: translateY(-1px)
-}
-
-.service:hover i {
-	color: var(--accent)
-}
-
-.service:hover .service-icon {
-	background: #22c55e
-}
-
-.service-icon {
-	width: 20px;
-	height: 20px;
-	background: #19cc66;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: #fff;
-	font-size: 13px;
-}
-
-.service span {
-	display: flex;
-	align-items: center;
-	gap: 8px
-}
+.service:hover{ background:#eef2ff; transform:translateY(-1px) }
+.service:hover i{ color:var(--accent) }
+.service:hover .service-icon{ background:#22c55e }
+.service-icon{ width:20px;height:20px;background:#19cc66;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px; }
+.service span{ display:flex; align-items:center; gap:8px }
 
 /* Grid form */
-.form-grid {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 12px 18px
+.form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 18px }
+.form-group{ display:flex; flex-direction:column; }
+.form-group.full{ grid-column:1 / span 2 }
+.form-group label{ font-size:12px;font-weight:900;margin-bottom:6px;color:#111827 }
+.form-group input,.form-group select{
+  padding:10px 12px;border:1px solid #cbd5e1;border-radius:12px;font-size:13px;background:#fff;transition:border-color .2s, box-shadow .2s;
 }
+.form-group input:focus,.form-group select:focus{ border-color:var(--accent); outline:none; box-shadow:0 0 0 4px rgba(37,99,235,.15) }
+.email-input{ display:flex;align-items:center;gap:6px }
+.email-input input{ flex:1 }
+.email-input select{ min-width:200px;padding:10px 12px }
+.biz-inputs,.phone-inputs{ display:flex;align-items:center;gap:6px }
+.biz-inputs input,.phone-inputs input{ width:76px;text-align:center }
+.error-msg{ color:var(--danger);font-size:12px;margin-top:6px;min-height:16px;visibility:hidden }
+.error-msg.active{ visibility:visible }
 
-.form-group {
-	display: flex;
-	flex-direction: column;
+/* Accordion */
+.accordion{ border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow);margin-bottom:18px }
+.accordion-item{ border-bottom:1px solid var(--line) }
+.accordion-item:last-child{ border-bottom:0 }
+.accordion-header{
+  width:100%;text-align:left;padding:12px 14px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:0;font-size:14px;
+  font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
 }
+.accordion-header i{ transition:transform .25s ease;color:#334155 }
+.accordion-header.active i{ transform:rotate(180deg) }
+.accordion-content{ height:0;overflow:hidden;transition:height .3s ease;background:#fff;padding:0 14px }
+.accordion-content.open{ height:auto }
+.accordion-content p{ margin:10px 0;color:#1f2937;line-height:1.7 }
 
-.form-group.full {
-	grid-column: 1/span 2
+/* Sign */
+.agreement-box{ background:#f8fafc;padding:20px;border-radius:12px;border:1px solid var(--line);display:flex;gap:20px;align-items:flex-start }
+.agreement-left{ flex:1;font-size:14px;line-height:1.8;margin-top:6px }
+.agreement-right{ flex:1.2;display:flex;flex-direction:column;gap:10px }
+#signaturePad{ border:1px solid #cbd5e1;border-radius:12px;background:#fff;cursor:crosshair;width:100%;height:auto }
+.sign-actions{ display:flex;gap:10px }
+.sign-actions button{
+  padding:9px 14px;font-size:14px;border:1px solid #cbd5e1;background:#eef2ff;color:#1e3a8a;cursor:pointer;border-radius:12px;font-weight:900;
 }
+.sign-actions button:hover{ background:#e0e7ff }
 
-.form-group label {
-	font-size: 12px;
-	font-weight: 900;
-	margin-bottom: 6px;
-	color: #111827
+/* Footer buttons */
+.form-footer{ margin-top:20px;display:flex;justify-content:space-between;gap:10px }
+.btn{
+  flex:1;padding:14px;font-size:16px;font-weight:900;border:0;cursor:pointer;transition:transform .15s ease, filter .15s ease;
+  border-radius:12px;position:relative;color:#0b1220;
 }
+.btn i{ position:absolute;top:50%;transform:translateY(-50%) }
+.btn-prev{ background:#fee2e2 } .btn-prev i{ left:18px }
+.btn-next{ background:#dbeafe } .btn-next i{ right:18px }
+.btn:hover{ filter:brightness(.98) } .btn:active{ transform:translateY(1px) }
 
-.form-group input, .form-group select {
-	padding: 10px 12px;
-	border: 1px solid #cbd5e1;
-	border-radius: 12px;
-	font-size: 13px;
-	background: #fff;
-	transition: border-color .2s, box-shadow .2s;
+/* Pay methods */
+.pay-methods{ display:flex; gap:10px; margin-top:10px }
+/* 공통 */
+.pay-btn{
+  flex:1; padding:12px; font-weight:900; border:0; border-radius:12px; cursor:pointer;
+  transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
 }
+.pay-btn:active{ transform:translateY(1px) }
+/* 카카오 */
+.pay-btn.kakao{ background:#ffeb00; color:#111 }
+/* 토스 */
+.pay-btn.toss{ background:#0064FF; color:#fff; box-shadow:0 6px 16px rgba(0,100,255,.25) }
+.pay-btn.toss:hover{ filter:brightness(1.02) }
+/* 선택 표시 */
+.pay-btn.active{ outline:3px solid #111827 }
 
-.form-group input:focus, .form-group select:focus {
-	border-color: var(--accent);
-	outline: none;
-	box-shadow: 0 0 0 4px rgba(37, 99, 235, .15)
-}
+/* Summary */
+.summary-table{ width:100%; border-collapse:collapse; margin-top:10px; font-size:14px }
+.summary-table td{ padding:8px 0 }
+.summary-table .right{ text-align:right }
+.summary-table .total td{ border-top:2px solid #000; padding-top:10px; font-size:15px }
 
-.email-input {
-	display: flex;
-	align-items: center;
-	gap: 6px
-}
+/* Utils */
+.input-with-icon{ position:relative; display:flex; align-items:center }
+.input-with-icon input{ flex:1; padding-right:36px }
+.input-with-icon .icon-btn{ position:absolute; right:6px; background:none; border:0; cursor:pointer; font-size:16px; color:#666 }
+.input-with-icon .icon-btn:hover{ color:var(--accent) }
 
-.email-input input {
-	flex: 1
-}
-
-.email-input select {
-	min-width: 200px;
-	padding: 10px 12px
-}
-
-.biz-inputs, .phone-inputs {
-	display: flex;
-	align-items: center;
-	gap: 6px
-}
-
-.biz-inputs input, .phone-inputs input {
-	width: 76px;
-	text-align: center;
-}
-
-.error-msg {
-	color: var(--danger);
-	font-size: 12px;
-	margin-top: 6px;
-	min-height: 16px;
-	visibility: hidden
-}
-
-.error-msg.active {
-	visibility: visible
-}
-
-/* 아코디언 */
-.accordion {
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	overflow: hidden;
-	background: #fff;
-	box-shadow: var(--shadow);
-	margin-bottom: 18px
-}
-
-.accordion-item {
-	border-bottom: 1px solid var(--line)
-}
-
-.accordion-item:last-child {
-	border-bottom: 0
-}
-
-.accordion-header {
-	width: 100%;
-	text-align: left;
-	padding: 12px 14px;
-	background: linear-gradient(180deg, #ffffff, #fbfdff);
-	border: 0;
-	font-size: 14px;
-	font-weight: 900;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.accordion-header i {
-	transition: transform .25s ease;
-	color: #334155
-}
-
-.accordion-header.active i {
-	transform: rotate(180deg)
-}
-
-.accordion-content {
-	height: 0;
-	overflow: hidden;
-	transition: height .3s ease;
-	background: #fff;
-	padding: 0 14px
-}
-
-.accordion-content.open {
-	height: auto
-}
-
-.accordion-content p {
-	margin: 10px 0;
-	color: #1f2937;
-	line-height: 1.7
-}
-
-/* 전자서명 */
-.agreement-box {
-	background: #f8fafc;
-	padding: 20px;
-	border-radius: 12px;
-	border: 1px solid var(--line);
-	display: flex;
-	gap: 20px;
-	align-items: flex-start;
-}
-
-.agreement-left {
-	flex: 1;
-	font-size: 14px;
-	line-height: 1.8;
-	margin-top: 6px
-}
-
-.agreement-right {
-	flex: 1.2;
-	display: flex;
-	flex-direction: column;
-	gap: 10px
-}
-
-#signaturePad {
-	border: 1px solid #cbd5e1;
-	border-radius: 12px;
-	background: #fff;
-	cursor: crosshair;
-	width: 100%;
-	height: auto
-}
-
-.sign-actions {
-	display: flex;
-	gap: 10px
-}
-
-.sign-actions button {
-	padding: 9px 14px;
-	font-size: 14px;
-	border: 1px solid #cbd5e1;
-	background: #eef2ff;
-	color: #1e3a8a;
-	cursor: pointer;
-	border-radius: 12px;
-	font-weight: 900;
-}
-
-.sign-actions button:hover {
-	background: #e0e7ff
-}
-
-/* Buttons */
-.form-footer {
-	margin-top: 20px;
-	display: flex;
-	justify-content: space-between;
-	gap: 10px
-}
-
-.btn {
-	flex: 1;
-	padding: 14px;
-	font-size: 16px;
-	font-weight: 900;
-	border: 0;
-	cursor: pointer;
-	transition: transform .15s ease, filter .15s ease;
-	border-radius: 12px;
-	position: relative;
-	color: #0b1220;
-}
-
-.btn i {
-	position: absolute;
-	top: 50%;
-	transform: translateY(-50%)
-}
-
-.btn-prev {
-	background: #fee2e2
-}
-
-.btn-prev i {
-	left: 18px
-}
-
-.btn-next {
-	background: #dbeafe
-}
-
-.btn-next i {
-	right: 18px
-}
-
-.btn:hover {
-	filter: brightness(.98)
-}
-
-.btn:active {
-	transform: translateY(1px)
-}
-
-/* 결제 */
-.pay-methods {
-	display: flex;
-	gap: 10px;
-	margin-top: 10px
-}
-
-.pay-btn {
-	flex: 1;
-	padding: 12px;
-	font-weight: 900;
-	border: 0;
-	border-radius: 12px;
-	cursor: pointer
-}
-
-.pay-btn.kakao {
-	background: #ffeb00
-}
-
-.pay-btn.naver {
-	background: #03c75a;
-	color: #fff
-}
-
-.pay-btn.active {
-	outline: 3px solid #111827
-}
-
-/* 요약 */
-.summary-table {
-	width: 100%;
-	border-collapse: collapse;
-	margin-top: 10px;
-	font-size: 14px
-}
-
-.summary-table td {
-	padding: 8px 0
-}
-
-.summary-table .right {
-	text-align: right
-}
-
-.summary-table .total td {
-	border-top: 2px solid #000;
-	padding-top: 10px;
-	font-size: 15px
-}
-
-/* 유틸 */
-.input-with-icon {
-	position: relative;
-	display: flex;
-	align-items: center
-}
-
-.input-with-icon input {
-	flex: 1;
-	padding-right: 36px
-}
-
-.input-with-icon .icon-btn {
-	position: absolute;
-	right: 6px;
-	background: none;
-	border: 0;
-	cursor: pointer;
-	font-size: 16px;
-	color: #666;
-}
-
-.input-with-icon .icon-btn:hover {
-	color: var(--accent)
-}
-
-/* 반응형 */
-@media ( max-width : 992px) {
-	.form-sections {
-		flex-direction: column
-	}
-	.section.sub-info {
-		border-right: 0;
-		border-bottom: 1px solid var(--line)
-	}
+/* Responsive */
+@media (max-width: 992px){
+  .form-sections{ flex-direction:column }
+  .section.sub-info{ border-right:0; border-bottom:1px solid var(--line) }
 }
 </style>
 </head>
 <body>
-	<!-- 헤더 -->
-	<div class="app-header">
-		<div class="app-title">
-			<h1>구독 신청</h1>
-		</div>
-		<div>
-			<span class="chip"><i class="fa-regular fa-circle-check"></i>
-				간편 결제 지원</span>
-		</div>
-	</div>
+  <!-- 헤더 -->
+  <div class="app-header">
+    <div class="app-title"><h1>구독 신청</h1></div>
+    <div><span class="chip"><i class="fa-regular fa-circle-check"></i> 간편 결제 지원</span></div>
+  </div>
 
-	<!-- 본문 -->
-	<div class="container">
-		<!-- 단계 표시 -->
-		<div class="stepper" aria-label="진행 단계">
-			<div class="step" style="text-align: center">
-				<div class="circle step-circle active" data-step="1">1</div>
-				<div class="step-label">구독 정보</div>
-			</div>
-			<div class="line" aria-hidden="true"></div>
-			<div class="step" style="text-align: center">
-				<div class="circle step-circle" data-step="2">2</div>
-				<div class="step-label">계약서</div>
-			</div>
-			<div class="line" aria-hidden="true"></div>
-			<div class="step" style="text-align: center">
-				<div class="circle step-circle" data-step="3">3</div>
-				<div class="step-label">결제</div>
-			</div>
-		</div>
+  <div class="container">
+    <!-- 단계 표시 -->
+    <div class="stepper" aria-label="진행 단계">
+      <div class="step" style="text-align:center">
+        <div class="circle step-circle active" data-step="1">1</div>
+        <div class="step-label">구독 정보</div>
+      </div>
+      <div class="line" aria-hidden="true"></div>
+      <div class="step" style="text-align:center">
+        <div class="circle step-circle" data-step="2">2</div>
+        <div class="step-label">계약서</div>
+      </div>
+      <div class="line" aria-hidden="true"></div>
+      <div class="step" style="text-align:center">
+        <div class="circle step-circle" data-step="3">3</div>
+        <div class="step-label">결제</div>
+      </div>
+    </div>
 
-		<!-- 페이지 -->
-		<div class="pages-wrapper" id="pagesWrapper">
-			<!-- STEP 1 -->
-			<div class="page active" id="step1">
-				<div class="form-sections">
-					<div class="section sub-info">
-						<h3>구독 정보</h3>
-						<p>
-							<strong>(월 ₩30,000) VAT 별도</strong>
-						</p>
+    <!-- 페이지 -->
+    <div class="pages-wrapper" id="pagesWrapper">
+      <!-- STEP 1 -->
+      <div class="page active" id="step1">
+        <div class="form-sections">
+          <div class="section sub-info">
+            <h3>구독 정보</h3>
+            <p><strong>(월 ₩30,000) VAT 별도</strong></p>
 
-						<h4>포함 서비스</h4>
-						<div class="services">
-							<div class="service">
-								<span><div class="service-icon">✔</div> 회계</span><i
-									class="fa-regular fa-file-lines"></i>
-							</div>
-							<div class="service">
-								<span><div class="service-icon">✔</div> 인사</span><i
-									class="fa-solid fa-user"></i>
-							</div>
-							<div class="service">
-								<span><div class="service-icon">✔</div> 영업</span><i
-									class="fa-solid fa-chart-line"></i>
-							</div>
-						</div>
-					</div>
+            <h4>포함 서비스</h4>
+            <div class="services">
+              <div class="service"><span><div class="service-icon">✔</div> 회계</span><i class="fa-regular fa-file-lines"></i></div>
+              <div class="service"><span><div class="service-icon">✔</div> 인사</span><i class="fa-solid fa-user"></i></div>
+              <div class="service"><span><div class="service-icon">✔</div> 영업</span><i class="fa-solid fa-chart-line"></i></div>
+            </div>
+          </div>
 
-					<div class="section user-info">
-						<h3>사용자 정보</h3>
-						<form>
-							<div class="form-grid">
-								<!-- 1 -->
-								<div class="form-group">
-									<label>회사명</label> <input type="text" id="companyName"
-										placeholder="예) OO주식회사" required> <span
-										class="error-msg"></span>
-								</div>
-								<div class="form-group">
-									<label>대표자명</label> <input type="text" id="ceoName"
-										placeholder="예) 홍길동" required> <span class="error-msg"></span>
-								</div>
-								<!-- 2 -->
-								<div class="form-group">
-									<label>사업자 등록번호</label>
-									<div class="biz-inputs">
-										<input type="text" id="biz1" maxlength="3" required> -
-										<input type="text" id="biz2" maxlength="2" required> -
-										<input type="text" id="biz3" maxlength="5" required>
-									</div>
-									<span class="error-msg"></span>
-								</div>
-								<div class="form-group">
-									<label>도로명 주소</label>
-									<div class="input-with-icon">
-										<input type="text" id="roadAddress" placeholder="도로명 주소"
-											readonly required>
-										<button type="button" class="icon-btn"
-											onclick="execDaumPostcode()" aria-label="주소 검색">
-											<i class="fa fa-search"></i>
-										</button>
-									</div>
-									<span class="error-msg"></span>
-								</div>
-								<!-- 3 -->
-								<div class="form-group full">
-									<label>상세 주소</label> <input type="text" id="addressDetail"
-										placeholder="상세 주소 입력" required> <span
-										class="error-msg"></span>
-								</div>
-								<!-- 4 -->
-								<div class="form-group">
-									<label>마스터 사용자 ID</label> <input type="text" id="masterId"
-										placeholder="관리자 계정 ID" required> <span
-										class="error-msg"></span>
-								</div>
-								<div class="form-group">
-									<label>마스터 PW</label> <input type="password" id="masterPw"
-										placeholder="초기 비밀번호" required> <span
-										class="error-msg"></span>
-								</div>
-								<!-- 5 -->
-								<div class="form-group">
-									<label>담당자명</label> <input type="text" id="managerName"
-										placeholder="예) 김길동" required> <span class="error-msg"></span>
-								</div>
-								<div class="form-group">
-									<label>담당자 연락처</label>
-									<div class="phone-inputs">
-										<input type="text" id="phone1" maxlength="3" required>
-										- <input type="text" id="phone2" maxlength="4" required>
-										- <input type="text" id="phone3" maxlength="4" required>
-									</div>
-									<span class="error-msg"></span>
-								</div>
-								<!-- 6 -->
-								<div class="form-group full">
-									<label>담당자 이메일</label>
-									<div class="email-input">
-										<input type="text" id="emailFront" placeholder="example"
-											required> <span>@</span> <select id="emailDomain"
-											required>
-											<option value="">선택</option>
-										</select>
-									</div>
-									<span class="error-msg"></span>
-								</div>
-								<!-- 7 -->
-								<div class="form-group full">
-									<label>구독 기간</label> <select id="subPeriod" required>
-										<option value="">선택</option>
-										<option>1개월</option>
-										<option>3개월</option>
-										<option>6개월</option>
-										<option>12개월</option>
-									</select> <span class="error-msg"></span>
-								</div>
-							</div>
-						</form>
-					</div>
-				</div>
+          <div class="section user-info">
+            <h3>사용자 정보</h3>
+            <form>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>회사명</label>
+                  <input type="text" id="companyName" placeholder="예) OO주식회사" required>
+                  <span class="error-msg"></span>
+                </div>
+                <div class="form-group">
+                  <label>대표자명</label>
+                  <input type="text" id="ceoName" placeholder="예) 홍길동" required>
+                  <span class="error-msg"></span>
+                </div>
 
-				<div class="form-footer">
-					<button class="btn btn-prev" onclick="location.href='/'">
-						<i class="fa fa-arrow-left"></i> 이전으로
-					</button>
-					<button class="btn btn-next" onclick="goToStep(2)">
-						다음으로 <i class="fa fa-arrow-right"></i>
-					</button>
-				</div>
-			</div>
+                <div class="form-group">
+                  <label>사업자 등록번호</label>
+                  <div class="biz-inputs">
+                    <input type="text" id="biz1" maxlength="3" required> -
+                    <input type="text" id="biz2" maxlength="2" required> -
+                    <input type="text" id="biz3" maxlength="5" required>
+                  </div>
+                  <span class="error-msg"></span>
+                </div>
 
-			<!-- STEP 2 -->
-			<div class="page hidden-right" id="step2">
-				<div class="section">
-					<h3>ERP 시스템 이용계약서</h3>
+                <div class="form-group">
+                  <label>도로명 주소</label>
+                  <div class="input-with-icon">
+                    <input type="text" id="roadAddress" placeholder="도로명 주소" readonly required>
+                    <button type="button" class="icon-btn" onclick="execDaumPostcode()" aria-label="주소 검색"><i class="fa fa-search"></i></button>
+                  </div>
+                  <span class="error-msg"></span>
+                </div>
 
-					<div class="accordion">
-						<div class="accordion-item">
-							<button class="accordion-header">
-								[ 서비스 이용 계약서 ] <i class="fa fa-chevron-down"></i>
-							</button>
-							<div class="accordion-content">
-								<p>
-									<strong>제1조 (목적)</strong><br>본 계약은 [회사명]이 제공하는 ERP 시스템(이하
-									"서비스")의 이용과 관련하여, 서비스 제공자와 이용자 간의 권리와 의무 및 책임사항을 규정함을 목적으로 합니다.
-								</p>
-								<p>
-									<strong>제2조 (서비스 범위)</strong><br>1. 서비스 제공자는 ERP 시스템의 회계,
-									인사, 영업 관련 기능을 제공합니다.<br>2. 서비스의 구체적인 내용과 범위는 회사의 정책에 따라
-									변경될 수 있습니다.
-								</p>
-								<p>
-									<strong>제3조 (이용자의 의무)</strong><br>1. 이용자는 서비스를 본래의 목적에 맞게
-									사용해야 합니다.<br>2. 불법적인 용도로 서비스를 이용하거나, 타인의 권리를 침해해서는 안 됩니다.
-								</p>
-								<p>
-									<strong>제4조 (계약 기간 및 해지)</strong><br>1. 기본 계약 기간은 구독 신청 시
-									선택한 기간으로 합니다.<br>2. 이용자는 계약기간 중 해지를 원할 경우 회사가 정한 절차에 따라 해지
-									신청을 해야 하며, 이미 납부한 요금은 환불되지 않습니다.
-								</p>
-								<p>
-									<strong>제5조 (책임 제한)</strong><br>회사는 천재지변, 시스템 장애, 외부 요인으로
-									인한 서비스 중단에 대하여 책임을 지지 않습니다. 단, 회사의 고의 또는 중대한 과실로 인한 경우에는 예외로
-									합니다.
-								</p>
-							</div>
-						</div>
+                <div class="form-group full">
+                  <label>상세 주소</label>
+                  <input type="text" id="addressDetail" placeholder="상세 주소 입력" required>
+                  <span class="error-msg"></span>
+                </div>
 
-						<div class="accordion-item">
-							<button class="accordion-header">
-								[ 개인정보 수집 · 이용 동의서 ] <i class="fa fa-chevron-down"></i>
-							</button>
-							<div class="accordion-content">
-								<p>
-									<strong>1. 수집하는 개인정보 항목</strong><br>- 회사명, 대표자명, 사업자 등록번호,
-									담당자명, 연락처, 이메일 주소
-								</p>
-								<p>
-									<strong>2. 개인정보의 수집 및 이용 목적</strong><br>1) 서비스 가입 및 관리<br>2)
-									계약 이행 및 서비스 제공<br>3) 요금 청구 및 결제 관리<br>4) 고객 상담 및 공지사항
-									전달
-								</p>
-								<p>
-									<strong>3. 개인정보의 보관 및 이용 기간</strong><br>수집된 개인정보는 서비스 이용
-									계약이 유지되는 동안 보관하며, 계약 해지 시 즉시 파기합니다.<br>단, 관련 법령에 따라 일정 기간
-									보관이 필요한 경우 해당 기간 동안 보관할 수 있습니다.
-								</p>
-								<p>
-									<strong>4. 동의 거부 권리</strong><br>이용자는 개인정보 수집 및 이용에 대한 동의를
-									거부할 권리가 있으며, 동의 거부 시 서비스 이용이 제한될 수 있습니다.
-								</p>
-							</div>
-						</div>
-					</div>
+                <div class="form-group">
+                  <label>마스터 사용자 ID</label>
+                  <input type="text" id="masterId" placeholder="관리자 계정 ID" required>
+                  <span class="error-msg"></span>
+                </div>
+                <div class="form-group">
+                  <label>마스터 PW</label>
+                  <input type="password" id="masterPw" placeholder="초기 비밀번호" required>
+                  <span class="error-msg"></span>
+                </div>
 
-					<div class="agreement-box">
-						<div class="agreement-left">
-							<p>본 계약서의 모든 내용을 확인하였으며, 이에 동의합니다.</p>
-							<p>
-								계약일자 : <strong id="contractDate"></strong>
-							</p>
-							<p>
-								구독 회사명 : <span id="contractCompany">__________</span>
-							</p>
-							<p>
-								대표자명 : <span id="contractCeo">__________</span>
-							</p>
-							<p>
-								계약 만료일자 : <strong id="contractEndDate">__________</strong>
-							</p>
-						</div>
+                <div class="form-group">
+                  <label>담당자명</label>
+                  <input type="text" id="managerName" placeholder="예) 김길동" required>
+                  <span class="error-msg"></span>
+                </div>
+                <div class="form-group">
+                  <label>담당자 연락처</label>
+                  <div class="phone-inputs">
+                    <input type="text" id="phone1" maxlength="3" required> -
+                    <input type="text" id="phone2" maxlength="4" required> -
+                    <input type="text" id="phone3" maxlength="4" required>
+                  </div>
+                  <span class="error-msg"></span>
+                </div>
 
-						<div class="agreement-right">
-							<label style="font-weight: 800">전자서명</label>
-							<canvas id="signaturePad" width="500" height="200"></canvas>
-							<div class="sign-actions">
-								<button type="button" id="clearSign">초기화</button>
-							</div>
-						</div>
-					</div>
+                <div class="form-group full">
+                  <label>담당자 이메일</label>
+                  <div class="email-input">
+                    <input type="text" id="emailFront" placeholder="example" required>
+                    <span>@</span>
+                    <select id="emailDomain" required>
+                      <option value="">선택</option>
+                    </select>
+                  </div>
+                  <span class="error-msg"></span>
+                </div>
 
-					<div class="form-footer">
-						<button class="btn btn-prev" onclick="goToStep(1)">
-							<i class="fa fa-arrow-left"></i> 이전으로
-						</button>
-						<button class="btn btn-next" onclick="goToStep(3)">
-							다음으로 <i class="fa fa-arrow-right"></i>
-						</button>
-					</div>
-				</div>
-			</div>
+                <div class="form-group full">
+                  <label>구독 기간</label>
+                  <select id="subPeriod" required>
+                    <option value="">선택</option>
+                    <option>1개월</option><option>3개월</option><option>6개월</option><option>12개월</option>
+                  </select>
+                  <span class="error-msg"></span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
 
-			<!-- STEP 3 -->
-			<div class="page hidden-right" id="step3">
-				<div class="form-sections">
-					<div class="section sub-info">
-						<h3>결제 정보</h3>
-						<h4>간편 결제 수단</h4>
-						<div class="pay-methods">
-							<button type="button" class="pay-btn kakao"
-								onclick="selectPayMethod('kakao')">카카오 페이</button>
-							<button type="button" class="pay-btn naver"
-								onclick="selectPayMethod('naver')">네이버 페이</button>
-						</div>
-					</div>
+        <div class="form-footer">
+          <button class="btn btn-prev" onclick="location.href='/'"><i class="fa fa-arrow-left"></i> 이전으로</button>
+          <button class="btn btn-next" onclick="goToStep(2)">다음으로 <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
 
-					<div class="section user-info">
-						<h3>최종 결제 내역</h3>
-						<div class="summary">
-							<p>
-								<strong>ERP</strong>
-							</p>
-							<p id="summaryPeriod">___개월 구독 / 월 ₩30,000</p>
-							<table class="summary-table">
-								<tr>
-									<td>기본 요금</td>
-									<td class="right" id="summaryBase">₩0</td>
-								</tr>
-								<tr>
-									<td>부가세</td>
-									<td class="right" id="summaryTax">₩0</td>
-								</tr>
-								<tr class="total">
-									<td><strong>총 결제 금액</strong></td>
-									<td class="right" id="summaryTotal"><strong>₩0</strong></td>
-								</tr>
-							</table>
-						</div>
-						<div class="agree-box">
-							<label><input type="checkbox" id="agreePayment">
-								위 결제 금액에 동의합니다.</label>
-						</div>
-					</div>
-				</div>
+      <!-- STEP 2 -->
+      <div class="page hidden-right" id="step2">
+        <div class="section">
+          <h3>ERP 시스템 이용계약서</h3>
 
-				<div class="form-footer">
-					<button class="btn btn-prev" onclick="goToStep(2)">
-						<i class="fa fa-arrow-left"></i> 이전으로
-					</button>
-					<button class="btn btn-next" onclick="submitPayment()">
-						결제하기 <i class="fa fa-arrow-right"></i>
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
+          <div class="accordion">
+            <div class="accordion-item">
+              <button class="accordion-header">[ 서비스 이용 계약서 ] <i class="fa fa-chevron-down"></i></button>
+              <div class="accordion-content">
+                <p><strong>제1조 (목적)</strong><br>본 계약은 [회사명]이 제공하는 ERP 시스템(이하 "서비스")의 이용과 관련하여, 서비스 제공자와 이용자 간의 권리와 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                <p><strong>제2조 (서비스 범위)</strong><br>1. 서비스 제공자는 ERP 시스템의 회계, 인사, 영업 관련 기능을 제공합니다.<br>2. 서비스의 구체적인 내용과 범위는 회사의 정책에 따라 변경될 수 있습니다.</p>
+                <p><strong>제3조 (이용자의 의무)</strong><br>1. 이용자는 서비스를 본래의 목적에 맞게 사용해야 합니다.<br>2. 불법적인 용도로 서비스를 이용하거나, 타인의 권리를 침해해서는 안 됩니다.</p>
+                <p><strong>제4조 (계약 기간 및 해지)</strong><br>1. 기본 계약 기간은 구독 신청 시 선택한 기간으로 합니다.<br>2. 이용자는 계약기간 중 해지를 원할 경우 회사가 정한 절차에 따라 해지 신청을 해야 하며, 이미 납부한 요금은 환불되지 않습니다.</p>
+                <p><strong>제5조 (책임 제한)</strong><br>회사는 천재지변, 시스템 장애, 외부 요인으로 인한 서비스 중단에 대하여 책임을 지지 않습니다. 단, 회사의 고의 또는 중대한 과실로 인한 경우에는 예외로 합니다.</p>
+              </div>
+            </div>
 
-	<!-- 모달 마스크 (기존 로직 유지) -->
-	<div id="payMask"
-		style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .35); z-index: 9999;"></div>
+            <div class="accordion-item">
+              <button class="accordion-header">[ 개인정보 수집 · 이용 동의서 ] <i class="fa fa-chevron-down"></i></button>
+              <div class="accordion-content">
+                <p><strong>1. 수집하는 개인정보 항목</strong><br>- 회사명, 대표자명, 사업자 등록번호, 담당자명, 연락처, 이메일 주소</p>
+                <p><strong>2. 개인정보의 수집 및 이용 목적</strong><br>1) 서비스 가입 및 관리<br>2) 계약 이행 및 서비스 제공<br>3) 요금 청구 및 결제 관리<br>4) 고객 상담 및 공지사항 전달</p>
+                <p><strong>3. 개인정보의 보관 및 이용 기간</strong><br>수집된 개인정보는 서비스 이용 계약이 유지되는 동안 보관하며, 계약 해지 시 즉시 파기합니다.<br>단, 관련 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관할 수 있습니다.</p>
+                <p><strong>4. 동의 거부 권리</strong><br>이용자는 개인정보 수집 및 이용에 대한 동의를 거부할 권리가 있으며, 동의 거부 시 서비스 이용이 제한될 수 있습니다.</p>
+              </div>
+            </div>
+          </div>
 
-	<script>
-    // ===== 전역 상태 =====
-    let currentStep = 1;
-    let payWin = null;
-    let payClosePoll = null;
-    let selectedMethod = null;
+          <div class="agreement-box">
+            <div class="agreement-left">
+              <p>본 계약서의 모든 내용을 확인하였으며, 이에 동의합니다.</p>
+              <p>계약일자 : <strong id="contractDate"></strong></p>
+              <p>구독 회사명 : <span id="contractCompany">__________</span></p>
+              <p>대표자명 : <span id="contractCeo">__________</span></p>
+              <p>계약 만료일자 : <strong id="contractEndDate">__________</strong></p>
+            </div>
 
-    // ===== 마스크 =====
-    function ensureMask(){ return document.getElementById('payMask'); }
-    function showMask(){ ensureMask().style.display = 'block'; }
-    function hideMask(){ ensureMask().style.display = 'none'; }
+            <div class="agreement-right">
+              <label style="font-weight:800">전자서명</label>
+              <canvas id="signaturePad" width="500" height="200"></canvas>
+              <div class="sign-actions"><button type="button" id="clearSign">초기화</button></div>
+            </div>
+          </div>
 
-    // ===== 레이아웃 높이 =====
-    function resizeWrapper(){
-      const wrapper = document.getElementById('pagesWrapper');
-      const activePage = document.querySelector('.page.active');
-      if(!wrapper || !activePage) return;
-      wrapper.style.height = activePage.scrollHeight + 'px';
-    }
+          <div class="form-footer">
+            <button class="btn btn-prev" onclick="goToStep(1)"><i class="fa fa-arrow-left"></i> 이전으로</button>
+            <button class="btn btn-next" onclick="goToStep(3)">다음으로 <i class="fa fa-arrow-right"></i></button>
+          </div>
+        </div>
+      </div>
 
-    // ===== 입력 유틸 =====
-    function onlyNumberInput(selector){
-      document.querySelectorAll(selector).forEach(input=>{
-        input.addEventListener('input', ()=>{ input.value = input.value.replace(/\D/g,''); });
-      });
-    }
-    function autoMoveNext(selector){
-      document.querySelectorAll(selector).forEach(input=>{
-        input.addEventListener('input', ()=>{
-          const maxLength = input.getAttribute('maxlength');
-          if(maxLength && input.value.length >= maxLength){
-            let next = input.nextElementSibling;
-            while(next && next.tagName !== 'INPUT') next = next.nextElementSibling;
-            if(next) next.focus();
-          }
-        });
-      });
-    }
+      <!-- STEP 3 -->
+      <div class="page hidden-right" id="step3">
+        <div class="form-sections">
+          <div class="section sub-info">
+            <h3>결제 정보</h3>
+            <h4>간편 결제 수단</h4>
+            <div class="pay-methods">
+              <button type="button" class="pay-btn kakao" onclick="selectPayMethod('kakao')">카카오 페이</button>
+              <button type="button" class="pay-btn toss"  onclick="selectPayMethod('toss')">토스 페이</button>
+            </div>
+          </div>
 
-    // ===== 에러 =====
-    function showError(input, message){
-      const container = input.closest('.form-group');
-      const errorSpan = container?.querySelector('.error-msg');
-      if(errorSpan){ errorSpan.textContent = message; errorSpan.classList.add('active'); }
-      input.focus();
-      requestAnimationFrame(resizeWrapper);
-    }
-    function clearErrors(){
-      document.querySelectorAll('.error-msg').forEach(span=>{
-        span.textContent = ''; span.classList.remove('active');
-      });
-      requestAnimationFrame(resizeWrapper);
-    }
+          <div class="section user-info">
+            <h3>최종 결제 내역</h3>
+            <div class="summary">
+              <p><strong>ERP</strong></p>
+              <p id="summaryPeriod">___개월 구독 / 월 ₩30,000</p>
+              <table class="summary-table">
+                <tr><td>기본 요금</td><td class="right" id="summaryBase">₩0</td></tr>
+                <tr><td>부가세</td><td class="right" id="summaryTax">₩0</td></tr>
+                <tr class="total"><td><strong>총 결제 금액</strong></td><td class="right" id="summaryTotal"><strong>₩0</strong></td></tr>
+              </table>
+            </div>
+            <div class="agree-box">
+              <label><input type="checkbox" id="agreePayment"> 위 결제 금액에 동의합니다.</label>
+            </div>
+          </div>
+        </div>
 
-    // ===== STEP1 검증 =====
-    function validateStep1(){
-      clearErrors();
-      const companyName = document.getElementById('companyName');
-      const ceoName = document.getElementById('ceoName');
-      const biz1 = document.getElementById('biz1');
-      const biz2 = document.getElementById('biz2');
-      const biz3 = document.getElementById('biz3');
-      const roadAddress = document.getElementById('roadAddress');
-      const addressDetail = document.getElementById('addressDetail');
-      const masterId = document.getElementById('masterId');
-      const masterPw = document.getElementById('masterPw');
-      const managerName = document.getElementById('managerName');
-      const phone1 = document.getElementById('phone1');
-      const phone2 = document.getElementById('phone2');
-      const phone3 = document.getElementById('phone3');
-      const emailFront = document.getElementById('emailFront');
-      const emailDomain = document.getElementById('emailDomain');
-      const subPeriod = document.getElementById('subPeriod');
+        <div class="form-footer">
+          <button class="btn btn-prev" onclick="goToStep(2)"><i class="fa fa-arrow-left"></i> 이전으로</button>
+          <button class="btn btn-next" onclick="submitPayment()">결제하기 <i class="fa fa-arrow-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      if(!companyName.value.trim()) { showError(companyName, '회사명을 입력해주세요.'); return false; }
-      if(!ceoName.value.trim()) { showError(ceoName, '대표자명을 입력해주세요.'); return false; }
-      if(!biz1.value.trim() || !biz2.value.trim() || !biz3.value.trim()){ showError(biz1, '사업자 등록번호를 모두 입력해주세요.'); return false; }
-      if(!roadAddress.value.trim()) { showError(roadAddress, '주소를 입력해주세요.'); return false; }
-      if(!addressDetail.value.trim()) { showError(addressDetail, '상세 주소를 입력해주세요.'); return false; }
-      if(!masterId.value.trim()) { showError(masterId, '마스터 사용자 ID를 입력해주세요.'); return false; }
-      if(!masterPw.value.trim()) { showError(masterPw, '마스터 PW를 입력해주세요.'); return false; }
-      if(!managerName.value.trim()) { showError(managerName, '담당자명을 입력해주세요.'); return false; }
-      if(!phone1.value.trim() || !phone2.value.trim() || !phone3.value.trim()){ showError(phone1, '연락처를 모두 입력해주세요.'); return false; }
-      if(!emailFront.value.trim()) { showError(emailFront, '이메일 앞부분을 입력해주세요.'); return false; }
-      if(!emailDomain.value.trim()) { showError(emailDomain, '이메일 도메인을 선택해주세요.'); return false; }
-      if(!subPeriod.value.trim()) { showError(subPeriod, '구독 기간을 선택해주세요.'); return false; }
+  <!-- 마스크 -->
+  <div id="payMask" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9999;"></div>
 
-      const biz = `${biz1.value}-${biz2.value}-${biz3.value}`;
-      if(!/^\d{3}-\d{2}-\d{5}$/.test(biz)){
-        showError(biz1, '사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)');
-        return false;
-      }
-      const phone = `${phone1.value}-${phone2.value}-${phone3.value}`;
-      if(!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone)){
-        showError(phone1, '연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)');
-        return false;
-      }
-      return true;
-    }
+<script>
+/* ==== 전역 ==== */
+let currentStep = 1;
+let payWin = null, payClosePoll = null;
+let selectedMethod = null;
 
-    // ===== STEP 이동 =====
-    function goToStep(step){
-      if(step === currentStep) return;
-      if(currentStep === 1 && step === 2){ if(!validateStep1()) return; }
+/* 마스크 */
+function ensureMask(){ return document.getElementById('payMask'); }
+function showMask(){ ensureMask().style.display='block'; }
+function hideMask(){ ensureMask().style.display='none'; }
 
-      const currentPage = document.getElementById('step'+currentStep);
-      const nextPage = document.getElementById('step'+step);
+/* 래퍼 높이 */
+function resizeWrapper(){
+  const wrapper = document.getElementById('pagesWrapper');
+  const activePage = document.querySelector('.page.active');
+  if(!wrapper || !activePage) return;
+  wrapper.style.height = activePage.scrollHeight + 'px';
+}
 
-      if(step > currentStep){
-        currentPage.classList.remove('active'); currentPage.classList.add('hidden-left');
-        nextPage.classList.remove('hidden-left','hidden-right');
-      }else{
-        currentPage.classList.remove('active'); currentPage.classList.add('hidden-right');
-        nextPage.classList.remove('hidden-right','hidden-left');
-      }
-      nextPage.classList.add('active');
-
-      document.querySelectorAll('.step-circle').forEach(c=> c.classList.toggle('active', c.dataset.step == step));
-      currentStep = step;
-
-      if(step === 2){
-        const company = document.getElementById('companyName').value || '__________';
-        const ceo = document.getElementById('ceoName').value || '__________';
-        const today = new Date();
-        const startDateStr = today.toISOString().split('T')[0];
-
-        const subPeriod = document.getElementById('subPeriod').value;
-        let endDate = new Date(today);
-        if(subPeriod.includes('개월')){
-          const months = parseInt(subPeriod.replace('개월',''));
-          endDate.setMonth(endDate.getMonth() + months);
-        }
-        const endDateStr = endDate.toISOString().split('T')[0];
-
-        document.getElementById('contractCompany').textContent = `[ ${company} ]`;
-        document.getElementById('contractCeo').textContent = `[ ${ceo} ]`;
-        document.getElementById('contractDate').textContent = `[ ${startDateStr} ]`;
-        document.getElementById('contractEndDate').textContent = `[ ${endDateStr} ]`;
-      }
-
-      if(step === 3){
-        const subPeriod = document.getElementById('subPeriod').value;
-        let months = 0;
-        if(subPeriod.includes('개월')) months = parseInt(subPeriod.replace('개월',''));
-        const unitPrice = 30000;
-        const basePrice = months * unitPrice;
-        const tax = Math.round(basePrice * 0.1);
-        const total = basePrice + tax;
-
-        document.getElementById('summaryPeriod').textContent = `${subPeriod} 구독 / 월 ₩${unitPrice.toLocaleString()}`;
-        document.getElementById('summaryBase').textContent = `₩${basePrice.toLocaleString()}`;
-        document.getElementById('summaryTax').textContent = `₩${tax.toLocaleString()}`;
-        document.getElementById('summaryTotal').textContent = `₩${total.toLocaleString()}`;
-      }
-
-      requestAnimationFrame(resizeWrapper);
-      nextPage.addEventListener('transitionend', resizeWrapper, { once:true });
-    }
-    window.goToStep = goToStep;
-
-    // ===== 아코디언 =====
-    function initAccordion(){
-      document.querySelectorAll('.accordion-header').forEach(header=>{
-        header.addEventListener('click', ()=>{
-          const content = header.nextElementSibling;
-          header.classList.toggle('active');
-          content.classList.toggle('open');
-          resizeWrapper();
-          content.addEventListener('transitionend', resizeWrapper, { once:true });
-        });
-      });
-    }
-
-    // ===== 전자서명 =====
-    let canvas, ctx, drawing = false;
-    function getPosition(e){
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      if(e.touches){
-        return { x:(e.touches[0].clientX-rect.left)*scaleX, y:(e.touches[0].clientY-rect.top)*scaleY };
-      }else{
-        return { x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
-      }
-    }
-    function startDrawing(e){ e.preventDefault(); drawing = true; const p = getPosition(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
-    function draw(e){ if(!drawing) return; e.preventDefault(); const p = getPosition(e); ctx.lineTo(p.x, p.y); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); }
-    function stopDrawing(e){ if(!drawing) return; e.preventDefault(); drawing = false; }
-    function getSignatureDataUrl(){ try{ return canvas.toDataURL('image/png'); }catch(_){ return ''; } }
-
-    // ===== 결제 수단 =====
-    function selectPayMethod(method){
-      selectedMethod = method;
-      document.querySelectorAll('.pay-btn').forEach(btn=>btn.classList.remove('active'));
-      const selectedBtn = document.querySelector('.pay-btn.'+method);
-      if(selectedBtn) selectedBtn.classList.add('active');
-    }
-    window.selectPayMethod = selectPayMethod;
-
-    // ===== 결제 팝업 =====
-    function openPayPopup(url){
-      showMask();
-      const features = 'width=480,height=720,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
-      payWin = window.open(url, 'easyPay', features);
-      if(payClosePoll) clearInterval(payClosePoll);
-      payClosePoll = setInterval(()=>{
-        if(!payWin || payWin.closed){ clearInterval(payClosePoll); hideMask(); }
-      }, 700);
-    }
-
-    // ===== 결제 시작 =====
-    function submitPayment(){
-      if(!document.getElementById('agreePayment').checked){ alert('결제 금액에 동의해야 진행 가능합니다.'); return; }
-      if(!selectedMethod){ alert('결제 수단을 선택해주세요.'); return; }
-
-      const userId = 'admin01';
-      const buyerName = document.getElementById('managerName').value;
-      const subPeriodText = document.getElementById('subPeriod').value;
-      const totalAmount = parseInt(document.getElementById('summaryTotal').textContent.replace(/[₩,]/g,'') || '0', 10);
-
-      const emailFront  = document.getElementById('emailFront').value.trim();
-      const emailDomain = document.getElementById('emailDomain').value.trim();
-      const contactEmail = `${emailFront}@${emailDomain}`;
-
-      const signatureDataUrl = getSignatureDataUrl();
-
-      const payRequest = {
-        orderId:'ORDER_' + Date.now(),
-        userId, itemName:'ERP 구독', amount: totalAmount,
-        payMethod: selectedMethod.toUpperCase(),
-        buyerName, subPeriod: subPeriodText
-      };
-
-      const companyInfo = {
-        companyName: document.getElementById('companyName').value,
-        ceoName: document.getElementById('ceoName').value,
-        bizRegNo: `${document.getElementById('biz1').value}-${document.getElementById('biz2').value}-${document.getElementById('biz3').value}`,
-        roadAddress: document.getElementById('roadAddress').value,
-        addressDetail: document.getElementById('addressDetail').value,
-        tel: `${document.getElementById('phone1').value}-${document.getElementById('phone2').value}-${document.getElementById('phone3').value}`,
-        managerName: document.getElementById('managerName').value,
-        managerEmail: contactEmail,
-      };
-
-      const systemUser = {
-        userId: document.getElementById('masterId').value.trim(),
-        userPw: document.getElementById('masterPw').value,
-        empCode:'', remk:'마스터 관리자'
-      };
-
-      fetch('/pay/ready', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ payRequest, companyInfo, systemUser, contactEmail, signatureDataUrl })
-      })
-      .then(res=>res.json())
-      .then(data=>{
-        const redirectUrl = selectedMethod === 'kakao' ? data.next_redirect_pc_url : data.redirectUrl;
-        if(!redirectUrl) throw new Error('결제 리다이렉트 URL이 없습니다.');
-        openPayPopup(redirectUrl);
-      })
-      .catch(err=>{
-        hideMask();
-        console.error(err);
-        alert('결제 준비 중 오류가 발생했습니다.');
-      });
-    }
-    window.submitPayment = submitPayment;
-
-    // ===== 결제 결과 수신 =====
-    window.addEventListener('message', (e)=>{
-      const msg = e.data || {};
-      if(msg.type === 'KAKAOPAY_RESULT' || msg.type === 'NAVERPAY_RESULT'){
-        try{ hideMask && hideMask(); }catch(_){}
-        try{ if(window.payWin && !payWin.closed) payWin.close(); }catch(_){}
-
-        if(msg.status === 'success'){
-          const subscriptionCode = msg.subscriptionCode || '';
-          const buyerName = (document.getElementById('managerName')?.value || '').trim();
-          const companyCode = msg.companyCode || '';
-          const masterId = msg.masterId || '';
-
-          const totalText = document.getElementById('summaryTotal')?.textContent || '₩0';
-          const vatText = document.getElementById('summaryTax')?.textContent || '₩0';
-          const toNumber = (w)=> Number(String(w).replace(/[^\d]/g,''));
-          const total = toNumber(totalText);
-          const vat = toNumber(vatText);
-
-          const params = new URLSearchParams({ subscriptionCode, buyerName, total:String(total), vat:String(vat), companyCode, masterId });
-          window.location.href = `/pay/complete?${params.toString()}`;
-        }else if(msg.status === 'cancel'){
-          alert('결제가 취소되었습니다.');
-        }else{
-          alert('결제에 실패했습니다.');
-        }
+/* 숫자 입력/자동 이동 */
+function onlyNumberInput(selector){
+  document.querySelectorAll(selector).forEach(input=>{
+    input.addEventListener('input', ()=>{ input.value = input.value.replace(/\D/g,''); });
+  });
+}
+function autoMoveNext(selector){
+  document.querySelectorAll(selector).forEach(input=>{
+    input.addEventListener('input', ()=>{
+      const maxLength = input.getAttribute('maxlength');
+      if(maxLength && input.value.length >= maxLength){
+        let next = input.nextElementSibling;
+        while(next && next.tagName !== 'INPUT') next = next.nextElementSibling;
+        if(next) next.focus();
       }
     });
+  });
+}
 
-    // ===== 다음 주소 찾기 =====
-    function execDaumPostcode(){
-      new daum.Postcode({
-        oncomplete: function(data){
-          document.getElementById('roadAddress').value = data.address;
-          resizeWrapper();
-        }
-      }).open();
+/* 에러 */
+function showError(input, msg){
+  const container = input.closest('.form-group');
+  const errorSpan = container?.querySelector('.error-msg');
+  if(errorSpan){ errorSpan.textContent = msg; errorSpan.classList.add('active'); }
+  input.focus();
+  requestAnimationFrame(resizeWrapper);
+}
+function clearErrors(){
+  document.querySelectorAll('.error-msg').forEach(s=>{ s.textContent=''; s.classList.remove('active'); });
+  requestAnimationFrame(resizeWrapper);
+}
+
+/* STEP1 검증 */
+function validateStep1(){
+  clearErrors();
+  const companyName = document.getElementById('companyName');
+  const ceoName = document.getElementById('ceoName');
+  const biz1 = document.getElementById('biz1');
+  const biz2 = document.getElementById('biz2');
+  const biz3 = document.getElementById('biz3');
+  const roadAddress = document.getElementById('roadAddress');
+  const addressDetail = document.getElementById('addressDetail');
+  const masterId = document.getElementById('masterId');
+  const masterPw = document.getElementById('masterPw');
+  const managerName = document.getElementById('managerName');
+  const phone1 = document.getElementById('phone1');
+  const phone2 = document.getElementById('phone2');
+  const phone3 = document.getElementById('phone3');
+  const emailFront = document.getElementById('emailFront');
+  const emailDomain = document.getElementById('emailDomain');
+  const subPeriod = document.getElementById('subPeriod');
+
+  if(!companyName.value.trim()) return showError(companyName,'회사명을 입력해주세요.'), false;
+  if(!ceoName.value.trim())     return showError(ceoName,'대표자명을 입력해주세요.'), false;
+  if(!biz1.value.trim()||!biz2.value.trim()||!biz3.value.trim()) return showError(biz1,'사업자 등록번호를 모두 입력해주세요.'), false;
+  if(!roadAddress.value.trim()) return showError(roadAddress,'주소를 입력해주세요.'), false;
+  if(!addressDetail.value.trim()) return showError(addressDetail,'상세 주소를 입력해주세요.'), false;
+  if(!masterId.value.trim())    return showError(masterId,'마스터 사용자 ID를 입력해주세요.'), false;
+  if(!masterPw.value.trim())    return showError(masterPw,'마스터 PW를 입력해주세요.'), false;
+  if(!managerName.value.trim()) return showError(managerName,'담당자명을 입력해주세요.'), false;
+  if(!phone1.value.trim()||!phone2.value.trim()||!phone3.value.trim()) return showError(phone1,'연락처를 모두 입력해주세요.'), false;
+  if(!emailFront.value.trim())  return showError(emailFront,'이메일 앞부분을 입력해주세요.'), false;
+  if(!emailDomain.value.trim()) return showError(emailDomain,'이메일 도메인을 선택해주세요.'), false;
+  if(!subPeriod.value.trim())   return showError(subPeriod,'구독 기간을 선택해주세요.'), false;
+
+  const biz = `${biz1.value}-${biz2.value}-${biz3.value}`;
+  if(!/^\d{3}-\d{2}-\d{5}$/.test(biz)) return showError(biz1,'사업자 등록번호 형식이 올바르지 않습니다. (예: 123-45-67890)'), false;
+
+  const phone = `${phone1.value}-${phone2.value}-${phone3.value}`;
+  if(!/^\d{2,3}-\d{3,4}-\d{4}$/.test(phone)) return showError(phone1,'연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)'), false;
+
+  return true;
+}
+
+/* STEP 이동 */
+function goToStep(step){
+  if(step === currentStep) return;
+  if(currentStep === 1 && step === 2){ if(!validateStep1()) return; }
+
+  const currentPage = document.getElementById('step'+currentStep);
+  const nextPage = document.getElementById('step'+step);
+
+  if(step > currentStep){
+    currentPage.classList.remove('active'); currentPage.classList.add('hidden-left');
+    nextPage.classList.remove('hidden-left','hidden-right');
+  }else{
+    currentPage.classList.remove('active'); currentPage.classList.add('hidden-right');
+    nextPage.classList.remove('hidden-right','hidden-left');
+  }
+  nextPage.classList.add('active');
+
+  document.querySelectorAll('.step-circle').forEach(c=> c.classList.toggle('active', c.dataset.step == step));
+  currentStep = step;
+
+  if(step === 2){
+    const company = document.getElementById('companyName').value || '__________';
+    const ceo = document.getElementById('ceoName').value || '__________';
+    const today = new Date();
+    const startDateStr = today.toISOString().split('T')[0];
+
+    const subPeriod = document.getElementById('subPeriod').value;
+    let endDate = new Date(today);
+    if(subPeriod.includes('개월')){
+      const months = parseInt(subPeriod.replace('개월',''));
+      endDate.setMonth(endDate.getMonth() + months);
     }
-    window.execDaumPostcode = execDaumPostcode;
+    const endDateStr = endDate.toISOString().split('T')[0];
 
-    // ===== 이메일 도메인 로딩 =====
-    function loadEmailDomains(){
-      fetch('/api/modal/commonCodeAdmin?commonGroup=GRP004')
-        .then(res=>res.json())
-        .then(domains=>{
-          const select = document.getElementById('emailDomain');
-          select.innerHTML = '<option value="">선택</option>';
-          domains.forEach(d=>{
-            const opt = document.createElement('option');
-            opt.value = d.codeName; opt.textContent = d.codeName;
-            select.appendChild(opt);
-          });
-        })
-        .catch(err=> console.error('이메일 도메인 로딩 실패:', err));
-    }
+    document.getElementById('contractCompany').textContent = `[ ${company} ]`;
+    document.getElementById('contractCeo').textContent = `[ ${ceo} ]`;
+    document.getElementById('contractDate').textContent = `[ ${startDateStr} ]`;
+    document.getElementById('contractEndDate').textContent = `[ ${endDateStr} ]`;
+  }
 
-    // ===== 초기화 =====
-    document.addEventListener('DOMContentLoaded', ()=>{
-      initAccordion();
+  if(step === 3){
+    const subPeriod = document.getElementById('subPeriod').value;
+    let months = 0;
+    if(subPeriod.includes('개월')) months = parseInt(subPeriod.replace('개월',''));
+    const unitPrice = 30000;
+    const basePrice = months * unitPrice;
+    const tax = Math.round(basePrice * 0.1);
+    const total = basePrice + tax;
+
+    document.getElementById('summaryPeriod').textContent = `${subPeriod} 구독 / 월 ₩${unitPrice.toLocaleString()}`;
+    document.getElementById('summaryBase').textContent   = `₩${basePrice.toLocaleString()}`;
+    document.getElementById('summaryTax').textContent    = `₩${tax.toLocaleString()}`;
+    document.getElementById('summaryTotal').textContent  = `₩${total.toLocaleString()}`;
+  }
+
+  requestAnimationFrame(resizeWrapper);
+  nextPage.addEventListener('transitionend', resizeWrapper, { once:true });
+}
+window.goToStep = goToStep;
+
+/* 아코디언 */
+function initAccordion(){
+  document.querySelectorAll('.accordion-header').forEach(header=>{
+    header.addEventListener('click', ()=>{
+      const content = header.nextElementSibling;
+      header.classList.toggle('active');
+      content.classList.toggle('open');
       resizeWrapper();
-      window.addEventListener('resize', resizeWrapper);
-
-      // 서명 캔버스
-      canvas = document.getElementById('signaturePad');
-      if(canvas){
-        ctx = canvas.getContext('2d');
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        canvas.addEventListener('touchstart', startDrawing, {passive:false});
-        canvas.addEventListener('touchmove', draw, {passive:false});
-        canvas.addEventListener('touchend', stopDrawing, {passive:false});
-        canvas.addEventListener('touchcancel', stopDrawing, {passive:false});
-        const clearBtn = document.getElementById('clearSign');
-        clearBtn?.addEventListener('click', ()=> ctx.clearRect(0,0,canvas.width,canvas.height));
-      }
-
-      // 숫자 제한 & 자동 포커스
-      onlyNumberInput('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
-      autoMoveNext('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
-
-      // 이메일 도메인
-      loadEmailDomains();
+      content.addEventListener('transitionend', resizeWrapper, { once:true });
     });
-    window.addEventListener('load', resizeWrapper);
-  </script>
+  });
+}
 
-	<!-- 다음 우편번호 -->
-	<script
-		src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+/* 전자서명 */
+let canvas, ctx, drawing=false;
+function getPosition(e){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+  if(e.touches){ return { x:(e.touches[0].clientX-rect.left)*scaleX, y:(e.touches[0].clientY-rect.top)*scaleY }; }
+  return { x:(e.clientX-rect.left)*scaleX, y:(e.clientY-rect.top)*scaleY };
+}
+function startDrawing(e){ e.preventDefault(); drawing=true; const p=getPosition(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); }
+function draw(e){ if(!drawing) return; e.preventDefault(); const p=getPosition(e); ctx.lineTo(p.x,p.y); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.lineCap='round'; ctx.stroke(); }
+function stopDrawing(e){ if(!drawing) return; e.preventDefault(); drawing=false; }
+function getSignatureDataUrl(){ try{ return canvas.toDataURL('image/png'); }catch(_){ return ''; } }
+
+/* 결제 수단 선택 */
+function selectPayMethod(method){
+  selectedMethod = method;  // 'kakao' | 'toss'
+  document.querySelectorAll('.pay-btn').forEach(btn=>btn.classList.remove('active'));
+  const selectedBtn = document.querySelector('.pay-btn.'+method);
+  if(selectedBtn) selectedBtn.classList.add('active');
+}
+window.selectPayMethod = selectPayMethod;
+
+/* 팝업 열기 */
+function openPayPopup(url){
+  showMask();
+
+  // 화면 기준 반응형 크기
+  const sw = window.screen.availWidth  || window.innerWidth;
+  const sh = window.screen.availHeight || window.innerHeight;
+
+  // 원하는 기본값(필요하면 숫자만 바꿔서 쓰세요)
+  const targetW = Math.min(980, Math.floor(sw * 0.88));   // 최대 980px, 화면의 88%
+  const targetH = Math.min(800, Math.floor(sh * 0.92));  // 최대 1100px, 화면의 92%
+
+  // 화면 가운데 배치
+  const left = Math.max(0, Math.floor((sw - targetW) / 2));
+  const top  = Math.max(0, Math.floor((sh - targetH) / 2));
+
+  const features = [
+    `width=${targetW}`,
+    `height=${targetH}`,
+    `left=${left}`,
+    `top=${top}`,
+    'menubar=no',
+    'toolbar=no',
+    'location=no',
+    'status=no',
+    'scrollbars=yes',
+    'resizable=yes'
+  ].join(',');
+
+  payWin = window.open(url, 'easyPay', features);
+
+  // 팝업 차단 시 현재 탭으로 이동(폴백)
+  if (!payWin || payWin.closed || typeof payWin.closed === 'undefined') {
+    hideMask();
+    window.location.href = url;
+    return;
+  }
+
+  if (payClosePoll) clearInterval(payClosePoll);
+  payClosePoll = setInterval(()=>{
+    if(!payWin || payWin.closed){
+      clearInterval(payClosePoll);
+      hideMask();
+    }
+  }, 700);
+}
+
+/* 결제 시작 */
+function submitPayment(){
+  if(!document.getElementById('agreePayment').checked){ alert('결제 금액에 동의해야 진행 가능합니다.'); return; }
+  if(!selectedMethod){ alert('결제 수단을 선택해주세요.'); return; }
+
+  const userId = 'admin01';
+  const buyerName = document.getElementById('managerName').value;
+  const subPeriodText = document.getElementById('subPeriod').value;
+  const totalAmount = parseInt(document.getElementById('summaryTotal').textContent.replace(/[₩,]/g,'') || '0', 10);
+
+  const emailFront  = document.getElementById('emailFront').value.trim();
+  const emailDomain = document.getElementById('emailDomain').value.trim();
+  const contactEmail = `${emailFront}@${emailDomain}`;
+
+  const signatureDataUrl = getSignatureDataUrl();
+
+  const payRequest = {
+    orderId:'ORDER_' + Date.now(),
+    userId, itemName:'ERP 구독', amount: totalAmount,
+    payMethod: selectedMethod.toUpperCase(), // 'KAKAO' | 'TOSS'
+    buyerName, subPeriod: subPeriodText
+  };
+
+  const companyInfo = {
+    companyName: document.getElementById('companyName').value,
+    ceoName: document.getElementById('ceoName').value,
+    bizRegNo: `${document.getElementById('biz1').value}-${document.getElementById('biz2').value}-${document.getElementById('biz3').value}`,
+    roadAddress: document.getElementById('roadAddress').value,
+    addressDetail: document.getElementById('addressDetail').value,
+    tel: `${document.getElementById('phone1').value}-${document.getElementById('phone2').value}-${document.getElementById('phone3').value}`,
+    managerName: document.getElementById('managerName').value,
+    managerEmail: contactEmail,
+  };
+
+  const systemUser = {
+    userId: document.getElementById('masterId').value.trim(),
+    userPw: document.getElementById('masterPw').value,
+    empCode:'', remk:'마스터 관리자'
+  };
+
+  fetch('/pay/ready', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ payRequest, companyInfo, systemUser, contactEmail, signatureDataUrl })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    // Kakao: next_redirect_pc_url, Toss: redirectUrl(/pay/toss/checkout?...)
+    const redirectUrl = data.next_redirect_pc_url || data.redirectUrl;
+    if(!redirectUrl) throw new Error('결제 리다이렉트 URL이 없습니다.');
+    openPayPopup(redirectUrl);
+  })
+  .catch(err=>{
+    hideMask();
+    console.error(err);
+    alert('결제 준비 중 오류가 발생했습니다.');
+  });
+}
+window.submitPayment = submitPayment;
+
+/* 결제 결과 수신 (Kakao/Toss) */
+window.addEventListener('message', function(e){
+  try {
+    const d = e.data || {};
+    if ((d.type === 'KAKAOPAY_RESULT' || d.type === 'TOSS_RESULT') && d.status === 'success') {
+      const q = new URLSearchParams({
+        subscriptionCode: d.subscriptionCode || '',
+        companyCode: d.companyCode || '',
+        masterId: d.masterId || '',
+        buyerName: d.buyerName || '',
+        total: (d.total ?? 0).toString(),
+        vat: (d.vat ?? 0).toString(),
+      });
+      location.href = '/pay/complete?' + q.toString();
+    }
+  } catch(err) {
+    console.error('pay complete redirect error:', err);
+  }
+});
+
+/* 다음 주소 */
+function execDaumPostcode(){
+  new daum.Postcode({
+    oncomplete: function(data){
+      document.getElementById('roadAddress').value = data.address;
+      resizeWrapper();
+    }
+  }).open();
+}
+window.execDaumPostcode = execDaumPostcode;
+
+/* 이메일 도메인 로딩 */
+function loadEmailDomains(){
+  fetch('/api/modal/commonCodeAdmin?commonGroup=GRP004')
+    .then(res=>res.json())
+    .then(domains=>{
+      const select = document.getElementById('emailDomain');
+      select.innerHTML = '<option value="">선택</option>';
+      domains.forEach(d=>{
+        const opt = document.createElement('option');
+        opt.value = d.codeName; opt.textContent = d.codeName;
+        select.appendChild(opt);
+      });
+    })
+    .catch(err=> console.error('이메일 도메인 로딩 실패:', err));
+}
+
+/* 초기화 */
+document.addEventListener('DOMContentLoaded', ()=>{
+  initAccordion();
+  resizeWrapper();
+  window.addEventListener('resize', resizeWrapper);
+
+  // 서명 캔버스
+  canvas = document.getElementById('signaturePad');
+  if(canvas){
+    ctx = canvas.getContext('2d');
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, {passive:false});
+    canvas.addEventListener('touchmove', draw, {passive:false});
+    canvas.addEventListener('touchend', stopDrawing, {passive:false});
+    canvas.addEventListener('touchcancel', stopDrawing, {passive:false});
+    document.getElementById('clearSign')?.addEventListener('click', ()=> ctx.clearRect(0,0,canvas.width,canvas.height));
+  }
+
+  // 숫자 제한 & 자동 포커스
+  onlyNumberInput('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
+  autoMoveNext('#biz1, #biz2, #biz3, #phone1, #phone2, #phone3');
+
+  // 이메일 도메인
+  loadEmailDomains();
+});
+window.addEventListener('load', resizeWrapper);
+</script>
+
+<!-- 다음 우편번호 -->
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </body>
 </html>
