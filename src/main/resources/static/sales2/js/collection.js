@@ -249,8 +249,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const columns = [
         { title:"청구번호",    field:"INVOICE_CODE", width:140, hozAlign:"center", widthGrow:0.4 },
         { title:"청구일",      field:"DMND_DATE",   width:110, hozAlign:"center", widthGrow:0.4 },
-        { title:"품목명",      field:"ITEM_NAME",   minWidth:180, widthGrow:0.3 },
-        { title:"전체수량",    field:"TOTAL_QTY",   width:95, hozAlign:"right" },
         { title:"청구금액(원)", field:"DMND_AMT",   hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
         { title:"수금금액(원)", field:"COLLECTED",  hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
         { title:"미수금액(원)", field:"UNRCT_BALN", hozAlign:"right", formatter:"money", formatterParams:{precision:0}, widthGrow:0.5 },
