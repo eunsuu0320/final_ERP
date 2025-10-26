@@ -93,6 +93,7 @@ public class EstimateController {
 		dto.setRemarks(estimate.getRemarks());
 		dto.setManager(estimate.getManager());
 		dto.setManagerName(estimate.getManagerEmp().getName());
+		dto.setPartnerDiscountAmount(estimate.getPartnerDiscountAmount());
 
 		// Estimate 엔티티에 PostCode, Address, PayCondition 필드가 있다고 가정하고 매핑합니다.
 		// 만약 Estimate 엔티티에 해당 필드가 없다면, 이 부분은 수정하거나 제외해야 합니다.

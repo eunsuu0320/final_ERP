@@ -29,6 +29,7 @@ public class OrderRegistrationDTO {
     
     // 3. OrdersServiceImpl에서 getDeliveryDate() 사용을 위해 추가
     private Date deliveryDate;
+    private Integer partnerDiscountAmount;
 
     // 4. OrdersServiceImpl에서 getEstimateUniqueCode() 사용을 위해 추가 (연결된 견적서 ID)
     private Long estimateUniqueCode; 

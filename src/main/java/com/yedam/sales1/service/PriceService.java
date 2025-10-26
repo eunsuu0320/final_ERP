@@ -35,6 +35,9 @@ public interface PriceService {
 	Map<String, Object> getTableDataFromProductModal(List<Product> products);
 
 	Map<String, Object> getProduct(List<String> priceProducts);
+	
+    List<Map<String, Object>> findApplicablePriceGroup(String partnerCode, List<String> productCodes);
+
 
 	Price savePrice(Price price);
 

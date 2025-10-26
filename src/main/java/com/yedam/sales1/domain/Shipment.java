@@ -38,6 +38,10 @@ public class Shipment {
 
     @Column(name = "WAREHOUSE", length = 30)
     private String warehouse;
+    
+    
+    @Column(name = "IS_INVOICE", length = 30)
+    private String isInvoice;
 
     @Column(name = "TOTAL_QUANTITY")
     private Integer totalQuantity;

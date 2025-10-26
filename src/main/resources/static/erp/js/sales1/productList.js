@@ -7,22 +7,22 @@ document.addEventListener("DOMContentLoaded", function() {
 	loadCommonCode('GRP001', 'productGroupSearch', '품목그룹');
 	loadCommonCode('GRP003', 'warehouseCodeSearch', '창고');
 
-	// 숫자 입력 포맷터
+	// 숫자 입력 포맷터 (콤마 표시용)
 	window.koKRformatter = function(inputElement) {
-		const cleanValue = window.cleanValue || function(val) {
-			return Number(String(val).replace(/[^0-9.-]/g, '')) || 0;
-		};
-		const currentValue = cleanValue(inputElement.value);
-		if (!inputElement.value) {
+		// 1️⃣ 숫자만 추출 (음수, 소수점 허용)
+		const cleanValue = String(inputElement.value).replace(/[^0-9.-]/g, '');
+
+		// 2️⃣ 입력값이 비었으면 빈 문자열로 복원
+		if (cleanValue === '' || isNaN(cleanValue)) {
 			inputElement.value = '';
-			const hiddenInput = document.getElementById(inputElement.id.replace('Display', ''));
-			if (hiddenInput) hiddenInput.value = '';
 			return;
 		}
-		inputElement.value = currentValue.toLocaleString('ko-KR');
-		const hiddenInput = document.getElementById(inputElement.id.replace('Display', ''));
-		if (hiddenInput) hiddenInput.value = currentValue;
+
+		// 3️⃣ 숫자로 변환 후 한글 로케일(3자리 콤마) 적용
+		const numericValue = Number(cleanValue);
+		inputElement.value = numericValue.toLocaleString('ko-KR');
 	};
+
 
 	// 품목상세모달
 	window.showDetailModal = function(modalType, keyword) {
@@ -46,34 +46,132 @@ document.addEventListener("DOMContentLoaded", function() {
 		modal.show();
 
 		if (modalType === 'detail' && keyword) {
+			// -------------------------------
+			// [A] 로딩 오버레이 생성 (모달 내부)
+			// -------------------------------
+			let overlayContainer = modalEl ? modalEl.querySelector(".modal-content") : document.body;
+			let overlay = overlayContainer.querySelector(".loading-overlay");
+
+			if (!overlay) {
+				overlay = document.createElement("div");
+				overlay.className = "loading-overlay";
+				overlay.innerHTML = `
+					<div class="text-center">
+						<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+						<p class="text-secondary fw-semibold mb-0">데이터를 불러오는 중입니다...</p>
+					</div>
+				`;
+				Object.assign(overlay.style, {
+					position: "absolute",
+					top: 0,
+					left: 0,
+					width: "100%",
+					height: "100%",
+					display: "flex",
+					flexDirection: "column",
+					justifyContent: "center",
+					alignItems: "center",
+					backgroundColor: "rgba(255,255,255,0.9)",
+					zIndex: 1056,
+					borderRadius: "0.5rem",
+				});
+				overlayContainer.style.position = "relative";
+				overlayContainer.appendChild(overlay);
+			}
+			overlay.style.display = "flex";
+
+			// -------------------------------
+			// [B] 실제 데이터 로딩 로직
+			// -------------------------------
 			Promise.all(commonCodePromises)
 				.then(() => {
 					console.log("모든 공통 코드(Choices.js) 로드 완료. 상세 데이터 로드 시작.");
-					loadDetailData('product', keyword, form)
-						.then(responseData => {
-							window.lastLoadedProductData = responseData;
-							window.lastModalType = modalType;
-						});
+					return loadDetailData('product', keyword, form);
+				})
+				.then(responseData => {
+					window.lastLoadedProductData = responseData;
+					window.lastModalType = modalType;
 				})
 				.catch(err => {
-					console.error("공통 코드 로딩 중 치명적인 오류 발생:", err);
+					console.error("공통 코드 로딩 중 오류 발생:", err);
 					alert("필수 데이터 로딩 중 오류가 발생했습니다. 관리자에게 문의하세요.");
+				})
+				.finally(() => {
+					// -------------------------------
+					// [C] 로딩 오버레이 제거
+					// -------------------------------
+					setTimeout(() => {
+						if (overlay) overlay.style.display = "none";
+					}, 300); // 부드럽게 사라지도록 약간의 딜레이
 				});
 		}
+
 	};
 
+	// 품목상세모달 저장
 	// 품목상세모달 저장
 	window.saveModal = function() {
 		const form = document.getElementById("itemForm");
 		const modalEl = document.getElementById("newDetailModal");
-		const formData = new FormData(form);
 
-		if (!checkRequired(form)) return;
+		// -------------------------------
+		// [A] 모달 오버레이 표시
+		// -------------------------------
+		let overlayContainer = modalEl ? modalEl.querySelector(".modal-content") : document.body;
+		let overlay = overlayContainer.querySelector(".loading-overlay");
+		if (!overlay) {
+			overlay = document.createElement("div");
+			overlay.className = "loading-overlay";
+			overlay.innerHTML = `
+				<div class="text-center">
+					<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+					<p class="text-secondary fw-semibold mb-0">저장 중입니다...</p>
+				</div>
+			`;
+			Object.assign(overlay.style, {
+				position: "absolute",
+				top: 0,
+				left: 0,
+				width: "100%",
+				height: "100%",
+				display: "flex",
+				flexDirection: "column",
+				justifyContent: "center",
+				alignItems: "center",
+				backgroundColor: "rgba(255,255,255,0.9)",
+				zIndex: 2000,
+				borderRadius: "0.5rem",
+			});
+			overlayContainer.style.position = "relative";
+			overlayContainer.appendChild(overlay);
+		}
+		overlay.style.display = "flex";
+
+		// -------------------------------
+		// [B] FormData 생성 전 콤마 제거
+		// -------------------------------
+		["inPrice", "outPrice"].forEach(id => {
+			const el = document.getElementById(id);
+			if (el) el.value = el.value.replace(/,/g, '').trim() || 0;
+		});
+
+		const formData = new FormData(form);
+		if (!checkRequired(form)) {
+			overlay.style.display = "none";
+			return;
+		}
 
 		const productCode = formData.get("productCode");
 		const isUpdate = productCode && productCode.trim() !== '';
 		const url = isUpdate ? "/api/modifyProduct" : "/api/registProduct";
 
+		// -------------------------------
+		// [C] fetch 전송
+		// -------------------------------
 		fetch(url, {
 			method: "POST",
 			body: formData,
@@ -82,25 +180,84 @@ document.addEventListener("DOMContentLoaded", function() {
 					document.querySelector('meta[name="_csrf"]').content
 			}
 		})
-			.then(res => res.json())
+			.then(async res => {
+				const text = await res.text();
+				try { return JSON.parse(text); }
+				catch { throw new Error(text); }
+			})
 			.then(data => {
-				console.log("전송한 데이터 : ", data);
+				console.log("저장 완료:", data);
 				alert("저장되었습니다.");
 
 				form.reset();
-
 				["unit", "productGroup", "warehouseCode"].forEach(name => {
 					const select = form.querySelector(`select[name='${name}']`);
 					if (select && select.choicesInstance) select.choicesInstance.setChoiceByValue('');
 				});
 
 				bootstrap.Modal.getInstance(modalEl).hide();
+
+				// -------------------------------
+				// [D] 테이블 영역 오버레이 표시
+				// -------------------------------
+				const tableArea = document.querySelector("#productTableArea"); // ✅ Tabulator 영역의 부모 div ID로 변경하세요
+				if (tableArea) {
+					let tableOverlay = tableArea.querySelector(".loading-overlay");
+					if (!tableOverlay) {
+						tableOverlay = document.createElement("div");
+						tableOverlay.className = "loading-overlay";
+						tableOverlay.innerHTML = `
+							<div class="text-center">
+								<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+									<span class="visually-hidden">Loading...</span>
+								</div>
+								<p class="text-secondary fw-semibold mb-0">최신 데이터로 갱신 중입니다...</p>
+							</div>
+						`;
+						Object.assign(tableOverlay.style, {
+							position: "absolute",
+							top: 0,
+							left: 0,
+							width: "100%",
+							height: "100%",
+							display: "flex",
+							flexDirection: "column",
+							justifyContent: "center",
+							alignItems: "center",
+							backgroundColor: "rgba(255,255,255,0.9)",
+							zIndex: 1500,
+							borderRadius: "0.5rem",
+						});
+						tableArea.style.position = "relative";
+						tableArea.appendChild(tableOverlay);
+					}
+					tableOverlay.style.display = "flex";
+				}
+
+				// -------------------------------
+				// [E] 페이지 새로고침 (약간의 지연)
+				// -------------------------------
+				setTimeout(() => {
+					window.location.reload();
+				}, 800);
 			})
 			.catch(err => {
-				console.error("저장실패 : ", err);
-				alert("저장에 실패했습니다.");
+				console.error("저장 실패:", err);
+				alert("저장에 실패했습니다.\n" + err.message);
+			})
+			.finally(() => {
+				// -------------------------------
+				// [F] 모달 오버레이 제거
+				// -------------------------------
+				setTimeout(() => {
+					if (overlay) overlay.style.display = "none";
+				}, 300);
 			});
 	};
+
+
+
+
 
 	// 품목리스트 테이블 컬럼 정의
 	let tabulatorColumns = [

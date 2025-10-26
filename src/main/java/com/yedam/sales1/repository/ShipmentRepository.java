@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,10 @@ public interface ShipmentRepository extends JpaRepository<Shipment, String> {
 
 	@Query("SELECT p FROM Shipment p " + "WHERE p.companyCode = :companyCode ")
 	List<Shipment> findAll(@Param("companyCode") String companyCode);
+
+	@Modifying
+	@Query("UPDATE Shipment s SET s.isInvoice = 'Y' WHERE s.shipmentCode = :shipmentCode")
+	void updateIsInvoice(@Param("shipmentCode") String shipmentCode);
 
 	@Query("SELECT MAX(p.shipmentCode) FROM Shipment p")
 	String findMaxShipmentCode();
@@ -36,7 +41,6 @@ public interface ShipmentRepository extends JpaRepository<Shipment, String> {
 			+ "AND p.companyCode = :companyCode ")
 	List<Shipment> findByFilter(@Param("searchVo") Shipment searchVo, @Param("companyCode") String companyCode);
 
-	// ✅ 1. 출하완료 목록 조회 (프론트엔드용)
 	@Query("""
 			    SELECT new map(
 			        s.shipmentCode as shipmentCode,
@@ -49,7 +53,8 @@ public interface ShipmentRepository extends JpaRepository<Shipment, String> {
 			    FROM Shipment s
 			    JOIN Partner p ON s.partnerCode = p.partnerCode
 			    WHERE s.partnerCode = :partnerCode
-			    AND s.status = '출하완료'
+			      AND s.status = '판매완료'
+			      AND (s.isInvoice IS NULL OR s.isInvoice <> 'Y')
 			""")
 	List<Map<String, Object>> findCompletedShipmentsByPartnerMap(@Param("partnerCode") String partnerCode);
 
@@ -79,9 +84,5 @@ public interface ShipmentRepository extends JpaRepository<Shipment, String> {
 			 ORDER BY s.shipment_date DESC
 			""", nativeQuery = true)
 	List<Map<String, Object>> findCompletedShipmentsByPartner(@Param("partnerCode") String partnerCode);
-	
-	
-	
-
 
 }

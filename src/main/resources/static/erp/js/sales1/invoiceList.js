@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (!res.ok) throw new Error("출하지시서 조회 실패");
 			const shipments = await res.json();
 			if (!Array.isArray(shipments) || shipments.length === 0)
-				return alert("출하완료된 출하지시서가 없습니다.");
+				return alert("판매완료된 출하지시서가 없습니다.");
 
 			const tbody = document.querySelector("#itemDetailBody");
 			tbody.innerHTML = "";
@@ -447,6 +447,11 @@ document.addEventListener("DOMContentLoaded", function() {
 					const code = rowData.청구서코드;
 
 					if (value === "회계반영완료") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${value}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+					if (value === "수금완료") {
 						return `<input type="text" class="form-control form-control-sm text-center bg-light"
 							value="${value}" readonly
 							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;

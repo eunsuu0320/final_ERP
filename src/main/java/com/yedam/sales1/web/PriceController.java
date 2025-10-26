@@ -119,7 +119,6 @@ public class PriceController {
 		System.out.println("============================================================");
 		System.out.println("price 상세정보 조회 결과");
 
-
 		if (price != null) {
 			return ResponseEntity.ok(price);
 		} else {
@@ -224,4 +223,31 @@ public class PriceController {
 			return ResponseEntity.ok(Collections.emptyList());
 		}
 	}
+
+	/**
+	 * 거래처 + 품목 목록 기반으로 적용 가능한 단가그룹 조회
+	 */
+
+	@PostMapping("/api/price/findApplicablePriceGroup")
+	@ResponseBody // ✅ JSON 변환 강제 (중요)
+	public ResponseEntity<List<Map<String, Object>>> findApplicablePriceGroup(
+			@RequestBody Map<String, Object> request) {
+
+		try {
+			String partnerCode = (String) request.get("partnerCode");
+			@SuppressWarnings("unchecked")
+			List<String> productCodes = (List<String>) request.get("productCodes");
+
+			System.out.println("🔍 요청 받은 거래처 코드: " + partnerCode);
+			System.out.println("🔍 요청 받은 품목 코드 리스트: " + productCodes);
+
+			List<Map<String, Object>> result = priceService.findApplicablePriceGroup(partnerCode, productCodes);
+
+			return ResponseEntity.ok(result); // ✅ JSON 자동 변환
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+		}
+	}
+
 }

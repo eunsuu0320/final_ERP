@@ -112,41 +112,194 @@ document.addEventListener("DOMContentLoaded", function() {
 	window.saveModal = function() {
 		const partnerForm = document.getElementById("partnerForm");
 		const modalEl = document.getElementById("newDetailModal");
-		if (!partnerForm) { alert("저장 오류: 폼을 찾을 수 없습니다."); return; }
+		if (!partnerForm) {
+			alert("저장 오류: 폼을 찾을 수 없습니다.");
+			return;
+		}
 
+		// -------------------------------
+		// [A] 로딩 오버레이 생성
+		// -------------------------------
+		// -------------------------------
+		// [A] 로딩 오버레이 생성 (흰색 배경 + 파란 스피너)
+		// -------------------------------
+		let overlayContainer = modalEl.querySelector(".modal-content");
+		if (!overlayContainer) overlayContainer = modalEl;
+
+		let overlay = overlayContainer.querySelector(".loading-overlay");
+		if (!overlay) {
+			overlay = document.createElement("div");
+			overlay.className = "loading-overlay";
+			overlay.innerHTML = `
+				<div class="text-center">
+					<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+						<span class="visually-hidden">Loading...</span>
+					</div>
+					<p class="text-secondary fw-semibold mb-0">저장 중입니다...</p>
+				</div>
+			`;
+			Object.assign(overlay.style, {
+				position: "absolute",
+				top: 0,
+				left: 0,
+				width: "100%",
+				height: "100%",
+				display: "flex",
+				flexDirection: "column",
+				justifyContent: "center",
+				alignItems: "center",
+				backgroundColor: "rgba(255,255,255,0.9)", // ✅ 흰색 반투명 배경
+				zIndex: 1056,
+				borderRadius: "0.5rem",
+			});
+			overlayContainer.style.position = "relative";
+			overlayContainer.appendChild(overlay);
+		}
+		overlay.style.display = "flex";
+
+
+
+		// -------------------------------
+		// [1] partnerForm 데이터 수집
+		// -------------------------------
 		const partnerData = Object.fromEntries(new FormData(partnerForm).entries());
-		if (partnerData.emailId || partnerData.emailDomain) partnerData.email = `${partnerData.emailId || ''}@${partnerData.emailDomain || ''}`;
-		delete partnerData.emailId; delete partnerData.emailDomain;
 
+		// -------------------------------
+		// [2] 이메일 조합
+		// -------------------------------
+		if (partnerData.emailId || partnerData.emailDomain) {
+			partnerData.email = `${partnerData.emailId || ''}@${partnerData.emailDomain || ''}`;
+		}
+		delete partnerData.emailId;
+		delete partnerData.emailDomain;
+
+		// -------------------------------
+		// [3] 전화번호 조합 (phone1 + phone2 + phone3 → 010-1234-5678)
+		// -------------------------------
+		const phone1 = document.getElementById("phone1")?.value.trim() || "";
+		const phone2 = document.getElementById("phone2")?.value.trim() || "";
+		const phone3 = document.getElementById("phone3")?.value.trim() || "";
+
+		if (phone1 && phone2 && phone3) {
+			const cleanPhone = (phone1 + phone2 + phone3).replace(/[^0-9]/g, "");
+			const formattedPhone = cleanPhone.replace(/(\d{3})(\d{3,4})(\d{4})/, "$1-$2-$3");
+			partnerData.partnerPhone = formattedPhone;
+			document.getElementById("partnerPhone").value = formattedPhone;
+		} else {
+			alert("연락처를 모두 입력해주세요.");
+			overlay.style.display = "none";
+			return;
+		}
+
+		// -------------------------------
+		// [4] 사업자등록번호 조합 (biz1 + biz2 + biz3 → 123-45-67890)
+		// -------------------------------
+		const biz1 = document.getElementById("biz1")?.value.trim() || "";
+		const biz2 = document.getElementById("biz2")?.value.trim() || "";
+		const biz3 = document.getElementById("biz3")?.value.trim() || "";
+
+		if (biz1 && biz2 && biz3) {
+			const cleanBiz = (biz1 + biz2 + biz3).replace(/[^0-9]/g, "");
+			const formattedBiz = cleanBiz.replace(/(\d{3})(\d{2})(\d{5})/, "$1-$2-$3");
+			partnerData.businessNo = formattedBiz;
+			document.getElementById("businessNo").value = formattedBiz;
+		} else {
+			alert("사업자등록번호를 모두 입력해주세요.");
+			overlay.style.display = "none";
+			return;
+		}
+
+		// -------------------------------
+		// [5] 기타 폼 데이터 결합
+		// -------------------------------
 		const loanForm = document.getElementById("loanForm");
 		let loanPriceDataObject = loanForm ? Object.fromEntries(new FormData(loanForm).entries()) : {};
 
+		// 여신한도 콤마 제거
+		if (loanPriceDataObject.loanLimit) {
+			loanPriceDataObject.loanLimit = loanPriceDataObject.loanLimit.replace(/,/g, "");
+		}
+
 		const paymentData = collectPaymentData();
-		const finalPayload = { partnerData, loanPriceData: loanPriceDataObject, paymentData };
+
+		const finalPayload = {
+			partnerData,
+			loanPriceData: loanPriceDataObject,
+			paymentData
+		};
 
 		console.log("전송 데이터:", finalPayload);
 
+		// -------------------------------
+		// [6] 서버 전송
+		// -------------------------------
 		fetch("api/registFullPartner", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				[document.querySelector('meta[name="_csrf_header"]').content]: document.querySelector('meta[name="_csrf"]').content
+				[document.querySelector('meta[name="_csrf_header"]').content]:
+					document.querySelector('meta[name="_csrf"]').content
 			},
 			body: JSON.stringify(finalPayload)
 		})
-			.then(res => !res.ok ? res.json().then(error => { throw new Error(error.message || `서버 오류: ${res.status}`); }) : res.json())
-			.then(data => {
+			.then(res =>
+				!res.ok
+					? res.json().then(error => {
+						throw new Error(error.message || `서버 오류: ${res.status}`);
+					})
+					: res.json()
+			)
+			.then(async data => {
 				alert("저장되었습니다.");
 				partnerForm.reset();
-				['businessType', 'businessSector', 'emailDomain'].forEach(name => {
+
+				// select 초기화
+				["businessType", "businessSector", "emailDomain"].forEach(name => {
 					const select = partnerForm.querySelector(`select[name='${name}']`);
-					if (select && select.choicesInstance) select.choicesInstance.setChoiceByValue('');
+					if (select && select.choicesInstance) select.choicesInstance.setChoiceByValue("");
 				});
-				bootstrap.Modal.getInstance(modalEl).hide();
-				window.partnerTableInstance.redraw();
+
+				// ✅ 모달 닫기
+				const modalInstance = bootstrap.Modal.getInstance(modalEl);
+				modalInstance.hide();
+
+				// ✅ 테이블 새로고침 (API 재요청)
+				if (window.partnerTableInstance) {
+					try {
+						console.log("📡 거래처 목록 새로고침 중...");
+						await window.partnerTableInstance.setData("/api/partnerList");
+						console.log("✅ 거래처 목록 새로고침 완료");
+					} catch (reloadErr) {
+						console.error("❌ 거래처 목록 새로고침 실패:", reloadErr);
+					}
+				} else if (typeof window.loadPartnerList === "function") {
+					console.log("📡 loadPartnerList() 호출");
+					await window.loadPartnerList();
+				}
+
+				// ✅ 스크롤 맨 위로 이동 (UI 자연스럽게)
+				window.scrollTo({ top: 0, behavior: "smooth" });
 			})
-			.catch(err => { console.error("저장 실패:", err); alert("저장 실패. 콘솔 확인."); });
+			.catch(err => {
+				console.error("저장 실패:", err);
+				alert("저장 실패. 콘솔 확인.");
+			})
+			.finally(() => {
+				// 로딩 오버레이 제거
+				overlay.style.display = "none";
+			});
+
 	};
+
+
+	window.formatLoanLimit = function(input) {
+		let value = input.value.replace(/[^0-9]/g, "");
+		input.value = value ? Number(value).toLocaleString() : "";
+	};
+
+
+
+
 
 	// ------------------------------
 	// Tabulator 테이블 생성
@@ -285,72 +438,128 @@ document.addEventListener("DOMContentLoaded", function() {
 		const tbody = document.getElementById('itemDetailBody');
 		if (!tbody) return;
 
-		// 1. 은행 select 다시 초기화
-		tbody.querySelectorAll('select[name="bankCombined"]').forEach(selectEl => {
-			selectEl.innerHTML = '';
+		// ✅ 1. 입력행(new-item-row)만 선택
+		const newRow = tbody.querySelector('tr.new-item-row');
+		if (!newRow) return;
+
+		// ✅ 2. 입력행의 은행 select만 초기화
+		const bankSelect = newRow.querySelector('select[name="bankCombined"]');
+		if (bankSelect) {
+			bankSelect.innerHTML = '';
 
 			// placeholder 추가
 			const placeholder = document.createElement('option');
 			placeholder.value = '';
 			placeholder.textContent = '은행을 선택하세요';
-			selectEl.appendChild(placeholder);
+			bankSelect.appendChild(placeholder);
 
 			// 실제 옵션 추가
 			for (const value in bankSelectOptions) {
 				const option = document.createElement('option');
 				option.value = value;
 				option.textContent = bankSelectOptions[value];
-				selectEl.appendChild(option);
+				bankSelect.appendChild(option);
 			}
 
-			selectEl.value = ''; // 선택 해제
-		});
+			bankSelect.value = ''; // 선택 해제
+		}
 
-		// 2. 입력행의 체크박스 초기화
-		const newRowCheckbox = tbody.querySelector('tr.new-item-row input[type="checkbox"]');
+		// ✅ 3. 입력행의 체크박스 초기화
+		const newRowCheckbox = newRow.querySelector('input[type="checkbox"]');
 		if (newRowCheckbox) {
 			newRowCheckbox.checked = false;
 			newRowCheckbox.disabled = true;
 		}
 
-		// 3. 다른 입력 필드도 함께 초기화
-		tbody.querySelectorAll('tr.new-item-row input.item-input').forEach(input => {
+		// ✅ 4. 입력행의 나머지 input/select 초기화
+		newRow.querySelectorAll('input.item-input').forEach(input => {
 			if (input.type !== 'checkbox') input.value = '';
 		});
 
-		tbody.querySelectorAll('tr.new-item-row select.item-input').forEach(select => {
+		newRow.querySelectorAll('select.item-input').forEach(select => {
 			if (select.name !== 'bankCombined') {
 				if (select.name === 'isDefault') select.value = 'N';
 				else if (select.name === 'usageType') select.value = 'Y';
 				else select.selectedIndex = 0;
 			}
 		});
+
+		console.log("✅ 입력행(new-item-row)만 초기화 완료");
 	}
+
 
 
 	// ------------------------------
 	// 결제정보 수집
 	// ------------------------------
 	function collectPaymentData() {
-		const paymentData = [];
-		const rows = document.getElementById('itemDetailBody').querySelectorAll('tr:not(.new-payment-row)');
-		rows.forEach(row => {
-			const bankCombined = row.querySelector('select[name="bankCombined"]').value;
-			const accountNo = row.querySelector('input[name="accountNo"]').value;
-			const depositorName = row.querySelector('input[name="depositorName"]').value;
-			if (bankCombined && accountNo && depositorName) {
-				const [bankCode, ...bankNameParts] = bankCombined.split(' - ');
-				paymentData.push({
-					bankCode: bankCode ? bankCode.trim() : null,
-					bankName: bankNameParts.join(' - ').trim(),
-					accountNo, depositorName,
-					isDefault: row.querySelector('select[name="isDefault"]').value,
-					usageStatus: row.querySelector('select[name="usageType"]').value
+		const paymentRows = document.querySelectorAll("#paymentTable tbody tr");
+		const paymentList = [];
+
+		paymentRows.forEach(row => {
+			// 입력 요소 수집
+			const bankSelect = row.querySelector("select[name='bankCombined']");
+			const accountInput = row.querySelector("input[name='accountNo']");
+			const depositorInput = row.querySelector("input[name='depositorName']");
+			const isDefaultSelect = row.querySelector("select[name='isDefault']");
+			const usageSelect = row.querySelector("select[name='usageType']");
+
+			// 값 추출
+			const bankCombined = bankSelect?.value?.trim();
+			const accountNo = accountInput?.value?.trim();
+			const depositorName = depositorInput?.value?.trim();
+			const isDefault = isDefaultSelect?.value || "N";
+			const usageType = usageSelect?.value || "Y";
+
+			// ✅ 은행코드/은행명 분리 처리
+			let bankCode = "";
+			let bankName = "";
+			if (bankCombined) {
+				const parts = bankCombined.split("-").map(s => s.trim()); // 양쪽 여백 제거
+				bankCode = parts[0] || "";
+				bankName = parts[1] || "";
+			}
+
+			// ✅ 유효한 입력만 수집
+			if (bankCode && accountNo) {
+				paymentList.push({
+					bankCode,
+					bankName,
+					accountNo,
+					depositorName,
+					isDefault,
+					usageType
 				});
 			}
 		});
-		return paymentData;
+
+		console.log("💾 수집된 결제정보:", paymentList);
+		return paymentList;
 	}
+
+
+	
+	
+	// 📞 연락처 자동 탭 이동 함수
+	window.autoTab = function(currentInput, nextInputId) {
+		// 입력된 값의 길이
+		const currentLength = currentInput.value.length;
+		// 현재 input의 maxlength 속성값 (HTML에 반드시 지정되어 있어야 함)
+		const maxLength = currentInput.getAttribute("maxlength");
+
+		// ✅ maxLength만큼 입력되면 다음 input으로 포커스 이동
+		if (maxLength && currentLength >= parseInt(maxLength)) {
+			const nextInput = document.getElementById(nextInputId);
+			if (nextInput) {
+				nextInput.focus();
+			}
+		}
+	}
+
+	
+	
+	
+	
 
 	// ------------------------------
 	// 검색 및 초기화

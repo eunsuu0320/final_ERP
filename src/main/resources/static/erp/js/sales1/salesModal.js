@@ -40,7 +40,21 @@ function openSalesModal(onSelect, partnerCode) {
 					bootstrap.Modal.getInstance(document.getElementById("commonModal")).hide();
 				}
 			}
-		]
+		],
+	});
+
+	// ✅ 데이터 로딩 완료 후 처리 (데이터 없으면 alert + 모달 닫기)
+	window.salesTable.on("dataLoaded", function(data) {
+		console.log("주문 목록 로딩 완료:", data);
+
+		if (!data || data.length === 0) {
+			alert("출하 가능한 주문이 없습니다.");
+			return; // 모달 열지 않음
+		}
+
+		// ✅ 데이터가 있는 경우에만 모달 표시
+		const modal = new bootstrap.Modal(document.getElementById("commonModal"));
+		modal.show();
 	});
 
 	// 검색 이벤트 연결
@@ -64,7 +78,5 @@ function openSalesModal(onSelect, partnerCode) {
 			}
 		};
 	}
-
-	const modal = new bootstrap.Modal(document.getElementById("commonModal"));
-	modal.show();
 }
+

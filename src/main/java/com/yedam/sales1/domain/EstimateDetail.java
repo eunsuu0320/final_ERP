@@ -45,6 +45,9 @@ public class EstimateDetail implements java.io.Serializable {
 	// PRICE (NUMBER) - 단가
 	@Column(name = "PRICE")
 	private Integer price;
+	
+	@Column(name = "DISCOUNT_AMOUNT")
+	private Integer discountAmount;
 
 	// REMARKS (VARCHAR2(1000)) - 비고
 	@Column(name = "REMARKS", length = 1000)

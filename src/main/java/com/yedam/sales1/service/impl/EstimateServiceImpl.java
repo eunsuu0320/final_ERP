@@ -49,57 +49,49 @@ public class EstimateServiceImpl implements EstimateService {
 
 		return estimateRepository.findAllEstimates(companyCode);
 	}
-	
-	
-    @Override
-    public List<Estimate> getFilterEstimate(Estimate searchVo) {
-        return estimateRepository.findByFilter(searchVo);
-    }
+
+	@Override
+	public List<Estimate> getFilterEstimate(Estimate searchVo) {
+		return estimateRepository.findByFilter(searchVo);
+	}
 
 	@Override
 	public Map<String, Object> getTableDataFromEstimate(List<Estimate> estimates) {
-	    List<Map<String, Object>> rows = new ArrayList<>();
-	    List<String> columns = List.of(
-	        "견적서고유코드", "견적서코드", "등록일자", "거래처명",
-	        "품목명", "유효기간", "견적금액합계", "담당자", "비고", "진행상태"
-	    );
+		List<Map<String, Object>> rows = new ArrayList<>();
+		List<String> columns = List.of("견적서고유코드", "견적서코드", "등록일자", "거래처명", "품목명", "유효기간", "견적금액합계", "담당자", "비고",
+				"진행상태");
 
-	    for (Estimate estimate : estimates) {
-	        // 🔹 품목명 리스트 조회
-	        List<String> productNames = estimateDetailRepository.findProductNamesByEstimateUniqueCode(
-	            estimate.getEstimateUniqueCode()
-	        );
+		for (Estimate estimate : estimates) {
+			// 🔹 품목명 리스트 조회
+			List<String> productNames = estimateDetailRepository
+					.findProductNamesByEstimateUniqueCode(estimate.getEstimateUniqueCode());
 
-	        // 🔹 대표 품목명 + 외 n건 처리
-	        String productSummary = "";
-	        if (productNames.isEmpty()) {
-	            productSummary = "";
-	        } else if (productNames.size() == 1) {
-	            productSummary = productNames.get(0);
-	        } else {
-	            productSummary = productNames.get(0) + " 외 " + (productNames.size() - 1) + "건";
-	        }
+			// 🔹 대표 품목명 + 외 n건 처리
+			String productSummary = "";
+			if (productNames.isEmpty()) {
+				productSummary = "";
+			} else if (productNames.size() == 1) {
+				productSummary = productNames.get(0);
+			} else {
+				productSummary = productNames.get(0) + " 외 " + (productNames.size() - 1) + "건";
+			}
 
-	        Map<String, Object> row = new HashMap<>();
-	        row.put("견적서고유코드", estimate.getEstimateUniqueCode());
-	        row.put("견적서코드", estimate.getEstimateCode());
-	        row.put("등록일자", estimate.getCreateDate());
-	        row.put("거래처명", estimate.getPartner().getPartnerName());
-	        row.put("품목명", productSummary);
-	        row.put("유효기간", estimate.getExpiryDate());
-	        row.put("견적금액합계", estimate.getTotalAmount());
-	        row.put("담당자", estimate.getManagerEmp().getName());
-	        row.put("비고", estimate.getRemarks());
-	        row.put("진행상태", estimate.getStatus());
-	        rows.add(row);
-	    }
+			Map<String, Object> row = new HashMap<>();
+			row.put("견적서고유코드", estimate.getEstimateUniqueCode());
+			row.put("견적서코드", estimate.getEstimateCode());
+			row.put("등록일자", estimate.getCreateDate());
+			row.put("거래처명", estimate.getPartner().getPartnerName());
+			row.put("품목명", productSummary);
+			row.put("유효기간", estimate.getExpiryDate());
+			row.put("견적금액합계", estimate.getTotalAmount());
+			row.put("담당자", estimate.getManagerEmp().getName());
+			row.put("비고", estimate.getRemarks());
+			row.put("진행상태", estimate.getStatus());
+			rows.add(row);
+		}
 
-	    return Map.of("columns", columns, "rows", rows);
+		return Map.of("columns", columns, "rows", rows);
 	}
-
-
-
-
 
 	@Override
 	@Transactional
@@ -163,6 +155,7 @@ public class EstimateServiceImpl implements EstimateService {
 		estimate.setEstimateCode(newCode);
 		estimate.setCompanyCode(companyCode);
 		estimate.setManager(manager);
+		estimate.setStatus("미확인");
 
 		estimateRepository.save(estimate);
 		Long generatedEstimateId = estimate.getEstimateUniqueCode();
@@ -179,7 +172,8 @@ public class EstimateServiceImpl implements EstimateService {
 		for (EstimateDetail detail : dto.getDetailList()) {
 			// 새로운 엔티티 객체로 복사 (트랜잭션 충돌 방지 핵심)
 			EstimateDetail newDetail = EstimateDetail.builder().productCode(detail.getProductCode())
-					.quantity(detail.getQuantity()).price(detail.getPrice()).remarks(detail.getRemarks()).build();
+					.quantity(detail.getQuantity()).price(detail.getPrice()).discountAmount(detail.getDiscountAmount())
+					.build();
 
 			// 외래 키(FK) 및 공통 필드 설정
 			newDetail.setEstimateUniqueCode(generatedEstimateId);
@@ -209,15 +203,25 @@ public class EstimateServiceImpl implements EstimateService {
 		return Estimate.builder().partnerCode(dto.getPartnerCode()).deliveryDate(dto.getDeliveryDate())
 				.expiryDate(java.time.LocalDate.now().plusDays(dto.getValidPeriod()).toString())
 				.totalAmount(totalAmount).status("미확인").postCode(dto.getPostCode()).address(dto.getAddress())
-				.payCondition(dto.getPayCondition()).remarks(dto.getRemarks()).build();
+				.payCondition(dto.getPayCondition()).partnerDiscountAmount(dto.getPartnerDiscountAmount())
+				.remarks(dto.getRemarks()).build();
 	}
 
-	/** 헬퍼: 총 금액 계산 로직 (보안 및 신뢰성 확보) */
+	/** 헬퍼: 총 금액 계산 로직 (할인액 반영 포함) */
 	private Double calculateTotalAmount(List<EstimateDetail> detailList) {
 		double totalSum = 0.0;
+
 		for (EstimateDetail detail : detailList) {
-			totalSum += (double) detail.getQuantity() * (double) detail.getPrice() * 1.1;
+			double quantity = detail.getQuantity() != null ? detail.getQuantity() : 0;
+			double price = detail.getPrice() != null ? detail.getPrice() : 0;
+			double discount = detail.getDiscountAmount() != null ? detail.getDiscountAmount() : 0;
+
+			// 공급가 + 부가세 - 할인금액
+			double subtotal = (quantity * price * 1.1) - discount;
+			totalSum += subtotal;
 		}
+
+		// 소수점 둘째 자리까지 반올림
 		return Math.round(totalSum * 100.0) / 100.0;
 	}
 
@@ -285,7 +289,7 @@ public class EstimateServiceImpl implements EstimateService {
 	@Override
 	public Estimate getEstimateByEstimateUniqueCode(Long estimateUniqueCode) {
 		// TODO Auto-generated method stub
-        return estimateRepository.findByEstimateUniqueCode(estimateUniqueCode);
+		return estimateRepository.findByEstimateUniqueCode(estimateUniqueCode);
 	}
 
 }

@@ -14,17 +14,28 @@
 <link rel="stylesheet"
 	href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 <style>
-/* 로딩 오버레이 (공통) */
-.modal-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(255, 255, 255, .7);
-	display: none;
+/* ✅ 모달 내부 전용 오버레이 (모달 전체가 아닌 modal-content만 덮기) */
+#newDetailModal .modal-content {
+	position: relative; /* 기준점 생성 */
+	overflow: hidden; /* 오버레이가 삐져나가지 않게 */
+}
+
+.modal-loading-overlay {
+	position: absolute;
+	inset: 0; /* top, right, bottom, left = 0 */
+	background: rgba(255, 255, 255, 0.6);
+	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 1056;
+	z-index: 10; /* 모달 내부 기준 */
 	font-weight: 700;
 	font-size: 18px;
+}
+
+.modal-loading-overlay .spinner-border {
+	width: 3rem;
+	height: 3rem;
+	color: #0d6efd;
 }
 </style>
 </head>
@@ -127,16 +138,25 @@
 										onclick="resetOrder()">초기화</button>
 									<button type="button" class="btn btn-secondary me-3"
 										onclick="openModal('estimate', function(selected) {
-                          // 견적서 조회 → 로딩 표시 + 데이터 바인딩 (요구사항 3)
-                          showLoading();
-                          document.getElementById('estimateCode').value = selected.estimateCode;
-                          document.getElementById('estimateUniqueCode').value = selected.estimateUniqueCode;
-                          loadDetailData('estimate', selected.estimateUniqueCode, document.getElementById('quoteForm'))
-                            .then(d => { window.lastLoadedOrderData = d; }) // 캐시
-                            .catch(err => console.error('견적 상세 로딩 실패:', err))
-                            .finally(hideLoading);
-                        })">
+	  // ✅ 모달 내부 전용 로딩 오버레이 표시
+	  showModalLoading();
+
+	  // 값 세팅
+	  document.getElementById('estimateCode').value = selected.estimateCode;
+	  document.getElementById('estimateUniqueCode').value = selected.estimateUniqueCode;
+
+	  // 데이터 로드
+	  loadDetailData('estimate', selected.estimateUniqueCode, document.getElementById('quoteForm'))
+	    .then(d => { 
+	      window.lastLoadedOrderData = d;
+	    })
+	    .catch(err => console.error('견적 상세 로딩 실패:', err))
+	    .finally(() => {
+	      hideModalLoading(); // ✅ 완료 후 오버레이 제거
+	    });
+	})">
 										견적서조회</button>
+
 									<button type="button" class="btn-close" data-bs-dismiss="modal"
 										aria-label="Close"></button>
 								</div>
@@ -281,8 +301,8 @@
 												<th style="width: 10%;">수량*</th>
 												<th style="width: 10%;">공급가액</th>
 												<th style="width: 10%;">부가세</th>
-												<th style="width: 10%;">최종금액</th>
-												<th style="width: 15%;">비고</th>
+												<th style="width: 10%;">할인금액</th>
+												<th style="width: 15%;">최종금액</th>
 											</tr>
 										</thead>
 										<tbody id="itemDetailBody">
@@ -325,10 +345,11 @@
 													name="taxAmount" disabled></td>
 												<td><input type="text"
 													class="form-control form-control-sm item-input text-end"
-													name="finalAmount" disabled></td>
+													name="discountAmount" id="discountAmount" disabled></td>
 												<td><input type="text"
-													class="form-control form-control-sm item-input"
-													name="remarks"></td>
+													class="form-control form-control-sm item-input text-end"
+													name="finalAmount" disabled></td>
+
 											</tr>
 										</tbody>
 										<tfoot id="itemDetailFooter">
@@ -338,14 +359,21 @@
 												<td class="text-end" id="totalQuantity">0 개</td>
 												<td class="text-end" id="totalSupplyAmount">0 원</td>
 												<td class="text-end" id="totalTaxAmount">0 원</td>
+												<td class="text-end" id="totalDiscountAmount">0 원</td>
+												<td class="text-end" id="totalAmount">0 원</td>
+											</tr>
+											<tr class="table-warning fw-bold">
+												<td colspan="4" class="text-end">거래처 특별 할인</td>
+												<td colspan="5" class="text-end" id="partnerDiscountAmount">0
+													원</td>
 												<td></td>
-												<td></td>
+
 											</tr>
 											<tr class="table-warning fw-bold">
 												<td colspan="4" class="text-end">총 금액</td>
-												<td colspan="5" class="text-end" id="totalFinalAmount">0
+												<td colspan="6" class="text-end" id="totalEstimateAmount">0
 													원</td>
-												<td></td>
+
 											</tr>
 										</tfoot>
 									</table>
@@ -359,8 +387,7 @@
 		</main>
 	</div>
 
-	<!-- 로딩 오버레이 (요구사항 3) -->
-	<div id="loadingOverlay" class="modal-overlay">데이터 로딩 중...</div>
+
 
 	<div id="postcodeLayer" class="postcode-layer">
 		<div class="close-btn text-end p-2">

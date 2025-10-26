@@ -16,6 +16,7 @@ import com.yedam.sales1.dto.InvoiceResponseDto;
 import com.yedam.sales1.dto.InvoiceSaveRequestDto;
 import com.yedam.sales1.repository.InvoiceDetailRepository;
 import com.yedam.sales1.repository.InvoiceRepository;
+import com.yedam.sales1.repository.ShipmentRepository;
 import com.yedam.sales1.service.InvoiceService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +27,16 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final InvoiceDetailRepository invoiceDetailRepository;
+    private final ShipmentRepository shipmentRepository;
 
     @Autowired
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
-                              InvoiceDetailRepository invoiceDetailRepository) {
+                              InvoiceDetailRepository invoiceDetailRepository,
+                              ShipmentRepository shipmentRepository) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceDetailRepository = invoiceDetailRepository;
+        this.shipmentRepository = shipmentRepository;
+
     }
 
     // ===============================
@@ -104,6 +109,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = dto.toEntity(invoiceCode);
         invoice.setCompanyCode(companyCode);
         invoiceRepository.save(invoice); // PK(INVOICE_UNIQUE_CODE) 생성
+        
 
         // 4) 상세 저장
         for (InvoiceSaveRequestDto.InvoiceDetailDto d : dto.getInvoiceDetail()) {
@@ -123,6 +129,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                     .build();
 
             invoiceDetailRepository.save(detail);
+            shipmentRepository.updateIsInvoice(d.getShipmentCode());
+
         }
     }
 

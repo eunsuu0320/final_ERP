@@ -38,10 +38,9 @@ public class ShipmentServiceImpl implements ShipmentService {
 	private final PartnerRepository partnerRepository;
 	private final OrderDetailRepository orderDetailRepository;
 
-	
 	@PersistenceContext
-    private EntityManager entityManager;
-	
+	private EntityManager entityManager;
+
 	@Autowired
 	public ShipmentServiceImpl(ShipmentRepository shipmentRepository, ShipmentDetailRepository shipmentDetailRepository,
 			PartnerRepository partnerRepository, OrderDetailRepository orderDetailRepository) {
@@ -168,7 +167,7 @@ public class ShipmentServiceImpl implements ShipmentService {
 			throw new RuntimeException("유효하지 않거나 찾을 수 없는 거래처 이름입니다: " + dto.getPartnerName());
 		}
 		dto.setPartnerCode(partnerCode);
-
+		dto.setStatus("미확인");
 		// 2️⃣ 상세 항목 유효성 검사
 		if (dto.getDetailList() == null || dto.getDetailList().isEmpty()) {
 			throw new RuntimeException("출하 상세 항목이 누락되었습니다.");
@@ -199,7 +198,6 @@ public class ShipmentServiceImpl implements ShipmentService {
 			// ShipmentDetail 기본 세팅
 			detail.setShipmentCode(newShipmentCode); // 마스터 코드 FK 설정
 			detail.setCompanyCode(companyCode);
-			detail.setStatus("지시 대기"); // 기본 상태
 			String newDetailCode = String.format("SHPD%04d", detailNum++);
 			detail.setShipmentDetailCode(newDetailCode);
 			newDetailsToSave.add(detail);
