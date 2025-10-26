@@ -237,8 +237,8 @@ function renderPartnerTable(selectedPartners = []) {
 			cellClick: (e, cell) => cell.getRow().toggleSelect(),
 		},
 		{ title: "거래처명", field: "거래처명" },
-		{ title: "거래처코드", field: PARTNER_CODE_FIELD, width: 120 },
-		{ title: "유형", field: "거래처유형", width: 100 },
+		{ title: "거래처코드", field: PARTNER_CODE_FIELD },
+		{ title: "유형", field: "거래처유형" },
 	];
 
 	const instance = new Tabulator(`#${tableContainerId}`, {
@@ -289,9 +289,10 @@ function renderProductTable(selectedProducts = []) {
 	});
 
 	const columns = [
+		// ✅ 체크박스 선택 컬럼 추가
 		{
-			title: "No",
-			formatter: "rownum",
+			formatter: "rowSelection",
+			titleFormatter: "rowSelection", // 헤더 전체 선택 박스
 			hozAlign: "center",
 			headerHozAlign: "center",
 			width: 50,
@@ -299,9 +300,9 @@ function renderProductTable(selectedProducts = []) {
 			cellClick: (e, cell) => cell.getRow().toggleSelect(),
 		},
 		{ title: "품목명", field: "품목명" },
-		{ title: "품목코드", field: PRODUCT_CODE_FIELD, width: 120 },
-		{ title: "품목그룹", field: "품목그룹", width: 100 },
-		{ title: "규격/단위", field: "규격/단위", width: 80, hozAlign: "center" },
+		{ title: "품목코드", field: PRODUCT_CODE_FIELD, hozAlign: "center" },
+		{ title: "품목그룹", field: "품목그룹", hozAlign: "center" },
+		{ title: "규격/단위", field: "규격/단위", hozAlign: "center" },
 	];
 
 	const instance = new Tabulator(`#${tableContainerId}`, {
@@ -315,6 +316,7 @@ function renderProductTable(selectedProducts = []) {
 		placeholder: "검색된 데이터가 없습니다.",
 	});
 
+	// ✅ 자동 선택 처리
 	instance.on("renderComplete", () => {
 		let selectedCount = 0;
 		instance.getRows().forEach(row => {
@@ -328,6 +330,7 @@ function renderProductTable(selectedProducts = []) {
 
 	window.productTableInstance = instance; // 모달 내 테이블 인스턴스 전역 저장
 }
+
 
 // --------------------------------------------------------------------------
 // [함수] 탭 전환 (changeTabData) - HTML onclick에서 직접 호출됨
@@ -413,8 +416,6 @@ async function choosePartner(priceUniqueCode) {
 
 	if (!modalEl) {
 		console.error("❌ Modal Element not found: #choosePartnerModal");
-		const overlayToControl = document.getElementById('loading-overlay');
-		if (overlayToControl) overlayToControl.style.display = 'none';
 		return;
 	}
 
@@ -424,24 +425,57 @@ async function choosePartner(priceUniqueCode) {
 			modal = new bootstrap.Modal(modalEl);
 		} catch (e) {
 			console.error("❌ Bootstrap Modal 초기화 중 오류 발생:", e);
-			const overlayToControl = document.getElementById('loading-overlay');
-			if (overlayToControl) overlayToControl.style.display = 'none';
 			return;
 		}
 	}
 
-	const overlayToControl = document.getElementById('loading-overlay');
+	// ✅ 기존 오버레이 제거: 메인 영역의 overlayToControl 제거
+	const mainOverlay = document.getElementById('loading-overlay');
+	if (mainOverlay) mainOverlay.style.display = 'none';
+
+	// ✅ [A] 모달 내부 오버레이 표시
+	let overlayContainer = modalEl.querySelector(".modal-content");
+	let overlay = overlayContainer.querySelector(".loading-overlay");
+	if (!overlay) {
+		overlay = document.createElement("div");
+		overlay.className = "loading-overlay";
+		overlay.innerHTML = `
+			<div class="text-center">
+				<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="text-secondary fw-semibold mb-0">거래처 정보를 불러오는 중...</p>
+			</div>
+		`;
+		Object.assign(overlay.style, {
+			position: "absolute",
+			top: 0,
+			left: 0,
+			width: "100%",
+			height: "100%",
+			display: "flex",
+			flexDirection: "column",
+			justifyContent: "center",
+			alignItems: "center",
+			backgroundColor: "rgba(255,255,255,0.9)",
+			zIndex: 1056,
+			borderRadius: "0.5rem",
+		});
+		overlayContainer.style.position = "relative";
+		overlayContainer.appendChild(overlay);
+	}
+
+	overlay.style.display = "flex";
+
 	const saveButton = modalEl.querySelector('.savePartnerButton');
-
-	if (overlayToControl) overlayToControl.style.display = 'flex';
-
 	if (saveButton) {
 		saveButton.setAttribute('data-price-unique-code', priceUniqueCode);
 	} else {
-		console.warn("📌 경고: 'savePartnerButton' 클래스를 가진 저장 버튼을 찾을 수 없습니다. HTML을 확인하세요.");
+		console.warn("📌 경고: 'savePartnerButton' 클래스를 가진 저장 버튼을 찾을 수 없습니다.");
 	}
 
 	try {
+		// ✅ 거래처 목록 조회
 		const res = await fetch(`/api/price/getPartner?priceUniqueCode=${encodeURIComponent(priceUniqueCode)}`);
 		const partners = await res.json();
 		console.log("📋 서버에서 받은 거래처 목록:", partners);
@@ -458,20 +492,24 @@ async function choosePartner(priceUniqueCode) {
 		console.error("❌ 거래처 설정 로드 실패:", err);
 		renderPartnerTable([]);
 	} finally {
-		if (overlayToControl) overlayToControl.style.display = 'none';
+		// ✅ [B] 오버레이 숨기기
+		setTimeout(() => {
+			if (overlay) overlay.style.display = "none";
+		}, 400);
 	}
-};
+}
 
+
+// --------------------------------------------------------------------------
+// [함수] 품목 설정 모달 열기 (chooseProduct) - HTML onclick에서 직접 호출됨
+// --------------------------------------------------------------------------
 // --------------------------------------------------------------------------
 // [함수] 품목 설정 모달 열기 (chooseProduct) - HTML onclick에서 직접 호출됨
 // --------------------------------------------------------------------------
 async function chooseProduct(priceUniqueCode) {
 	const modalEl = document.getElementById("chooseProductModal");
-
 	if (!modalEl) {
 		console.error("❌ Modal Element not found: #chooseProductModal");
-		const overlayToControl = document.getElementById('loading-overlay');
-		if (overlayToControl) overlayToControl.style.display = 'none';
 		return;
 	}
 
@@ -481,23 +519,53 @@ async function chooseProduct(priceUniqueCode) {
 			modal = new bootstrap.Modal(modalEl);
 		} catch (e) {
 			console.error("❌ Bootstrap Modal 초기화 중 오류 발생:", e);
-			const overlayToControl = document.getElementById('loading-overlay');
-			if (overlayToControl) overlayToControl.style.display = 'none';
 			return;
 		}
 	}
 
-	const overlayToControl = document.getElementById('loading-overlay');
-	const saveButton = modalEl.querySelector('.saveProductButton');
-
-	if (overlayToControl) overlayToControl.style.display = 'flex';
-
+	// ✅ 저장 버튼에 priceUniqueCode 바인딩
+	const saveButton = modalEl.querySelector(".saveProductButton");
 	if (saveButton) {
-		saveButton.setAttribute('data-price-unique-code', priceUniqueCode);
-		console.log(priceUniqueCode);
+		saveButton.setAttribute("data-price-unique-code", priceUniqueCode);
+		console.log("priceUniqueCode:", priceUniqueCode);
 	} else {
-		console.warn("📌 경고: 'saveProductButton' ID를 가진 저장 버튼을 찾을 수 없습니다. HTML을 확인하세요.");
+		console.warn("📌 경고: '.saveProductButton' 클래스를 가진 저장 버튼을 찾을 수 없습니다. HTML을 확인하세요.");
 	}
+
+	// ✅ 모달 내부 오버레이 (modal-content 위에 표시)
+	const overlayContainer = modalEl.querySelector(".modal-content") || modalEl;
+	let overlay = overlayContainer.querySelector(".loading-overlay");
+	if (!overlay) {
+		overlay = document.createElement("div");
+		overlay.className = "loading-overlay";
+		overlay.innerHTML = `
+      <div class="text-center">
+        <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-secondary fw-semibold mb-0">품목 정보를 불러오는 중...</p>
+      </div>
+    `;
+		Object.assign(overlay.style, {
+			position: "absolute",
+			inset: "0",
+			width: "100%",
+			height: "100%",
+			display: "flex",
+			flexDirection: "column",
+			justifyContent: "center",
+			alignItems: "center",
+			backgroundColor: "rgba(255,255,255,0.9)",
+			zIndex: 1056,
+			borderRadius: "0.5rem",
+		});
+		// 부모가 relative 아니면 오버레이가 안 보일 수 있음
+		if (getComputedStyle(overlayContainer).position === "static") {
+			overlayContainer.style.position = "relative";
+		}
+		overlayContainer.appendChild(overlay);
+	}
+	overlay.style.display = "flex";
 
 	try {
 		const res = await fetch(`/api/price/getProduct?priceUniqueCode=${encodeURIComponent(priceUniqueCode)}`);
@@ -511,14 +579,18 @@ async function chooseProduct(priceUniqueCode) {
 		}
 
 		modal.show();
-
 	} catch (err) {
 		console.error("❌ 품목 설정 로드 실패:", err);
 		renderProductTable([]);
+		// 에러 메시지를 오버레이 텍스트로 잠깐 보여주고 싶다면:
+		// overlay.querySelector("p").textContent = "목록을 불러오지 못했습니다.";
 	} finally {
-		if (overlayToControl) overlayToControl.style.display = 'none';
+		setTimeout(() => {
+			if (overlay) overlay.style.display = "none";
+		}, 300);
 	}
-};
+}
+
 
 // --------------------------------------------------------------------------
 // [함수] 거래처 설정 저장 (saveChoosePartner) - HTML onclick에서 직접 호출됨
@@ -677,19 +749,66 @@ function showDetailModal(modalType, keyword) {
 
 // --------------------------------------------------------------------------
 // [함수] 모달 저장 (saveModal) - HTML onclick에서 직접 호출됨
-// --------------------------------------------------------------------------
 function saveModal() {
 	const form = document.getElementById("itemForm");
 	const modalEl = document.getElementById("newDetailModal");
-	const formData = new FormData(form);
 
+	// ✅ 유효성 검사
 	if (typeof checkRequired === 'function' && !checkRequired(form)) return;
-	if (typeof checkRequired !== 'function') console.warn("checkRequired 함수가 정의되지 않아 유효성 검사를 건너칩니다.");
+	if (typeof checkRequired !== 'function')
+		console.warn("checkRequired 함수가 정의되지 않아 유효성 검사를 건너뜁니다.");
 
+	const formData = new FormData(form);
 	const priceGroupCode = formData.get("priceGroupCode");
 	const isUpdate = priceGroupCode && priceGroupCode.trim() !== '';
 	const url = isUpdate ? "/api/modifyPrice" : "/api/registPrice";
 
+	// ✅ [A] 모달 오버레이 표시
+	let overlayContainer = modalEl ? modalEl.querySelector(".modal-content") : document.body;
+	let overlay = overlayContainer.querySelector(".loading-overlay");
+	if (!overlay) {
+		overlay = document.createElement("div");
+		overlay.className = "loading-overlay";
+		overlay.innerHTML = `
+			<div class="text-center">
+				<div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<p class="text-secondary fw-semibold mb-0">저장 중입니다...</p>
+			</div>
+		`;
+		Object.assign(overlay.style, {
+			position: "absolute",
+			top: 0,
+			left: 0,
+			width: "100%",
+			height: "100%",
+			display: "flex",
+			flexDirection: "column",
+			justifyContent: "center",
+			alignItems: "center",
+			backgroundColor: "rgba(255,255,255,0.9)",
+			zIndex: 2000,
+			borderRadius: "0.5rem",
+		});
+		overlayContainer.style.position = "relative";
+		overlayContainer.appendChild(overlay);
+	}
+	overlay.style.display = "flex";
+
+	// ✅ [1] 할인율 변환 (예: 30 → 0.3)
+	let discountValue = formData.get("discountPct");
+	if (discountValue !== null && discountValue !== "") {
+		let parsed = parseFloat(discountValue);
+		if (!isNaN(parsed)) {
+			const converted = parsed / 100; // ← 0.3으로 변환
+			formData.set("discountPct", converted);
+			document.getElementById("discountPct").value = converted;
+			console.log(`📦 할인율 변환 완료: ${parsed}% → ${converted}`);
+		}
+	}
+
+	// ✅ [2] fetch 전송
 	fetch(url, {
 		method: "POST",
 		body: formData,
@@ -698,16 +817,40 @@ function saveModal() {
 				document.querySelector('meta[name="_csrf"]').content
 		}
 	})
-		.then(res => res.json())
+		.then(async res => {
+			const text = await res.text();
+			let data;
+			try {
+				data = JSON.parse(text);
+			} catch (err) {
+				console.error("⚠️ JSON 파싱 실패. 서버 응답 원문:", text);
+				throw new Error("서버 응답이 유효한 JSON 형식이 아닙니다.");
+			}
+
+			if (!res.ok) throw new Error(data.message || `서버 오류: ${res.status}`);
+			return data;
+		})
 		.then(() => {
+			console.log("✅ 저장 성공");
 			form.reset();
 			bootstrap.Modal.getInstance(modalEl).hide();
-			reloadMainTableData();
+
+			if (typeof reloadMainTableData === 'function') reloadMainTableData();
 		})
 		.catch(err => {
 			console.error("저장 실패:", err);
+			alert("저장 실패. 콘솔을 확인하세요.");
+		})
+		.finally(() => {
+			// ✅ [B] 저장 완료 후 오버레이 제거
+			setTimeout(() => {
+				if (overlay) overlay.style.display = "none";
+			}, 400);
 		});
-};
+}
+
+
+
 
 // --------------------------------------------------------------------------
 // [함수] 거래처 설정 모달 초기화 (resetChoosePartner) - 모달 닫힘 시 호출

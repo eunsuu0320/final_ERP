@@ -144,6 +144,7 @@ public class OrdersServiceImpl implements OrdersService {
         orders.setWriter(getManagerFromAuthentication());
 
         ordersRepository.save(orders);
+        estimateRepository.updateStatusSuccess(dto.getEstimateUniqueCode());
         Long orderUk = orders.getOrderUniqueCode();
 
         String maxDetailCode = orderDetailRepository.findMaxOrderDetailCode();
@@ -159,8 +160,8 @@ public class OrdersServiceImpl implements OrdersService {
                     .price(d.getPrice())
                     .amountSupply(d.getAmountSupply())
                     .pctVat(d.getPctVat())
-                    .remarks(d.getRemarks())
-                    .status("등록")
+                    .discountAmount(d.getDiscountAmount())
+                    .status("미확인")
                     .nonShipment(d.getQuantity())
                     .build();
             nd.setOrderUniqueCode(orderUk);
@@ -199,6 +200,7 @@ public class OrdersServiceImpl implements OrdersService {
                 .manager(dto.getManager())
                 .status("미확인")
                 .remarks(dto.getRemarks())
+                .partnerDiscountAmount(dto.getPartnerDiscountAmount())
                 .postCode(dto.getPostCode())
                 .address(dto.getAddress())
                 .payCondition(dto.getPayCondition())
@@ -257,6 +259,7 @@ public class OrdersServiceImpl implements OrdersService {
         dto.setEstimateUniqueCode(o.getEstimateUniqueCode());
         dto.setPostCode(o.getPostCode());
         dto.setAddress(o.getAddress());
+        dto.setPartnerDiscountAmount(o.getPartnerDiscountAmount());
         dto.setPayCondition(o.getPayCondition());
 
         // ✅ 견적 코드 매핑

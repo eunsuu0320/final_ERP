@@ -23,6 +23,7 @@ public class ShipmentRegistrationDTO {
     private String postCode;          // 우편번호
     private String address;           // 주소
     private String remarks;           // 비고
+    private String status;
 
     // 출하 상세(ShipmentDetail)
     private List<ShipmentDetail> detailList; // 상세 항목

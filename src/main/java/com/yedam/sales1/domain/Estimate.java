@@ -77,6 +77,9 @@ public class Estimate {
 	@Column(name = "DELIVERY_DATE")
 	@Temporal(TemporalType.DATE)
 	private Date deliveryDate;
+	
+	@Column(name = "PARTNER_DISCOUNT_AMOUNT")
+	private Integer partnerDiscountAmount;
 
 	// 우편번호 (POST_CODE)
 	@Column(name = "POST_CODE")

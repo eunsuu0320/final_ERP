@@ -48,6 +48,9 @@ public class Orders {
 
     @Column(name = "VERSION", nullable = false)
     private Integer version;
+    
+    @Column(name = "PARTNER_DISCOUNT_AMOUNT")
+    private Integer partnerDiscountAmount;
 
     @Column(name = "IS_CURRENT_VERSION", length = 10, nullable = false)
     private String isCurrentVersion;

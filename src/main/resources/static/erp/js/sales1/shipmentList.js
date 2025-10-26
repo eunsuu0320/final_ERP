@@ -153,16 +153,64 @@ document.addEventListener("DOMContentLoaded", function() {
 			alert("판매완료 처리 중 오류 발생.");
 		}
 	};
+	
+	
+	
+	window.showTabulatorOverlay = function(show = true) {
+		const tableContainer = document.querySelector("#shipmentTable, #quoteTable, #commonModalTable");
+		if (!tableContainer) return;
 
-	window.saveModal = function() {
+		let overlay = document.getElementById("tabulator-loading-overlay");
+
+		if (!overlay) {
+			overlay = document.createElement("div");
+			overlay.id = "tabulator-loading-overlay";
+			Object.assign(overlay.style, {
+				position: "absolute",
+				top: 0,
+				left: 0,
+				width: "100%",
+				height: "100%",
+				backgroundColor: "rgba(255,255,255,0.7)",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				zIndex: 2000,
+			});
+			overlay.innerHTML = `
+				<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<span class="ms-3 fw-bold">데이터 갱신 중...</span>
+			`;
+
+			// 부모 요소 position 보정
+			const parent = tableContainer.parentElement;
+			const style = window.getComputedStyle(parent);
+			if (style.position === "static") parent.style.position = "relative";
+
+			parent.appendChild(overlay);
+		}
+
+		overlay.style.display = show ? "flex" : "none";
+	}
+
+	
+	
+
+	window.saveModal = function () {
 		const quoteForm = document.getElementById("quoteForm");
 		const modalEl = document.getElementById("newDetailModal");
+
 		if (!quoteForm) return alert("출하 등록 폼을 찾을 수 없습니다.");
 		if (!window.checkRequired(quoteForm)) return;
+
 		const detailList = collectShipmentDetails();
 		if (detailList.length === 0) return alert("출하 상세 항목을 입력해주세요.");
+
 		const formData = new FormData(quoteForm);
 		const formObj = Object.fromEntries(formData.entries());
+
 		const finalPayload = {
 			deliveryDate: formObj.deliveryDateText || null,
 			partnerCode: formObj.partnerCode || '',
@@ -172,27 +220,47 @@ document.addEventListener("DOMContentLoaded", function() {
 			postCode: formObj.postCode || null,
 			address: formObj.address || '',
 			remarks: formObj.remarks || '',
+			status: '미확인',
 			detailList: detailList
 		};
+
 		fetch("/api/registShipment", {
 			method: "POST",
-			headers: { "Content-Type": "application/json", [document.querySelector('meta[name="_csrf_header"]').content]: document.querySelector('meta[name="_csrf"]').content },
+			headers: {
+				"Content-Type": "application/json",
+				[document.querySelector('meta[name="_csrf_header"]').content]:
+					document.querySelector('meta[name="_csrf"]').content
+			},
 			body: JSON.stringify(finalPayload)
 		})
 			.then(res => {
-				if (!res.ok) return res.json().then(error => { throw new Error(error.message || `서버 오류 발생: ${res.status}`); });
+				if (!res.ok)
+					return res.json().then(error => {
+						throw new Error(error.message || `서버 오류 발생: ${res.status}`);
+					});
 				return res.json();
 			})
 			.then(data => {
 				alert("출하 지시 등록 완료. 코드: " + data.id);
+
+				// ✅ 모달 닫기
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
 				if (modalInstance) modalInstance.hide();
+
+				// ✅ 타뷸레이터 로딩 오버레이 표시
+				showTabulatorOverlay(true);
+
+				// ✅ 1초 뒤 새로고침 (UX 안정적)
+				setTimeout(() => {
+					location.reload();
+				}, 1000);
 			})
 			.catch(err => {
 				console.error("출하 등록 실패:", err);
 				alert(`등록 실패: ${err.message}`);
 			});
 	};
+
 
 	window.validateNowQuantity = function(input) {
 		const row = input.closest("tr");
@@ -279,6 +347,14 @@ document.addEventListener("DOMContentLoaded", function() {
 						return `<input type="text" class="form-control form-control-sm text-center bg-light"
 							value="${value}" readonly style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
 					}
+					
+					
+					
+					if (value === "출하완료") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${value}" readonly style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+					
 					const options = Object.keys(STATUS_MAP).map(key => {
 						const itemInfo = STATUS_MAP[key];
 						const isSelected = key === value ? 'selected' : '';
@@ -396,3 +472,29 @@ function calculateRow(inputElement) {
 		if (window.calculateTotal) window.calculateTotal();
 	}
 }
+
+
+document.addEventListener("keydown", function (e) {
+	// Enter 키만 감지
+	if (e.key === "Enter") {
+		const active = document.activeElement;
+
+		// 현재 포커스된 요소가 '현지시수량' input일 때만 실행
+		if (active && active.name === "nowQuantity") {
+			e.preventDefault(); // Enter 기본 동작(폼 제출 등) 방지
+
+			// 모든 현지시수량 input 가져오기
+			const allInputs = Array.from(document.querySelectorAll('input[name="nowQuantity"]'));
+			const currentIndex = allInputs.indexOf(active);
+
+			// 다음 인풋으로 포커스 이동
+			if (currentIndex >= 0 && currentIndex < allInputs.length - 1) {
+				allInputs[currentIndex + 1].focus();
+				allInputs[currentIndex + 1].select(); // 기존 값 선택 상태로 (입력 편의)
+			} else {
+				// 마지막 항목일 경우 — 선택 해제 or 경고음 등 선택 가능
+				console.log("마지막 현지시수량 입력 필드입니다.");
+			}
+		}
+	}
+});

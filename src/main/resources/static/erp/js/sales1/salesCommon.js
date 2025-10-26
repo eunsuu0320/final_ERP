@@ -183,7 +183,7 @@ async function loadCommonCode(value, selectName, name) {
 			if (selectName === 'businessSector') targetWidth = '300px';
 			if (selectName === 'emailDomain') targetWidth = '250px';
 			if (selectName === 'warehouse') targetWidth = '250px';
-			
+
 			wrapper.style.width = targetWidth;    // 폭 고정
 			wrapper.style.maxWidth = 'none';      // 최대폭 제한 해제
 			wrapper.style.flex = `0 0 ${targetWidth}`; // flex 컨테이너에서 줄어들지 않도록
@@ -321,34 +321,44 @@ window.getCommonCode = async function(commonGroup) {
 
 
 
+
+
+
+
+
+
 function bindDataToForm(data, form) {
 	console.log("바인딩할 데이터:", data);
 	console.log("바인딩할 폼:", form);
 	const allInputs = form.querySelectorAll('input, select, textarea');
 	const codeFields = ['productCode', 'partnerCode', 'estimateCode', 'priceGroupCode'];
 
+	// 모든 입력 필드 잠금 해제
 	allInputs.forEach(input => {
 		if (input.type !== 'hidden') {
 			input.readOnly = false;
 		}
 	});
 
+	// 자동 생성 placeholder
 	const displayElement = form.querySelector('.display-code-field');
 	if (displayElement) {
 		displayElement.placeholder = "자동 생성";
 		displayElement.value = "";
 	}
 
+	// ===============================
+	// [1] 일반 필드 바인딩
+	// ===============================
 	for (const key in data) {
 		if (data.hasOwnProperty(key) && key !== 'detailList') {
 			const elements = form.querySelectorAll(`[name="${key}"]`);
 			if (elements.length > 0) {
 				let value = data[key] === null ? '' : data[key];
 
-				// discountPct 처리
+				// discountPct 변환 (0.1 → 10)
 				if (key === 'discountPct' && value !== '') {
-					value = Number(value) * 100; // 서버 값 × 100
-					value = value.toFixed(2); // 소수점 2자리로 제한 (필요시)
+					if (value < 1) value = (Number(value) * 100).toFixed(2);
 				}
 
 				value = String(value);
@@ -369,23 +379,25 @@ function bindDataToForm(data, form) {
 						}
 					}
 
-					// Choices.js (comboSelect) 처리
+					// comboSelect (Choices.js)
 					if (element.classList.contains('comboSelect') && element.choicesInstance) {
 						element.choicesInstance.setChoiceByValue(value);
 					}
 				}
 			}
-
-			const partnerNameEl = document.getElementById("partnerName");
-			if (partnerNameEl) partnerNameEl.readOnly = true;
-
-			const partnerModalBtn = document.getElementById("partnerModalBtn");
-			if (partnerModalBtn) partnerModalBtn.disabled = true;
 		}
 	}
 
+	// 거래처명/모달 버튼 비활성화
+	const partnerNameEl = document.getElementById("partnerName");
+	if (partnerNameEl) partnerNameEl.readOnly = true;
 
-	// --- [2] 디테일 데이터(detailList) 바인딩 ---
+	const partnerModalBtn = document.getElementById("partnerModalBtn");
+	if (partnerModalBtn) partnerModalBtn.disabled = true;
+
+	// ===============================
+	// [2] detailList 바인딩
+	// ===============================
 	if (data.detailList && Array.isArray(data.detailList) && data.detailList.length > 0) {
 		console.log("디테일 리스트 바인딩 시작:", data.detailList);
 		const detailTbody = document.getElementById('itemDetailBody');
@@ -398,46 +410,43 @@ function bindDataToForm(data, form) {
 		detailTbody.querySelectorAll('tr:not(.new-item-row)').forEach(tr => tr.remove());
 
 		data.detailList.forEach(detail => {
-			// 템플릿 행 복제
 			const newRowTemplate = detailTbody.querySelector('tr.new-item-row');
-			if (!newRowTemplate) {
-				console.log("newRowTemplate 없음.");
-				return;
-			}
+			if (!newRowTemplate) return;
+
 			const dataRow = newRowTemplate.cloneNode(true);
 			dataRow.classList.remove('new-item-row', 'bg-light');
 			dataRow.removeAttribute('data-row-id');
 			dataRow.setAttribute('data-row-id', Date.now());
-
 			dataRow.querySelectorAll('.btn-outline-secondary').forEach(btn => btn.remove());
 
-			// 각 key에 해당하는 id를 찾아 값 매핑
+			// key 기반 값 매핑
 			for (const key in detail) {
 				if (!detail.hasOwnProperty(key)) continue;
-				console.log("detail의 key는: ", key);
-				const value = detail[key] ?? '';
+				let value = detail[key] ?? '';
+
+				// discountAmount 쉼표 포맷팅
+				if (key === 'discountAmount' && value !== '' && !isNaN(value)) {
+					value = Number(value).toLocaleString('ko-KR');
+				}
+
 				const targetInput = dataRow.querySelector(`#${key}`);
 				if (targetInput) {
 					targetInput.value = value;
 
-					// 숫자 계산용 필드에만 calculateRow 적용
+					// 숫자 계산 필드 자동 계산
 					const numericFields = ['price', 'quantity', 'supplyAmount', 'taxAmount', 'finalAmount'];
-					if (numericFields.includes(key)) {
-						calculateRow(targetInput);
-					}
+					if (numericFields.includes(key)) calculateRow(targetInput);
 				}
 			}
 
-			// productSpec = productSize + ' ' + unit
+			// 규격/단위 결합
 			const productSize = detail.productSize ?? '';
 			const unit = detail.unit ?? '';
 			const specValue = [productSize, unit].filter(v => v && v.trim() !== '').join(' ');
 			const specInput = dataRow.querySelector('#productSpec');
-			if (specInput) {
-				specInput.value = specValue;
-			}
+			if (specInput) specInput.value = specValue;
 
-			// 첫 번째 셀 체크박스 활성화
+			// 체크박스 활성화
 			const checkbox = dataRow.querySelector('input[type="checkbox"]');
 			if (checkbox) {
 				checkbox.classList.add('item-checkbox');
@@ -447,13 +456,40 @@ function bindDataToForm(data, form) {
 
 			detailTbody.appendChild(dataRow);
 		});
+	}
 
-		// 모든 상세 항목 바인딩 후 총합 계산
-		if (typeof window.calculateTotal === 'function') {
-			window.calculateTotal();
+	// ===============================
+	// [3] 금액 (tfoot) 필드 바인딩
+	// ===============================
+	const partnerDiscountEl = document.getElementById("partnerDiscountAmount");
+	const totalEstimateEl = document.getElementById("totalEstimateAmount");
+	const totalDiscountEl = document.getElementById("totalDiscountAmount");
+
+	if (partnerDiscountEl && data.partnerDiscountAmount != null) {
+		partnerDiscountEl.textContent = Number(data.partnerDiscountAmount).toLocaleString("ko-KR") + " 원";
+	}
+	if (totalEstimateEl && data.totalEstimateAmount != null) {
+		totalEstimateEl.textContent = Number(data.totalEstimateAmount).toLocaleString("ko-KR") + " 원";
+	}
+	if (totalDiscountEl && data.totalDiscountAmount != null) {
+		totalDiscountEl.textContent = Number(data.totalDiscountAmount).toLocaleString("ko-KR") + " 원";
+	}
+
+	// ===============================
+	// [4] 총합 계산 (거래처할인 적용)
+	// ===============================
+	if (typeof window.calculateTotal === 'function') {
+		window.calculateTotal();
+		// calculateTotal이 덮어쓰기 전에 다시 반영
+		if (partnerDiscountEl && data.partnerDiscountAmount != null) {
+			const formatted = Number(data.partnerDiscountAmount).toLocaleString('ko-KR');
+			partnerDiscountEl.textContent = `${formatted} 원`;
 		}
 	}
 }
+
+
+
 
 
 window.showLoading = function() {
@@ -581,71 +617,71 @@ window.resetItemGrid = function() {
 // 파일: partnerList.js (결제 정보 테이블 로직)
 
 window.addItemRow = function() {
-  const tbody = document.getElementById('itemDetailBody');
-  const newRowTemplate = tbody.querySelector('tr.new-item-row');
+	const tbody = document.getElementById('itemDetailBody');
+	const newRowTemplate = tbody.querySelector('tr.new-item-row');
 
-  if (!newRowTemplate) return;
+	if (!newRowTemplate) return;
 
-  // 1. 필수 입력 검증
-  const validationResult = window.checkRowRequired(newRowTemplate);
+	// 1. 필수 입력 검증
+	const validationResult = window.checkRowRequired(newRowTemplate);
 
-  if (validationResult.isValid) {
-    // 입력이 있다면 데이터 행으로 복사
-    const dataRow = newRowTemplate.cloneNode(true);
-    dataRow.classList.remove('new-item-row', 'bg-light');
-    dataRow.removeAttribute('data-row-id');
-    dataRow.setAttribute('data-row-id', Date.now());
+	if (validationResult.isValid) {
+		// 입력이 있다면 데이터 행으로 복사
+		const dataRow = newRowTemplate.cloneNode(true);
+		dataRow.classList.remove('new-item-row', 'bg-light');
+		dataRow.removeAttribute('data-row-id');
+		dataRow.setAttribute('data-row-id', Date.now());
 
-    // 💡 복제된 행에서 검색 버튼 제거
-    const searchBtn = dataRow.querySelector('.btn-outline-secondary');
-    if (searchBtn) searchBtn.remove();
+		// 💡 복제된 행에서 검색 버튼 제거
+		const searchBtn = dataRow.querySelector('.btn-outline-secondary');
+		if (searchBtn) searchBtn.remove();
 
-    // select 값 유지
-    const newRowSelects = newRowTemplate.querySelectorAll('select.item-input');
-    const dataRowSelects = dataRow.querySelectorAll('select.item-input');
+		// select 값 유지
+		const newRowSelects = newRowTemplate.querySelectorAll('select.item-input');
+		const dataRowSelects = dataRow.querySelectorAll('select.item-input');
 
-    newRowSelects.forEach((selectEl, index) => {
-      dataRowSelects[index].value = selectEl.value;
-    });
+		newRowSelects.forEach((selectEl, index) => {
+			dataRowSelects[index].value = selectEl.value;
+		});
 
-    // 체크박스 활성화
-    const dataRowCheckbox = dataRow.querySelector('td:first-child input[type="checkbox"]');
-    if (dataRowCheckbox) {
-      dataRowCheckbox.classList.add('item-checkbox');
-      dataRowCheckbox.disabled = false;
-      dataRowCheckbox.checked = false;
-    }
+		// 체크박스 활성화
+		const dataRowCheckbox = dataRow.querySelector('td:first-child input[type="checkbox"]');
+		if (dataRowCheckbox) {
+			dataRowCheckbox.classList.add('item-checkbox');
+			dataRowCheckbox.disabled = false;
+			dataRowCheckbox.checked = false;
+		}
 
-    tbody.appendChild(dataRow);
-    window.calculateTotal();
+		tbody.appendChild(dataRow);
+		window.calculateTotal();
 
-    // ✅ 추가: 기존 입력 행 초기화 (reset)
-    const inputs = newRowTemplate.querySelectorAll('input.item-input, select.item-input');
-    inputs.forEach(el => {
-      if (el.tagName === 'SELECT') {
-        el.selectedIndex = 0; // 첫 옵션으로 초기화
-      } else if (el.type === 'checkbox' || el.type === 'radio') {
-        el.checked = false;
-      } else {
-        el.value = ''; // 일반 input 초기화
-      }
-    });
+		// ✅ 추가: 기존 입력 행 초기화 (reset)
+		const inputs = newRowTemplate.querySelectorAll('input.item-input, select.item-input');
+		inputs.forEach(el => {
+			if (el.tagName === 'SELECT') {
+				el.selectedIndex = 0; // 첫 옵션으로 초기화
+			} else if (el.type === 'checkbox' || el.type === 'radio') {
+				el.checked = false;
+			} else {
+				el.value = ''; // 일반 input 초기화
+			}
+		});
 
-  } else {
-    if (tbody.querySelectorAll('tr:not(.new-item-row)').length === 0) {
-      const missingField = validationResult.missingFieldName;
-      alert(`${missingField}은(는) 필수 입력 항목입니다.`);
-      const missingInput = newRowTemplate.querySelector(`[name="${missingField}"]`);
-      if (missingInput) missingInput.focus();
-      return;
-    }
-  }
+	} else {
+		if (tbody.querySelectorAll('tr:not(.new-item-row)').length === 0) {
+			const missingField = validationResult.missingFieldName;
+			alert(`${missingField}은(는) 필수 입력 항목입니다.`);
+			const missingInput = newRowTemplate.querySelector(`[name="${missingField}"]`);
+			if (missingInput) missingInput.focus();
+			return;
+		}
+	}
 
 
-  // 기존 함수 호출 (혹시 커스텀 초기화 로직이 있는 경우)
-  window.clearInputRowValues(newRowTemplate);
+	// 기존 함수 호출 (혹시 커스텀 초기화 로직이 있는 경우)
+	window.clearInputRowValues(newRowTemplate);
 
-  console.log("새로운 결제 정보 행 추가 완료 및 입력 행 초기화.");
+	console.log("새로운 결제 정보 행 추가 완료 및 입력 행 초기화.");
 };
 
 

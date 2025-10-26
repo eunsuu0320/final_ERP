@@ -7,8 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	const STATUS_MAP = {
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
-		"미체결": { label: "미체결" },
-		"체결": { label: "체결" }
+		"미체결": { label: "미체결" }
 	};
 
 	// 콤마 제거 후 정수만 추출하는 헬퍼 함수 (전역으로 정의하여 모든 함수에서 사용)
@@ -140,6 +139,127 @@ document.addEventListener("DOMContentLoaded", function() {
 			bindDataToForm(window.lastLoadedEstimateData, form);
 	};
 
+
+	// ✅ [완성형 priceDiscount 함수 - 전체 코드 복사 사용 가능]
+	window.priceDiscount = async function() {
+		try {
+			const partnerCode = document.getElementById("partnerCodeModal")?.value || '';
+			const detailList = collectQuoteDetails();
+
+			// ✅ 품목코드 목록 추출
+			const productCodeList = detailList
+				.map(i => i.productCode)
+				.filter(c => c && c.trim() !== "");
+
+			// ✅ 유효성 검사
+			if (!partnerCode) {
+				alert("거래처 코드가 선택되지 않았습니다.");
+				return;
+			}
+			if (productCodeList.length === 0) {
+				alert("품목 코드가 없습니다.");
+				return;
+			}
+
+			// ✅ 요청 데이터
+			const payload = { partnerCode, productCodes: productCodeList };
+			const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+			const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+
+			// ✅ 로딩 오버레이 표시
+			if (typeof showTableLoading === "function") showTableLoading(true);
+
+			// ✅ 서버 호출
+			const res = await fetch("/api/price/findApplicablePriceGroup", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					[csrfHeader]: csrfToken
+				},
+				body: JSON.stringify(payload),
+			});
+
+			if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+
+			const result = await res.json();
+			console.log("📦 서버 응답 결과:", result);
+
+			// ✅ 결과 없을 때
+			if (!Array.isArray(result) || result.length === 0) {
+				alert("적용 가능한 단가그룹이 없습니다.");
+				return;
+			}
+
+			// ==========================
+			// 🔹 [1] 단가 유형별 할인율 구분
+			// ==========================
+			let partnerDiscountRate = 0;
+			const productDiscountMap = {};
+
+			result.forEach(p => {
+				const rate = parseFloat(p.discountPct || 0);
+				if (p.priceType === "거래처단가") {
+					// 거래처단가 중 가장 큰 할인율 적용
+					partnerDiscountRate = Math.max(partnerDiscountRate, rate);
+				} else if (p.priceType === "품목단가" && p.productCode) {
+					// 품목단가 중 동일 품목에 대해 가장 큰 할인율 적용
+					const prev = productDiscountMap[p.productCode] || 0;
+					productDiscountMap[p.productCode] = Math.max(prev, rate);
+				}
+			});
+
+			console.log("✅ 거래처 할인율:", partnerDiscountRate);
+			console.log("✅ 품목별 할인율 맵:", productDiscountMap);
+
+			// ==========================
+			// 🔹 [2] 품목별 할인 적용
+			// ==========================
+			const rows = document.querySelectorAll("#itemDetailBody tr");
+			rows.forEach(row => {
+				const code = row.querySelector('input[name="itemCode"]')?.value;
+				if (!code) return;
+
+				const supplyInput = row.querySelector('input[name="supplyAmount"]');
+				const taxInput = row.querySelector('input[name="taxAmount"]');
+				const discountInput = row.querySelector('input[name="discountAmount"]');
+				const finalInput = row.querySelector('input[name="finalAmount"]');
+
+				if (!supplyInput || !taxInput || !discountInput || !finalInput) return;
+
+				const supply = cleanValue(supplyInput.value);
+				const tax = cleanValue(taxInput.value);
+				const discountRate = productDiscountMap[code] || 0;
+
+				const discountValue = Math.floor((supply + tax) * discountRate);
+				const finalAmount = (supply + tax) - discountValue;
+
+				discountInput.value = discountValue.toLocaleString('ko-KR');
+				finalInput.value = finalAmount.toLocaleString('ko-KR');
+			});
+
+			// ==========================
+			// 🔹 [3] 합계 재계산 및 거래처 할인 적용
+			// ==========================
+			calculateTotal(partnerDiscountRate);
+
+			alert(`적용 가능한 단가 ${result.length}건을 반영했습니다.`);
+
+		} catch (err) {
+			console.error("❌ 단가그룹 조회 중 오류 발생:", err);
+			alert("단가그룹 조회 중 오류가 발생했습니다.");
+		} finally {
+			if (typeof showTableLoading === "function") showTableLoading(false);
+		}
+	};
+
+
+
+
+
+
+
+
+
 	window.showDetailModal = function(modalType, keyword) {
 		const modalName = modalType === 'detail' ? '견적서 상세정보' : '견적서 등록';
 		const modalEl = document.getElementById("newDetailModal");
@@ -154,13 +274,24 @@ document.addEventListener("DOMContentLoaded", function() {
 		document.getElementById("partnerModalBtn").disabled = modalType !== 'regist';
 		document.querySelector("#newDetailModal .modal-title").textContent = modalName;
 
-		if (modalType === 'detail' && keyword)
-			loadDetailData('estimate', keyword, form).then(d => {
-				window.lastLoadedEstimateData = d;
-				window.lastModalType = modalType;
-			});
+		// ✅ detail 모드일 때만 오버레이 표시 + 로딩
+		if (modalType === 'detail' && keyword) {
+			showTableLoading(true); // 모달 내부 오버레이 표시
+
+			loadDetailData('estimate', keyword, form)
+				.then(d => {
+					window.lastLoadedEstimateData = d;
+					window.lastModalType = modalType;
+				})
+				.catch(err => console.error('견적서 상세 로딩 실패:', err))
+				.finally(() => {
+					showTableLoading(false); // 로딩 종료 후 오버레이 제거
+				});
+		}
+
 		modal.show();
 	};
+
 
 	const modalEl = document.getElementById("newDetailModal");
 	if (modalEl)
@@ -169,6 +300,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	window.saveModal = function() {
 		const form = document.getElementById("quoteForm");
 		const modalEl = document.getElementById("newDetailModal");
+
+		// ✅ td의 텍스트에서 숫자만 추출
+		const partnerDiscountText = document.getElementById("partnerDiscountAmount")?.textContent || "0";
+		const partnerDiscountAmount = window.cleanValue(partnerDiscountText); // "1,200 원" → 1200
 
 		if (!form) return console.error("폼을 찾을 수 없습니다.");
 
@@ -186,8 +321,11 @@ document.addEventListener("DOMContentLoaded", function() {
 			payCondition: formObj.payCondition || '',
 			remarks: formObj.remarks || '',
 			manager: formObj.manager || '',
+			partnerDiscountAmount: partnerDiscountAmount, // ✅ 이제 정확히 숫자값
 			detailList: detailList
 		};
+
+		console.log("✅ 저장 payload:", payload); // 확인용 로그
 
 		fetch("/api/registEstimate", {
 			method: "POST",
@@ -207,9 +345,12 @@ document.addEventListener("DOMContentLoaded", function() {
 			.catch(err => console.error("저장 실패:", err));
 	};
 
+
 	function collectQuoteDetails() {
+
 		const detailList = [];
 		const tbody = document.getElementById('itemDetailBody');
+
 		if (!tbody) return detailList;
 
 		tbody.querySelectorAll('tr').forEach(row => {
@@ -218,11 +359,65 @@ document.addEventListener("DOMContentLoaded", function() {
 				productCode: row.querySelector('input[name="itemCode"]').value || '',
 				quantity: window.cleanValue(row.querySelector('input[name="quantity"]').value),
 				price: window.cleanValue(row.querySelector('input[name="price"]').value),
-				remarks: row.querySelector('input[name="remarks"]').value || '',
+				discountAmount: window.cleanValue(row.querySelector('input[name="discountAmount"]').value),
+
 			});
 		});
 		return detailList;
 	}
+
+
+
+
+
+
+	// ===============================
+	// ✅ [공통] 로딩 오버레이 표시 함수
+	// ===============================
+	function showTableLoading(show = true) {
+		const modalContent = document.querySelector("#newDetailModal .modal-content");
+		if (!modalContent) return;
+
+		let overlay = modalContent.querySelector(".modal-loading-overlay");
+
+		// 처음 호출 시 오버레이 요소 생성
+		if (!overlay) {
+			overlay = document.createElement("div");
+			overlay.className = "modal-loading-overlay";
+			Object.assign(overlay.style, {
+				position: "absolute",
+				top: "0",
+				left: "0",
+				width: "100%",
+				height: "100%",
+				backgroundColor: "rgba(255, 255, 255, 0.7)",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+				zIndex: "1056", // 모달 내용 위
+				borderRadius: "0.3rem", // Bootstrap 모달 모서리와 일치
+			});
+			overlay.innerHTML = `
+				<div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+				<span class="ms-3 fw-bold">데이터 로딩 중...</span>
+			`;
+
+			// 부모인 modal-content가 relative가 아니라면 position 설정
+			const computedStyle = window.getComputedStyle(modalContent);
+			if (computedStyle.position === "static") {
+				modalContent.style.position = "relative";
+			}
+
+			modalContent.appendChild(overlay);
+		}
+
+		overlay.style.display = show ? "flex" : "none";
+	}
+
+
+
 
 	let tabulatorColumns = [
 		{
@@ -260,6 +455,20 @@ document.addEventListener("DOMContentLoaded", function() {
 						const sel = k === val ? 'selected' : '';
 						return `<option value="${k}" ${sel}>${STATUS_MAP[k].label}</option>`;
 					}).join('');
+					
+					if (val === "체결") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${val}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+					
+					if (val === "미체결") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${val}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+		
+					
 					return `<select class="form-select form-select-sm"
 						onchange="updateStatusAPI('${code}', this.value, this)"
 						style="font-size:0.75rem;min-width:90px;">${options}</select>`;
@@ -342,6 +551,7 @@ function calculateRow(inputElement) {
 	const taxAmountInput = row.querySelector('input[name="taxAmount"]');
 	const finalAmountInput = row.querySelector('input[name="finalAmount"]');
 
+
 	if (!quantityInput || !unitPriceInput || !supplyAmountInput || !taxAmountInput || !finalAmountInput) return;
 
 	// 3) 계산
@@ -356,51 +566,69 @@ function calculateRow(inputElement) {
 	taxAmountInput.value = taxAmount.toLocaleString('ko-KR');
 	finalAmountInput.value = finalAmount.toLocaleString('ko-KR');
 
+
 	// 5) 합계 갱신
 	if (typeof window.calculateTotal === 'function') {
 		window.calculateTotal();
 	}
 }
 
-function calculateTotal() {
+function calculateTotal(partnerDiscountRate = 0) {
 	let totalQuantity = 0;
 	let totalSupplyAmount = 0;
 	let totalTaxAmount = 0;
+	let totalDiscountAmount = 0; // ✅ 품목별 할인 총합 추가
+	let totalFinalAmount = 0;
 
 	const tbody = document.getElementById('itemDetailBody');
 	if (!tbody) return;
 
 	tbody.querySelectorAll('tr').forEach(row => {
-		if (row.getAttribute('data-row-id') === 'new') return;
-
-		const quantityInput = row.querySelector('input[name="quantity"]');
-		const supplyAmountInput = row.querySelector('input[name="supplyAmount"]');
-		const taxAmountInput = row.querySelector('input[name="taxAmount"]');
-		if (!quantityInput || !supplyAmountInput || !taxAmountInput) return;
-
-		const cleanValue = window.cleanValue;
-		const quantity = cleanValue(quantityInput.value);
-		const supplyAmount = cleanValue(supplyAmountInput.value);
-		const taxAmount = cleanValue(taxAmountInput.value);
+		const quantity = cleanValue(row.querySelector('input[name="quantity"]')?.value);
+		const supply = cleanValue(row.querySelector('input[name="supplyAmount"]')?.value);
+		const tax = cleanValue(row.querySelector('input[name="taxAmount"]')?.value);
+		const discount = cleanValue(row.querySelector('input[name="discountAmount"]')?.value);
+		const final = cleanValue(row.querySelector('input[name="finalAmount"]')?.value);
 
 		totalQuantity += quantity;
-		totalSupplyAmount += supplyAmount;
-		totalTaxAmount += taxAmount;
+		totalSupplyAmount += supply;
+		totalTaxAmount += tax;
+		totalDiscountAmount += discount; // ✅ 할인금액 합계 누적
+		totalFinalAmount += final;
 	});
 
-	// 합계 표시
+	// ===============================
+	// ✅ 합계 표시 영역 업데이트
+	// ===============================
 	const totalQtyEl = document.getElementById('totalQuantity');
 	const totalSupplyEl = document.getElementById('totalSupplyAmount');
 	const totalTaxEl = document.getElementById('totalTaxAmount');
+	const totalDiscountEl = document.getElementById('totalDiscountAmount');
 	const totalAmountEl = document.getElementById('totalAmount');
+	const partnerDiscountEl = document.getElementById('partnerDiscountAmount');
+	const totalEstimateEl = document.getElementById('totalEstimateAmount');
 
 	if (totalQtyEl) totalQtyEl.textContent = totalQuantity.toLocaleString('ko-KR') + ' 개';
 	if (totalSupplyEl) totalSupplyEl.textContent = totalSupplyAmount.toLocaleString('ko-KR') + ' 원';
 	if (totalTaxEl) totalTaxEl.textContent = totalTaxAmount.toLocaleString('ko-KR') + ' 원';
+	if (totalDiscountEl) totalDiscountEl.textContent = totalDiscountAmount.toLocaleString('ko-KR') + ' 원'; // ✅ 할인 합계 표시
+	if (totalAmountEl) totalAmountEl.textContent = totalFinalAmount.toLocaleString('ko-KR') + ' 원';
 
-	const totalAmount = totalSupplyAmount + totalTaxAmount;
-	if (totalAmountEl) totalAmountEl.textContent = totalAmount.toLocaleString('ko-KR') + ' 원';
+	// ===============================
+	// ✅ 거래처 전체 할인 계산
+	// ===============================
+	const partnerDiscountValue = Math.floor(totalFinalAmount * partnerDiscountRate);
+	const totalEstimate = totalFinalAmount - partnerDiscountValue;
+
+	if (partnerDiscountEl)
+		partnerDiscountEl.textContent = partnerDiscountValue.toLocaleString('ko-KR') + ' 원';
+	if (totalEstimateEl)
+		totalEstimateEl.textContent = totalEstimate.toLocaleString('ko-KR') + ' 원';
 }
+
+
+
+
 
 // ✅ 전역 등록 (resetQuote, oninput 등에서 window.*로 접근 가능하게)
 window.calculateRow = calculateRow;

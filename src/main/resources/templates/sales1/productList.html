@@ -103,8 +103,8 @@
 				</div>
 				<div class="mb-2">
 					<!-- ✅ 전체 선택 체크박스 -->
-					<label class="me-2"> <input type="checkbox" id="selectAll"
-					 /> <span>전체</span>
+					<label class="me-2"> <input type="checkbox" id="selectAll" />
+						<span>전체</span>
 					</label>
 
 					<!-- ✅ 개별 컬럼 체크박스 -->
@@ -116,8 +116,10 @@
 				</div>
 
 
+				<div id="productTableArea">
+					<div id="productTable"></div>
 
-				<div id="productTable"></div>
+				</div>
 
 				<div class="modal fade" id="imgModal" tabindex="-1"
 					aria-hidden="true">
@@ -195,19 +197,20 @@
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">입고단가</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" id="inPriceDisplay"
-												oninput="koKRformatter(this)"> <input type="hidden"
-												id="inPrice" name="inPrice">
+											<!-- ✅ 표시용 input 하나만 사용 -->
+											<input type="text" class="form-control" id="inPrice"
+												name="inPrice" oninput="koKRformatter(this)">
 										</div>
 									</div>
+
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">출고단가</label>
 										<div class="col-sm-9">
-											<input type="text" class="form-control" id="outPriceDisplay"
-												oninput="koKRformatter(this)"> <input type="hidden"
-												id="outPrice" name="outPrice">
+											<input type="text" class="form-control" id="outPrice"
+												name="outPrice" oninput="koKRformatter(this)">
 										</div>
 									</div>
+
 									<div class="row mb-3">
 										<label class="col-sm-3 col-form-label">창고</label>
 										<div class="col-sm-9">

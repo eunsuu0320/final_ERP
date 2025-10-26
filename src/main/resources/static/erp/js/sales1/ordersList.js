@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", function() {
 	const STATUS_MAP = {
 		"미확인": { label: "미확인" },
 		"진행중": { label: "진행중" },
-		"출하지시완료": { label: "출하지시완료" },
 	};
 	window.cleanValue = (val) => parseInt(String(val).replace(/[^0-9]/g, '')) || 0;
 
@@ -75,15 +74,18 @@ document.addEventListener("DOMContentLoaded", function() {
 			document.getElementById("partnerModalBtn").disabled = false;
 		}
 
+		// ✅ DETAIL 타입일 때도 모달 내부 오버레이 적용
 		if (modalType === 'detail' && (keyword !== undefined && keyword !== null)) {
-			showLoading();
+			showModalLoading(); // ✅ 모달 내부 오버레이 표시
 			loadDetailData('orders', keyword, form)
 				.then(data => {
 					window.lastLoadedOrderData = data;
 					window.lastModalType = 'detail';
 				})
 				.catch(err => console.error('주문 상세 로딩 실패:', err))
-				.finally(hideLoading);
+				.finally(() => {
+					hideModalLoading(); // ✅ 로딩 완료 시 제거
+				});
 		}
 
 		modalEl.addEventListener('hidden.bs.modal', function() {
@@ -93,12 +95,17 @@ document.addEventListener("DOMContentLoaded", function() {
 		modal.show();
 	};
 
+
 	// 저장
 	window.saveModal = function() {
 		const quoteForm = document.getElementById("quoteForm");
 		const modalEl = document.getElementById("newDetailModal");
 		if (!quoteForm) { alert("저장 오류: 주문서 등록 폼을 찾을 수 없습니다."); return; }
 
+		const partnerDiscountText = document.getElementById("partnerDiscountAmount")?.textContent || "0";
+		const partnerDiscountAmount = window.cleanValue(partnerDiscountText); // "1,200 원" → 1200
+
+		
 		const orderData = new FormData(quoteForm);
 		const orderDataObject = Object.fromEntries(orderData.entries());
 
@@ -120,6 +127,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			detailList: detailList,
 			postCode: orderDataObject.postCode ? parseInt(orderDataObject.postCode) : null,
 			address: orderDataObject.address || '',
+			partnerDiscountAmount: partnerDiscountAmount, // ✅ 이제 정확히 숫자값
 			payCondition: orderDataObject.payCondition || ''
 		};
 		console.log("전송할 최종 주문 데이터:", finalPayload);
@@ -167,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				price: window.cleanValue(row.querySelector('input[name=\"price\"]').value),
 				amountSupply: supplyAmount,
 				pctVat: Math.round(pctVat * 100) / 100,
-				remarks: row.querySelector('input[name=\"remarks\"]').value || '',
+				discountAmount: window.cleanValue(row.querySelector('input[name="discountAmount"]').value),
 			});
 		});
 		return list;
@@ -192,14 +200,14 @@ document.addEventListener("DOMContentLoaded", function() {
 					return `<div style="cursor:pointer; color:blue;" onclick="showDetailModal('detail', '${uk}')">${value}</div>`;
 				};
 			}
-			
-			
+
+
 			if (col === "비고") {
 				columnDef.hozAlign = "left";
 			}
-			
+
 			if (col === "주문금액합계") {
-					columnDef.title = col + " (원)";
+				columnDef.title = col + " (원)";
 				columnDef.formatter = function(cell) {
 					const v = cell.getValue();
 					if (v === null || v === undefined || isNaN(v)) return "-";
@@ -216,6 +224,20 @@ document.addEventListener("DOMContentLoaded", function() {
 						const isSelected = key === value ? 'selected' : '';
 						return `<option value="${key}" ${isSelected}>${STATUS_MAP[key].label}</option>`;
 					}).join('');
+					
+					if (value === "진행중") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${value}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+					
+					if (value === "출하지시완료") {
+						return `<input type="text" class="form-control form-control-sm text-center bg-light"
+							value="${value}" readonly
+							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
+					}
+					
+					
 					return `<select class="form-select form-select-sm"
 							onchange="updateStatusAPI('${code}', this.value, this)"
 							style="font-size:0.75rem; padding:0.25rem 0.5rem; height:auto; min-width:90px;">
@@ -339,6 +361,35 @@ window.updateStatusAPI = function(code, status, selectElement) {
 		});
 };
 
+
+
+window.showModalLoading = function() {
+	const modalContent = document.querySelector("#newDetailModal .modal-content");
+	if (!modalContent) return;
+
+	if (modalContent.querySelector(".modal-loading-overlay")) return;
+
+	const overlay = document.createElement("div");
+	overlay.className = "modal-loading-overlay";
+	overlay.innerHTML = `
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <span class="ms-3">데이터 로딩 중...</span>
+  `;
+	modalContent.appendChild(overlay);
+};
+
+window.hideModalLoading = function() {
+	const modalContent = document.querySelector("#newDetailModal .modal-content");
+	if (!modalContent) return;
+
+	const overlay = modalContent.querySelector(".modal-loading-overlay");
+	if (overlay) overlay.remove();
+};
+
+
+
 // === 행 계산 ===
 window.calculateRow = function(inputElement) {
 	const row = inputElement.closest('tr');
@@ -368,28 +419,55 @@ window.calculateRow = function(inputElement) {
 	calculateTotal();
 };
 
-// === 합계 ===
-window.calculateTotal = function() {
-	let totalQuantity = 0, totalSupplyAmount = 0, totalTaxAmount = 0, totalFinalAmount = 0;
+function calculateTotal(partnerDiscountRate = 0) {
+	let totalQuantity = 0;
+	let totalSupplyAmount = 0;
+	let totalTaxAmount = 0;
+	let totalDiscountAmount = 0; // ✅ 품목별 할인 총합 추가
+	let totalFinalAmount = 0;
+
 	const tbody = document.getElementById('itemDetailBody');
 	if (!tbody) return;
 
 	tbody.querySelectorAll('tr').forEach(row => {
-		if (row.getAttribute('data-row-id') === 'new') return;
-
-		const cleanValue = window.cleanValue;
-		const quantity = cleanValue(row.querySelector('input[name=\"quantity\"]')?.value || 0);
-		const supplyAmount = cleanValue(row.querySelector('input[name=\"supplyAmount\"]')?.value || 0);
-		const taxAmount = cleanValue(row.querySelector('input[name=\"taxAmount\"]')?.value || 0);
+		const quantity = cleanValue(row.querySelector('input[name="quantity"]')?.value);
+		const supply = cleanValue(row.querySelector('input[name="supplyAmount"]')?.value);
+		const tax = cleanValue(row.querySelector('input[name="taxAmount"]')?.value);
+		const discount = cleanValue(row.querySelector('input[name="discountAmount"]')?.value);
+		const final = cleanValue(row.querySelector('input[name="finalAmount"]')?.value);
 
 		totalQuantity += quantity;
-		totalSupplyAmount += supplyAmount;
-		totalTaxAmount += taxAmount;
-		totalFinalAmount += (supplyAmount + taxAmount);
+		totalSupplyAmount += supply;
+		totalTaxAmount += tax;
+		totalDiscountAmount += discount; // ✅ 할인금액 합계 누적
+		totalFinalAmount += final;
 	});
 
-	document.getElementById('totalQuantity').textContent = totalQuantity.toLocaleString('ko-KR') + ' 개';
-	document.getElementById('totalSupplyAmount').textContent = totalSupplyAmount.toLocaleString('ko-KR') + ' 원';
-	document.getElementById('totalTaxAmount').textContent = totalTaxAmount.toLocaleString('ko-KR') + ' 원';
-	document.getElementById('totalFinalAmount').textContent = totalFinalAmount.toLocaleString('ko-KR') + ' 원';
-};
+	// ===============================
+	// ✅ 합계 표시 영역 업데이트
+	// ===============================
+	const totalQtyEl = document.getElementById('totalQuantity');
+	const totalSupplyEl = document.getElementById('totalSupplyAmount');
+	const totalTaxEl = document.getElementById('totalTaxAmount');
+	const totalDiscountEl = document.getElementById('totalDiscountAmount');
+	const totalAmountEl = document.getElementById('totalAmount');
+	const partnerDiscountEl = document.getElementById('partnerDiscountAmount');
+	const totalEstimateEl = document.getElementById('totalEstimateAmount');
+
+	if (totalQtyEl) totalQtyEl.textContent = totalQuantity.toLocaleString('ko-KR') + ' 개';
+	if (totalSupplyEl) totalSupplyEl.textContent = totalSupplyAmount.toLocaleString('ko-KR') + ' 원';
+	if (totalTaxEl) totalTaxEl.textContent = totalTaxAmount.toLocaleString('ko-KR') + ' 원';
+	if (totalDiscountEl) totalDiscountEl.textContent = totalDiscountAmount.toLocaleString('ko-KR') + ' 원'; // ✅ 할인 합계 표시
+	if (totalAmountEl) totalAmountEl.textContent = totalFinalAmount.toLocaleString('ko-KR') + ' 원';
+
+	// ===============================
+	// ✅ 거래처 전체 할인 계산
+	// ===============================
+	const partnerDiscountValue = Math.floor(totalFinalAmount * partnerDiscountRate);
+	const totalEstimate = totalFinalAmount - partnerDiscountValue;
+
+	if (partnerDiscountEl)
+		partnerDiscountEl.textContent = partnerDiscountValue.toLocaleString('ko-KR') + ' 원';
+	if (totalEstimateEl)
+		totalEstimateEl.textContent = totalEstimate.toLocaleString('ko-KR') + ' 원';
+}

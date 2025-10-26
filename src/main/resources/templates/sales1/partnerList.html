@@ -162,16 +162,17 @@
 													<div class="d-flex align-items-center" style="gap: 6px;">
 														<input type="text" class="form-control text-center"
 															style="width: 80px;" maxlength="3" id="biz1"
-															oninput="autoTab(this,'biz2',3)"> <span>-</span>
-														<input type="text" class="form-control text-center"
+															oninput="autoTab(this, 'biz2')"> <span>-</span> <input
+															type="text" class="form-control text-center"
 															style="width: 90px;" maxlength="2" id="biz2"
-															oninput="autoTab(this,'biz3',2)"> <span>-</span>
-														<input type="text" class="form-control text-center"
+															oninput="autoTab(this, 'biz3')"> <span>-</span> <input
+															type="text" class="form-control text-center"
 															style="width: 90px;" maxlength="5" id="biz3"
-															oninput="updateBusinessNo()"> <input
+															> <input
 															type="hidden" name="businessNo" id="businessNo">
 													</div>
 												</div>
+
 
 												<!-- 업태 -->
 												<div class="d-flex align-items-center mb-3"
@@ -214,16 +215,17 @@
 													<div class="d-flex align-items-center" style="gap: 6px;">
 														<input type="text" class="form-control text-center"
 															style="width: 80px;" maxlength="3" id="phone1"
-															oninput="autoTab(this,'phone2',3)"> <span>-</span>
+															oninput="autoTab(this, 'phone2')"> <span>-</span>
 														<input type="text" class="form-control text-center"
 															style="width: 90px;" maxlength="4" id="phone2"
-															oninput="autoTab(this,'phone3',4)"> <span>-</span>
+															oninput="autoTab(this, 'phone3')"> <span>-</span>
 														<input type="text" class="form-control text-center"
 															style="width: 90px;" maxlength="4" id="phone3"
-															oninput="updatePhoneNo()" required> <input
+															 required> <input
 															type="hidden" name="partnerPhone" id="partnerPhone">
 													</div>
 												</div>
+
 
 												<!-- 담당자 -->
 												<div class="d-flex align-items-center mb-3"
@@ -343,11 +345,14 @@
 											<label class="col-sm-3 col-form-label" style="width: 150px;">여신한도</label>
 											<div class="col-sm-9 d-flex align-items-center">
 												<div class="col-2 me-2">
-													<input type="number" class="form-control" name="loanLimit">
+													<input type="text" class="form-control" name="loanLimit"
+														id="loanLimit" inputmode="numeric"
+														oninput="formatLoanLimit(this)">
 												</div>
 												원
 											</div>
 										</div>
+
 
 										<div class="row mb-3">
 											<label class="col-sm-3 col-form-label" style="width: 150px;">비고</label>

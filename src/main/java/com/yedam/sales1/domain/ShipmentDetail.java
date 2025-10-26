@@ -38,8 +38,6 @@ public class ShipmentDetail {
 	@Column(name = "REMARKS", length = 1000)
 	private String remarks;
 
-	@Column(name = "STATUS", length = 20)
-	private String status;
 
 	@Column(name = "COMPANY_CODE", length = 20, nullable = false)
 	private String companyCode;

@@ -28,6 +28,7 @@ public class OrderModalDTO {
     private Integer postCode;
     private String address;
     private String payCondition;
+    private Integer partnerDiscountAmount;
 
     private Date deliveryDate;
     private Date createDate;

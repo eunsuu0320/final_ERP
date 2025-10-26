@@ -32,6 +32,9 @@ public class OrderDetail {
 
     @Column(name = "QUANTITY")
     private Integer quantity; // QUANTITY (NUMBER NULL)
+    
+    @Column(name = "DISCOUNT_AMOUNT")
+    private Integer discountAmount; 
 
     @Column(name = "PRICE")
     private Double price; // PRICE (NUMBER NULL)
