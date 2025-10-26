@@ -33,6 +33,9 @@
       padding: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
+     /* 사이드 카드 제목 빨간색 (우선순위 강화) */
+	.side-card .d-block.mb-2 { color: #dc3545 !important; }
+
 
     /* 헤더의 전체선택 체크박스 정확히 중앙 정렬 */
     #sales-table .tabulator-col.sel-col .tabulator-col-title {
@@ -69,6 +72,7 @@
       pointer-events: all;     /* 클릭 차단 */
     }
     .loading-overlay.d-none { display: none; }
+
   </style>
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
@@ -98,35 +102,29 @@
           </div>
         </div>
 
-        <!-- ✅ 유의사항 영역: 카드 2개로 분리 + 배경 진하게 -->
-        <div class="col-12 col-md-4 col-lg-3 order-2">
-          <div class="d-flex flex-column gap-3">
-
-            <!-- 카드 1: 미수금 Top5 -->
-            <div class="side-card">
-              <h5 class="text-danger fw-bold mb-3">미수금 상위 5 거래처</h5>
-              <table class="table table-borderless mb-0">
-                <tbody id="top-ar-body"></tbody>
-              </table>
-            </div>
-
-            <!-- 카드 2: 여신기간 초과 Top5 -->
-            <div class="side-card">
-              <h5 class="text-danger fw-bold mb-3">여신기간 초과 거래처</h5>
-              <table class="table table-borderless mb-0">
-              
-                <tbody>
-                <tr><td>거래처 f</td></tr>
-                <tbody id="credit-over-body">
-                  <tr><td class="text-muted">로딩 중…</td></tr>
-                </tbody>
-              </table>
-            </div>
-
-          </div>
-        </div>
-        <!-- /유의사항 영역 -->
-      </div>
+		<!-- 유의사항 영역 -->
+		<div class="col-12 col-md-4 col-lg-3 order-2">
+		  <div class="side-card">
+		
+		    <div class="mb-4">
+		      <strong class="d-block mb-2 text-danger">미수금 상위5 거래처</strong>
+		      <table class="table table-borderless mb-0">
+		        <tbody id="top-ar-body">
+		          <tr><td colspan="2">로딩중...</td></tr>
+		        </tbody>
+		      </table>
+		    </div>
+		
+		    <div>
+		      <strong class="d-block mb-2 text-danger">여신초과 상위5 거래처</strong>
+		      <table class="table table-borderless mb-0">
+		        <tbody id="credit-exceed-body">
+		          <tr><td colspan="2">로딩중...</td></tr>
+		        </tbody>
+		      </table>
+		    </div>
+		  </div>
+		</div>
 
       <!-- 등록 모달 -->
       <div class="modal fade" id="insertSalesModal" tabindex="-1" aria-hidden="true">
