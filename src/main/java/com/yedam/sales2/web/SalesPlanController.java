@@ -147,21 +147,21 @@ public class SalesPlanController {
 	}
 
 	// 미수금 top5
-	@GetMapping("/api/invoices/top-outstanding")
+	@GetMapping(value = "/api/invoices/top-outstanding", produces = "application/json")
 	@ResponseBody
-	public List<Map<String, Object>> topOutstanding(@RequestParam String companyCode,
-			@RequestParam(defaultValue = "5") int limit) {
-		return salesService.getTopOutstanding(companyCode, limit);
+	public List<Map<String, Object>> topOutstanding() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		String companyCode = auth.getName().split(":")[0];
+		return salesService.getTopOutstanding(companyCode, 5);
 	}
 
 	// 여신초과 TOP5
 	@GetMapping(value = "/api/sales2/credit-term-over-partners", produces = "application/json")
 	@ResponseBody
-	public List<LoanOverdueWithNameView> termOverPartners(@RequestParam(defaultValue = "5") int limit) {
+	public List<LoanOverdueWithNameView> termOverPartners() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		String companyCode = auth.getName().split(":")[0];
-		int n = Math.max(1, Math.min(limit, 10));
-		return loanRepository.findOverdueTopNWithName(companyCode, n);
+		return loanRepository.findOverdueTopNWithName(companyCode, 5);
 	}
 
 }

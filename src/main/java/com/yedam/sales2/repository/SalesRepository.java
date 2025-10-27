@@ -75,7 +75,8 @@ public interface SalesRepository extends JpaRepository<Sales, String> {
             "  GROUP BY i.partner_code, i.partner_name " +
             "  ORDER BY SUM(NVL(i.unrct_baln,0)) DESC " +
             ") t " +
-            "WHERE ROWNUM <= :limit",
+            "WHERE ROWNUM <= :limit " +
+            "AND totalUnrctBaln > 0 ",
             nativeQuery = true)
         List<Map<String,Object>> findTopOutstanding(
             @Param("companyCode") String companyCode,
