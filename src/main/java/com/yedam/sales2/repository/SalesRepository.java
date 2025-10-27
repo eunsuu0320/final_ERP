@@ -55,7 +55,8 @@ public interface SalesRepository extends JpaRepository<Sales, String> {
     	    + "                 on (e.emp_code = d.emp_code and e.company_code = d.company_code) "
     	    + "    	     LEFT JOIN SALES s  "
     	    + "    	         ON  (s.EMP_CODE = e.EMP_CODE AND EXTRACT(YEAR FROM s.SALES_DATE) = EXTRACT(YEAR FROM SYSDATE) - 1) "
-    	    + "             where e.company_code =?1 "
+    	    + "             where e.company_code =?1"
+    	    + "				and e.dept = '333' "
     	    + "    	     GROUP BY d.esp_code, e.EMP_CODE, e.NAME  "
     	    + "    	     ORDER BY e.EMP_CODE",
     	    nativeQuery = true)
