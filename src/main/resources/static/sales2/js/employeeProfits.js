@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
     pagination: "local",
     paginationSize: 10,                       // 기본 10개
     paginationCounter: "rows",                // "1-10 of 128" 형태 카운터 표시
-
+	columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     ajaxURL: "/api/employeeProfits/list",
     ajaxConfig: "GET",
     // 초기 로딩시에도 현재 조건 반영

@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", function () {
     pagination: "local",
     paginationSize: 10,
     paginationCounter: "rows",
-
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     selectablePersistence: true,
     ajaxResponse: function (url, params, response) {
       const el = document.querySelector("#total-count span");

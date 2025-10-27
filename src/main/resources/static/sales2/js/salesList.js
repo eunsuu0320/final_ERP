@@ -8,6 +8,8 @@ document.addEventListener("DOMContentLoaded", function () {
   table = new Tabulator("#sales-table", {
     height: getTableHeight(),          // 🔹반응형 높이
     layout: "fitColumns",
+    rowHeight: 45,
+    columnDefaults: { headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/stats",
     // ✅ 테이블 로딩 스피너
@@ -44,6 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
         titleFormatterParams: { rowRange: "active" },
         headerHozAlign: "center",
         hozAlign: "center",
+        columnDefaults: { headerHozAlign: "center" },
         headerSort: false,
         width: 44,
         cssClass: "sel-col",
@@ -68,6 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
     layout: "fitColumns",
     height: "350px",
     ajaxURL: "/api/sales/last-year-qty",
+    rowHeight: 40,
+    columnDefaults: { headerHozAlign: "center" },
     ajaxParams: { year: 2024 },
     // ✅ 테이블 로딩 스피너
     ajaxLoader: true,
@@ -91,6 +96,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var thisYearTable = new Tabulator("#thisYearTable", {
     layout: "fitColumns",
     height: "350px",
+    columnDefaults: { headerHozAlign: "center" },
+    rowHeight: 40,
     columns: [
       { title: "분기", field: "qtr", hozAlign: "center", editor: false },
       { title: "총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
@@ -112,6 +119,8 @@ document.addEventListener("DOMContentLoaded", function () {
   var editYearTable = new Tabulator("#editYearTable", {
     layout: "fitColumns",
     height: "350px",
+    rowHeight: 40,
+    columnDefaults: { headerHozAlign: "center" },
     columns: [
       { title: "분기", field: "qtr", hozAlign: "center" },
       { title: "총 매출액", field: "purpSales", hozAlign: "right", editor: "number", formatter: moneyFormatter },
