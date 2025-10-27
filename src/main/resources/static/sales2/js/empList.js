@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
   empTable = new Tabulator("#empPlanList-table", {
     height: "600px",
     layout: "fitColumns",
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/empPlanList?planYear=2025",
 
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
   planTable = new Tabulator("#plan-table", {
     layout: "fitColumns",
     reactiveData: true,
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     columns: [
       { title: "분기", field: "qtr", hozAlign: "center", editor: false, widthGrow: 0.4 },
       { title: "올해 총 매출액(원)", field: "purpSales", hozAlign: "right", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0 } },

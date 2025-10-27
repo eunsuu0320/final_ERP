@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", function() {
     height: "408px",
     pagination: "local",
     paginationSize: 10,
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/profit-list",
     ajaxConfig: "GET",
@@ -47,10 +48,10 @@ document.addEventListener("DOMContentLoaded", function() {
       return url + (qs.toString() ? `?${qs.toString()}` : "");
     },
     columns: [
-      { title: "품목코드", field: "PRODUCTCODE", hozAlign: "center", width: 80 },
+      { title: "품목코드", field: "PRODUCTCODE", hozAlign: "center", width: 90 },
       { title: "품목명",   field: "PRODUCTNAME", hozAlign: "center", width: 120 },
       { title: "판매", columns: [
-        { title: "수량(개)",  field: "QTY",        hozAlign: "center", width: 70 },
+        { title: "수량(개)",  field: "QTY",        hozAlign: "center", width: 90 },
         { title: "단가(원)",  field: "SALEPRICE",  hozAlign: "right", formatter: "money", width: 90,  formatterParams:{precision:0} },
         { title: "금액(원)",  field: "SALEAMT",    hozAlign: "right", formatter: "money", width: 100, formatterParams:{precision:0} },
       ]},
@@ -70,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const v = cell.getValue();
             return (v ?? v === 0) ? String(v).replace('%','') + '%' : '-';
           },
-          width: 60
+          width: 40
         }
       ]}
     ],
