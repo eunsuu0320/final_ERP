@@ -148,14 +148,14 @@ public class EstimateServiceImpl implements EstimateService {
 		Double totalAmount = calculateTotalAmount(dto.getDetailList());
 		Estimate estimate = createEstimateEntity(dto, totalAmount);
 		String companyCode = getCompanyCodeFromAuthentication();
-		String manager = getManagerFromAuthentication();
 
 		// 4. 헤더 코드 부여 및 저장 (PK 확보)
 		String newCode = generateNewEstimateCode(); // ESTxxxx
 		estimate.setEstimateCode(newCode);
 		estimate.setCompanyCode(companyCode);
-		estimate.setManager(manager);
 		estimate.setStatus("미확인");
+		estimate.setManager(dto.getManager());
+		
 
 		estimateRepository.save(estimate);
 		Long generatedEstimateId = estimate.getEstimateUniqueCode();
