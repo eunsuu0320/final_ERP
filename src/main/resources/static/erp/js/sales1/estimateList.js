@@ -321,7 +321,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			payCondition: formObj.payCondition || '',
 			remarks: formObj.remarks || '',
 			manager: formObj.manager || '',
-			partnerDiscountAmount: partnerDiscountAmount, // ✅ 이제 정확히 숫자값
+			partnerDiscountAmount: partnerDiscountAmount, // ✅ 숫자값
 			detailList: detailList
 		};
 
@@ -338,12 +338,17 @@ document.addEventListener("DOMContentLoaded", function() {
 		})
 			.then(res => res.ok ? res.json() : res.json().then(err => { throw new Error(err.message); }))
 			.then(() => {
+				alert("견적서 등록이 완료되었습니다."); // ✅ 성공 알림
 				const modalInstance = bootstrap.Modal.getInstance(modalEl);
-				if (modalInstance) modalInstance.hide();
-				location.reload();
+				if (modalInstance) modalInstance.hide(); // ✅ 모달 닫기
+				location.reload(); // ✅ 새로고침
 			})
-			.catch(err => console.error("저장 실패:", err));
+			.catch(err => {
+				console.error("저장 실패:", err);
+				alert("견적서 등록 중 오류가 발생했습니다.\n자세한 내용은 콘솔을 확인하세요.");
+			});
 	};
+
 
 
 	function collectQuoteDetails() {
@@ -455,20 +460,20 @@ document.addEventListener("DOMContentLoaded", function() {
 						const sel = k === val ? 'selected' : '';
 						return `<option value="${k}" ${sel}>${STATUS_MAP[k].label}</option>`;
 					}).join('');
-					
+
 					if (val === "체결") {
 						return `<input type="text" class="form-control form-control-sm text-center bg-light"
 							value="${val}" readonly
 							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
 					}
-					
+
 					if (val === "미체결") {
 						return `<input type="text" class="form-control form-control-sm text-center bg-light"
 							value="${val}" readonly
 							style="font-size:0.75rem; height:auto; min-width:90px; cursor:no-drop;">`;
 					}
-		
-					
+
+
 					return `<select class="form-select form-select-sm"
 						onchange="updateStatusAPI('${code}', this.value, this)"
 						style="font-size:0.75rem;min-width:90px;">${options}</select>`;
