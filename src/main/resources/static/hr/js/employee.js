@@ -197,15 +197,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 			setModalMode("view");
 
+			// 텍스트 인풋 채우기
 			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
 			setVal("empCode", emp.empCode);
 			setVal("name", emp.name);
 			setVal("phone", emp.phone);
 			setVal("birth", (emp.birth || "").toString().slice(0, 10));
 			setVal("email", emp.email);
-			setVal("dept", emp.dept);
-			setVal("position", emp.position);
-			setVal("grade", emp.grade);
 			setVal("salary", emp.salary);
 			setVal("hireDate", (emp.hireDate || "").toString().slice(0, 10));
 			setVal("resignDate", (emp.resignDate || "").toString().slice(0, 10));
@@ -213,18 +211,28 @@ document.addEventListener("DOMContentLoaded", async () => {
 			setVal("depCnt", emp.depCnt);
 			setVal("resignReason", emp.resignReason);
 			setVal("bankCode", emp.bankCode);
-			setVal("bankCodeName", CODE.GRP015[emp.bankCode]);
+			setVal("bankCodeName", CODE?.GRP015?.[emp.bankCode] ?? "");
 			setVal("accHolder", emp.accHolder);
 			setVal("accNo", emp.accNo);
 			setVal("postalCode", emp.postalCode);
 			setVal("address", emp.address);
 
+			// 셀렉트(부서/직급/직책)는 옵션 채우면서 선택값까지 적용(대기)
+			await Promise.all([
+				getCode('GRP011', 'dept', emp.dept),     // 부서
+				getCode('GRP010', 'position', emp.position), // 직급
+				getCode('GRP013', 'grade', emp.grade)     // 직책
+			]);
+
+			// 전부 세팅이 끝난 뒤 모달 오픈
 			new bootstrap.Modal(modalEl).show();
+
 		} catch (err) {
 			console.error(err);
 			alert("단건 조회에 실패했습니다.");
 		}
 	});
+
 
 	// 단 건 수정
 	document.getElementById("btn-update")?.addEventListener("click", async () => {
@@ -235,6 +243,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 		}
 
 		const empCode = selected[0].empCode;
+
 		try {
 			const res = await fetch(`/api/employees/${encodeURIComponent(empCode)}`);
 			if (!res.ok) throw new Error(await res.text());
@@ -245,34 +254,44 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 			setModalMode("edit");
 
-			const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ""; };
-			setVal("empCode", emp.empCode);
-			setVal("name", emp.name);
-			setVal("phone", emp.phone);
-			setVal("birth", (emp.birth || "").toString().slice(0, 10));
-			setVal("email", emp.email);
-			setVal("dept", emp.dept);
-			setVal("position", emp.position);
-			setVal("grade", emp.grade);
-			setVal("salary", emp.salary);
-			setVal("hireDate", (emp.hireDate || "").toString().slice(0, 10));
-			setVal("resignDate", (emp.resignDate || "").toString().slice(0, 10));
-			setVal("holyDays", emp.holyDays);
-			setVal("depCnt", emp.depCnt);
-			setVal("resignReason", emp.resignReason);
-			setVal("bankCode", emp.bankCode);
-			setVal("bankCodeName", CODE.GRP015[emp.bankCode]);
-			setVal("accHolder", emp.accHolder);
-			setVal("accNo", emp.accNo);
-			setVal("postalCode", emp.postalCode);
-			setVal("address", emp.address);
+			// 텍스트/숫자 인풋 값 세팅
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("empCode", emp.empCode);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("name", emp.name);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("phone", emp.phone);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = (v || "").toString().slice(0, 10); })("birth", emp.birth);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("email", emp.email);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("salary", emp.salary);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = (v || "").toString().slice(0, 10); })("hireDate", emp.hireDate);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = (v || "").toString().slice(0, 10); })("resignDate", emp.resignDate);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("holyDays", emp.holyDays);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("depCnt", emp.depCnt);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("resignReason", emp.resignReason);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("bankCode", emp.bankCode);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = (CODE?.GRP015?.[v] ?? ""); })("bankCodeName", emp.bankCode);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("accHolder", emp.accHolder);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("accNo", emp.accNo);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("postalCode", emp.postalCode);
+			(function(id, v) { const el = document.getElementById(id); if (el) el.value = v ?? ""; })("address", emp.address);
 
-			new bootstrap.Modal(modalEl).show();
+			// 셀렉트(부서/직급/직책): 옵션 채우고 선택값 적용 (비동기 대기)
+			await Promise.all([
+				getCode("GRP011", "dept", emp.dept),     // 부서
+				getCode("GRP010", "position", emp.position), // 직급
+				getCode("GRP013", "grade", emp.grade)     // 직책
+			]);
+
+			// 모두 세팅된 후 모달 띄우기
+			const bsModal = new bootstrap.Modal(modalEl);
+			bsModal.show();
+			// 레이아웃 재계산(옵션): 이미지/캔버스 등 있는 경우
+			setTimeout(() => bsModal.handleUpdate && bsModal.handleUpdate(), 0);
+
 		} catch (err) {
 			console.error(err);
 			alert("수정할 사원 데이터를 불러오지 못했습니다.");
 		}
 	});
+
 
 	// 신규 버튼
 	document.getElementById("btn-new")?.addEventListener("click", () => {
