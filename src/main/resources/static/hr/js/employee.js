@@ -172,8 +172,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 			{ title: "사원번호", field: "empCode" },
 			{ title: "성명", field: "name" },
 			{ title: "부서명", field: "deptCode.codeName" },
-			{ title: "직책", field: "positionCode.codeName" },
 			{ title: "직급", field: "gradeCode.codeName" },
+			{ title: "직책", field: "positionCode.codeName" },
 			{ title: "전화번호", field: "phone" },
 			{ title: "Email", field: "email" },
 			{ title: "입사일자", field: "hireDate", sorter: "date", hozAlign: "center" },
@@ -220,8 +220,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 			// 셀렉트(부서/직급/직책)는 옵션 채우면서 선택값까지 적용(대기)
 			await Promise.all([
 				getCode('GRP011', 'dept', emp.dept),     // 부서
-				getCode('GRP010', 'position', emp.position), // 직급
-				getCode('GRP013', 'grade', emp.grade)     // 직책
+				getCode('GRP013', 'position', emp.position), // 직급
+				getCode('GRP010', 'grade', emp.grade)     // 직책
 			]);
 
 			// 전부 세팅이 끝난 뒤 모달 오픈
@@ -276,8 +276,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 			// 셀렉트(부서/직급/직책): 옵션 채우고 선택값 적용 (비동기 대기)
 			await Promise.all([
 				getCode("GRP011", "dept", emp.dept),     // 부서
-				getCode("GRP010", "position", emp.position), // 직급
-				getCode("GRP013", "grade", emp.grade)     // 직책
+				getCode("GRP013", "position", emp.position), // 직급
+				getCode("GRP010", "grade", emp.grade)     // 직책
 			]);
 
 			// 모두 세팅된 후 모달 띄우기
