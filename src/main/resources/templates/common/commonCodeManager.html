@@ -105,6 +105,7 @@
     layout: "fitColumns",
     selectable: 1,
     ajaxURL: "/api/common/code-groups",
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     columns: [
       { title: "그룹 코드", field: "groupId", width: 140, hozAlign: "center" },
       { title: "그룹 명",   field: "groupName", minWidth: 180 },
@@ -135,6 +136,7 @@
     layout: "fitColumns",
     selectable: true,
     reactiveData: true,
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     columns: [
       { title: "공통코드 ID",  field: "codeId",   width: 160, editor: "input" },
       { title: "공통코드 명",  field: "codeName", minWidth: 200, editor: "input" },
