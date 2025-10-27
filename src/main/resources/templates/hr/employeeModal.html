@@ -68,11 +68,11 @@
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직급</label>
-											<select id="position" name="position" class="form-control"></select>
+											<select id="grade" name="grade" class="form-control"></select>
 										</div>
 										<div class="col-md-4">
 											<label class="form-label required">직책</label>
-											<select id="grade" name="grade" class="form-control"></select>
+											<select id="position" name="position" class="form-control"></select>
 										</div>
 									</div>
 
@@ -212,11 +212,34 @@
 		  canvas.getContext("2d").scale(ratio, ratio);
 		}
 
-	// 모달 열릴 때
-	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
+	// ✅ 모달 열릴 때: 'create' 에서만 초기화/코드조회 실행
+	document.getElementById("empModal").addEventListener("shown.bs.modal", function (e) {
+	  // 모드 판별: 버튼 data-mode → 모달 data-mode → 기본 'edit'
+	  const trigger = e.relatedTarget;
+	  const mode =
+	    trigger?.getAttribute("data-mode") ||
+	    this.getAttribute("data-mode") ||
+	    "edit";
+
+	  // 공통(필요하면 캔버스 크기만 갱신)
 	  resizeCanvas();
+
+	  if (mode !== "create") {
+	    // 조회/수정 모드에서는 초기화/코드조회 금지 (이미 setModalMode()/getCode()에서 세팅함)
+	    return;
+	  }
+
+	  // ↓↓↓ 신규 모드에서만 실행
+	  document.getElementById("dept").innerHTML = '';
+	  document.getElementById("position").innerHTML = '';
+	  document.getElementById("grade").innerHTML = '';
 	  signaturePad.clear();
+	  // 코드 로딩(신규이므로 선택값 없음)
+	  getCode('GRP013', 'position'); // 직책
+	  getCode('GRP010', 'grade');    // 직급
+	  getCode('GRP011', 'dept');     // 부서
 	});
+
 
 	// 탭 전환될 때 (근로계약서 탭 들어갈 때)
 	document.getElementById("contract-tab").addEventListener("shown.bs.tab", function () {
