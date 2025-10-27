@@ -371,7 +371,7 @@ function loadTopOutstanding() {
   const tbody = document.getElementById("top-ar-body");
   setLoading(tbody);
 
-  fetch("/api/invoices/top-outstanding?companyCode=C001&limit=5")
+  fetch("/api/invoices/top-outstanding")
     .then(res => res.json())
     .then(list => {
       if (!Array.isArray(list) || list.length === 0) { setEmpty(tbody); return; }
@@ -392,7 +392,7 @@ function loadCreditExceeded() {
   setLoading(tbody);
 
   // 🔧 필요시 아래 URL을 실제 API에 맞게 교체하세요.
-  const URL = "/api/credit/over-limit?companyCode=C001&limit=5";
+  const URL = "/api/sales2/credit-term-over-partners";
 
   fetch(URL)
     .then(res => res.json())
