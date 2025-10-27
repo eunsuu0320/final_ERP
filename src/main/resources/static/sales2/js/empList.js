@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // ✅ 페이지네이션 옵션 (local)
     pagination: "local",
-    paginationSize: 10,                        // 기본 10개씩 보기
+    paginationSize: 20,                        // 기본 10개씩 보기
     paginationCounter: "rows",                 // "1-10 of 128" 형태 카운터
 
     columns: [

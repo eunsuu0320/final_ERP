@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   table = new Tabulator("#sales-table", {
     height: getTableHeight(),          // 🔹반응형 높이
     layout: "fitColumns",
-    rowHeight: 45,
+    rowHeight: 43,
     columnDefaults: { headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/stats",
