@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
       { title: "분기", field: "qtr", hozAlign: "center", editor: false, widthGrow: 0.4 },
       { title: "올해 총 매출액(원)", field: "purpSales", hozAlign: "right", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0 } },
       { title: "올해 총 영업이익(원)", field: "purpProfitAmt", hozAlign: "right", editor: "number", formatter: "money", formatterParams: { thousand: ",", precision: 0 } },
-      { title: "신규 거래처수", field: "newVendCnt", editor: "number" }
+      { title: "신규 거래처수", field: "newVendCnt", editor: "number", hozAlign: "center"  }
     ],
     data: [
       { 분기: "1분기" },
