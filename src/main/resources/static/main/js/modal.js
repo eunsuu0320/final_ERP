@@ -370,6 +370,7 @@ function openModal(type, onSelect, commonGroup) {
 		pagination: "local",
 		paginationSize: 10,
 		movableColumns: true,
+		columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
 		columns: [
 			...config.columns,
 			{

@@ -58,12 +58,25 @@
     .umodal__saving.show{display:flex;}
     .spinner{width:28px;height:28px;border-radius:50%;border:3px solid #cfd0d4;border-top-color:#4e73df;animation:spin 1s linear infinite;}
     @keyframes spin{to{transform:rotate(360deg);}}
-    
+
     /* 공통(bootstrap) 모달이 우리 커스텀 umodal 위로 오도록 */
-	.umodal{ z-index:1080; }          /* 그대로 유지 */
-	.modal{ z-index: 1110 !important; }
-	.modal-backdrop{ z-index: 1105 !important; }
-    
+    .umodal{ z-index:1080; }
+    .modal{ z-index: 1110 !important; }
+    .modal-backdrop{ z-index: 1105 !important; }
+
+    /* ===== 토스트 ===== */
+    #toastContainer{position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column; gap:10px; z-index:1200; pointer-events:none;}
+    .utoast{min-width:260px; max-width:360px; background:#111827; color:#fff; border-radius:8px; box-shadow:0 10px 24px rgba(0,0,0,.2); padding:12px 14px; display:flex; align-items:flex-start; gap:10px; opacity:0; transform:translateY(12px); transition:opacity .2s ease, transform .2s ease; pointer-events:auto;}
+    .utoast.show{opacity:1; transform:translateY(0);}
+    .utoast__icon{font-size:18px; line-height:1; margin-top:2px;}
+    .utoast__body{flex:1;}
+    .utoast__title{font-weight:700; font-size:14px; margin-bottom:2px;}
+    .utoast__msg{font-size:13px; opacity:.95; word-break:keep-all;}
+    .utoast__close{background:transparent; border:0; color:#cbd5e1; cursor:pointer; font-size:16px;}
+
+    .utoast--success{background:#065f46;}
+    .utoast--error{background:#7f1d1d;}
+    .utoast--info{background:#1f2937;}
   </style>
 </head>
 
@@ -230,7 +243,44 @@
 <!-- Tabulator JS -->
 <script src="https://unpkg.com/tabulator-tables@5.6.2/dist/js/tabulator.min.js"></script>
 
+<!-- ===== 토스트 컨테이너 ===== -->
+<div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
 <script>
+  /* ====== 토스트 유틸 ====== */
+  function toast(message, type = 'info', title){
+    const container = document.getElementById('toastContainer');
+    const wrap = document.createElement('div');
+    const iconMap = { success:'fa-circle-check', error:'fa-circle-exclamation', info:'fa-circle-info' };
+    const titleText = title || (type==='success' ? '완료' : type==='error' ? '오류' : '안내');
+    wrap.className = `utoast utoast--${type}`;
+    wrap.setAttribute('role','status');
+    wrap.innerHTML = `
+      <i class="utoast__icon fa-solid ${iconMap[type]||iconMap.info}" aria-hidden="true"></i>
+      <div class="utoast__body">
+        <div class="utoast__title">${titleText}</div>
+        <div class="utoast__msg">${message||''}</div>
+      </div>
+      <button class="utoast__close" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    container.appendChild(wrap);
+    requestAnimationFrame(()=> wrap.classList.add('show'));
+
+    const remove = ()=>{
+      wrap.classList.remove('show');
+      wrap.addEventListener('transitionend', ()=> wrap.remove(), { once:true });
+    };
+    const closeBtn = wrap.querySelector('.utoast__close');
+    closeBtn.addEventListener('click', remove);
+
+    // 자동 제거
+    setTimeout(remove, 3200);
+  }
+
+  const toastSuccess = (msg)=> toast(msg, 'success');
+  const toastError   = (msg)=> toast(msg, 'error');
+  const toastInfo    = (msg)=> toast(msg, 'info');
+
   /* ====== 유틸 ====== */
   function roleLabelOf(code){ const map={MASTER:"마스터 관리자",MANAGER:"일반 관리자",USER:"일반 사용자"}; return map[code]||code||""; }
   const roleCodeToName={ R001:'MASTER', R002:'MANAGER', R003:'USER' };
@@ -244,7 +294,7 @@
       });
     } else {
       console.error('openModal is not defined. (modal.js 확인)');
-      alert('검색 모달 스크립트를 불러오지 못했습니다. modal.js를 확인해주세요.');
+      toastError('검색 모달 스크립트를 불러오지 못했습니다. modal.js를 확인해주세요.');
     }
   });
 
@@ -257,7 +307,7 @@
     pagination: true,
     paginationMode: "local",
     paginationSize: 7,
-    columnDefaults: { headerSort: true, vertAlign: "middle" },
+    columnDefaults: { headerSort: true, vertAlign: "middle", headerHozAlign: "center" },
     columns: [
       { title: "사원번호", field: "empNo", width: 120, widthShrink: 0 },
       { title: "성명", field: "name", minWidth: 180, widthGrow: 1 },
@@ -309,39 +359,40 @@
   
   // 회사 정보
   async function loadCompanyInfo(){
-	  try{
-	    const res = await fetch('/api/common/company', { headers:{ 'Accept':'application/json' }});
-	    if(!res.ok) throw new Error('회사 정보를 불러오지 못했습니다.');
-	    const c = await res.json();
-	
-	    const companyCode = c.companyCode ?? c.compCode ?? c.code ?? '';
-	    const bizNo       = c.bizRegNo ?? c.bizNo ?? c.businessNumber ?? '';
-	    const companyName = c.companyName ?? c.compName ?? c.name ?? '';
-	    const addr1       = c.roadAddress ?? c.address ?? c.addr ?? '';
-	    const addr2       = c.addressDetail ?? c.addrDetail ?? c.detailAddress ?? '';
-	    const picName     = c.managerName ?? c.picName ?? c.contactName ?? '';
-	    const picTel      = c.tel ?? c.phone ?? c.picTel ?? '';
-	    const picEmail    = c.managerEmail ?? c.picEmail ?? c.email ?? '';
-	
-	    // DOM 주입
-	    document.getElementById('compCode').value = companyCode;
-	    document.getElementById('bizNo').value    = bizNo;
-	    document.getElementById('compName').value = companyName;
-	    document.getElementById('addr').value     = [addr1, addr2].filter(Boolean).join(' ');
-	    document.getElementById('picName').value  = picName;
-	    document.getElementById('picTel').value   = picTel;
-	    document.getElementById('picEmail').value = picEmail;
-	  }catch(err){
-	    console.error(err);
-	    // 최소한 사용자에게도 표시
-	    document.getElementById('compCode').value = '';
-	    document.getElementById('bizNo').value    = '';
-	    document.getElementById('compName').value = '회사 정보를 불러오지 못했습니다.';
-	    document.getElementById('addr').value     = '';
-	    document.getElementById('picName').value  = '';
-	    document.getElementById('picTel').value   = '';
-	    document.getElementById('picEmail').value = '';
-	  }
+    try{
+      const res = await fetch('/api/common/company', { headers:{ 'Accept':'application/json' }});
+      if(!res.ok) throw new Error('회사 정보를 불러오지 못했습니다.');
+      const c = await res.json();
+  
+      const companyCode = c.companyCode ?? c.compCode ?? c.code ?? '';
+      const bizNo       = c.bizRegNo ?? c.bizNo ?? c.businessNumber ?? '';
+      const companyName = c.companyName ?? c.compName ?? c.name ?? '';
+      const addr1       = c.roadAddress ?? c.address ?? c.addr ?? '';
+      const addr2       = c.addressDetail ?? c.addrDetail ?? c.detailAddress ?? '';
+      const picName     = c.managerName ?? c.picName ?? c.contactName ?? '';
+      const picTel      = c.tel ?? c.phone ?? c.picTel ?? '';
+      const picEmail    = c.managerEmail ?? c.picEmail ?? c.email ?? '';
+  
+      // DOM 주입
+      document.getElementById('compCode').value = companyCode;
+      document.getElementById('bizNo').value    = bizNo;
+      document.getElementById('compName').value = companyName;
+      document.getElementById('addr').value     = [addr1, addr2].filter(Boolean).join(' ');
+      document.getElementById('picName').value  = picName;
+      document.getElementById('picTel').value   = picTel;
+      document.getElementById('picEmail').value = picEmail;
+    }catch(err){
+      console.error(err);
+      // 최소한 사용자에게도 표시
+      document.getElementById('compCode').value = '';
+      document.getElementById('bizNo').value    = '';
+      document.getElementById('compName').value = '회사 정보를 불러오지 못했습니다.';
+      document.getElementById('addr').value     = '';
+      document.getElementById('picName').value  = '';
+      document.getElementById('picTel').value   = '';
+      document.getElementById('picEmail').value = '';
+      toastError('회사 정보를 불러오지 못했습니다.');
+    }
   }
   
   /* ====== 구독 내역 ====== */
@@ -353,6 +404,7 @@
     pagination: true,
     paginationMode: "local",
     paginationSize: 8,
+    columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     columns: [
       { title: "구독기간", field: "term", width: 120, widthShrink: 0 },
       { title: "시작일자", field: "startDate", width: 180, sorter: "date", sorterParams: { format: "YYYY-MM-DD" } },
@@ -373,7 +425,7 @@
   document.getElementById('btnSubsExcel').addEventListener('click', ()=>subsTable.download("xlsx","구독내역.xlsx",{sheetName:"Subscriptions"}));
   
   document.addEventListener('DOMContentLoaded', () => {
-	  loadCompanyInfo();
+    loadCompanyInfo();
   });
   
   /* ====== 모달 오픈/저장 (기존 로직 유지) ====== */
@@ -421,14 +473,14 @@
         document.getElementById('um_deptName').value = selected.deptCode?.codeName ?? selected.deptName ?? selected.dept ?? '';
       });
     } else {
-      alert('검색 모달 스크립트를 불러오지 못했습니다. modal.js를 확인해주세요.');
+      toastError('검색 모달 스크립트를 불러오지 못했습니다. modal.js를 확인해주세요.');
     }
   });
 
   userTable.on('rowClick', (e,row)=>openUserModal('edit', row.getData()));
   document.getElementById('btnNew').addEventListener('click', ()=>openUserModal('new'));
 
-  /* 저장 로직 (원본 유지) */
+  /* 저장 로직 (원본 유지, alert→toast) */
   let isSavingUser=false;
   function setSavingUI(saving){
     const mask=document.getElementById('userSavingMask');
@@ -455,16 +507,16 @@
       roleCode:document.getElementById('um_roleCode').value||null,
       usageStatus:document.getElementById('um_usageStatus').value||'Y'
     };
-    if(!payload.empCode){ setSavingUI(false); return alert('사원번호를 선택하세요.'); }
-    if(!payload.userId){ setSavingUI(false); return alert('아이디를 입력하세요.'); }
+    if(!payload.empCode){ setSavingUI(false); return toastInfo('사원번호를 선택하세요.'); }
+    if(!payload.userId){ setSavingUI(false); return toastInfo('아이디를 입력하세요.'); }
     const isNew=(userModalMode==='new' || !payload.userCode);
     const url=isNew?'/api/common/users':`/api/common/users/${encodeURIComponent(payload.userCode)}`;
     const method=isNew?'POST':'PUT';
     try{
       const res=await fetchWithTimeout(url,{method,headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)},15000);
       if(!res.ok){ const text=await res.text().catch(()=> ''); throw new Error(text || `저장 실패 (HTTP ${res.status})`); }
-      await userTable.setData("/api/common/users"); closeUserModal(); alert(isNew?'사용자를 등록했습니다.':'사용자 정보를 수정했습니다.');
-    }catch(err){ console.error(err); alert(err?.message || '저장 중 오류가 발생했습니다.'); }
+      await userTable.setData("/api/common/users"); closeUserModal(); toastSuccess(isNew?'사용자를 등록했습니다.':'사용자 정보를 수정했습니다.');
+    }catch(err){ console.error(err); toastError(err?.message || '저장 중 오류가 발생했습니다.'); }
     finally{ setSavingUI(false); }
   }
 </script>
