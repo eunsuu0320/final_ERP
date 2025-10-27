@@ -214,14 +214,8 @@
 
 	// 모달 열릴 때
 	document.getElementById("empModal").addEventListener("shown.bs.modal", function () {
-	  document.getElementById("dept").innerHTML = '';
-	  document.getElementById("position").innerHTML = '';
-	  document.getElementById("grade").innerHTML = '';
 	  resizeCanvas();
 	  signaturePad.clear();
-	  getCode('GRP010', 'position');
-	  getCode('GRP013', 'grade');
-	  getCode('GRP011', 'dept');
 	});
 
 	// 탭 전환될 때 (근로계약서 탭 들어갈 때)
