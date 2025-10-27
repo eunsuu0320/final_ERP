@@ -63,7 +63,6 @@ public interface SalesRepository extends JpaRepository<Sales, String> {
 
     
     // 미수금 top5
-    // 미수잔액 TOP N (오라클 호환, 바인드 OK)
     @Query(value =
             "SELECT * FROM ( " +
             "  SELECT " +
