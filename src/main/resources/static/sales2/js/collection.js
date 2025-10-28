@@ -109,12 +109,12 @@ document.addEventListener("DOMContentLoaded", function () {
   // 전역으로 접근 가능하게
   window.table = new Tabulator(salesTableEl, {
     layout: "fitColumns",
-    height: "350px",
+    height: "334px",
     selectable: false, // ★ 행 클릭시 선택/하이라이트 안 되도록
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/receivable/list",
     pagination: "local",
-    paginationSize: 10,
+    paginationSize: 6,
     paginationCounter: "rows",
     columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     selectablePersistence: true,
