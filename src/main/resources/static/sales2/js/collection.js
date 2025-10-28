@@ -304,6 +304,7 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const data = await fetchInvoices(partnerCode);
       const columns = [
+		
         { title: "청구번호", field: "INVOICE_CODE", width: 140, hozAlign: "center", widthGrow: 0.4 },
         { title: "청구일", field: "DMND_DATE", width: 110, hozAlign: "center", widthGrow: 0.4 },
         { title: "청구금액(원)", field: "DMND_AMT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 }, widthGrow: 0.5 },
@@ -332,19 +333,20 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!window.invoiceTable) {
         window.invoiceTable = new Tabulator(el, {
           layout: "fitColumns",
-          height: "260px",
+          height: "297px",           // ← 높이 증가 (기존 260px)
           placeholder: "청구내역이 없습니다.",
           data,
           columns,
           columnDefaults: { headerHozAlign: "center" },
           index: "INVOICE_UNIQUE_CODE",
           pagination: "local",
-          paginationSize: 8,
+          paginationSize: 6,         // ← 페이지당 5건 (기존 8)
           paginationCounter: "rows"
         });
       } else {
         window.invoiceTable.setColumns(columns);
         window.invoiceTable.replaceData(data);
+        window.invoiceTable.setPageSize(5); // ← 재조회 시에도 5건 유지
         window.invoiceTable.redraw(true);
       }
     } catch (err) {
@@ -485,6 +487,14 @@ document.addEventListener("DOMContentLoaded", function () {
       if (result.success) {
         alert("수금 등록되었습니다.");
         bootstrap.Modal.getInstance(document.getElementById("insertCollectionModal"))?.hide();
+
+        // ▼▼▼ 여기만 추가/수정: 모달 닫히면서 청구내역(하단) 비우고 메인테이블만 보이게 ▼▼▼
+        try {
+          currentInvoicePartnerCode = null; // 현재 상세 상태 초기화
+          clearInvoiceSection();            // 청구내역 데이터/제목/버튼 상태 초기화
+        } catch (_) {}
+        // ▲▲▲ 추가 끝 ▲▲▲
+
         table?.replaceData();
       } else {
         alert("실패: " + (result.message || "서버 오류"));

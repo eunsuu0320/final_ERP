@@ -1,14 +1,14 @@
 document.addEventListener("DOMContentLoaded", function () {
-  // 동적 높이 계산(반응형); 최소 380px, 화면의 55%
   const getTableHeight = () => Math.max(380, Math.floor(window.innerHeight * 0.55)) + "px";
 
   // ================================
   // 📌 메인 목록 테이블
   // ================================
   table = new Tabulator("#sales-table", {
-    height: getTableHeight(),          // 🔹반응형 높이
+    height: getTableHeight(),         
     layout: "fitColumns",
-    rowHeight: 43,
+    rowHeight: 40,
+    height: "460px",
     columnDefaults: { headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/sales/stats",
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
         hozAlign: "center",
         columnDefaults: { headerHozAlign: "center" },
         headerSort: false,
-        width: 44,
+        width: 40,
         cssClass: "sel-col",
         cellClick: (e, cell) => cell.getRow().toggleSelect(),
       },
