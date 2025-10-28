@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 				hozAlign: "center",
 				headerHozAlign: "center",
 			},
-			{ title: "귀속날짜", field: "payPeriod", width: 120 },
+			{ title: "귀속날짜", field: "payPeriod", width: 90 },
 			{ title: "지급구분", field: "payType", width: 90 },
 			{ title: "대장명칭", field: "payName", width: 300 },
 			{ title: "지급일", field: "payDate" },
@@ -72,11 +72,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 					showSalaryPayModalFromRow(cell.getRow(), btn);
 				}
 			},
-			{ title: "인원수", field: "payCount", hozAlign: "center" },
+			{ title: "인원수", field: "payCount", hozAlign: "center", width: 90 },
 			{
 				title: "지급총액",
 				field: "payTotal",          // 실제 필드명에 맞게
 				hozAlign: "center",
+				width: 250,
 				sorter: "number",
 				formatter: "money",
 				formatterParams: {
