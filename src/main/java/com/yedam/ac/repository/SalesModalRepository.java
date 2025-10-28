@@ -17,7 +17,8 @@ public interface SalesModalRepository extends JpaRepository<Sales, String> {
         FROM (
             SELECT
               s.SALES_CODE    AS salesCode,     -- 🔁 컬럼명 교정
-              s.CORRESPONDENT AS partnerName,
+              s.CORRESPONDENT AS partnerCode,
+              s.PARTNER_NAME  AS partnerName,
               s.PRODUCT_NAME  AS productName,
               s.SALES_AMOUNT  AS salesAmount,
               s.SALES_DATE    AS salesDate

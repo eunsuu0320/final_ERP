@@ -50,7 +50,7 @@ const modalConfigs = {
 		title: "판매코드 검색",
 		columns: [
 			{ title: "판매코드", field: "salesCode", width: 140, hozAlign: "center" },
-			{ title: "거래처", field: "partnerName", minWidth: 160 },
+			{ title: "거래처명", field: "partnerName", minWidth: 160 },
 			{ title: "제품명", field: "productName", minWidth: 180 },
 			{
 				title: "판매금액", field: "salesAmount", width: 120, hozAlign: "right",
