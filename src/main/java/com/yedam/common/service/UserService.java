@@ -206,18 +206,18 @@ public class UserService implements UserDetailsService {
 
 		Role roleEntity = roleRepository.findByCompanyCodeAndRoleCode(companyCode, roleCode).orElse(null);
 
-		// 스프링 시큐리티 권한(접두사 포함)
+		// 스프링 시큐리티 권한
 		final String grantedRoleName = (roleEntity != null)
 				? (safe(roleEntity.getRoleName()).startsWith("ROLE_") ? roleEntity.getRoleName()
 						: "ROLE_" + roleEntity.getRoleName())
 				: fallbackRoleName;
 
-		// 화면 표시에 쓸 "권한" 텍스트(접두사 없는 role_name: MASTER/MANAGER/USER)
+		// 화면에 표시할 권한
 		final String roleDisplay = (roleEntity != null && !safe(roleEntity.getRoleName()).isBlank())
 				? roleEntity.getRoleName() // MASTER/MANAGER/USER
 				: roleCode.replaceFirst("^ROLE_", "");
 
-		// 부가정보 (마스터 계정처럼 사원연계 없을 수 있으니 널 세이프)
+		// 부가정보
 		String empCode = safe(su.getEmpCode());
 		String empName = "";
 		String deptName = "";
@@ -230,11 +230,10 @@ public class UserService implements UserDetailsService {
 			}
 		}
 
-		// ⚠️ 인덱스 매핑(템플릿이 parts[6]을 "권한"으로 사용)
 		// 0: companyCode, 1: userId, 2: empCode, 3: roleCode(원본), 4: empName, 5:
-		// deptName, 6: roleDisplay(화면용)
+		// deptName, 6: roleDisplay
 		String extendedUsername = String.join(":", safe(companyCode), safe(userId), empCode, safe(roleCode), empName,
-				deptName, roleDisplay // ← 화면에서 권한으로 표시할 값 (MASTER/MANAGER/USER)
+				deptName, roleDisplay // 화면에서 권한으로 표시할 값 (MASTER/MANAGER/USER)
 		);
 
 		return User.builder().username(extendedUsername).password(safe(su.getUserPw()))

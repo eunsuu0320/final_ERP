@@ -10,13 +10,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface ScreenPerm {
+	// 화면
 	String screen();
 	
+	// 단일 권한
 	Action action() default Action.READ;
 	
+	// 다중 권한
 	Action[] anyOf() default {};
-
+	
 	enum Action {
 		READ, CREATE, UPDATE, DELETE
 	}
 }
+

@@ -36,14 +36,12 @@ public class ScreenPermAspect {
         if (auth == null || auth.getName() == null) {
             return denyHere("인증 정보가 없습니다.", false);
         }
-
         String[] parts = auth.getName().split(":");
         if (parts.length < 4) {
             return denyHere("인증 username 형식 오류", false);
         }
         String companyCode = parts[0];
         String roleCode    = parts[3];
-
         String screen = perm.screen();
 
         // 어떤 액션을 체크할지 결정 (anyOf가 있으면 OR, 없으면 단일 action)
@@ -69,9 +67,8 @@ public class ScreenPermAspect {
                 if (ok) { allowed = true; break; }
             }
         }
-
         if (!allowed) {
-            // READ 페이지(보통 GET)면 forbidden 페이지로, 나머지는 403 텍스트로
+            // READ 페이지면 forbidden 페이지로, 나머지는 403 텍스트로
             boolean containsRead = Arrays.asList(toCheck).contains(Action.READ);
             boolean treatAsReadPage = shouldTreatAsReadPage(containsRead);
             return denyHere("해당 기능 권한이 없습니다.", treatAsReadPage);
