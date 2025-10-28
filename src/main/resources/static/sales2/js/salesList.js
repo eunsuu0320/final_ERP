@@ -409,9 +409,9 @@ function loadCreditExceeded() {
       if (!Array.isArray(list) || list.length === 0) { setEmpty(tbody); return; }
       tbody.innerHTML = list.map(r => {
         const name   = (r.partnerName ?? r.PARTNERNAME) ?? "-";
-        const exceed = (r.exceedAmount ?? r.EXCEEDAMOUNT);
+        const exceed = (r.overdueDays ?? r.OVERDUEDAYS);
         const val    = (exceed == null) ? "-" : Number(exceed).toLocaleString();
-        return `<tr><td>${name}</td><td class="text-end">${val}</td></tr>`;
+        return `<tr><td>${name}</td><td class="text-end-loan">${val}</td></tr>`;
       }).join("");
     })
     .catch(err => { console.error("여신초과 로드 실패:", err); setFailed(tbody); });
