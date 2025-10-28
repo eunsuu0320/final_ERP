@@ -43,10 +43,6 @@ public interface BusinessProfitsRepository extends JpaRepository<Sales, String> 
     
     
  // 차트 전용 — 분기 포함(QUARTER), 품목별 분기 이익률
-    /* ✅ 차트 쿼리 (DB-agnostic)
-    - 자바에서 계산해 넘긴 4개 (YEAR, QUARTER) 쌍만 OR로 매칭
-    - 모든 DB에서 동작(TO_CHAR만 있으면 됨; 기존에도 쓰고 있었음)
- */
  @Query(value = """
      SELECT
          TO_CHAR(s.SALES_DATE, 'YYYY') AS YEAR,
