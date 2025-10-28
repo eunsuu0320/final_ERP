@@ -21,7 +21,7 @@ public class SalesDashDao {
     public long countUnshipped(String companyCode) {
         String sql = """
             SELECT COUNT(*) FROM SHIPMENT
-             WHERE NVL(STATUS,'-') NOT IN ('출하완료','회계반영완료')
+             WHERE NVL(STATUS,'-') NOT IN ('출하완료','판매반영완료')
                AND NVL(COMPANY_CODE,'-') = :cc
         """;
         Number n = (Number) em.createNativeQuery(sql)
@@ -32,7 +32,7 @@ public class SalesDashDao {
     public long countAccounted(String companyCode) {
         String sql = """
             SELECT COUNT(*) FROM SHIPMENT
-             WHERE NVL(STATUS,'-') = '회계반영완료'
+             WHERE NVL(STATUS,'-') = '판매반영완료'
                AND NVL(COMPANY_CODE,'-') = :cc
         """;
         Number n = (Number) em.createNativeQuery(sql)
