@@ -44,7 +44,6 @@ document.addEventListener("DOMContentLoaded", function () {
     keyword = (keyword || "").toString().trim();
 
     return {
-      companyCode: "C001",
       ...(year && { year }),
       ...(quarter && { quarter }),
       ...(keyword && { keyword }),
@@ -129,33 +128,48 @@ document.addEventListener("DOMContentLoaded", function () {
         formatter: "money", formatterParams: { precision: 0 }, widthGrow:0.3},
 
       {
-        // ✅ 이 칼럼은 “공급가액 기준 점유율 막대 + 금액 표기(원, 소수점 없음)”
-        title: "합계(공급가액 기준)",
-        field: "totalAmount", // 서버 값은 쓰지 않고, salesAmount로 그립니다(부가세 제외).
-        hozAlign: "left",
-        formatter: function (cell) {
-          const row = cell.getRow().getData();
-          const amount = Number(row.salesAmount || 0); // 공급가액
-          const denom  = Number(totalSupplyAll || 0);
-          const pct    = denom > 0 ? Math.round((amount / denom) * 100) : 0;
+  title: "합계(공급가액 기준)",
+  field: "totalAmount",
+  hozAlign: "left",
+  cssClass: "profit-bar-cell",         // ← 이 줄 추가
+  formatter: function (cell) {
+    const row = cell.getRow().getData();
+    const amount = Number(row.salesAmount || 0);
+    const denom  = Number(totalSupplyAll || 0);
+    const pct    = denom > 0 ? Math.round((amount / denom) * 100) : 0;
 
-          const label = amount.toLocaleString(); // 원 단위, 소수점 제거
-          const html = `
-            <div style="display:flex; align-items:center; gap:8px; width:100%;">
-              <div style="flex:1; height:10px; background:#eee; border-radius:6px; overflow:hidden;">
-                <div style="height:100%; width:${Math.min(100, Math.max(0, pct))}%; background:#86b7fe;"></div>
-              </div>
-              <div style="min-width:110px; text-align:right;">
-                ${label}원&nbsp;<span style="color:#666;">(${pct}%)</span>
-              </div>
-            </div>
-          `;
-          const wrap = document.createElement("div");
-          wrap.innerHTML = html;
-          return wrap;
-        }
-        // ⛔️ 하단 합계(총합) 행 제거: bottomCalc 관련 설정을 넣지 않습니다.
-      },
+    const root  = document.createElement("div");
+    root.style.display = "flex";
+    root.style.alignItems = "center";
+    root.style.gap = "8px";
+
+    const track = document.createElement("div");
+    track.style.flex = "0 0 140px";         // ← 막대 폭 고정(핵심)
+    track.style.height = "10px";
+    track.style.background = "#eee";
+    track.style.borderRadius = "6px";
+    track.style.overflow = "hidden";
+
+    const fill = document.createElement("div");
+    fill.style.height = "100%";
+    fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+    fill.style.background = "#86b7fe";
+    track.appendChild(fill);
+
+    const label = document.createElement("div");
+    label.style.minWidth = "110px";
+    label.style.textAlign = "right";
+    label.textContent = `${amount.toLocaleString()}원 (${pct}%)`;
+
+    root.append(track, label);
+
+    // ← nowrap 깨주기 (이 칼럼만)
+    cell.getElement().style.whiteSpace = "normal";
+
+    return root;
+  }
+},
+
     ],
   });
 
@@ -192,7 +206,6 @@ function openEmployeeModal(emp) {
     const yearSel = document.getElementById("yearSelect")?.value ?? "";
     const quarterSel = document.getElementById("quarterSelect")?.value ?? "";
     const params = {
-      companyCode: "C001",
       empCode: emp.empCode,
       ...extra,
     };

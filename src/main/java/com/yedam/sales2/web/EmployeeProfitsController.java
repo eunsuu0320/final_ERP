@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,12 +31,14 @@ public class EmployeeProfitsController {
 	 
 	    @ResponseBody
 	    @GetMapping("/list")
-	    public List<Map<String, Object>> getEmployeeProfitsList(
-	        @RequestParam String companyCode,
+	    public List<Map<String, Object>> getEmployeeProfitsList(	    		
 	        @RequestParam(required = false) Integer year,
 	        @RequestParam(required = false) Integer quarter,
 	        @RequestParam(required = false) String keyword
 	    ) {
+	    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String companyCode = auth.getName().split(":")[0];
+	    	
 	        return service.getEmployeeSummary(companyCode, year, quarter, keyword);
 	    }
 	    
@@ -43,12 +47,14 @@ public class EmployeeProfitsController {
 	    @ResponseBody
 	    @GetMapping("/partners")
 	    public List<Map<String, Object>> getEmpPartners(
-	        @RequestParam String companyCode,
 	        @RequestParam String empCode,
 	        @RequestParam(required = false) Integer year,
 	        @RequestParam(required = false) Integer quarter,
 	        @RequestParam(required = false) String keyword
 	    ) {
+	    	Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            String companyCode = auth.getName().split(":")[0];
+	    	
 	        return service.getEmpPartners(companyCode, empCode, year, quarter, keyword);
 	    }
 
