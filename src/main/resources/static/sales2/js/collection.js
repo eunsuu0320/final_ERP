@@ -71,10 +71,8 @@ function hideInvoiceOverlay() {
 /* ============================
    ▼▼ 추가: 상세 섹션 자동 닫힘 상태 관리 ▼▼
    ============================ */
-// 현재 상세(청구내역)에 표시 중인 거래처 코드
 let currentInvoicePartnerCode = null;
 
-// 상세 섹션 비우기(닫기와 동일 효과)
 function clearInvoiceSection() {
   try { window.invoiceTable?.clearData(); } catch {}
   try {
@@ -82,7 +80,6 @@ function clearInvoiceSection() {
     if (title) title.textContent = "청구내역";
   } catch {}
   try {
-    // 조회 버튼 하이라이트 제거
     document
       .getElementById("sales-table")
       ?.querySelectorAll(".btn-view-invoices")
@@ -110,7 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
   window.table = new Tabulator(salesTableEl, {
     layout: "fitColumns",
     height: "334px",
-    selectable: false, // ★ 행 클릭시 선택/하이라이트 안 되도록
+    selectable: false,
     placeholder: "데이터가 없습니다.",
     ajaxURL: "/api/receivable/list",
     pagination: "local",
@@ -122,10 +119,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const el = document.querySelector("#total-count span");
       if (el) el.textContent = (Array.isArray(response) ? response.length : 0) + "건";
 
-      /* ---------------------------
-         ★ 추가: 목록 갱신 시 상세 자동 닫기
-         현재 상세에 띄운 거래처가 목록에서 사라졌다면 상세 섹션 클리어
-         --------------------------- */
       try {
         if (currentInvoicePartnerCode) {
           const stillExists = Array.isArray(response) && response.some(r =>
@@ -171,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // ✅ 생성 직후 안전한 지역 참조
   const table = window.table;
   collectionTable = window.table;
   table.on("dataLoaded", function () {
@@ -239,7 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
     true
   );
 
-  // 모달 닫히면 강조 해제(혹시 남아있다면) + 리드로우
+  // 모달 닫히면 강조 해제 + 리드로우
   document.getElementById("insertCollectionModal")?.addEventListener("hidden.bs.modal", () => {
     document.querySelectorAll("#sales-table .row-active").forEach(el => el.classList.remove("row-active"));
     safeRedrawAll();
@@ -298,13 +290,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     showInvoiceLoading();
 
-    /* ★ 추가: 현재 상세의 거래처 코드 저장 */
     currentInvoicePartnerCode = partnerCode;
 
     try {
       const data = await fetchInvoices(partnerCode);
       const columns = [
-		
         { title: "청구번호", field: "INVOICE_CODE", width: 140, hozAlign: "center", widthGrow: 0.4 },
         { title: "청구일", field: "DMND_DATE", width: 110, hozAlign: "center", widthGrow: 0.4 },
         { title: "청구금액(원)", field: "DMND_AMT", hozAlign: "right", formatter: "money", formatterParams: { precision: 0 }, widthGrow: 0.5 },
@@ -333,20 +323,20 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!window.invoiceTable) {
         window.invoiceTable = new Tabulator(el, {
           layout: "fitColumns",
-          height: "297px",           // ← 높이 증가 (기존 260px)
+          height: "297px",
           placeholder: "청구내역이 없습니다.",
           data,
           columns,
           columnDefaults: { headerHozAlign: "center" },
           index: "INVOICE_UNIQUE_CODE",
           pagination: "local",
-          paginationSize: 6,         // ← 페이지당 5건 (기존 8)
+          paginationSize: 6,
           paginationCounter: "rows"
         });
       } else {
         window.invoiceTable.setColumns(columns);
         window.invoiceTable.replaceData(data);
-        window.invoiceTable.setPageSize(5); // ← 재조회 시에도 5건 유지
+        window.invoiceTable.setPageSize(5);
         window.invoiceTable.redraw(true);
       }
     } catch (err) {
@@ -437,7 +427,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // ===============================
   document.getElementById("btnSave")?.addEventListener("click", async function () {
     const saveBtn = this;
-    if (saveBtn.dataset.loading === "1") return; // 중복 클릭 방지
+    if (saveBtn.dataset.loading === "1") return;
 
     const moneyDate = document.getElementById("moneyDate").value;
     const recpt = Number(uncomma(document.getElementById("collectAmt").value || "0"));
@@ -447,27 +437,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const partnerCode = document.querySelector("#insertCollectionModal #partnerCode")?.value || "";
     const outstandingVal = Number(uncomma(document.getElementById("outstandingAmt").value || "0"));
 
-    // 기본 검증
-    if (!partnerCode) {
-      alert("거래처를 선택하세요.");
-      return;
-    }
-    if (recpt <= 0) {
-      alert("수금금액은 0보다 커야 합니다.");
-      return;
-    }
-    if (recpt + postDeduction > outstandingVal) {
-      alert("수금금액 + 사후공제가 미수잔액보다 큽니다.");
-      return;
-    }
-    if (!paymentMethods) {
-      alert("결제방식을 선택하세요.");
-      return;
-    }
+    if (!partnerCode) { alert("거래처를 선택하세요."); return; }
+    if (recpt <= 0) { alert("수금금액은 0보다 커야 합니다."); return; }
+    if (recpt + postDeduction > outstandingVal) { alert("수금금액 + 사후공제가 미수잔액보다 큽니다."); return; }
+    if (!paymentMethods) { alert("결제방식을 선택하세요."); return; }
 
     const data = { moneyDate, recpt, postDeduction, paymentMethods, remk, partnerCode };
 
-    // ▼ UI 잠그기
     const closeBtn = document.querySelector("#insertCollectionModal .btn-close");
     const overlay = document.getElementById("collection-loading");
     const originalHtml = saveBtn.innerHTML;
@@ -485,17 +461,35 @@ document.addEventListener("DOMContentLoaded", function () {
       });
       const result = await res.json();
       if (result.success) {
-        alert("수금 등록되었습니다.");
-        bootstrap.Modal.getInstance(document.getElementById("insertCollectionModal"))?.hide();
+        // ⬇⬇⬇ 여기부터 "새로고침"만 추가/수정 (나머지 X)
+        alert("수금 등록되었습니다."); // ✅ 확인 누른 뒤 아래 코드 실행됨(동기)
 
-        // ▼▼▼ 여기만 추가/수정: 모달 닫히면서 청구내역(하단) 비우고 메인테이블만 보이게 ▼▼▼
+        // 1) 모달 닫기
+        const modal = bootstrap.Modal.getInstance(document.getElementById("insertCollectionModal"));
+        modal?.hide();
+
+        // 2) 상세(청구내역) 그리드 재조회: 방금 처리한 거래처 기준으로 다시 불러오기
         try {
-          currentInvoicePartnerCode = null; // 현재 상세 상태 초기화
-          clearInvoiceSection();            // 청구내역 데이터/제목/버튼 상태 초기화
-        } catch (_) {}
-        // ▲▲▲ 추가 끝 ▲▲▲
+          if (partnerCode) {
+            currentInvoicePartnerCode = partnerCode; // 현재 상세 타겟 유지
+            await renderInvoiceTable({ PARTNER_CODE: partnerCode, partnerCode });
+          }
+        } catch (e) {
+          console.warn("청구내역 재조회 실패:", e);
+        }
 
-        table?.replaceData();
+        // 3) 메인 테이블 재조회 (상단 합계/잔액 등 갱신)
+        try {
+          await window.table?.replaceData();
+        } catch (e) {
+          console.warn("메인 테이블 재조회 실패:", e);
+        }
+
+        // 4) 상세 영역으로 스크롤(변경된 상태 바로 보이도록)
+        try {
+          document.getElementById("invoice-table")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch {}
+        // ⬆⬆⬆ 새로고침 전용 로직 끝
       } else {
         alert("실패: " + (result.message || "서버 오류"));
       }
@@ -503,7 +497,6 @@ document.addEventListener("DOMContentLoaded", function () {
       console.error("등록 중 오류:", err);
       alert("서버 통신 오류");
     } finally {
-      // ▼ UI 해제
       saveBtn.innerHTML = originalHtml;
       saveBtn.disabled = false;
       if (closeBtn) closeBtn.disabled = false;
@@ -516,7 +509,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 📌 클릭 막힘 방지(유지)
   // ===============================
   salesTableEl.style.position = "relative";
-  salesTableEl.style.zIndex = "1"; // ★ 모달보다 항상 아래
+  salesTableEl.style.zIndex = "1";
   salesTableEl.style.pointerEvents = "auto";
 }); // end DOMContentLoaded
 
@@ -556,8 +549,8 @@ document.addEventListener("shown.bs.modal", function () {
   try {
     const st = document.getElementById("sales-table");
     if (st) {
-      st.style.pointerEvents = "none"; // 모달 떠있는 동안 뒤 클릭 차단
-      st.style.zIndex = "1"; // 항상 모달보다 아래
+      st.style.pointerEvents = "none";
+      st.style.zIndex = "1";
     }
   } catch {}
 });
@@ -575,7 +568,7 @@ document.addEventListener("hidden.bs.modal", function () {
     const st = document.getElementById("sales-table");
     if (st) {
       st.style.position = "relative";
-      st.style.zIndex = "1"; // 높이지 않음
+      st.style.zIndex = "1";
       st.style.pointerEvents = "auto";
     }
   } catch {}
