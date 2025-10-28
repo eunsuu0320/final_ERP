@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // 📌 왼쪽 사원 테이블 (페이지네이션 추가)
   // ================================
   empTable = new Tabulator("#empPlanList-table", {
-    height: "600px",
+    height: "610px",
     layout: "fitColumns",
     columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     placeholder: "데이터가 없습니다.",
@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
     columns: [
       { title: "사원명", field: "EMPNAME", width: 150, widthGrow: 0.3 },
       { title: "기존 거래처수", field: "CUSTOMERCOUNT", hozAlign: "center", widthGrow: 0.3 },
-      // ▼ 소수점 제거(.00 제거)
       { title: "작년 매출액(원)", field: "LASTYEARSALES", hozAlign: "right", formatter: "money", formatterParams: { thousand: ",", precision: 0 }, widthGrow: 0.4 },
       { title: "작년 매입단가(원)", field: "LASTYEARCOST", hozAlign: "right", formatter: "money", formatterParams: { thousand: ",", precision: 0 }, widthGrow: 0.4 },
       { title: "작년 영업이익(원)", field: "LASTYEARPROFIT", hozAlign: "right", formatter: "money", formatterParams: { thousand: ",", precision: 0 }, widthGrow: 0.4 }

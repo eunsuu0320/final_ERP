@@ -55,11 +55,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // ===============================
   const table = new Tabulator("#sales-table", {
     layout: "fitColumns",
-    height: "480px",
-
-    // ✅ 페이지네이션 옵션 (local)
+    height: "437px",
     pagination: "local",
-    paginationSize: 10,                       // 기본 10개
+    paginationSize: 12,                       // 기본 10개
     paginationCounter: "rows",                // "1-10 of 128" 형태 카운터 표시
 	columnDefaults: { vertAlign: "middle", headerHozAlign: "center" },
     ajaxURL: "/api/employeeProfits/list",
