@@ -72,7 +72,12 @@
       pointer-events: all;     /* 클릭 차단 */
     }
     .loading-overlay.d-none { display: none; }
-
+	
+	.text-end-loan {
+		text-align: right;
+		color: red;
+	}
+	
   </style>
   <meta name="_csrf" th:content="${_csrf.token}" />
   <meta name="_csrf_header" th:content="${_csrf.headerName}" />
