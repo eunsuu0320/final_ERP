@@ -243,39 +243,65 @@ function moneyChartOptions(){
   };
 }
 
+/* ===== (신규) 보기 좋은 Y축 계산 ===== */
+function niceAxis(maxValue, targetTicks = 6) {
+  const v = Math.max(0, Number(maxValue) || 0);
+  if (v === 0) return { max: 5, step: 1 };
+
+  const raw = v / targetTicks;
+  const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+  const residual = raw / pow10;
+
+  let base;
+  if (residual <= 1) base = 1;
+  else if (residual <= 2) base = 2;
+  else if (residual <= 2.5) base = 2.5;
+  else if (residual <= 5) base = 5;
+  else base = 10;
+
+  const step = base * pow10;
+  const max = Math.ceil(v / step) * step;
+  return { max, step };
+}
+
+/* ===== 부서별 인원 차트 옵션 (업데이트) ===== */
 function peopleChartOptions(yMax){
-	  return {
-	    responsive:true, maintainAspectRatio:false,
-	    legend:{ labels:{ fontColor:'#334155', boxWidth:14 } },
-	    tooltips:{ callbacks:{ label:(item,data)=>{
-	      const ds = data.datasets[item.datasetIndex];
-	      return `${ds.label}: ${Math.round(Number(item.yLabel||0))}`;
-	    }}},
-	    scales:{
-	      xAxes:[{
-	        // ⬇️ 막대가 차지하는 영역을 스케일에도 명시 (v2에서 확실)
-	        categoryPercentage: 0.45,   // 카테고리 폭 대비 영역
-	        barPercentage: 0.55,        // 데이터셋 폭 대비 막대 폭
-	        ticks:{ fontColor:'#64748b' },
-	        gridLines:{ display:false }
-	      }],
-	      yAxes:[{
-	        ticks:{
-	          min:0, max:yMax, beginAtZero:true, stepSize:1,
-	          callback:(v)=> Number.isInteger(v)? String(v) : '',
-	          fontColor:'#64748b',
-	          padding:6
-	        },
-	        gridLines:{
-	          color:'rgba(148,163,184,.18)',
-	          zeroLineColor:'rgba(148,163,184,.22)',
-	          drawBorder:false
-	        }
-	      }]
-	    },
-	    layout:{ padding:{ left:0, right:6, top:4, bottom:0 } }
-	  };
-	}
+  const { max, step } = niceAxis(yMax, 6); // 5~7개 눈금권
+
+  return {
+    responsive:true, maintainAspectRatio:false,
+    legend:{ labels:{ fontColor:'#334155', boxWidth:14 } },
+    tooltips:{ callbacks:{ label:(item,data)=>{
+      const ds = data.datasets[item.datasetIndex];
+      return `${ds.label}: ${Math.round(Number(item.yLabel||0))}`;
+    }}},
+    scales:{
+      xAxes:[{
+        categoryPercentage: 0.45,
+        barPercentage: 0.55,
+        ticks:{ fontColor:'#64748b', autoSkip:true, maxRotation:0 },
+        gridLines:{ display:false }
+      }],
+      yAxes:[{
+        ticks:{
+          min:0,
+          max: max,          // 동적 최대값
+          stepSize: step,    // 동적 눈금 간격
+          beginAtZero:true,
+          callback:(v)=> Number.isInteger(v)? String(v) : '',
+          fontColor:'#64748b',
+          padding:6
+        },
+        gridLines:{
+          color:'rgba(148,163,184,.18)',
+          zeroLineColor:'rgba(148,163,184,.22)',
+          drawBorder:false
+        }
+      }]
+    },
+    layout:{ padding:{ left:0, right:6, top:4, bottom:0 } }
+  };
+}
 
 /* ===== 스파크라인 (Chart.js v2) ===== */
 function sparkline(canvas, data, color){
@@ -332,28 +358,28 @@ function buildCharts(months, salesTrend, buyTrend, deptNames, deptCounts){
   const ctx2 = document.getElementById('chart-bar').getContext('2d');
   if(barChart) barChart.destroy();
   barChart = new Chart(ctx2,{
-	  type:'bar',
-	  data:{
-	    labels: deptNames,
-	    datasets:[{
-	      label:'사원수',
-	      data: counts,
-	      backgroundColor:'rgba(16,185,129,.18)',
-	      hoverBackgroundColor:'rgba(16,185,129,.28)',
-	      borderColor:'#10b981',
-	      borderWidth:2,
+    type:'bar',
+    data:{
+      labels: deptNames,
+      datasets:[{
+        label:'사원수',
+        data: counts,
+        backgroundColor:'rgba(16,185,129,.18)',
+        hoverBackgroundColor:'rgba(16,185,129,.28)',
+        borderColor:'#10b981',
+        borderWidth:2,
 
-	      // ⬇️ v2에서 확실히 적용되도록 고정 두께 + 최대 두께
-	      barThickness: 14,
-	      maxBarThickness: 18,
+        // 막대 두께 제어
+        barThickness: 14,
+        maxBarThickness: 18,
 
-	      // (참고) 데이터셋에도 보조적으로 넣어 둡니다
-	      categoryPercentage: 0.45,
-	      barPercentage: 0.55
-	    }]
-	  },
-	  options: peopleChartOptions(yMax)
-	});
+        // v2 호환을 위해 데이터셋에도 지정
+        categoryPercentage: 0.45,
+        barPercentage: 0.55
+      }]
+    },
+    options: peopleChartOptions(yMax)
+  });
 }
 
 /* ===== 전월 대비 ===== */
@@ -462,8 +488,7 @@ async function load(){
     document.getElementById('kpi-attend-note').textContent = '금일 기준';
 
     // Sparklines
-    
-    
+    // (기존 구조 유지 — 필요한 것만 호출)
     sparkline(document.getElementById('spark-emp'),   (d.deptCounts||[]), 'rgba(16,185,129,1)');
     sparkline(document.getElementById('spark-ar'),    (d.arTrend||[]),    'rgba(20,184,166,1)');
     sparkline(document.getElementById('spark-sales-cnt'), (d.salesCntTrend||[]), 'rgba(6,182,212,1)');
