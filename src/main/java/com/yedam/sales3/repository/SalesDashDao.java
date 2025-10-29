@@ -31,8 +31,8 @@ public class SalesDashDao {
 
     public long countAccounted(String companyCode) {
         String sql = """
-            SELECT COUNT(*) FROM SHIPMENT
-             WHERE NVL(STATUS,'-') = '판매반영완료'
+            SELECT COUNT(*) FROM INVOICE
+             WHERE NVL(STATUS,'-') = '회계반영완료'
                AND NVL(COMPANY_CODE,'-') = :cc
         """;
         Number n = (Number) em.createNativeQuery(sql)
@@ -105,22 +105,29 @@ public class SalesDashDao {
           SELECT qtr_num, NVL(SUM(target_amt),0) AS TARGET_AMT
             FROM (
               SELECT
-                /* QTR을 안전하게 1~4 숫자로 정규화 */
+                /* QTR 정규화: 1~4 */
                 CASE
-                  WHEN REGEXP_LIKE(TRIM(SPD.QTR), '^[1-4]$')
-                    THEN TO_NUMBER(TRIM(SPD.QTR))
-                  WHEN REGEXP_LIKE(SPD.QTR, 'Q[1-4]', 'i')
-                    THEN TO_NUMBER(REGEXP_SUBSTR(SPD.QTR, '[1-4]'))
-                  WHEN REGEXP_LIKE(SPD.QTR, '[1-4]분기')
-                    THEN TO_NUMBER(REGEXP_SUBSTR(SPD.QTR, '[1-4]'))
+                  WHEN REGEXP_LIKE(TRIM(SPD.QTR), '^[1-4]$')            THEN TO_NUMBER(TRIM(SPD.QTR))
+                  WHEN REGEXP_LIKE(SPD.QTR, 'Q[1-4]', 'i')              THEN TO_NUMBER(REGEXP_SUBSTR(SPD.QTR, '[1-4]'))
+                  WHEN REGEXP_LIKE(SPD.QTR, '[1-4]분기')                 THEN TO_NUMBER(REGEXP_SUBSTR(SPD.QTR, '[1-4]'))
                   ELSE NULL
                 END AS qtr_num,
                 NVL(SPD.PURP_SALES, 0) AS target_amt
               FROM SALES_PLAN SP
               JOIN SALES_PLAN_DETAIL SPD
-                ON TO_CHAR(SP.SALES_PLAN_CODE) = SPD.SALES_PLAN_CODE
-              WHERE TO_CHAR(SP.PLAN_YEAR,'YYYY') = :y
-                AND NVL(SP.COMPANY_CODE,'-') = :cc
+                ON TRIM(TO_CHAR(SP.SALES_PLAN_CODE)) = TRIM(SPD.SALES_PLAN_CODE)
+              WHERE NVL(TRIM(SP.COMPANY_CODE), '-') = :cc
+                /* PLAN_YEAR 타입/형식 혼재 대응 */
+                AND (
+                     /* VARCHAR2('2025') */
+                     (REGEXP_LIKE(TRIM(SP.PLAN_YEAR), '^[0-9]{4}$') AND TRIM(SP.PLAN_YEAR) = :ys)
+                  OR /* DATE */
+                     (CASE WHEN REGEXP_LIKE(DUMP(SP.PLAN_YEAR,101),'Typ=12') 
+                           THEN TO_CHAR(CAST(SP.PLAN_YEAR AS DATE),'YYYY') END) = :ys
+                  OR /* NUMBER(2025) */
+                     (CASE WHEN REGEXP_LIKE(DUMP(SP.PLAN_YEAR,101),'Typ=2') 
+                           THEN TO_CHAR(SP.PLAN_YEAR) END) = :ys
+                )
             )
            WHERE qtr_num IS NOT NULL
            GROUP BY qtr_num
@@ -129,8 +136,8 @@ public class SalesDashDao {
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = em.createNativeQuery(sql)
-                .setParameter("y", String.valueOf(year))
                 .setParameter("cc", companyCode)
+                .setParameter("ys", String.valueOf(year))  // '2025' 문자열로 고정
                 .getResultList();
 
         Map<Integer, Long> map = new HashMap<>();

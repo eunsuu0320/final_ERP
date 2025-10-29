@@ -44,6 +44,8 @@
 
     .table .right { text-align: right; }
   </style>
+  <!-- Chart.js v2.9.4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
 </head>
 
 <body layout:fragment="content">
@@ -151,13 +153,13 @@
 <!-- Thymeleaf 값 주입 -->
 <script th:inline="javascript">
   window.SALES3 = {
-    companyCode: /*[[${companyCode}]]*/ 'C001',
-    currentYear: /*[[${currentYear}]]*/ (new Date().getFullYear())
+    companyCode: /*[[${companyCode}]]*/ 'C0001',
+    currentYear: /*[[${currentYear}]]*/ 2025
   };
 </script>
 
 <script>
-  const COMPANY_CODE = (window.SALES3 && window.SALES3.companyCode) || 'C001';
+  const COMPANY_CODE = (window.SALES3 && window.SALES3.companyCode) || 'C0001';
   const CURRENT_YEAR = (window.SALES3 && window.SALES3.currentYear) || (new Date().getFullYear());
 
   const fmtWon = n => (Number(n||0)).toLocaleString('ko-KR');
