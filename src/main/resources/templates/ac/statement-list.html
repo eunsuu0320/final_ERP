@@ -305,6 +305,17 @@
       const tz = d.getTimezoneOffset() * 60000;
       return new Date(d.getTime() - tz).toISOString().slice(0,10);
     }
+    // ★ 올해 1/1 ~ 12/31 기본 기간 세팅
+    function initYearRange(){
+      const now  = new Date();
+      const y    = now.getFullYear();
+      const from = `${y}-01-01`;
+      const to   = `${y}-12-31`;
+      const $from = document.getElementById('fromDate');
+      const $to   = document.getElementById('toDate');
+      if ($from) $from.value = from;
+      if ($to)   $to.value   = to;
+    }
 
     /* 부가세 계산 */
     const FRACTION = { TAXABLE:{num:10,den:100}, ZERO:{num:0,den:100}, EXEMPT:{num:0,den:100} };
@@ -602,6 +613,7 @@
 
     
 
+    initYearRange();
     loadAllData();
 
     /* 필터/버튼 핸들러 */
@@ -616,14 +628,27 @@
 
     document.getElementById('btn-search').addEventListener('click',()=>{ loadAllData(); });
     document.getElementById('btn-reset').addEventListener('click',()=>{
-      ['partnerName','voucherNo','fromDate','toDate'].forEach(id=>document.getElementById(id).value='');
-      currentType='ALL';
-      document.querySelectorAll('.btn-type .btn').forEach(b=>{
-        b.classList.remove('btn-primary');b.classList.add('btn-outline-primary');
-        if(b.dataset.type==='ALL'){b.classList.remove('btn-outline-primary');b.classList.add('btn-primary');}
-      });
-      loadAllData();
-    });
+    	  // 텍스트 필드만 비우고
+    	  ['partnerName','voucherNo'].forEach(id=>{
+    	    const el = document.getElementById(id);
+    	    if (el) el.value = '';
+    	  });
+
+    	  // ★ 날짜는 ‘올해 1/1 ~ 12/31’로 복원
+    	  initYearRange();
+
+    	  // 타입 버튼 ALL로 복귀
+    	  currentType='ALL';
+    	  document.querySelectorAll('.btn-type .btn').forEach(b=>{
+    	    b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary');
+    	    if (b.dataset.type==='ALL'){
+    	      b.classList.remove('btn-outline-primary');
+    	      b.classList.add('btn-primary');
+    	    }
+    	  });
+
+    	  loadAllData();
+    	});
 
     /* ---------- 모달/검색 훅: 상단 거래처 ---------- */
     const $partnerNameTop     = document.getElementById('partnerName');

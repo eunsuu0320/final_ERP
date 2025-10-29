@@ -31,7 +31,7 @@ public class SalesDashController {
     @GetMapping("/sales3/salesdash")
     public String view(Model model, @RequestParam(required=false) String companyCode){
         // 회사코드는 인터셉터/세션에서 내려주는 값이 있으면 사용하고, 없으면 파라미터/기본값
-        String cc = (companyCode==null || companyCode.isBlank()) ? "C001" : companyCode;
+        String cc = (companyCode==null || companyCode.isBlank()) ? "C0001" : companyCode;
         model.addAttribute("companyCode", cc);
         model.addAttribute("currentYear", Year.now().getValue());
         return "sales3/salesdash";
